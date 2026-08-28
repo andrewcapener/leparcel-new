@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 import { eq } from 'drizzle-orm'
-import { db } from './index'
+import { db, sqlite } from './index'
 import {
   shows, spaceTypes, vendors, applications, bookings,
   auditLog, emailOutbox, subscribers, type Category,
@@ -238,4 +238,11 @@ async function main() {
   console.log(`Seeded: 1 show, ${spaces.length} space types, ${i} applicants, ${paidCount} bookings.`)
 }
 
-main()
+main().then(() => {
+  // Fold the WAL back into mermade.db and close cleanly, so the main db file
+  // alone carries all seeded rows. On Vercel only that file is bundled into
+  // the serverless functions; without this checkpoint the seed data stays in
+  // the -wal sidecar and the deployed db is empty.
+  sqlite.pragma('wal_checkpoint(TRUNCATE)')
+  sqlite.close()
+})
