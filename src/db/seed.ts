@@ -67,7 +67,7 @@ const PRODUCTS: Array<{ category: Category; blurb: string; low: number; high: nu
 ]
 
 const DECLINE_TEMPLATES = [
-  'Category was full this season — we take one to three makers per category.',
+  'Category was full this season. We take one to three makers per category.',
   'The photography made it hard to judge the work. Natural light on a plain background helps.',
   'Not enough differentiation from makers already on the roster.',
 ]
