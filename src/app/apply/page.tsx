@@ -8,7 +8,15 @@ import { usd } from '@/lib/money'
 
 export const dynamic = 'force-dynamic'
 
-export default async function Apply() {
+export default async function Apply({
+  searchParams,
+}: {
+  searchParams: Promise<{ preview?: string }>
+}) {
+  // ?preview=1 shows the form outside the application window — view only.
+  // Submission is still enforced server-side in actions.ts, which rejects
+  // anything outside the window regardless of how the form was reached.
+  const preview = (await searchParams).preview === '1'
   const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
@@ -79,8 +87,18 @@ export default async function Apply() {
         </div>
       </section>
 
-      {win === 'open' ? (
-        <ApplyForm show={show} spaces={spaces} />
+      {win === 'open' || preview ? (
+        <>
+          {win !== 'open' && (
+            <section className="apply" style={{ paddingBottom: 0 }}>
+              <div className="k">
+                Preview — applications are not open. Submissions are disabled until{' '}
+                {fmtDate(show.applicationsOpenAt)}.
+              </div>
+            </section>
+          )}
+          <ApplyForm show={show} spaces={spaces} />
+        </>
       ) : (
         <section className="apply">
           <div className="k">{win === 'before' ? 'Not open yet' : 'Closed'}</div>
