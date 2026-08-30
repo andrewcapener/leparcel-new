@@ -21,11 +21,11 @@ export default async function ShowSettings() {
 
   const rows: Array<[string, string, string?]> = [
     ['Show', `${show.numeral} · ${show.name}`],
-    ['Venue', `${show.venueName} — ${show.venueAddress}`],
+    ['Venue', `${show.venueName} · ${show.venueAddress}`],
     ['Dates', fmtRange(show.startsOn, show.endsOn)],
     ['Hours', show.hoursNote],
     ['Applications open', fmtDate(show.applicationsOpenAt),
-      '⚠️ Unconfirmed — the site says "late August", Instagram says Sep 7. Open question #1.'],
+      'Confirmed by Drew, Aug 2026. The close date below is still unconfirmed; it mirrors Spring’s 11-day window.'],
     ['Applications close', fmtDate(show.applicationsCloseAt)],
     ['Roster announced', fmtDate(show.rosterAnnouncedOn)],
     ['Commission', `${show.commissionBps / 100}% (${show.commissionBps} bps)`,
@@ -40,8 +40,8 @@ export default async function ShowSettings() {
     <div style={{ padding: '26px 26px 80px', maxWidth: 900 }}>
       <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34, marginBottom: 8 }}>Show settings</h1>
       <p style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 26, maxWidth: 72 + 'ch' }}>
-        Read-only in the prototype. Everything the public site renders — dates, prices, the
-        commission rate, the application window — is read from here. There are no hardcoded dates
+        Read-only in the prototype. Everything the public site renders (dates, prices, the
+        commission rate, the application window) is read from here. There are no hardcoded dates
         or prices anywhere in the codebase.
       </p>
 

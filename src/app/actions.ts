@@ -68,7 +68,7 @@ const ApplicationSchema = z.object({
   contactName: z.string().min(2, 'Required'),
   email: z.string().email('Enter a valid email address'),
   phone: z.string().min(7, 'Required'),
-  instagram: z.string().min(1, 'Required — it’s how we look at your work'),
+  instagram: z.string().min(1, 'Required. It’s how we look at your work'),
   website: z.string().optional(),
   city: z.string().min(1, 'Required'),
   state: z.string().min(2, 'Required'),
@@ -77,7 +77,7 @@ const ApplicationSchema = z.object({
   spaceTypeId: z.string().min(1, 'Choose a space'),
 
   category: z.enum(CATEGORIES, { message: 'Choose a category' }),
-  description: z.string().min(40, 'Tell us a little more — 40 characters minimum').max(600, '600 characters max'),
+  description: z.string().min(40, 'Tell us a little more (40 characters minimum)').max(600, '600 characters max'),
   priceLow: z.coerce.number().int().min(1, 'Required'),
   priceHigh: z.coerce.number().int().min(1, 'Required'),
 
@@ -182,7 +182,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   await mail(
     email,
     `We have your ${show.name} application`,
-    `Thanks — your application for ${show.name} is in.\n\n`
+    `Your ${show.name} application is in.\n\n`
       + `Shop: ${d.shopName}\nCategory: ${d.category}\n`
       + `Space: ${space.label} · ${usd(space.priceCents)}\n\n`
       + `We read every application and answer either way. The roster is announced `
@@ -255,13 +255,13 @@ export async function decide(fd: FormData): Promise<void> {
 
         await mail(
           vendor.email,
-          `You’re in — ${show.name}`,
+          `You’re in: ${show.name}`,
           `${vendor.contactName}, you’re in.\n\n`
             + `${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${show.venueName}\n`
-            + `Your vendor code is ${code}. Tag every item ${code} plus the price — that's all the register needs.\n\n`
+            + `Your vendor code is ${code}. Tag every item ${code} plus the price. That's all the register needs.\n\n`
             + `Space: ${space.label}\nBooth fee: ${usd(space.priceCents)}\n`
             + `${app.track === 'indoor' ? `Commission: ${show.commissionBps / 100}% on indoor sales\n` : ''}`
-            + `\nPay to confirm within ${show.paymentWindowHours} hours — the space returns to the pool after that.\n\n— Mermade Market`,
+            + `\nPay to confirm within ${show.paymentWindowHours} hours. After that the space returns to the pool.\n\n— Mermade Market`,
           'accepted',
         )
       }
@@ -272,7 +272,7 @@ export async function decide(fd: FormData): Promise<void> {
     await mail(
       vendor.email,
       `Your ${show.name} application`,
-      `${vendor.contactName} — thank you for applying to ${show.name}.\n\n`
+      `${vendor.contactName}, thank you for applying to ${show.name}.\n\n`
         + `We're not able to offer you a space this season.\n\n`
         + (reason ? `${reason}\n\n` : '')
         + `We only take one to three makers per category and had far more strong applications than spaces. `
@@ -285,7 +285,7 @@ export async function decide(fd: FormData): Promise<void> {
     await mail(
       vendor.email,
       `Waitlisted for ${show.name}`,
-      `${vendor.contactName} — you're on the waitlist for ${show.name}.\n\n`
+      `${vendor.contactName}, you're on the waitlist for ${show.name}.\n\n`
         + `Spaces open up when accepted vendors don't pay in time, and we offer them in order. `
         + `We'll email either way by ${fmtDate(show.rosterAnnouncedOn)}.\n\n— Mermade Market`,
       'waitlisted',

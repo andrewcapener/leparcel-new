@@ -14,7 +14,7 @@ export const founderLetter = {
   heading: 'I started this because I wanted somewhere to buy things made by people I could meet.',
   body: [
     'In 2015 that meant sixteen makers in a room by the harbor and a folding table for a register. We had no idea whether anyone would come. Four hundred people did.',
-    'Eleven years later the rule hasn’t changed: everything on the floor is made by the person who applied. No resellers, no drop-ship, no wholesale lines dressed up as small batch. We read every application, and most seasons we say no to four out of five — not because the work isn’t good, but because a hundred makers is what fits, and what fits is what makes it worth your Saturday.',
+    'Eleven years later the rule hasn’t changed: everything on the floor is made by the person who applied. No resellers, no drop-shipping, no wholesale dressed up as small batch. We read every application, and most seasons we say no to four out of five. A hundred makers is what fits in the room, and we’d rather keep the room worth your Saturday.',
     'Come early, bring a bag, and talk to people. That’s the whole thing.',
   ],
   signature: 'Elise',
@@ -29,7 +29,7 @@ export const claim = {
   eyebrow: 'The market',
   lead: 'Every maker here was chosen by a person who ',
   emphasis: 'looked at the work',
-  tail: ' — and said no to four out of five.',
+  tail: ', and said no to four out of five.',
 }
 
 /** ⚠️ UNVERIFIED — docs/09-CONTENT-AUDIT.md §5: publish only what you can source. */
@@ -42,9 +42,9 @@ export const press = {
 export const visiting = [
   { q: 'Where', a: 'Dana Point Community House, 24642 San Juan Avenue. Indoors, one floor, step-free.' },
   { q: 'Admission', a: 'Free, as it has been every year since 2015. No ticket, no line.' },
-  { q: 'Parking', a: 'Free lot on site, plus street parking on San Juan and Del Prado. Fills by 11am Saturday — Friday evening is the calm one.' },
+  { q: 'Parking', a: 'Free lot on site, plus street parking on San Juan and Del Prado. Fills by 11am Saturday. Friday evening is the calm one.' },
   { q: 'Strollers & kids', a: 'Yes to both. Aisles are wide, and there’s a kids’ table near the entrance.' },
-  { q: 'How long', a: 'Most people spend about ninety minutes. Bring a tote — one register at the front means one bag at the end.' },
+  { q: 'How long', a: 'Most people spend about ninety minutes. Bring a tote: one register at the front means one bag at the end.' },
   { q: 'Food', a: 'Coffee and pastry inside; two trucks in the lot Saturday and Sunday.' },
 ]
 
@@ -81,6 +81,6 @@ export const ARCHIVE_IS_PLACEHOLDER = true
 
 export const newsletter = {
   heading: 'The roster goes out to the list first.',
-  body: 'Two shows a year. We announce the merchant lineup, the floor plan, and Friday-evening early access to subscribers before anyone else. Nothing else — we’re not going to email you in July.',
+  body: 'Two shows a year. Subscribers hear the merchant lineup, the floor plan, and Friday-evening early access before anyone else. That’s it. We’re not going to email you in July.',
   fine: 'About six emails a year. Unsubscribe any time.',
 }

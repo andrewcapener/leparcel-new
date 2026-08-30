@@ -15,7 +15,7 @@ export function Masthead({ show }: { show: Show }) {
       ? `Applications open ${fmtDate(show.applicationsOpenAt, { year: undefined })}`
       : win === 'open'
         ? `Applications close ${fmtDate(show.applicationsCloseAt, { year: undefined })}`
-        : 'Applications closed — join the waitlist'
+        : 'Applications closed · waitlist open'
 
   return (
     <>
@@ -25,7 +25,7 @@ export function Masthead({ show }: { show: Show }) {
         <span>{applyNote}</span>
       </div>
       <div className="mast">
-        <Link href="/" aria-label="Mermade Market — home">
+        <Link href="/" aria-label="Mermade Market, home">
           <Wordmark className="wm" />
         </Link>
         <div className="tag">A juried market of independent makers</div>

@@ -124,7 +124,7 @@ export default async function Home() {
           <figcaption className="cap">
             {C.founderLetter.photoCaption}
             {C.founderLetter.photoIsPlaceholder && (
-              <span style={{ color: 'var(--clay)' }}> · placeholder — needs a portrait of Elise</span>
+              <span style={{ color: 'var(--clay)' }}> · placeholder, needs a portrait of Elise</span>
             )}
           </figcaption>
         </figure>
@@ -237,7 +237,7 @@ export default async function Home() {
         </div>
         {C.ARCHIVE_IS_PLACEHOLDER && (
           <p style={{ fontSize: 12, color: '#8A8377', marginTop: 16, fontFamily: 'var(--font-j)' }}>
-            ⚠️ Placeholder rows — see docs/09-CONTENT-AUDIT.md §5. Source from
+            ⚠️ Placeholder rows. See docs/09-CONTENT-AUDIT.md §5. Source from
             Dropbox/MERMADE before this page goes live.
           </p>
         )}
@@ -281,9 +281,9 @@ export default async function Home() {
               : `Applications for ${show.name} are closed.`}
         </h2>
         <p>
-          Indoor tables are consignment — we merchandise, staff, and sell your work at a central
-          register and take {show.commissionBps / 100}%. Outdoor tents are a flat day rate and you
-          keep everything. One form, both tracks, no fee to apply.
+          Indoor is consignment: we merchandise your work, staff the floor, and sell it at the
+          register for {show.commissionBps / 100}% of sales. Outdoor tents are a flat day rate and
+          you keep everything. One form, both tracks, no fee to apply.
         </p>
         <div className="cta">
           <Link href="/apply" className="btn">

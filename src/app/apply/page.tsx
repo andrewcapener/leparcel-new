@@ -52,7 +52,7 @@ export default async function Apply({
             <span className="q">Indoor</span>
             <span className="a">
               Consignment. We merchandise your work, staff the floor, and sell everything at a
-              central register — you don’t need to be there. We keep{' '}
+              central register, so you don’t need to be there. We keep{' '}
               {show.commissionBps / 100}% of indoor sales and pay out after the show.
             </span>
           </div>
@@ -65,7 +65,7 @@ export default async function Apply({
           <div className="row">
             <span className="q">Booth fees</span>
             <span className="a">
-              {spaces.map((s) => `${s.label} — ${usd(s.priceCents)}`).join(' · ')}
+              {spaces.map((s) => `${s.label} ${usd(s.priceCents)}`).join(' · ')}
             </span>
           </div>
           <div className="row">
@@ -92,7 +92,7 @@ export default async function Apply({
           {win !== 'open' && (
             <section className="apply" style={{ paddingBottom: 0 }}>
               <div className="k">
-                Preview — applications are not open. Submissions are disabled until{' '}
+                Preview. Applications are not open, and submissions are disabled until{' '}
                 {fmtDate(show.applicationsOpenAt)}.
               </div>
             </section>
@@ -110,7 +110,7 @@ export default async function Apply({
           <p>
             {win === 'before'
               ? 'Join the list and we’ll email you the morning they open.'
-              : 'Join the list and we’ll email you when the next window opens — about ten months a year this page would otherwise be a dead end.'}
+              : 'Join the list and we’ll email you the morning the next window opens.'}
           </p>
         </section>
       )}

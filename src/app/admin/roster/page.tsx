@@ -49,7 +49,7 @@ export default async function Roster() {
   return (
     <div style={{ padding: '26px 26px 80px' }}>
       <header style={{ display: 'flex', alignItems: 'baseline', gap: 18, marginBottom: 24 }}>
-        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34 }}>Roster — {show.name}</h1>
+        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34 }}>Roster · {show.name}</h1>
       </header>
 
       <div style={{
@@ -89,7 +89,7 @@ export default async function Roster() {
           At the snapshotted rate, a $100 indoor sale splits{' '}
           <strong style={{ color: 'var(--ink)' }}>{usd(example.commissionCents)}</strong> to Mermade
           and <strong style={{ color: 'var(--ink)' }}>{usd(example.netCents)}</strong> to the vendor.
-          Commission is snapshotted per booking and immutable — changing the show rate later never
+          Commission is snapshotted per booking and immutable: changing the show rate later never
           changes what an accepted vendor was promised.
         </p>
       )}
@@ -135,7 +135,7 @@ export default async function Roster() {
               <td>
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', maxWidth: 150 }}>
                   {!documented(app) && (
-                    <span className="chip" data-warn="1" title="CDTFA Publication 111 — up to $1,000 per undocumented seller">
+                    <span className="chip" data-warn="1" title="CDTFA Publication 111: up to $1,000 per undocumented seller">
                       Blocks load-in
                     </span>
                   )}
@@ -165,13 +165,13 @@ export default async function Roster() {
 
       <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 22, maxWidth: 76 + 'ch' }}>
         “Mark paid” stands in for the vendor paying in the portal. In production this is a Stripe
-        Checkout webhook — payment state is only ever set from a verified webhook, never a client
+        Checkout webhook; payment state is only ever set from a verified webhook, never a client
         callback (CLAUDE.md rule 5).
       </p>
       <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 12, maxWidth: 76 + 'ch' }}>
         <strong style={{ color: 'var(--ink)' }}>Blocks load-in</strong> means no seller’s permit
         number and no CDTFA-410-D on file. Publication 111 puts the record-keeping duty on the
-        market, not the maker — up to $1,000 per undocumented seller who should have held a permit,
+        market, not the maker: up to $1,000 per undocumented seller who should have held a permit,
         and the records have to be kept four years. It is deliberately <em>not</em> a gate on the
         application: the duty attaches to renting space, and a maker who isn’t accepted never rents
         any.

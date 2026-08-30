@@ -46,7 +46,7 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
           {new Date(show.rosterAnnouncedOn).toLocaleDateString('en-US', {
             timeZone: 'America/Los_Angeles', month: 'long', day: 'numeric',
           })}
-          , and we answer either way — you will not be left wondering.
+          , and we answer either way.
         </p>
         <div className="fine" style={{ marginTop: 26 }}>
           In the prototype your confirmation email is readable at /admin/outbox
@@ -129,7 +129,7 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
         </div>
         <Field name="madeByYou" label="Is everything made by you?" error={e.madeByYou}>
           <select className="inp" id="madeByYou" name="madeByYou" required defaultValue={v.madeByYou ?? 'all'}>
-            <option value="all">Yes — I make everything</option>
+            <option value="all">Yes, I make everything</option>
             <option value="mostly_sourced_components">Mostly, with sourced components</option>
             <option value="curate_resell">I curate and resell</option>
           </select>
@@ -159,21 +159,18 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
             onChange={(ev) => setTrack(ev.target.value as typeof track)}
           >
             <option value="indoor">
-              Indoor — consignment, {show.commissionBps / 100}% commission, you don’t attend
+              Indoor: consignment, {show.commissionBps / 100}% commission, you don’t attend
             </option>
-            <option value="outdoor">Outdoor — you run your own tent and keep 100%</option>
+            <option value="outdoor">Outdoor: your own tent, and you keep 100%</option>
             <option value="both">Both</option>
           </select>
         </Field>
-        <Field
-          name="spaceTypeId" label="Space" error={e.spaceTypeId}
-          hint="Prices come off the show record — there are no stale price tables anywhere on this site."
-        >
+        <Field name="spaceTypeId" label="Space" error={e.spaceTypeId}>
           <select className="inp" id="spaceTypeId" name="spaceTypeId" required defaultValue={v.spaceTypeId ?? ''}>
             <option value="" disabled>Choose a space</option>
             {visible.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.label} — {usd(s.priceCents)}
+                {s.label} · {usd(s.priceCents)}
               </option>
             ))}
           </select>
@@ -187,11 +184,11 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
         <div className="k" style={{ margin: '38px 0 20px' }}>04 · Paperwork (optional)</div>
         <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-2)', marginBottom: 24, maxWidth: '60ch' }}>
           None of this is required to apply, and none of it affects the jury.
-          If you’re accepted we’ll need it before load-in — answering now just
+          If you’re accepted we’ll need it before load-in. Answering now just
           means one less email in October.
         </p>
         <Field
-          name="sellerPermit" label="CA seller’s permit number — if you have one" error={e.sellerPermit}
+          name="sellerPermit" label="CA seller’s permit number (if you have one)" error={e.sellerPermit}
           hint="Leave it blank if you don’t. We’ll sort it out with you after acceptance."
         >
           <input
@@ -206,7 +203,7 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
             style={{ marginTop: 3 }}
           />
           <span style={{ fontSize: 14, lineHeight: 1.5 }}>
-            I don’t have one — I think I qualify as an occasional seller (CDTFA 410-D)
+            I don’t have one. I think I qualify as an occasional seller (CDTFA 410-D)
           </span>
         </label>
         <label className="field" style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>

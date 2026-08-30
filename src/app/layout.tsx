@@ -28,7 +28,7 @@ const body = Barlow({
 })
 
 export const metadata: Metadata = {
-  title: 'Mermade Market — Dana Point, California',
+  title: 'Mermade Market · Dana Point, California',
   description:
     'A juried market of independent makers in Dana Point, California. Free to attend, twice a year, since 2015.',
 }

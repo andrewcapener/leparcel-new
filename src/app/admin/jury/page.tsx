@@ -66,7 +66,7 @@ export default async function Jury({
   return (
     <div style={{ padding: '26px 26px 80px' }}>
       <header style={{ display: 'flex', alignItems: 'baseline', gap: 18, marginBottom: 22 }}>
-        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34 }}>Jury — {show.name}</h1>
+        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34 }}>Jury · {show.name}</h1>
         <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>
           {sold} of {show.indoorCapacity + show.outdoorCapacity} spaces committed ·{' '}
           {show.commissionBps / 100}% commission · {show.paymentWindowHours}h payment window
@@ -216,7 +216,7 @@ export default async function Jury({
                             <input type="hidden" name="status" value={s} />
                             {s === 'declined' && (
                               <input type="hidden" name="reason"
-                                value="Category was full this season — we take one to three makers per category." />
+                                value="Category was full this season. We take one to three makers per category." />
                             )}
                             <button className="btn-o" type="submit">{LABEL[s]}</button>
                           </form>

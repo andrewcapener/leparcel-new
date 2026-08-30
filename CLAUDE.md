@@ -14,6 +14,7 @@ You are building the Mermade Market platform: a custom replacement for the busin
 9. `docs/09-CONTENT-AUDIT.md` — what every homepage block is for, which of the four business jobs it serves, and the page order. **The homepage is ordered for shoppers; depth lives on sub-pages.** Never publish an unsourced number.
 10. `docs/10-VENDOR-AGREEMENT.md` — the vendor agreement: Part I common terms, Schedule A (indoor consignment), Schedule B (outdoor booth licence). Carries ⟨DECISION⟩ and ⟨COUNSEL⟩ markers and a status table. **Unreviewed by an attorney — do not treat any clause as settled, and don't wire policy from it that contradicts the Show record.**
 11. `docs/11-AGREEMENT-RESEARCH.md` — clause-by-clause source quotes from other major craft fairs plus the California statutes, with URLs. Read only if you need to know *why* a clause reads the way it does.
+12. `docs/12-VOICE.md` — how Mermade sounds in any rendered copy: concise, warm through specifics, community implied and never stated, **no em dashes in prose**. Run every user-facing string you write past it.
 
 ---
 

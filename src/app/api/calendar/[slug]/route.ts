@@ -30,7 +30,7 @@ export async function GET(
     `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '')}`,
     `DTSTART;VALUE=DATE:${ymd(show.startsOn)}`,
     `DTEND;VALUE=DATE:${ymd(end.toISOString())}`,
-    `SUMMARY:Mermade Market — ${show.name}`,
+    `SUMMARY:Mermade Market · ${show.name}`,
     `LOCATION:${show.venueAddress.replace(/,/g, '\\,')}`,
     `DESCRIPTION:${`A juried market of independent makers. Free admission. ${show.hoursNote}`.replace(/,/g, '\\,')}`,
     'URL:https://mermademarket.com',
