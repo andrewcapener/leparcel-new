@@ -12,6 +12,7 @@ export async function GET() {
     hasDatabaseUrlEnv: Boolean(process.env.DATABASE_URL),
     bundledDb: existsSync(bundled),
     tmpDb: existsSync('/tmp/mermade.db'),
+    lastRequestError: (globalThis as Record<string, unknown>).__lastRequestError ?? null,
   }
   if (diag.bundledDb) {
     const st = statSync(bundled)
