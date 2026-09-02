@@ -12,7 +12,7 @@
 |---|---|---|
 | Google Ads | ✅ **Linked** | Client account **455-403-3676 (Mark Cross)** accepted the link to manager account **Clifford Press (219-394-7711)** on 2026-09-02. Reads go through the manager login, same as A. Clifford. |
 | Meta — Page | ✅ **Granted** | Page **Mark Cross** (ID `100542473354908`) shared into the housework Business Manager (`1728203510834209`) on 2026-08-28. |
-| Meta — Ad account | ⚠️ **Not yet shared** | No ad-account grant has arrived — only the Page. The integration discovers the ad account by name at runtime and reports "not connected" until the client shares it. **Action: ask the client to share their ad account (Business Settings → Ad Accounts → Assign Partner, business ID 1728203510834209).** |
+| Meta — Ad account | ⚠️ **Shared, not assigned** | Update 9/2 (later): **"Mark Cross Ad Account" (`act_341898973409009`) IS in the housework BM** — the client did their part. The system user behind our token just isn't assigned to it. **Action (ours, ~1 min): Business settings → Users → System users → housework system user → Add assets → Mark Cross Ad Account.** Audit auto-completes once assigned. |
 | housework-api | ✅ **Deployed** | `lib/markcross` + `/api/markcross-dashboard-data` + `/api/markcross-audit` pushed to `main` (commit `6facfdd`), Vercel deploys from main. |
 | Shopify / GA4 / Klaviyo | ❌ Not connected | Stolberg-parity extras. Add when credentials exist; the dashboard route is shaped to grow into the Stolberg response. |
 
