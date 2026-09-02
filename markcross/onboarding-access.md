@@ -14,7 +14,9 @@
 | Meta — Page | ✅ **Granted** | Page **Mark Cross** (ID `100542473354908`) shared into the housework Business Manager (`1728203510834209`) on 2026-08-28. |
 | Meta — Ad account | ✅ **Live** | "Mark Cross Ad Account" (`act_341898973409009`, ACTIVE) shared into the BM and assigned to the system user; audited 9/2. Note: `/me/adaccounts` lagged the assignment, so the integration probes the account ID directly. |
 | housework-api | ✅ **Deployed** | `lib/markcross` + `/api/markcross-dashboard-data` + `/api/markcross-audit` pushed to `main` (commit `6facfdd`), Vercel deploys from main. |
-| Shopify / GA4 / Klaviyo | ❌ Not connected | Stolberg-parity extras. Add when credentials exist; the dashboard route is shaped to grow into the Stolberg response. |
+| Shopify | ⏳ **Code deployed, needs credentials** | Andrew has store access. Create a custom app in the Mark Cross Shopify admin (Settings → Apps and sales channels → Develop apps → Create app → Admin API scope `read_orders` → install → copy token), then set in Vercel: `MARKCROSS_SHOPIFY_DOMAIN` (the `*.myshopify.com` domain) and `MARKCROSS_SHOPIFY_ACCESS_TOKEN`. Dashboard picks it up automatically (`sources.shopify` flips true). |
+| GA4 | ⏳ **Code deployed, needs property + access** | Andrew checking access. Add the service account (`GOOGLE_SERVICE_ACCOUNT_EMAIL` in Vercel) as **Viewer** on the Mark Cross GA4 property (Admin → Property access management), then set `MARKCROSS_GA4_PROPERTY_ID` in Vercel (Admin → Property settings → Property ID, digits only). |
+| Klaviyo | ❌ Not connected | Stolberg-parity extra; add later if wanted. |
 
 ## housework-api integration
 
