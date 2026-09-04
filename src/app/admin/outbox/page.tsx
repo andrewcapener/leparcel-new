@@ -12,9 +12,9 @@ export default async function Outbox() {
     <div style={{ padding: '26px 26px 80px' }}>
       <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34, marginBottom: 8 }}>Outbox</h1>
       <p style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 26, maxWidth: 72 + 'ch' }}>
-        The prototype writes mail here instead of sending it, so you can read exactly what a vendor
-        receives at each step. Swap for Resend + React Email at the same call site in{' '}
-        <code>src/app/actions.ts</code>.
+        Every message the system sends, exactly as the vendor receives it. Delivery runs through
+        Resend when RESEND_API_KEY is set; &ldquo;logged&rdquo; means the message was recorded but
+        sending is not configured.
       </p>
 
       {mails.length === 0 ? (
@@ -30,6 +30,13 @@ export default async function Outbox() {
                 borderBottom: '1px solid var(--line)', background: 'var(--paper-2)',
               }}>
                 <span className="chip">{m.template}</span>
+                <span
+                  className="chip"
+                  data-warn={m.deliveryStatus === 'failed' ? '1' : undefined}
+                  title={m.deliveryDetail || undefined}
+                >
+                  {m.deliveryStatus}
+                </span>
                 <span style={{ fontSize: 13 }}>{m.toEmail}</span>
                 <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--ink-3)' }}>
                   {fmtDateTime(m.sentAt)}

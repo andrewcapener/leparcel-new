@@ -70,7 +70,7 @@ Full rationale and rejected alternatives in `docs/02-ARCHITECTURE.md` §1.
 
 ## What this repo already is, and what it is not
 
-This is a **working vertical slice on SQLite**, not the production app. Treat it as a
+This is a **working vertical slice on Postgres**, not yet the full production app. Treat it as a
 reference implementation of the parts it covers and as a spec for the parts it doesn't.
 
 **Built and working** — public home page, `/apply` (with server-side Zod validation that
@@ -79,9 +79,10 @@ echoes values back on rejection), `/admin/jury`, `/admin/roster`, `/admin/show`,
 the money library with a 200,000-case property test, and the full design system in
 `src/app/globals.css`.
 
-**Deliberately stubbed** — there is **no auth** (every admin page is open; the "who" in
-the bar is a hardcoded string), no Stripe, no real email delivery (the outbox is a table
-you read), no file uploads, no RLS, and no POS.
+**Deliberately stubbed** — no Stripe, no file uploads, no RLS, and no POS. Auth on
+`/admin` is an interim shared password (`ADMIN_PASSWORD` + signed cookie in
+`src/proxy.ts`), to be replaced by Supabase Auth. Email delivers through Resend when
+`RESEND_API_KEY` is set and is always recorded in the outbox table.
 
 **Known gaps in the prototype schema, already specified in `docs/03-DATA-MODEL.md`** —
 booth **add-ons** (share $100, endcap $40 indoor / $60 outdoor, tent rental $100) exist
@@ -89,9 +90,8 @@ in the data model as `booking_addons` and `bookings.addons_cents`, but the proto
 Drizzle schema and seed don't carry them yet, and the vendor agreement's fee schedule
 doesn't price them. Close all three together.
 
-**The SQLite choice is intentional and temporary.** The schema is written Postgres-shaped
-so the swap to Supabase is a driver change, not a redesign. Do the swap early rather than
-building more on SQLite.
+**The database is Postgres** (Supabase in production, any Postgres via `DATABASE_URL`
+locally). The SQLite era is over; see README for env vars and seeding modes.
 
 ---
 

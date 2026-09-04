@@ -1,21 +1,25 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core'
-import { sql } from 'drizzle-orm'
+import { pgTable, text, integer, boolean, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core'
 
 /**
- * Prototype schema — a faithful subset of docs/03-DATA-MODEL.md.
+ * Postgres schema — a faithful subset of docs/03-DATA-MODEL.md, run on
+ * Supabase in production and any Postgres locally (DATABASE_URL).
  *
- * SQLite here so the prototype runs with zero setup. The column names, the
- * money-as-integer-cents rule, and the show_id scoping are identical to the
- * Postgres DDL in the spec, so porting is a dialect change, not a redesign.
+ * Timestamp convention: columns the app writes (show dates, deadlines,
+ * paid_at…) are ISO-8601 strings in text columns, exactly as the app
+ * produces them, so the SQLite-era call sites work unchanged. Columns the
+ * database fills (created_at, submitted_at…) are timestamptz with a
+ * defaultNow(), read back as strings. Both parse with new Date() and render
+ * through src/lib/dates.ts in America/Los_Angeles (CLAUDE.md rule 8).
  */
 
-const now = sql`(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`
+const dbNow = (name: string) =>
+  timestamp(name, { withTimezone: true, mode: 'string' }).notNull().defaultNow()
 
 /* ───────────────────────── shows ─────────────────────────
  * NOTHING is hardcoded. Dates, prices, capacity, commission,
  * and the application window all live here (CLAUDE.md rule 6).
  */
-export const shows = sqliteTable('shows', {
+export const shows = pgTable('shows', {
   id: text('id').primaryKey(),
   slug: text('slug').notNull().unique(),
   numeral: text('numeral').notNull(),            // "XXII"
@@ -41,12 +45,12 @@ export const shows = sqliteTable('shows', {
   indoorCapacity: integer('indoor_capacity').notNull().default(80),
   outdoorCapacity: integer('outdoor_capacity').notNull().default(30),
 
-  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(false),
-  createdAt: text('created_at').notNull().default(now),
+  isActive: boolean('is_active').notNull().default(false),
+  createdAt: dbNow('created_at'),
 })
 
 /* ───────────────────── space types (priced inventory) ───────────────────── */
-export const spaceTypes = sqliteTable('space_types', {
+export const spaceTypes = pgTable('space_types', {
   id: text('id').primaryKey(),
   showId: text('show_id').notNull().references(() => shows.id),
   track: text('track', { enum: ['indoor', 'outdoor'] }).notNull(),
@@ -61,7 +65,7 @@ export const spaceTypes = sqliteTable('space_types', {
 /* ───────────────────────── vendors ─────────────────────────
  * Persistent across shows. An application belongs to a vendor.
  */
-export const vendors = sqliteTable('vendors', {
+export const vendors = pgTable('vendors', {
   id: text('id').primaryKey(),
   shopName: text('shop_name').notNull(),
   legalName: text('legal_name'),
@@ -74,9 +78,9 @@ export const vendors = sqliteTable('vendors', {
   state: text('state').notNull().default('CA'),
   vendorCode: text('vendor_code'),               // "MM07" — assigned at acceptance
   showsAttended: integer('shows_attended').notNull().default(0),
-  isFlagged: integer('is_flagged', { mode: 'boolean' }).notNull().default(false),
+  isFlagged: boolean('is_flagged').notNull().default(false),
   flagReason: text('flag_reason'),
-  createdAt: text('created_at').notNull().default(now),
+  createdAt: dbNow('created_at'),
 }, (t) => [uniqueIndex('vendors_email').on(t.email)])
 
 export const CATEGORIES = [
@@ -91,7 +95,7 @@ export const APPLICATION_STATUSES = [
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number]
 
 /* ─────────────────────── applications ─────────────────────── */
-export const applications = sqliteTable('applications', {
+export const applications = pgTable('applications', {
   id: text('id').primaryKey(),
   showId: text('show_id').notNull().references(() => shows.id),
   vendorId: text('vendor_id').notNull().references(() => vendors.id),
@@ -109,18 +113,18 @@ export const applications = sqliteTable('applications', {
   madeByYou: text('made_by_you', {
     enum: ['all', 'mostly_sourced_components', 'curate_resell'],
   }).notNull(),
-  usesAiArtwork: integer('uses_ai_artwork', { mode: 'boolean' }).notNull().default(false),
-  isMlm: integer('is_mlm', { mode: 'boolean' }).notNull().default(false),
+  usesAiArtwork: boolean('uses_ai_artwork').notNull().default(false),
+  isMlm: boolean('is_mlm').notNull().default(false),
 
   // compliance — closes audit §1.1 / §1.3
   sellerPermit: text('seller_permit').notNull().default(''),
-  occasionalSeller: integer('occasional_seller', { mode: 'boolean' }).notNull().default(false),
-  hasCoi: integer('has_coi', { mode: 'boolean' }).notNull().default(false),
+  occasionalSeller: boolean('occasional_seller').notNull().default(false),
+  hasCoi: boolean('has_coi').notNull().default(false),
 
   photos: text('photos').notNull().default('[]'),  // JSON array of paths
 
   status: text('status').notNull().default('new'),
-  submittedAt: text('submitted_at').notNull().default(now),
+  submittedAt: dbNow('submitted_at'),
 
   // jury record
   scoreQuality: integer('score_quality'),
@@ -144,7 +148,7 @@ export const applications = sqliteTable('applications', {
  * immutable (CLAUDE.md rule 6) — changing the show rate later must
  * never retroactively change what a vendor was promised.
  */
-export const bookings = sqliteTable('bookings', {
+export const bookings = pgTable('bookings', {
   id: text('id').primaryKey(),
   showId: text('show_id').notNull().references(() => shows.id),
   vendorId: text('vendor_id').notNull().references(() => vendors.id),
@@ -161,7 +165,7 @@ export const bookings = sqliteTable('bookings', {
   paymentDueAt: text('payment_due_at').notNull(),
   paidAt: text('paid_at'),
 
-  createdAt: text('created_at').notNull().default(now),
+  createdAt: dbNow('created_at'),
 }, (t) => [
   uniqueIndex('bookings_show_vendor_code').on(t.showId, t.vendorCode),
   index('bookings_show_status').on(t.showId, t.status),
@@ -171,7 +175,7 @@ export const bookings = sqliteTable('bookings', {
  * CLAUDE.md rule 3 — every state change that touches money or a
  * vendor's standing is logged with actor, before, after, reason.
  */
-export const auditLog = sqliteTable('audit_log', {
+export const auditLog = pgTable('audit_log', {
   id: text('id').primaryKey(),
   entity: text('entity').notNull(),           // 'application' | 'booking'
   entityId: text('entity_id').notNull(),
@@ -180,28 +184,32 @@ export const auditLog = sqliteTable('audit_log', {
   before: text('before'),                     // JSON
   after: text('after'),                       // JSON
   reason: text('reason').notNull().default(''),
-  at: text('at').notNull().default(now),
+  at: dbNow('at'),
 }, (t) => [index('audit_entity').on(t.entity, t.entityId)])
 
 /* ─────────────────────── email outbox ───────────────────────
- * The prototype writes mail here instead of sending it, so you can
- * read exactly what a vendor would receive at /admin/outbox.
+ * Every message the system sends is recorded here — the audit trail
+ * behind /admin/outbox. Delivery itself is Resend (see mail() in
+ * src/app/actions.ts); the row is written whether or not sending is
+ * configured.
  */
-export const emailOutbox = sqliteTable('email_outbox', {
+export const emailOutbox = pgTable('email_outbox', {
   id: text('id').primaryKey(),
   toEmail: text('to_email').notNull(),
   subject: text('subject').notNull(),
   body: text('body').notNull(),
   template: text('template').notNull(),
-  sentAt: text('sent_at').notNull().default(now),
+  deliveryStatus: text('delivery_status').notNull().default('logged'), // 'logged' | 'sent' | 'failed'
+  deliveryDetail: text('delivery_detail').notNull().default(''),
+  sentAt: dbNow('sent_at'),
 })
 
 /* ─────────────────────── newsletter ─────────────────────── */
-export const subscribers = sqliteTable('subscribers', {
+export const subscribers = pgTable('subscribers', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
   source: text('source').notNull().default('home'),
-  createdAt: text('created_at').notNull().default(now),
+  createdAt: dbNow('created_at'),
 })
 
 export type Show = typeof shows.$inferSelect

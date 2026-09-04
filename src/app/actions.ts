@@ -31,8 +31,45 @@ async function log(
  * exactly what a vendor would receive at /admin/outbox. Swap for Resend +
  * React Email at the same call site — nothing else changes.
  */
+/**
+ * Every message is recorded in the outbox (the audit trail behind
+ * /admin/outbox), then delivered through Resend when RESEND_API_KEY is set.
+ * Without the key nothing is sent and the row says 'logged', which is the
+ * prototype behavior. A delivery failure never fails the caller's action:
+ * the application is already saved, and the row records what happened.
+ */
 async function mail(toEmail: string, subject: string, body: string, template: string) {
-  await db.insert(emailOutbox).values({ id: randomUUID(), toEmail, subject, body, template })
+  const id = randomUUID()
+  await db.insert(emailOutbox).values({ id, toEmail, subject, body, template })
+
+  const key = process.env.RESEND_API_KEY
+  if (!key) return
+
+  let status = 'sent'
+  let detail = ''
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: process.env.EMAIL_FROM ?? 'Mermade Market <onboarding@resend.dev>',
+        to: [toEmail],
+        subject,
+        text: body,
+      }),
+    })
+    if (!res.ok) {
+      status = 'failed'
+      detail = `HTTP ${res.status}: ${(await res.text()).slice(0, 500)}`
+    }
+  } catch (err) {
+    status = 'failed'
+    detail = err instanceof Error ? err.message : String(err)
+  }
+  await db.update(emailOutbox)
+    .set({ deliveryStatus: status, deliveryDetail: detail })
+    .where(eq(emailOutbox.id, id))
+  if (status === 'failed') console.error(`[mail] delivery failed for ${template}: ${detail}`)
 }
 
 export type FormState = {

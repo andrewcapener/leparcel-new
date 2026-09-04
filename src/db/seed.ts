@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 import { eq } from 'drizzle-orm'
-import { db, sqlite } from './index'
+import { db, sqlClient } from './index'
 import {
   shows, spaceTypes, vendors, applications, bookings,
   auditLog, emailOutbox, subscribers, type Category,
@@ -76,7 +76,22 @@ function pick<T>(arr: readonly T[], i: number): T {
   return arr[i % arr.length]!
 }
 
+/**
+ * Modes:
+ *   SEED_MODE=demo (default) — the show, prices, and 30 fake applicants.
+ *   SEED_MODE=show           — the show and prices only. Use in production:
+ *                              fake merchants must never reach the public
+ *                              roster or the jury queue.
+ * A non-empty database is never wiped unless SEED_FORCE=1 is set.
+ */
 async function main() {
+  const mode = process.env.SEED_MODE === 'show' ? 'show' : 'demo'
+
+  const existing = await db.select({ id: shows.id }).from(shows).limit(1)
+  if (existing.length && process.env.SEED_FORCE !== '1') {
+    throw new Error('Database is not empty. Set SEED_FORCE=1 to wipe and reseed.')
+  }
+
   // Idempotent: wipe and rebuild.
   await db.delete(auditLog)
   await db.delete(emailOutbox)
@@ -134,6 +149,11 @@ async function main() {
     const id = randomUUID()
     spaceIds[s.code] = id
     await db.insert(spaceTypes).values({ id, showId, sortOrder: i, ...s })
+  }
+
+  if (mode === 'show') {
+    console.log(`Seeded (show only): 1 show, ${spaces.length} space types.`)
+    return
   }
 
   /* ── 30 applicants across the pipeline ── */
@@ -238,11 +258,10 @@ async function main() {
   console.log(`Seeded: 1 show, ${spaces.length} space types, ${i} applicants, ${paidCount} bookings.`)
 }
 
-main().then(() => {
-  // Fold the WAL back into mermade.db and close cleanly, so the main db file
-  // alone carries all seeded rows. On Vercel only that file is bundled into
-  // the serverless functions; without this checkpoint the seed data stays in
-  // the -wal sidecar and the deployed db is empty.
-  sqlite.pragma('wal_checkpoint(TRUNCATE)')
-  sqlite.close()
-})
+main()
+  .then(() => sqlClient.end())
+  .catch(async (err) => {
+    console.error(err instanceof Error ? err.message : err)
+    await sqlClient.end()
+    process.exit(1)
+  })

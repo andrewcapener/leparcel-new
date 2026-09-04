@@ -11,6 +11,23 @@ import * as C from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 
+/** Fact tiles derive from the Show record (CLAUDE.md rule 6), never a literal. */
+function romanToInt(numeral: string) {
+  const v: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100 }
+  let total = 0
+  for (let i = 0; i < numeral.length; i++) {
+    const cur = v[numeral[i]!] ?? 0
+    const next = v[numeral[i + 1]!] ?? 0
+    total += cur < next ? -cur : cur
+  }
+  return total
+}
+
+function showDays(show: { startsOn: string; endsOn: string }) {
+  const ms = new Date(show.endsOn).getTime() - new Date(show.startsOn).getTime()
+  return Math.round(ms / 86_400_000) + 1
+}
+
 const FEATURED = [
   { photo: '/photos/mk1.jpg', line: 'Wheel-thrown stoneware' },
   { photo: '/photos/mk2.jpg', line: 'Letterpress & risograph' },
@@ -87,7 +104,7 @@ export default async function Home() {
         </div>
         <div>
           <div className="k">Days</div>
-          <div className="v num">3</div>
+          <div className="v num">{showDays(show)}</div>
         </div>
         <div>
           <div className="k">Makers</div>
@@ -99,17 +116,19 @@ export default async function Home() {
         </div>
         <div>
           <div className="k">Shows held</div>
-          <div className="v num">21</div>
+          <div className="v num">{romanToInt(show.numeral) - 1}</div>
         </div>
       </div>
-      <div className="pressline">
-        <span className="q">“{C.press.quote}”</span>
-        {C.press.outlets.map((o) => (
-          <span className="cn" key={o}>
-            {o}
-          </span>
-        ))}
-      </div>
+      {C.press.verified && (
+        <div className="pressline">
+          <span className="q">“{C.press.quote}”</span>
+          {C.press.outlets.map((o) => (
+            <span className="cn" key={o}>
+              {o}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* ── 4 · FOUNDER LETTER ──────────────────────────────────── */}
       <section className="letter">
@@ -121,12 +140,9 @@ export default async function Home() {
             tone="soft"
             sizes="(max-width:900px) 100vw, 34vw"
           />
-          <figcaption className="cap">
-            {C.founderLetter.photoCaption}
-            {C.founderLetter.photoIsPlaceholder && (
-              <span style={{ color: 'var(--clay)' }}> · placeholder, needs a portrait of Elise</span>
-            )}
-          </figcaption>
+          {!C.founderLetter.photoIsPlaceholder && (
+            <figcaption className="cap">{C.founderLetter.photoCaption}</figcaption>
+          )}
         </figure>
         <div>
           <div className="k" style={{ marginBottom: 20 }}>
@@ -225,21 +241,19 @@ export default async function Home() {
         </div>
         <h2 style={{ marginTop: 20 }}>{C.archiveNote.heading}</h2>
         <p>{C.archiveNote.body}</p>
-        <div className="mini">
-          {C.archiveRows.map((r) => (
-            <div className="row" key={r.numeral}>
-              <span className="sh">{r.numeral}</span>
-              <span>{r.season}</span>
-              <span>{r.venue}</span>
-              <span>{r.merchants} merchants</span>
-            </div>
-          ))}
-        </div>
-        {C.ARCHIVE_IS_PLACEHOLDER && (
-          <p style={{ fontSize: 12, color: '#8A8377', marginTop: 16, fontFamily: 'var(--font-j)' }}>
-            ⚠️ Placeholder rows. See docs/09-CONTENT-AUDIT.md §5. Source from
-            Dropbox/MERMADE before this page goes live.
-          </p>
+        {/* Rows render only once sourced from the real records. docs/09 §5:
+            one soft number inverts the institutional effect. */}
+        {!C.ARCHIVE_IS_PLACEHOLDER && (
+          <div className="mini">
+            {C.archiveRows.map((r) => (
+              <div className="row" key={r.numeral}>
+                <span className="sh">{r.numeral}</span>
+                <span>{r.season}</span>
+                <span>{r.venue}</span>
+                <span>{r.merchants} merchants</span>
+              </div>
+            ))}
+          </div>
         )}
       </section>
 

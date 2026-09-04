@@ -5,9 +5,23 @@ deadline: **public site → apply → jury → accept → booking → confirmed 
 
 ```bash
 npm install
-npm run setup     # creates mermade.db and seeds a show + 30 applicants
+export DATABASE_URL='postgres://...'   # any Postgres; Supabase in production
+npm run setup     # pushes the schema and seeds a show + 30 demo applicants
 npm run dev       # http://localhost:3000
 ```
+
+Environment variables:
+
+| Var | Required | What it does |
+|---|---|---|
+| `DATABASE_URL` | yes | Postgres. In production, Supabase's transaction pooler URL (port 6543). |
+| `ADMIN_PASSWORD` | in production | Gates every `/admin` page behind `/admin/login`. Unset in production, admin returns 503. |
+| `RESEND_API_KEY` | to send email | Without it, mail is only written to the outbox table. |
+| `EMAIL_FROM` | with Resend | e.g. `Mermade Market <hello@mermademarket.com>` (a domain verified in Resend). |
+
+Seeding: `SEED_MODE=show npm run db:seed` seeds only the show and prices (production);
+the default seeds 30 demo applicants too. A non-empty database is never wiped unless
+`SEED_FORCE=1` is set.
 
 `npm test` runs the commission property test (200,000 randomized cases).
 
@@ -35,20 +49,16 @@ npm run dev       # http://localhost:3000
 checklists.** None of them are needed until the November show. Applications
 open in weeks, so this slice is the one that has a date on it.
 
-Also missing on purpose: **auth**. `/admin` is wide open in the prototype so
-you can click through it. Supabase Auth (magic link for vendors, password +
-TOTP for staff) goes in before anything is deployed anywhere public.
+Auth on `/admin` is a shared staff password (`ADMIN_PASSWORD`), interim until
+Supabase Auth (magic link for vendors, password + TOTP for staff) lands.
 
 ---
 
 ## Notes for whoever builds the rest
 
-- **SQLite, not Postgres.** Only so this runs with zero setup. The column
-  names, the money-as-integer-cents rule, and the `show_id` scoping are
-  identical to the Postgres DDL in `03-DATA-MODEL.md`, so moving to Supabase is
-  a dialect change, not a redesign. Swap `src/db/index.ts` and the Drizzle
-  dialect; the queries are unchanged.
-- **Emails are written to a table**, not sent. Same call site swaps to Resend.
+- **Postgres via `DATABASE_URL`.** Supabase in production, any Postgres locally.
+- **Every email is recorded in the outbox table**, and delivered through Resend
+  when `RESEND_API_KEY` is set.
 - **"Mark paid" is a button**, not a webhook. In production, payment state is
   only ever set from a signature-verified Stripe webhook, never a client
   callback.

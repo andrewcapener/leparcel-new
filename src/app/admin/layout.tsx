@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link href="/admin/roster">Roster</Link>
         <Link href="/admin/show">Show settings</Link>
         <Link href="/admin/outbox">Outbox</Link>
-        <span className="who">elise@mermademarket.com · prototype, no auth</span>
+        <span className="who">Staff · shared password until real accounts land</span>
       </div>
       {children}
     </div>
