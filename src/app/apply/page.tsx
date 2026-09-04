@@ -51,9 +51,9 @@ export default async function Apply({
           <div className="row">
             <span className="q">Indoor</span>
             <span className="a">
-              Consignment. We merchandise your work, staff the floor, and sell everything at a
-              central register, so you don’t need to be there. We keep{' '}
-              {show.commissionBps / 100}% of indoor sales and pay out after the show.
+              You drop off your work and we do the rest: the display, the floor, the
+              register. We keep {show.commissionBps / 100}% of what sells and pay you
+              after the show. You don’t need to be there.
             </span>
           </div>
           <div className="row" id="outdoor">
@@ -79,9 +79,9 @@ export default async function Apply({
           <div className="row">
             <span className="q">What we look for</span>
             <span className="a">
-              Work made by the person applying. We take one to three makers per category, so a
-              strong application in a crowded category can still be declined. Every application is
-              read and answered either way.
+              Work made by the person applying. We take one to three makers per category,
+              which means some seasons we say no to work we love. We read everything and
+              answer either way.
             </span>
           </div>
         </div>

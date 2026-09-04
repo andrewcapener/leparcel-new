@@ -31,3 +31,19 @@ export function applicationWindow(openAt: string, closeAt: string, nowIso?: stri
   if (n > new Date(closeAt)) return 'closed'
   return 'open'
 }
+
+/** LA wall clock "YYYY-MM-DDTHH:mm" → ISO with the correct PT offset for that
+ *  date (PDT -07:00 or PST -08:00). The admin edits wall time; storage keeps
+ *  the offset explicit so nothing shifts when DST does. (CLAUDE.md rule 8.) */
+export function laWallToIso(wall: string): string {
+  for (const off of ['-08:00', '-07:00'] as const) {
+    const candidate = new Date(`${wall}:00${off}`)
+    if (isoToLaWall(candidate.toISOString()) === wall) return `${wall}:00${off}`
+  }
+  return `${wall}:00-08:00` // unreachable outside the one-hour DST gap
+}
+
+/** ISO → LA wall clock "YYYY-MM-DDTHH:mm", for datetime-local inputs. */
+export function isoToLaWall(iso: string): string {
+  return new Date(iso).toLocaleString('sv-SE', { timeZone: TZ }).slice(0, 16).replace(' ', 'T')
+}

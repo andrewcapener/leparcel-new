@@ -9,6 +9,14 @@
  * Show record. See CLAUDE.md rule 6.
  */
 
+/**
+ * ⚠️ VERIFY with Drew/Elise before applications open: Andrew thinks the market
+ * may have started in 2013, the business audit says 2015. The founding year
+ * appears in the utility bar, the footer, the admission answer, the founder
+ * letter's story, and implicitly in the show count. Change it HERE only.
+ */
+export const FOUNDED_YEAR = 2015
+
 export const founderLetter = {
   eyebrow: 'A note from the founder',
   heading: 'I started this because I wanted somewhere to buy things made by people I could meet.',
@@ -41,7 +49,7 @@ export const press = {
 
 export const visiting = [
   { q: 'Where', a: 'Dana Point Community House, 24642 San Juan Avenue. Indoors, one floor, step-free.' },
-  { q: 'Admission', a: 'Free, every show since 2015. No ticket, no line.' },
+  { q: 'Admission', a: `Free, every show since ${FOUNDED_YEAR}. No ticket, no line.` },
   { q: 'Parking', a: 'Free lot on site, plus street parking on San Juan and Del Prado. Fills by 11am Saturday. Friday evening is the calm one.' },
   { q: 'Strollers & kids', a: 'Yes to both. Aisles are wide, and there’s a kids’ table near the entrance.' },
   { q: 'How long', a: 'Most people spend about ninety minutes. Bring a tote: one register at the front means one bag at the end.' },

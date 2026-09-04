@@ -9,7 +9,7 @@ import {
   shows, vendors, applications, bookings, spaceTypes, auditLog,
   emailOutbox, subscribers, CATEGORIES, type ApplicationStatus,
 } from '@/db/schema'
-import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
+import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
 import { usd } from '@/lib/money'
 
 /* ═══════════════════════ helpers ═══════════════════════ */
@@ -111,7 +111,6 @@ const ApplicationSchema = z.object({
   state: z.string().min(2, 'Required'),
 
   track: z.enum(['indoor', 'outdoor', 'both']),
-  spaceTypeId: z.string().min(1, 'Choose a space'),
 
   category: z.enum(CATEGORIES, { message: 'Choose a category' }),
   description: z.string().min(40, 'Tell us a little more (40 characters minimum)').max(600, '600 characters max'),
@@ -165,13 +164,26 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   }
   const d = parsed.data
 
-  const space = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, d.spaceTypeId) })
-  if (!space) {
+  // Every checked space, in display order. The first is the primary request:
+  // it is what acceptance books; the rest are visible to the jury and staff.
+  const requestedIds = fd.getAll('spaces').map(String).filter(Boolean)
+  if (requestedIds.length === 0) {
     return {
       ok: false, attempt, values: strings(raw),
-      errors: { spaceTypeId: 'That space is no longer offered' },
+      errors: { spaces: 'Check at least one space' },
     }
   }
+  const allSpaces = await db.query.spaceTypes.findMany({ where: eq(spaceTypes.showId, show.id) })
+  const requested = requestedIds
+    .map((id) => allSpaces.find((s) => s.id === id))
+    .filter((s): s is NonNullable<typeof s> => Boolean(s))
+  if (requested.length !== requestedIds.length) {
+    return {
+      ok: false, attempt, values: strings(raw),
+      errors: { spaces: 'One of those spaces is no longer offered' },
+    }
+  }
+  const space = requested[0]!
 
   // Vendors persist across shows — find or create, never duplicate on email.
   const email = d.email.trim().toLowerCase()
@@ -199,7 +211,8 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   const appId = randomUUID()
   await db.insert(applications).values({
     id: appId, showId: show.id, vendorId: vendor!.id,
-    track: d.track, spaceTypeId: d.spaceTypeId,
+    track: d.track, spaceTypeId: space.id,
+    requestedSpaceIds: JSON.stringify(requestedIds),
     category: d.category, description: d.description,
     priceLowCents: d.priceLow * 100, priceHighCents: d.priceHigh * 100,
     madeByYou: d.madeByYou,
@@ -221,7 +234,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     `We have your ${show.name} application`,
     `Your ${show.name} application is in.\n\n`
       + `Shop: ${d.shopName}\nCategory: ${d.category}\n`
-      + `Space: ${space.label} · ${usd(space.priceCents)}\n\n`
+      + `Space${requested.length > 1 ? 's' : ''}: ${requested.map((s) => `${s.label} ${usd(s.priceCents)}`).join(' · ')}\n\n`
       + `We read every application and answer either way. The roster is announced `
       + `${fmtDate(show.rosterAnnouncedOn)}.\n\n— Mermade Market`,
     'application_received',
@@ -331,6 +344,7 @@ export async function decide(fd: FormData): Promise<void> {
 
   revalidatePath('/admin/jury')
   revalidatePath('/admin/roster')
+  revalidatePath(`/admin/applications/${appId}`)
   revalidatePath('/')
 }
 
@@ -369,4 +383,81 @@ export async function saveScores(fd: FormData): Promise<void> {
     juryNotes: String(fd.get('juryNotes') ?? ''),
   }).where(eq(applications.id, appId))
   revalidatePath('/admin/jury')
+  revalidatePath(`/admin/applications/${appId}`)
+}
+
+/* ═══════════════════════ show settings ═══════════════════════ */
+
+const ShowSettingsSchema = z.object({
+  venueName: z.string().min(2, 'Required'),
+  venueAddress: z.string().min(5, 'Required'),
+  hoursNote: z.string().min(1, 'Required'),
+  startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
+  endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
+  applicationsOpenAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
+  applicationsCloseAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
+  rosterAnnouncedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
+  commissionPct: z.coerce.number().min(0, 'Not negative').max(50, 'That is over half'),
+  paymentWindowHours: z.coerce.number().int('Whole hours').min(1).max(240, 'Ten days at most'),
+  indoorCapacity: z.coerce.number().int().min(0),
+  outdoorCapacity: z.coerce.number().int().min(0),
+})
+  .refine((d) => d.endsOn >= d.startsOn, { message: 'The show cannot end before it starts', path: ['endsOn'] })
+  .refine((d) => d.applicationsCloseAt > d.applicationsOpenAt, {
+    message: 'Applications cannot close before they open', path: ['applicationsCloseAt'],
+  })
+
+/**
+ * Edits the active Show record: the single source for every date, price, and
+ * rate the site renders (CLAUDE.md rule 6). Inputs are Pacific wall times;
+ * storage carries the explicit PT offset (rule 8). Changes are audit-logged
+ * (rule 3); commission edits never touch existing bookings, whose
+ * commission_bps is snapshotted and immutable.
+ */
+export async function updateShow(prev: FormState, fd: FormData): Promise<FormState> {
+  const attempt = (prev.attempt ?? 0) + 1
+  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  if (!show) return { ok: false, attempt, message: 'No active show.' }
+
+  const raw = Object.fromEntries(fd.entries())
+  const values = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, String(v)]))
+  const parsed = ShowSettingsSchema.safeParse(raw)
+  if (!parsed.success) {
+    const errors: Record<string, string> = {}
+    for (const issue of parsed.error.issues) errors[String(issue.path[0])] ??= issue.message
+    return { ok: false, attempt, errors, values }
+  }
+  const d = parsed.data
+
+  const next = {
+    venueName: d.venueName,
+    venueAddress: d.venueAddress,
+    hoursNote: d.hoursNote,
+    startsOn: laWallToIso(d.startsOn),
+    endsOn: laWallToIso(d.endsOn),
+    applicationsOpenAt: laWallToIso(d.applicationsOpenAt),
+    applicationsCloseAt: laWallToIso(d.applicationsCloseAt),
+    rosterAnnouncedOn: laWallToIso(d.rosterAnnouncedOn),
+    commissionBps: Math.round(d.commissionPct * 100),
+    paymentWindowHours: d.paymentWindowHours,
+    indoorCapacity: d.indoorCapacity,
+    outdoorCapacity: d.outdoorCapacity,
+  }
+
+  const before: Record<string, unknown> = {}
+  const after: Record<string, unknown> = {}
+  for (const k of Object.keys(next) as Array<keyof typeof next>) {
+    if (show[k] !== next[k]) { before[k] = show[k]; after[k] = next[k] }
+  }
+  if (Object.keys(after).length === 0) {
+    return { ok: true, attempt, message: 'Nothing changed.' }
+  }
+
+  await db.update(shows).set(next).where(eq(shows.id, show.id))
+  await log('show', show.id, 'settings_change', before, after, '', 'staff')
+
+  revalidatePath('/')
+  revalidatePath('/apply')
+  revalidatePath('/admin/show')
+  return { ok: true, attempt, message: 'Saved.' }
 }

@@ -123,7 +123,7 @@ async function main() {
     applicationsCloseAt: '2026-09-18T23:59:00-07:00',
     rosterAnnouncedOn: '2026-10-05T12:00:00-07:00',
     commissionBps: 2000,
-    paymentWindowHours: 36,   // Drew's real published policy; audit §2.3 recommends 48
+    paymentWindowHours: 48,   // moved from 36 to 48 per Drew, Sept 2026 (audit §2.3)
     indoorCapacity: 82,
     outdoorCapacity: 36,
     isActive: true,

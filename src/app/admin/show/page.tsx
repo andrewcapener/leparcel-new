@@ -2,14 +2,14 @@ import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { shows, spaceTypes } from '@/db/schema'
 import { usd } from '@/lib/money'
-import { fmtDate, fmtRange } from '@/lib/dates'
+import { SettingsForm } from './SettingsForm'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Read-only in the prototype. The point of this page is to show that NOTHING
- * is hardcoded: every date, price, capacity, and rate the public site and the
- * jury render comes from this one record. (CLAUDE.md rule 6.)
+ * The one record everything reads (CLAUDE.md rule 6): every date, price,
+ * capacity, and rate the public site and the jury render comes from here.
+ * Edits are audit-logged; commission changes never touch existing bookings.
  */
 export default async function ShowSettings() {
   const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
@@ -19,51 +19,25 @@ export default async function ShowSettings() {
     orderBy: [asc(spaceTypes.sortOrder)],
   })
 
-  const rows: Array<[string, string, string?]> = [
-    ['Show', `${show.numeral} · ${show.name}`],
-    ['Venue', `${show.venueName} · ${show.venueAddress}`],
-    ['Dates', fmtRange(show.startsOn, show.endsOn)],
-    ['Hours', show.hoursNote],
-    ['Applications open', fmtDate(show.applicationsOpenAt),
-      'Confirmed by Drew, Aug 2026. The close date below is still unconfirmed; it mirrors Spring’s 11-day window.'],
-    ['Applications close', fmtDate(show.applicationsCloseAt)],
-    ['Roster announced', fmtDate(show.rosterAnnouncedOn)],
-    ['Commission', `${show.commissionBps / 100}% (${show.commissionBps} bps)`,
-      'Snapshotted onto each booking at acceptance and immutable from then on.'],
-    ['Payment window', `${show.paymentWindowHours} hours`,
-      'Audit §2.3 recommends 48 over the current 36.'],
-    ['Indoor capacity', String(show.indoorCapacity)],
-    ['Outdoor capacity', String(show.outdoorCapacity)],
-  ]
-
   return (
     <div style={{ padding: '26px 26px 80px', maxWidth: 900 }}>
-      <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34, marginBottom: 8 }}>Show settings</h1>
+      <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34, marginBottom: 8 }}>
+        Show settings · {show.numeral} · {show.name}
+      </h1>
       <p style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 26, maxWidth: 72 + 'ch' }}>
-        Read-only in the prototype. Everything the public site renders (dates, prices, the
-        commission rate, the application window) is read from here. There are no hardcoded dates
-        or prices anywhere in the codebase.
+        Everything the public site renders (dates, prices, the commission rate, the application
+        window) is read from this record. Changes apply immediately and are audit-logged.
       </p>
 
-      <table className="tbl">
-        <tbody>
-          {rows.map(([k, v, note]) => (
-            <tr key={k}>
-              <th style={{ width: 200, borderBottom: '1px solid var(--line)' }}>{k}</th>
-              <td>
-                {v}
-                {note && (
-                  <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 5 }}>{note}</div>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <SettingsForm show={show} />
 
-      <h2 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, fontSize: 25, margin: '38px 0 14px' }}>
+      <h2 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, fontSize: 25, margin: '44px 0 14px' }}>
         Priced inventory
       </h2>
+      <p style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 14, maxWidth: 72 + 'ch' }}>
+        Read-only for now. Space prices are quoted to applicants and snapshotted onto bookings,
+        so editing them mid-window needs more care than a text field.
+      </p>
       <table className="tbl">
         <thead>
           <tr><th>Code</th><th>Track</th><th>Label</th><th className="r">Price</th><th className="r">Capacity</th></tr>

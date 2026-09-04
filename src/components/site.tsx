@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Wordmark } from './Wordmark'
 import type { Show } from '@/db/schema'
+import { FOUNDED_YEAR } from '@/lib/content'
 import { applicationWindow, fmtDate } from '@/lib/dates'
 
 /**
@@ -20,15 +21,14 @@ export function Masthead({ show }: { show: Show }) {
   return (
     <>
       <div className="util">
-        <span>Est. 2015 · Dana Point, California</span>
-        <span className="mid">{show.numeral === 'XXII' ? 'Twenty-second show' : `Show ${show.numeral}`}</span>
+        <span>Est. {FOUNDED_YEAR} · Dana Point, California</span>
+        <span className="mid">Show {show.numeral}</span>
         <span>{applyNote}</span>
       </div>
       <div className="mast">
         <Link href="/" aria-label="Mermade Market, home">
           <Wordmark className="wm" />
         </Link>
-        <div className="tag">A juried market of independent makers</div>
         <div className="r">
           <Link href="/#visiting">The Market</Link>
           <Link href="/#merchants">Merchants</Link>
@@ -52,7 +52,7 @@ export function Footer({ show }: { show: Show }) {
         <div>
           <Wordmark className="wm" />
           <div className="bl">
-            A juried market of independent makers. Dana Point, California, since 2015.
+            A juried market of independent makers. Dana Point, California, since {FOUNDED_YEAR}.
           </div>
         </div>
         <div>

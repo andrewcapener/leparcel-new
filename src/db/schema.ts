@@ -102,6 +102,11 @@ export const applications = pgTable('applications', {
 
   track: text('track', { enum: ['indoor', 'outdoor', 'both'] }).notNull(),
   spaceTypeId: text('space_type_id').references(() => spaceTypes.id),
+  // Every space the maker checked, as a JSON array of space_type ids. The
+  // primary (first) one is what acceptance books; most makers check one,
+  // outdoor makers often check several days, and roughly one in a hundred
+  // wants both tracks.
+  requestedSpaceIds: text('requested_space_ids').notNull().default('[]'),
 
   category: text('category').notNull(),
   secondaryCategories: text('secondary_categories').notNull().default('[]'), // JSON

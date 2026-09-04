@@ -148,7 +148,11 @@ export default async function Jury({
               return (
                 <tr key={app.id}>
                   <td>
-                    <div style={{ fontFamily: 'var(--font-g)', fontSize: 17 }}>{vendor.shopName}</div>
+                    <Link href={`/admin/applications/${app.id}`}
+                      style={{ fontFamily: 'var(--font-g)', fontSize: 17, display: 'block' }}
+                      className="jql">
+                      {vendor.shopName} <span style={{ color: 'var(--deep)', fontSize: 13 }}>→</span>
+                    </Link>
                     <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 3 }}>
                       {vendor.contactName} · {vendor.city}, {vendor.state}
                     </div>
@@ -173,7 +177,15 @@ export default async function Jury({
                   <td>{app.category}</td>
                   <td>
                     <div style={{ textTransform: 'capitalize' }}>{app.track}</div>
-                    <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{space?.label ?? '—'}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+                      {space?.label ?? '—'}
+                      {(() => {
+                        try {
+                          const n = JSON.parse(app.requestedSpaceIds).length
+                          return n > 1 ? ` +${n - 1} more` : ''
+                        } catch { return '' }
+                      })()}
+                    </div>
                   </td>
                   <td className="r">
                     {usd(app.priceLowCents)}-{usd(app.priceHighCents)}

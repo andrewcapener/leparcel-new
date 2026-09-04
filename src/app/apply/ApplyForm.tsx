@@ -48,9 +48,6 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
           })}
           , and we answer either way.
         </p>
-        <div className="fine" style={{ marginTop: 26 }}>
-          In the prototype your confirmation email is readable at /admin/outbox
-        </div>
       </section>
     )
   }
@@ -115,7 +112,7 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
         </Field>
         <Field
           name="description" label="Describe your product" error={e.description}
-          hint="600 characters max. What it is, how it's made, and by whom."
+          hint="600 characters max. What it is, how it's made, who makes it."
         >
           <textarea className="inp" id="description" name="description" maxLength={600} required {...keep("description")}/>
         </Field>
@@ -165,16 +162,24 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
             <option value="both">Both</option>
           </select>
         </Field>
-        <Field name="spaceTypeId" label="Space" error={e.spaceTypeId}>
-          <select className="inp" id="spaceTypeId" name="spaceTypeId" required defaultValue={v.spaceTypeId ?? ''}>
-            <option value="" disabled>Choose a space</option>
-            {visible.map((s) => (
-              <option key={s.id} value={s.id}>
+        <div className="field">
+          <span className="lb">Spaces</span>
+          {visible.map((s) => (
+            <label key={s.id} className="field" style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10 }}>
+              <input type="checkbox" name="spaces" value={s.id} style={{ marginTop: 3 }} />
+              <span style={{ fontSize: 14.5, lineHeight: 1.5 }}>
                 {s.label} · {usd(s.priceCents)}
-              </option>
-            ))}
-          </select>
-        </Field>
+                {s.description && (
+                  <span style={{ display: 'block', fontSize: 12.5, color: 'var(--ink-3)' }}>{s.description}</span>
+                )}
+              </span>
+            </label>
+          ))}
+          <span className="hint">
+            Check everything you&rsquo;d say yes to. Outdoor makers can check more than one day.
+          </span>
+          {e.spaces && <span className="err">{e.spaces}</span>}
+        </div>
 
         {/* ── Step 4 · compliance ──
             OPTIONAL here on purpose. The CDTFA obligation attaches to renting
@@ -233,7 +238,7 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
           {pending ? 'Sending…' : 'Submit application'}
         </button>
         <p className="fine" style={{ marginTop: 18, textAlign: 'left' }}>
-          No fee to apply. Every application is read and answered either way.
+          No fee to apply.
         </p>
       </form>
     </section>

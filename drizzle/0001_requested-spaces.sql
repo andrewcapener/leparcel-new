@@ -1,0 +1,1 @@
+ALTER TABLE "applications" ADD COLUMN "requested_space_ids" text DEFAULT '[]' NOT NULL;
