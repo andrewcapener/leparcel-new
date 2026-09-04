@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { ADMIN_COOKIE, sessionToken } from '@/lib/adminAuth'
+import { ADMIN_COOKIE, adminPassword, sessionToken } from '@/lib/adminAuth'
 
 export const dynamic = 'force-dynamic'
 
 async function signIn(fd: FormData) {
   'use server'
-  const password = process.env.ADMIN_PASSWORD
+  const password = adminPassword()
   const next = String(fd.get('next') || '/admin/jury')
   const target = next.startsWith('/admin') ? next : '/admin/jury'
   if (!password) redirect(process.env.NODE_ENV !== 'production' ? target : '/admin/login?err=1')

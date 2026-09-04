@@ -14,7 +14,7 @@ export async function GET() {
     envNames: Object.keys(process.env)
       .filter((k) => !/^(VERCEL|NEXT_|NODE|AWS_|TURBO|PATH$|PWD$|HOME$|HOSTNAME$|PORT$|LANG|SHLVL|_)/.test(k))
       .sort(),
-    hasAdminPassword: Boolean(process.env.ADMIN_PASSWORD),
+    hasAdminPassword: Boolean(process.env.ADMIN_PASSWORD ?? process.env.ADMIN_PASS),
     hasResendKey: Boolean(process.env.RESEND_API_KEY),
   }
   try {

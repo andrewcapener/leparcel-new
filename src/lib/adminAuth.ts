@@ -9,6 +9,9 @@
 
 export const ADMIN_COOKIE = 'mm_admin'
 
+/** Accepts either name; ADMIN_PASSWORD is canonical, ADMIN_PASS works too. */
+export const adminPassword = () => process.env.ADMIN_PASSWORD ?? process.env.ADMIN_PASS
+
 async function hmacHex(secret: string, message: string) {
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(secret),
@@ -23,7 +26,7 @@ export async function sessionToken(password: string) {
 }
 
 export async function isValidSession(cookieValue: string | undefined) {
-  const password = process.env.ADMIN_PASSWORD
+  const password = adminPassword()
   if (!password) return process.env.NODE_ENV !== 'production' // never open in prod
   if (!cookieValue) return false
   const expected = await sessionToken(password)

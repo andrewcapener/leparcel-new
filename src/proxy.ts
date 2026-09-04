@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { ADMIN_COOKIE, isValidSession } from '@/lib/adminAuth'
+import { ADMIN_COOKIE, adminPassword, isValidSession } from '@/lib/adminAuth'
 
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
   if (pathname === '/admin/login') return NextResponse.next()
 
-  if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) {
+  if (process.env.NODE_ENV === 'production' && !adminPassword()) {
     return new NextResponse('Admin is locked: ADMIN_PASSWORD is not configured.', { status: 503 })
   }
 
