@@ -308,7 +308,7 @@ export default async function Home() {
         <div className="fine">Every application is read and answered either way</div>
       </section>
 
-      <Footer />
+      <Footer show={show} />
     </>
   )
 }

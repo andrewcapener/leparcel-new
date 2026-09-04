@@ -14,7 +14,7 @@ export const founderLetter = {
   heading: 'I started this because I wanted somewhere to buy things made by people I could meet.',
   body: [
     'In 2015 that meant sixteen makers in a room by the harbor and a folding table for a register. We had no idea whether anyone would come. Four hundred people did.',
-    'Eleven years later the rule hasn’t changed: everything on the floor is made by the person who applied. No resellers, no drop-shipping, no wholesale dressed up as small batch. A hundred makers is what fits in the room, and we’d rather keep the room worth your Saturday.',
+    'Eleven years later the rule hasn’t changed: everything on the floor is made by the person who applied. No resellers, no drop-shipping, no wholesale dressed up as small batch. A hundred makers is what fits in the room.',
     'Come early, bring a bag, and talk to people. That’s the whole thing.',
   ],
   signature: 'Elise',
@@ -41,11 +41,11 @@ export const press = {
 
 export const visiting = [
   { q: 'Where', a: 'Dana Point Community House, 24642 San Juan Avenue. Indoors, one floor, step-free.' },
-  { q: 'Admission', a: 'Free, as it has been every year since 2015. No ticket, no line.' },
+  { q: 'Admission', a: 'Free, every show since 2015. No ticket, no line.' },
   { q: 'Parking', a: 'Free lot on site, plus street parking on San Juan and Del Prado. Fills by 11am Saturday. Friday evening is the calm one.' },
   { q: 'Strollers & kids', a: 'Yes to both. Aisles are wide, and there’s a kids’ table near the entrance.' },
   { q: 'How long', a: 'Most people spend about ninety minutes. Bring a tote: one register at the front means one bag at the end.' },
-  { q: 'Food', a: 'Coffee and pastry inside; two trucks in the lot Saturday and Sunday.' },
+  { q: 'Food', a: 'Coffee and pastry inside. Two trucks in the lot Saturday and Sunday.' },
 ]
 
 export const categoryRanges = [
@@ -62,8 +62,8 @@ export const categoryRanges = [
 
 export const archiveNote = {
   eyebrow: '03 · The archive',
-  heading: 'Eleven years, three venues, one rule.',
-  body: 'We’ve outgrown two buildings. The Ocean Institute, then River Street, now the Community House. The rule that survived all three moves is the only one that matters: the person who made it is the person who applied.',
+  heading: 'Eleven years, three venues.',
+  body: 'We’ve outgrown two buildings. The Ocean Institute first, then River Street, now the Community House on San Juan Avenue.',
 }
 
 /**
@@ -80,7 +80,7 @@ export const archiveRows = [
 export const ARCHIVE_IS_PLACEHOLDER = true
 
 export const newsletter = {
-  heading: 'The roster goes out to the list first.',
-  body: 'Subscribers hear the lineup, the floor plan, and Friday-evening early access first. That’s it. We’re not going to email you in July.',
+  heading: 'Stay hooked.',
+  body: 'The roster goes out to the list first: the lineup, the floor plan, and Friday-evening early access. That’s it. We’re not going to email you in July.',
   fine: 'About six emails a year. Unsubscribe any time.',
 }

@@ -115,7 +115,7 @@ export default async function Apply({
         </section>
       )}
 
-      <Footer />
+      <Footer show={show} />
     </>
   )
 }

@@ -42,7 +42,10 @@ export function Masthead({ show }: { show: Show }) {
   )
 }
 
-export function Footer() {
+export function Footer({ show }: { show: Show }) {
+  const month = new Date(show.startsOn).toLocaleDateString('en-US', {
+    month: 'long', timeZone: 'America/Los_Angeles',
+  })
   return (
     <footer className="foot">
       <div className="fgrid">
@@ -78,7 +81,7 @@ export function Footer() {
       </div>
       <div className="colophon">
         <span>© {new Date().getFullYear()} Mermade Market</span>
-        <span>Set in EB Garamond &amp; Libre Franklin</span>
+        <span>You scrolled the whole way. Come say hi in {month}.</span>
         <span>Dana Point, California</span>
       </div>
     </footer>
