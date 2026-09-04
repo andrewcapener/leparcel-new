@@ -199,7 +199,7 @@ export default async function Home() {
                 {m.vendorCode} · {m.category}
               </div>
               <div className="pr">
-                {FEATURED[i]!.line} · {usd(m.priceLowCents)} – {usd(m.priceHighCents)}
+                {FEATURED[i]!.line} · {usd(m.priceLowCents)}-{usd(m.priceHighCents)}
               </div>
             </div>
           ))}

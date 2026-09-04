@@ -176,7 +176,7 @@ export default async function Jury({
                     <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{space?.label ?? '—'}</div>
                   </td>
                   <td className="r">
-                    {usd(app.priceLowCents)} – {usd(app.priceHighCents)}
+                    {usd(app.priceLowCents)}-{usd(app.priceHighCents)}
                   </td>
                   <td className="r">{space ? usd(space.priceCents) : '—'}</td>
                   <td>

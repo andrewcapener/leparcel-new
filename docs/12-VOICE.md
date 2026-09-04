@@ -17,9 +17,11 @@ So: "Come early, bring a bag, and talk to people" carries the whole feeling.
 ## Rules
 
 1. **Short sentences.** Cut until it hurts, then put one concrete detail back.
-2. **No em dashes.** Use a period, a comma, a colon, or a parenthesis. The one
-   exception is the signature line of an email ("— Mermade Market") and the
-   typographic placeholder for an empty table cell.
+2. **No em dashes, no en dashes. Ever.** Use a period, a comma, a colon, or a
+   parenthesis; ranges take a plain hyphen ("$18-$240", "November 13-15",
+   "5-9pm"). The only exceptions are the signature line of an email
+   ("— Mermade Market") and the typographic placeholder for an empty table
+   cell.
 3. **Specifics carry the warmth.** "Friday evening is the calm one." "One
    register at the front means one bag at the end." Adjectives don't; details do.
 4. **Numbers are plain and sourced.** Never publish a count or a superlative

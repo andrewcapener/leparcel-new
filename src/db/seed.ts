@@ -115,7 +115,7 @@ async function main() {
     venueAddress: '24642 San Juan Avenue, Dana Point, CA 92629',
     startsOn: '2026-11-13T12:00:00-08:00',
     endsOn: '2026-11-15T12:00:00-08:00',
-    hoursNote: 'Friday 13 November, 5 – 9pm · Saturday 14th, 10am – 5pm · Sunday 15th, 10am – 4pm',
+    hoursNote: 'Friday 13 November, 5-9pm · Saturday 14th, 10am-5pm · Sunday 15th, 10am-4pm',
     // CONFIRMED by Drew, 25 Aug 2026: applications open Monday 7 September.
     // Close date mirrors the Spring window's shape (Mon 2 – Fri 13 March, 11 days)
     // — confirm before launch. Editable in /admin/show, never in code.
@@ -140,9 +140,9 @@ async function main() {
     { code: 'IN-3x6',   track: 'indoor' as const,  label: "3' × 6' space",       priceCents: 28_000, capacity: 24, description: 'The standard indoor space.' },
     { code: 'IN-3x8',   track: 'indoor' as const,  label: "3' × 8' space",       priceCents: 34_000, capacity: 12, description: 'Room for a rack alongside a table.' },
     { code: 'IN-3x12',  track: 'indoor' as const,  label: "3' × 12' space",      priceCents: 45_000, capacity:  6, description: 'The largest indoor footprint.' },
-    { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 12, description: '9am – 6pm. You run your own payments and keep 100%.' },
-    { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 12, description: '9am – 5pm. You run your own payments and keep 100%.' },
-    { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 12, description: '9am – 5pm. You run your own payments and keep 100%.' },
+    { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 12, description: '9am-6pm. You run your own payments and keep 100%.' },
+    { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 12, description: '9am-5pm. You run your own payments and keep 100%.' },
+    { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 12, description: '9am-5pm. You run your own payments and keep 100%.' },
   ]
   const spaceIds: Record<string, string> = {}
   for (const [i, s] of spaces.entries()) {

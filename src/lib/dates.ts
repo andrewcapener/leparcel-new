@@ -13,14 +13,14 @@ export function fmtDateTime(iso: string) {
   })
 }
 
-/** "November 13 – 15, 2026" */
+/** "November 13-15, 2026" */
 export function fmtRange(startIso: string, endIso: string) {
   const s = new Date(startIso), e = new Date(endIso)
   const month = s.toLocaleDateString('en-US', { timeZone: TZ, month: 'long' })
   const d1 = s.toLocaleDateString('en-US', { timeZone: TZ, day: 'numeric' })
   const d2 = e.toLocaleDateString('en-US', { timeZone: TZ, day: 'numeric' })
   const yr = e.toLocaleDateString('en-US', { timeZone: TZ, year: 'numeric' })
-  return `${month} ${d1} – ${d2}, ${yr}`
+  return `${month} ${d1}-${d2}, ${yr}`
 }
 
 export type WindowState = 'before' | 'open' | 'closed'

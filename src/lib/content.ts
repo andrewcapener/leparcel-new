@@ -49,15 +49,15 @@ export const visiting = [
 ]
 
 export const categoryRanges = [
-  { label: 'Ceramics & tableware', range: '$18 – $240' },
-  { label: 'Jewelry', range: '$32 – $480' },
-  { label: 'Textiles & apparel', range: '$24 – $320' },
-  { label: 'Paper & print', range: '$8 – $95' },
-  { label: 'Home & candles', range: '$16 – $180' },
-  { label: 'Skin & apothecary', range: '$14 – $88' },
-  { label: 'Vintage & found', range: '$20 – $600' },
-  { label: 'Kids', range: '$12 – $140' },
-  { label: 'Food & pantry', range: '$6 – $45' },
+  { label: 'Ceramics & tableware', range: '$18-$240' },
+  { label: 'Jewelry', range: '$32-$480' },
+  { label: 'Textiles & apparel', range: '$24-$320' },
+  { label: 'Paper & print', range: '$8-$95' },
+  { label: 'Home & candles', range: '$16-$180' },
+  { label: 'Skin & apothecary', range: '$14-$88' },
+  { label: 'Vintage & found', range: '$20-$600' },
+  { label: 'Kids', range: '$12-$140' },
+  { label: 'Food & pantry', range: '$6-$45' },
 ]
 
 export const archiveNote = {
