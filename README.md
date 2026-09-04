@@ -92,3 +92,9 @@ src/
     dates.ts            America/Los_Angeles, everywhere
     content.ts          editable copy
 ```
+
+## Deploying
+
+Pushes to the deploy branch build on Vercel automatically. Env vars
+(`DATABASE_URL` pooler URI, `ADMIN_PASSWORD`, `RESEND_API_KEY`) are baked
+in at build time; changing one requires a redeploy.
