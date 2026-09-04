@@ -9,6 +9,13 @@ export async function GET() {
     commit: process.env.VERCEL_GIT_COMMIT_SHA ?? 'local',
     branch: process.env.VERCEL_GIT_COMMIT_REF ?? 'local',
     lastRequestError: (globalThis as Record<string, unknown>).__lastRequestError ?? null,
+    // Names only, never values: which non-platform env vars this deployment
+    // actually carries, so a typo'd or wrongly-scoped variable is visible.
+    envNames: Object.keys(process.env)
+      .filter((k) => !/^(VERCEL|NEXT_|NODE|AWS_|TURBO|PATH$|PWD$|HOME$|HOSTNAME$|PORT$|LANG|SHLVL|_)/.test(k))
+      .sort(),
+    hasAdminPassword: Boolean(process.env.ADMIN_PASSWORD),
+    hasResendKey: Boolean(process.env.RESEND_API_KEY),
   }
   try {
     const { db, schema } = await import('@/db')
