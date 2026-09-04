@@ -112,9 +112,8 @@
   /* the calendar link is a button in this system, wherever the markup calls it .cal */
   .hero .cal{margin-left:auto;display:inline-block;padding:11px 21px 10px;border-radius:999px;
     font-family:var(--font-c);font-weight:700;text-transform:uppercase;letter-spacing:.06em;
-    font-size:16px;background:var(--accent);color:var(--on-accent);
-    border:2px solid var(--accent)}
-  .hero .cal:hover{background:var(--ink);border-color:var(--ink);color:var(--bone)}
+    font-size:16px;background:transparent;color:#FBF8F0;border:2px solid rgba(251,248,240,.85)}
+  .hero .cal:hover{background:#FBF8F0;color:var(--ink);border-color:#FBF8F0}
   .hero .stamp{position:absolute;right:var(--pad);top:24px;z-index:6;width:116px;
     filter:drop-shadow(0 3px 16px rgba(0,0,0,.45))}
 
@@ -164,7 +163,7 @@
     letter-spacing:.1em;font-size:13px}
 
   /* ─────────── generic section ─────────── */
-  .sec{padding:clamp(46px,7vw,86px) var(--pad)}
+  .sec{padding:clamp(56px,8.5vw,112px) var(--pad)}
   .shead{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:32px}
   .shead h2{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(34px,5.4vw,62px);line-height:.92}
@@ -186,8 +185,6 @@
   .cats{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:38px}
   .cats .row{border:2px solid var(--ink);border-radius:999px;padding:8px 16px 7px;
     display:flex;align-items:baseline;gap:9px;justify-content:flex-start}
-  .cats .row:nth-child(3n+1){background:color-mix(in srgb,var(--accent) 30%,transparent)}
-  .cats .row:nth-child(3n+2){background:color-mix(in srgb,var(--deep) 12%,transparent)}
   .cats .l{font-family:var(--font-c);font-weight:700;text-transform:uppercase;font-size:17px}
   .cats .rt{font-size:13.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
 
@@ -212,6 +209,11 @@
   .prows .q{display:block;font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:19px;color:var(--deep);margin-bottom:7px;letter-spacing:0}
   .prows .a{font-family:var(--font-g);font-size:18px;line-height:1.55;color:var(--ink-2);max-width:none}
+  /* airy variant, home only: rules not boxes, and generous cells */
+  .prows.air{border:0;border-top:2px solid var(--ink)}
+  .prows.air .row{padding:30px 26px 32px 0;border-right:0;background:transparent}
+  .prows.air .q{font-size:21px}
+  .prows.air .a{max-width:36ch}
 
   /* film */
   .film{position:relative}
@@ -225,7 +227,7 @@
     letter-spacing:.1em;font-size:16px;color:#FBF8F0}
 
   /* dark — eleven years */
-  .dark{background:var(--ink);color:var(--shell);padding:clamp(46px,7vw,86px) var(--pad)}
+  .dark{background:var(--ink);color:var(--shell);padding:clamp(56px,8.5vw,104px) var(--pad)}
   .dark h2{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(32px,5.3vw,64px);line-height:.92;max-width:16ch}
   .dark h2 em{font-style:normal;color:var(--accent)}
@@ -246,7 +248,7 @@
     display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,54px);align-items:center}
   .sub h2{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(32px,4.5vw,56px);line-height:.92;max-width:14ch}
-  .sub p{font-size:16px;line-height:1.55;color:var(--ink-2);margin-top:13px;max-width:44ch}
+  .sub p{font-family:var(--font-g);font-size:18px;line-height:1.55;color:var(--ink-2);margin-top:13px;max-width:42ch}
   .sub .f{display:flex;gap:10px;flex-wrap:wrap}
   .sub input{flex:1 1 210px;border:2px solid var(--ink);border-radius:999px;padding:13px 20px;
     font-family:var(--font-j);font-size:16px;background:var(--bone);color:var(--ink);outline:0}
@@ -304,6 +306,10 @@
     .hero .cal{margin-left:0;font-size:14px;padding:8px 15px 7px}
     .hero .stamp{width:84px;top:15px}
     .facts div{flex:1 1 45%}
+    .cats{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px;margin-right:calc(var(--pad) * -1);
+      -webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .cats::-webkit-scrollbar{display:none}
+    .cats .row{flex:none}
     .letter{grid-template-columns:1fr;gap:34px}
     .grid4{grid-template-columns:1fr 1fr}
     .sub{grid-template-columns:1fr;gap:30px}

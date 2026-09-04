@@ -108,7 +108,7 @@ export default async function Home() {
         </div>
         <div>
           <div className="k">Makers</div>
-          <div className="v num">{roster.length ? roster.length : '100+'}</div>
+          <div className="v num">{roster.length >= 24 ? roster.length : '100+'}</div>
         </div>
         <div>
           <div className="k">Since</div>
@@ -161,8 +161,8 @@ export default async function Home() {
       <div className="plate">
         <Photo src="/photos/floor.jpg" alt="" />
         <div className="cp">
-          <span>Show XXI · Fall 2025</span>
-          <span>{show.venueName}, Dana Point</span>
+          <span>Mermade Market</span>
+          <span>Dana Point, California</span>
         </div>
       </div>
 
@@ -183,6 +183,7 @@ export default async function Home() {
             </div>
           ))}
         </div>
+        {roster.length >= 4 && (
         <div className="grid4">
           {roster.slice(0, 4).map((m, i) => (
             <div key={m.vendorCode}>
@@ -203,6 +204,7 @@ export default async function Home() {
             </div>
           ))}
         </div>
+        )}
       </section>
 
       {/* ── 7 · VISITING — promoted; converts "maybe" into "going" ── */}
@@ -211,7 +213,7 @@ export default async function Home() {
           <span className="k">02</span>
           <h2>Visiting</h2>
         </div>
-        <div className="prows">
+        <div className="prows air">
           <div className="row">
             <span className="q">When</span>
             <span className="a num">{show.hoursNote}</span>
@@ -225,13 +227,12 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── 8 · FILM ────────────────────────────────────────────── */}
-      <div className="film">
+      {/* ── 8 · FILM ────────────────────────────────────────────────
+          The play chrome returns when the three-minute film exists
+          (docs/09 §"Film": keep prominent once it exists). Until then
+          this is a plate, not a promise. */}
+      <div className="plate">
         <Photo src="/photos/film.jpg" alt="" />
-        <div className="play">
-          <div className="circ">▶</div>
-          <div className="lb">Three minutes at the market · 2025</div>
-        </div>
       </div>
 
       {/* ── 9 · ELEVEN YEARS — archive demoted to a teaser ──────── */}

@@ -14,7 +14,7 @@ export const founderLetter = {
   heading: 'I started this because I wanted somewhere to buy things made by people I could meet.',
   body: [
     'In 2015 that meant sixteen makers in a room by the harbor and a folding table for a register. We had no idea whether anyone would come. Four hundred people did.',
-    'Eleven years later the rule hasn’t changed: everything on the floor is made by the person who applied. No resellers, no drop-shipping, no wholesale dressed up as small batch. We read every application, and most seasons we say no to four out of five. A hundred makers is what fits in the room, and we’d rather keep the room worth your Saturday.',
+    'Eleven years later the rule hasn’t changed: everything on the floor is made by the person who applied. No resellers, no drop-shipping, no wholesale dressed up as small batch. A hundred makers is what fits in the room, and we’d rather keep the room worth your Saturday.',
     'Come early, bring a bag, and talk to people. That’s the whole thing.',
   ],
   signature: 'Elise',
@@ -81,6 +81,6 @@ export const ARCHIVE_IS_PLACEHOLDER = true
 
 export const newsletter = {
   heading: 'The roster goes out to the list first.',
-  body: 'Two shows a year. Subscribers hear the merchant lineup, the floor plan, and Friday-evening early access before anyone else. That’s it. We’re not going to email you in July.',
+  body: 'Subscribers hear the lineup, the floor plan, and Friday-evening early access first. That’s it. We’re not going to email you in July.',
   fine: 'About six emails a year. Unsubscribe any time.',
 }
