@@ -92,3 +92,11 @@ export const newsletter = {
   body: 'The roster goes out to the list before anyone else sees it, and the list gets in Friday evening early. That’s it. We’re not going to email you in July.',
   fine: 'About six emails a year. Unsubscribe any time.',
 }
+
+/** Archive films, Andrew's footage. The first plays in the home film block;
+ *  the rest link out from the archive band. */
+export const films = [
+  { youtubeId: 'O0l3_CsZTAY', label: 'From the archive' },
+  { youtubeId: 'MAD5S4cPgsQ', label: 'Winter 2024' },
+]
+export const film = films[0]!

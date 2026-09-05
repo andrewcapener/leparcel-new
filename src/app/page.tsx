@@ -3,6 +3,7 @@ import { eq, and, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { shows, bookings, vendors, applications } from '@/db/schema'
 import { Photo } from '@/components/Photo'
+import { FilmBlock } from '@/components/FilmBlock'
 import { Masthead, Footer } from '@/components/site'
 import { SubscribeForm } from '@/components/SubscribeForm'
 import { fmtRange, fmtDate, applicationWindow } from '@/lib/dates'
@@ -227,13 +228,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── 8 · FILM ────────────────────────────────────────────────
-          The play chrome returns when the three-minute film exists
-          (docs/09 §"Film": keep prominent once it exists). Until then
-          this is a plate, not a promise. */}
-      <div className="plate">
-        <Photo src="/photos/film.jpg" alt="" />
-      </div>
+      {/* ── 8 · FILM — real archive footage, played on click ────── */}
+      <FilmBlock />
 
       {/* ── 9 · ELEVEN YEARS — archive demoted to a teaser ──────── */}
       <section className="dark" id="archive">
@@ -242,6 +238,12 @@ export default async function Home() {
         </div>
         <h2 style={{ marginTop: 20 }}>{C.archiveNote.heading}</h2>
         <p>{C.archiveNote.body}</p>
+        {C.films.slice(1).map((f) => (
+          <a key={f.youtubeId} className="more" target="_blank" rel="noreferrer"
+            href={`https://www.youtube.com/watch?v=${f.youtubeId}`}>
+            Watch: {f.label} ↗
+          </a>
+        ))}
         {/* Rows render only once sourced from the real records. docs/09 §5:
             one soft number inverts the institutional effect. */}
         {!C.ARCHIVE_IS_PLACEHOLDER && (
