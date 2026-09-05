@@ -182,6 +182,13 @@ export const applications = pgTable('applications', {
   isMlm: boolean('is_mlm').notNull().default(false),
 
   // compliance — closes audit §1.1 / §1.3
+  // Whether they have a California seller's permit, asked on the application
+  // of outdoor makers only. Not the number: the number is paperwork nobody has
+  // to hand while they are applying, and it is collected after acceptance.
+  // This is the planning signal, so staff know before the jury sits how many
+  // 410-D declarations they will be chasing. 'unsure' is a real answer and
+  // the most useful one, because it names who needs help.
+  permitStatus: text('permit_status', { enum: ['have', 'occasional', 'unsure'] }),
   sellerPermit: text('seller_permit').notNull().default(''),
   occasionalSeller: boolean('occasional_seller').notNull().default(false),
   hasCoi: boolean('has_coi').notNull().default(false),

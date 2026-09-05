@@ -282,12 +282,22 @@ export default async function ApplicationDetail({
           <div className="adm-sec"><h2>After acceptance</h2></div>
           <table className="adm-fx">
             <tbody>
-              <Row k="Paperwork" n="">
-                {app.sellerPermit
-                  ? `Seller's permit on file: ${app.sellerPermit}`
-                  : app.occasionalSeller
-                    ? 'No permit; says they qualify as an occasional seller (CDTFA 410-D)'
-                    : 'Nothing yet. Required before load-in, not before.'}
+              {/* Two different things. What they told us when they applied, and
+                  what we actually hold. The application asks the question; the
+                  number is collected after acceptance, so a blank here before
+                  then is expected rather than missing. */}
+              <Row k="Paperwork" n={app.track === 'indoor' ? 'Not needed' : ''}>
+                {app.track === 'indoor'
+                  ? 'Sells inside, so no permit is needed: we are the retailer of record (6.2).'
+                  : app.sellerPermit
+                    ? `Seller's permit on file: ${app.sellerPermit}`
+                    : app.permitStatus === 'have'
+                      ? 'Said they have a permit. Number not collected yet, due before load-in.'
+                      : app.permitStatus === 'occasional'
+                        ? 'Says they qualify as an occasional seller. Needs a CDTFA-410-D before load-in.'
+                        : app.permitStatus === 'unsure'
+                          ? 'Not sure what they have and asked for help. Worth a call before load-in.'
+                          : 'Not answered. Required before load-in, not before.'}
                 {app.hasCoi && <span className="adm-sub2">Carries their own liability insurance.</span>}
               </Row>
               {booking && (

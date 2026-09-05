@@ -63,7 +63,10 @@ export default async function Agreement() {
       <FactTable
         title="The parts that cost money"
         rows={[
-          { label: 'Commission inside', value: <><strong>{show.commissionBps / 100}%</strong> of the pre-tax retail price. Nothing outside.</> },
+          /* No bold. It was the only bold in the table, which made one number
+             shout at the top of a legal document while the clause that costs
+             more (non-refundable) sat plain two rows below. */
+          { label: 'Commission inside', value: `${show.commissionBps / 100}% of the pre-tax retail price. Nothing outside.` },
           { label: 'Application fee', value: 'None.' },
           { label: 'Paying for your space', value: `Within ${show.paymentWindowHours} hours of your acceptance, or the offer lapses (2.3).` },
           { label: 'Cancelling', value: 'Non-refundable (3.2). An outdoor day can be carried forward once, if you ask (B6.4).' },

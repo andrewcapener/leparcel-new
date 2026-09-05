@@ -76,15 +76,14 @@ const STEPS: Step[] = [
     blurb: 'Check every space you would say yes to. Choosing inside and outside, '
       + 'or more than one day, raises your chance of getting in.',
   },
+  /* There was a "Paperwork" step here: seller's permit, occasional-seller
+     declaration, insurance. It is gone. None of it reached the jury, all of it
+     asked a maker for tax paperwork before anyone had said yes, and the
+     agreement already requires the permit before load-in (6.1). It is
+     collected after acceptance instead, when the maker has a reason to dig it
+     out and we have a reason to need it. */
   {
     n: 4,
-    id: 'ap-paper',
-    title: 'Paperwork',
-    blurb: 'None of it reaches the jury. Skip it and nothing changes.',
-    optional: true,
-  },
-  {
-    n: 5,
     id: 'ap-sign',
     title: 'Agree and submit',
     blurb: 'Read the rules for your track, sign, and send it.',
@@ -120,7 +119,6 @@ const LABELS: Record<string, string> = {
   isMlm: 'MLM or direct sales',
   track: 'Inside or outside',
   spaces: 'Spaces',
-  sellerPermit: 'Seller’s permit number',
   signedName: 'Type your name to sign',
   agree: 'Vendor agreement',
 }
@@ -137,8 +135,7 @@ const STEP_OF: Record<string, number> = {
   category: 2, madeByYou: 2, description: 2, priceLow: 2, priceHigh: 2,
   usesAiArtwork: 2, isMlm: 2,
   track: 3, spaces: 3, addons: 3,
-  sellerPermit: 4, occasionalSeller: 4, hasCoi: 4,
-  agree: 5, signedName: 5,
+  agree: 4, signedName: 4,
 }
 
 /**
@@ -206,7 +203,6 @@ export function ApplyForm({
   const [track, setTrack] = useState<'indoor' | 'outdoor' | 'both'>(
     (v.track as 'indoor' | 'outdoor' | 'both') ?? 'indoor',
   )
-  const [occasional, setOccasional] = useState(v.occasionalSeller === 'on')
   // Checkbox groups live here, not in the DOM: the form remounts on every
   // rejected submit (see `key` below) and FormData's echo keeps only the last
   // value of a repeated name, so state is the only thing that can carry a
@@ -317,8 +313,7 @@ export function ApplyForm({
     // field is a form nagging you.
     2: has('category') && description.trim().length >= 40 && has('priceLow') && has('priceHigh'),
     3: chosen.length > 0,
-    4: has('sellerPermit') || occasional || answered.hasCoi === 'on',
-    5: answered.agree === 'on' && (answered.signedName ?? '').trim().length >= 2,
+    4: answered.agree === 'on' && (answered.signedName ?? '').trim().length >= 2,
   }
   // What is still unanswered somewhere else. The step you are looking at is
   // never on this list: its own fields are the thing in front of you.
@@ -656,6 +651,28 @@ export function ApplyForm({
               </div>
             )}
 
+            {track !== 'indoor' && (
+              <div className="column column--full">
+                {/* Outdoor only. An indoor maker does not need a permit, because
+                    Mermade is the retailer of record for their sales (agreement
+                    6.2), and asking would imply they do. We ask the question and
+                    not the number: the number is paperwork nobody has to hand
+                    while applying, and it is collected after acceptance. */}
+                <Field
+                  name="permitStatus" label="Selling outside: your seller’s permit"
+                  error={e.permitStatus}
+                  hint="Outside, you sell for your own account, so California requires this of you and requires us to hold the record. We sort the paperwork out after you are accepted. We just want to know what you have."
+                >
+                  <select className="inp" id="permitStatus" name="permitStatus" defaultValue={v.permitStatus ?? ''}>
+                    <option value="">Choose one</option>
+                    <option value="have">I have a California seller’s permit</option>
+                    <option value="occasional">I don’t, I’m an occasional seller</option>
+                    <option value="unsure">I’m not sure yet, help me</option>
+                  </select>
+                </Field>
+              </div>
+            )}
+
             <div className="column column--full">
               <fieldset className="ap-group" aria-describedby="call-hint">
                 <legend className="ap-group__legend">A hand with your space</legend>
@@ -766,50 +783,6 @@ export function ApplyForm({
           aria-labelledby={`${STEPS[3]!.id}-h`}
         >
           <StepHead step={STEPS[3]!} />
-          <div className="flexible-layout flexible-layout--form">
-            <div className="column column--full">
-              <p className="ap-lede">
-                If you’re accepted we’ll need this before load-in, and we’ll
-                walk you through it then. Filling it in now just saves an
-                email later.
-              </p>
-            </div>
-            <Field
-              name="sellerPermit" label="CA seller’s permit number (optional)"
-              error={e.sellerPermit}
-              hint="Leave it blank if you don’t have one. We’ll sort it out with you after acceptance."
-            >
-              {/* No inputMode: a permit number carries a hyphen, and a
-                  numeric keypad on a phone has no key for it. */}
-              {/* `type` is stated because the theme's field styling keys off
-                  `input[type=text]`, and an input with no type attribute
-                  rendered at its default size next to full-width neighbours. */}
-              <input
-                type="text" name="sellerPermit" disabled={occasional}
-                autoCapitalize="characters" autoCorrect="off" {...keep('sellerPermit')}
-              />
-            </Field>
-            <div className="column column--full">
-              <label className="check-option">
-                <input
-                  type="checkbox" name="occasionalSeller"
-                  checked={occasional} onChange={(ev) => setOccasional(ev.target.checked)}
-                />
-                <span>I don’t have a permit. I qualify as an occasional seller (CDTFA 410-D)</span>
-              </label>
-              <label className="check-option">
-                <input type="checkbox" name="hasCoi" defaultChecked={v.hasCoi === 'on'} />
-                <span>I carry my own liability insurance (recommended, not required)</span>
-              </label>
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="ap-step" id={STEPS[4]!.id} hidden={step !== 5}
-          aria-labelledby={`${STEPS[4]!.id}-h`}
-        >
-          <StepHead step={STEPS[4]!} />
           <div className="flexible-layout flexible-layout--form">
             <div className="column column--full">
               {/* Everything a maker is agreeing to, reachable from the place

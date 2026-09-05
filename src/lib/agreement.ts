@@ -217,7 +217,7 @@ const partOne: Part = {
       clauses: [
         {
           n: '6.1', lead: 'Outside makers: seller’s permit.',
-          text: ['You sell for your own account, so you must hold a valid California seller’s permit, or qualify as an occasional seller and give us a completed CDTFA-410-D. We need the permit number or the form before load-in. CDTFA Publication 111 requires us to keep that record and penalises us up to ${{pub111Penalty}} for each seller we cannot show it for. We keep these records for four years.'],
+          text: ['You sell for your own account, so you must hold a valid California seller’s permit, or qualify as an occasional seller and give us a completed CDTFA-410-D. We ask for the permit number, or the declaration, after you are accepted and we need it before load-in. Applying does not require either. CDTFA Publication 111 requires us to keep that record and penalises us up to ${{pub111Penalty}} for each seller we cannot show it for. We keep these records for four years.'],
         },
         {
           n: '6.2', lead: 'Inside makers: seller’s permit.',

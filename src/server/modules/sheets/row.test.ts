@@ -37,7 +37,7 @@ const application = {
   usesAiArtwork: false,
   isMlm: false,
   requestedSpaceIds: JSON.stringify(['sp-3x6', 'sp-out-sat']),
-  loadInSlots: '[]', wantsOnboardingCall: false, requestedAddons: JSON.stringify(['ENDCAP-IN', 'SHARE']),
+  loadInSlots: '[]', wantsOnboardingCall: false, permitStatus: null, requestedAddons: JSON.stringify(['ENDCAP-IN', 'SHARE']),
   // Postgres hands timestamptz back in this shape: a space, not a T.
   submittedAt: '2026-09-05 01:38:42.097708+00',
 }
@@ -108,7 +108,7 @@ check('admin link', row.adminLink === 'https://mermademarket.com/admin/applicati
     application: {
       ...application,
       requestedSpaceIds: JSON.stringify(['sp-3x6', 'sp-retired']),
-      loadInSlots: '[]', wantsOnboardingCall: false, requestedAddons: JSON.stringify(['GONE']),
+      loadInSlots: '[]', wantsOnboardingCall: false, permitStatus: null, requestedAddons: JSON.stringify(['GONE']),
     },
     vendor, catalog, siteUrl: 'https://x.test',
   })

@@ -190,6 +190,7 @@ const ApplicationSchema = z.object({
   usesAiArtwork: z.enum(['yes', 'no']),
   isMlm: z.enum(['yes', 'no']),
 
+  permitStatus: z.enum(['have', 'occasional', 'unsure']).optional().or(z.literal('')),
   sellerPermit: z.string().optional(),
   occasionalSeller: z.string().optional(),
   hasCoi: z.string().optional(),
@@ -345,6 +346,9 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     madeByYou: d.madeByYou,
     usesAiArtwork: d.usesAiArtwork === 'yes',
     isMlm: d.isMlm === 'yes',
+    // Only meaningful for someone selling outside, and null rather than
+    // empty so a report can tell "indoor, not asked" from "asked, skipped".
+    permitStatus: d.track === 'indoor' || !d.permitStatus ? null : d.permitStatus,
     sellerPermit: d.sellerPermit?.trim() ?? '',
     occasionalSeller: d.occasionalSeller === 'on',
     hasCoi: d.hasCoi === 'on',
@@ -571,7 +575,18 @@ export async function decide(fd: FormData): Promise<void> {
             + granted.map((a) => `${a.name}: ${usd(a.priceCents)}\n`).join('')
             + (granted.length > 0 ? `Total: ${usd(space.priceCents + addonsCents)}\n` : '')
             + `${app.track === 'indoor' ? `Commission: ${show.commissionBps / 100}% on indoor sales\n` : ''}`
-            + `\nPay to confirm within ${show.paymentWindowHours} hours. After that the space returns to the pool.\n\nMermade Market`,
+            + `\nPay to confirm within ${show.paymentWindowHours} hours. After that the space returns to the pool.\n`
+            // Outdoor makers sell for their own account, so the permit is ours
+            // to collect and CDTFA Publication 111 fines us per seller we
+            // cannot show a record for. The application no longer asks, so
+            // this is where the ask lives. Indoor makers do not need one:
+            // Mermade is the retailer of record for their sales (agreement 6.2).
+            + (app.track === 'outdoor' || app.track === 'both'
+              ? `\nOne more thing before load-in: reply with your California seller's permit number, `
+                + `or tell us you qualify as an occasional seller and we will send you the CDTFA-410-D `
+                + `to sign. You sell for your own account outside, so we have to hold that record.\n`
+              : '')
+            + `\nMermade Market`,
           'accepted',
         )
       }

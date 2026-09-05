@@ -40,6 +40,7 @@ export const SHEET_COLUMNS = [
   { key: 'addons', header: 'Add-ons requested' },
   { key: 'loadInSlots', header: 'Set-up times' },
   { key: 'onboardingCall', header: 'Wants Zoom call' },
+  { key: 'permitStatus', header: 'Seller permit' },
   { key: 'priceLow', header: 'Price low' },
   { key: 'priceHigh', header: 'Price high' },
   { key: 'madeByYou', header: 'Made by them' },
@@ -80,6 +81,7 @@ export type RowApplication = {
   requestedAddons: string
   loadInSlots: string
   wantsOnboardingCall: boolean
+  permitStatus: string | null
   submittedAt: string
 }
 
@@ -110,6 +112,13 @@ export type RowInput = {
 }
 
 /** Reads the same as the jury card, so the sheet and the admin agree. */
+/** Blank for an indoor maker, who is never asked. */
+const PERMIT: Record<string, string> = {
+  have: 'Has one',
+  occasional: 'Occasional seller',
+  unsure: 'Not sure, wants help',
+}
+
 const MADE_BY: Record<string, string> = {
   all: 'Makes everything',
   mostly_sourced_components: 'Mostly, with sourced components',
@@ -182,6 +191,7 @@ export function applicationRow(input: RowInput): SheetRow {
     // outdoor maker, who is never asked.
     loadInSlots: parseList(a.loadInSlots).join(', '),
     onboardingCall: yesNo(a.wantsOnboardingCall),
+    permitStatus: PERMIT[a.permitStatus ?? ''] ?? '',
     priceLow: usd(a.priceLowCents),
     priceHigh: usd(a.priceHighCents),
     madeByYou: MADE_BY[a.madeByYou] ?? a.madeByYou,
