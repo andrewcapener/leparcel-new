@@ -39,6 +39,18 @@ export function Masthead({ show }: { show: Show }) {
           </Link>
         </div>
       </div>
+      {/* On a phone the masthead has room for the mark and one button, so the
+          nav moves to its own scrollable row. Without it the only way off the
+          home page is the footer. */}
+      <nav className="mnav" aria-label="Sections">
+        <Link href="/#visiting">Visiting</Link>
+        <Link href="/schedule">Schedule</Link>
+        <Link href="/journal">Journal</Link>
+        <Link href="/faq">FAQ</Link>
+        <Link href="/makers/indoor">Sell inside</Link>
+        <Link href="/makers/outdoor">Sell outside</Link>
+        <Link href="/contact">Contact</Link>
+      </nav>
     </>
   )
 }

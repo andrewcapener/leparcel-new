@@ -59,7 +59,7 @@ export default async function Home() {
       <Photo src="/photos/hero.jpg" alt="" priority className="hero">
           <img className="stamp" src="/mermade-ribbon.png" alt="" />
           <div className="in">
-            <div className="eyebrow">Shop Small Festival</div>
+            <div className="eyebrow">Shop Small Festival · Hand curated</div>
             <h1>
               A hundred makers,
               <br />

@@ -28,9 +28,15 @@ const body = Barlow({
 })
 
 export const metadata: Metadata = {
-  title: 'Mermade Market · Dana Point, California',
+  // The words people actually type. The headline on the page is the
+  // differentiator; the title tag is where the category has to be spelled
+  // out, or a search for "makers market dana point" never finds us.
+  title: {
+    default: 'Mermade Market · A hand-curated makers market in Dana Point, California',
+    template: '%s · Mermade Market',
+  },
   description:
-    'A juried market of independent makers in Dana Point, California. Free to attend, twice a year, since 2015.',
+    'A hand-curated shop small makers market in Dana Point, California. Around a hundred independent makers, free to attend, twice a year since 2015.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
