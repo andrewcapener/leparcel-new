@@ -174,7 +174,7 @@
    visible artwork, since the version before it was 320x132 of canvas holding
    155x74 of mark, so the same box height rendered it at about 60px. This is
    the size it should have been. */
-.adm .adm-mark img { display: block; width: 104px; height: auto }
+.adm .adm-mark img { display: block; width: 84px; height: auto }
 .adm .adm-mark:hover { opacity: .78 }
 .adm .adm-side-kicker {
   font-family: var(--font-c); font-weight: 600; text-transform: uppercase;
