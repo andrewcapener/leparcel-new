@@ -5,7 +5,7 @@ import { subscribe, type FormState } from '@/app/actions'
 
 const initial: FormState = { ok: false }
 
-export function SubscribeForm({ fine }: { fine: string }) {
+export function SubscribeForm({ fine, compact }: { fine?: string; compact?: boolean }) {
   const [state, action, pending] = useActionState(subscribe, initial)
 
   if (state.ok) {
@@ -19,7 +19,7 @@ export function SubscribeForm({ fine }: { fine: string }) {
   }
 
   return (
-    <form action={action}>
+    <form action={action} className={compact ? 'subf compact' : undefined}>
       <div className="f">
         <input
           type="email"
@@ -35,7 +35,7 @@ export function SubscribeForm({ fine }: { fine: string }) {
         </button>
       </div>
       {state.errors?.email && <span className="err">{state.errors.email}</span>}
-      <div className="fine">{fine}</div>
+      {fine && <div className="fine">{fine}</div>}
     </form>
   )
 }

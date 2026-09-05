@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react'
  */
 export function HeroVideo({ youtubeId }: { youtubeId: string }) {
   const [show, setShow] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     const wide = window.matchMedia('(min-width: 900px)')
@@ -38,12 +39,13 @@ export function HeroVideo({ youtubeId }: { youtubeId: string }) {
   })
 
   return (
-    <div className="herovid" aria-hidden="true">
+    <div className="herovid" aria-hidden="true" data-loaded={loaded ? '1' : undefined}>
       <iframe
         src={`https://www.youtube-nocookie.com/embed/${youtubeId}?${params}`}
         title=""
         tabIndex={-1}
         allow="autoplay; encrypted-media"
+        onLoad={() => setLoaded(true)}
       />
     </div>
   )

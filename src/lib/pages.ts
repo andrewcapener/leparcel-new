@@ -28,6 +28,9 @@ export const PAGES: Array<{ path: string; visibility: Visibility; note: string }
   { path: '/collaborate',     visibility: 'nav',      note: 'Sponsorships' },
   { path: '/makers/indoor',   visibility: 'nav',      note: 'Indoor maker rules' },
   { path: '/makers/outdoor',  visibility: 'nav',      note: 'Outdoor maker rules' },
+  { path: '/merchants',       visibility: 'nav',      note: 'This show\'s confirmed lineup' },
+  { path: '/lookbook',        visibility: 'nav',      note: 'Indoor space lookbook' },
+  { path: '/sponsorships',    visibility: 'nav',      note: 'Sponsorships' },
 ]
 
 /** Spread into a page's `metadata` to keep it out of search results. */

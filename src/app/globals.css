@@ -406,7 +406,11 @@
     color:var(--ink-2);margin:0}
 
   /* background video behind the hero, sized to cover at any ratio */
-  .herovid{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+  /* Stays transparent until the embed reports it loaded, so a blocked or
+     slow YouTube leaves the poster photograph showing rather than a grey box. */
+  .herovid{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+    opacity:0;transition:opacity .6s ease}
+  .herovid[data-loaded="1"]{opacity:1}
   .herovid iframe{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
     width:max(100vw,177.78vh);height:max(56.25vw,100vh);border:0}
 
@@ -477,6 +481,20 @@
     font-size:clamp(24px,3.2vw,40px);line-height:1;color:var(--ink)}
   .days .t{font-family:var(--font-c);font-weight:500;text-transform:uppercase;
     letter-spacing:.09em;font-size:14px;color:var(--accent);margin-top:9px}
+
+  .lbgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:clamp(10px,1.6vw,20px)}
+  .lbgrid .ph{aspect-ratio:4/5}
+  @media(max-width:900px){.lbgrid{grid-template-columns:1fr 1fr}}
+
+  /* the newsletter form as it sits in the footer */
+  .subf.compact .f{display:flex;gap:7px;flex-wrap:wrap}
+  .subf.compact input{flex:1 1 150px;min-width:0;border:1px solid var(--foot-line);
+    border-radius:var(--arch);padding:9px 12px;font-family:var(--font-j);font-size:14px;
+    background:rgba(255,255,255,.65);color:var(--ink)}
+  .subf.compact input::placeholder{color:var(--foot-text)}
+  .subf.compact .go{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.08em;font-size:13px;color:var(--ink);padding:0 4px}
 
   /* merchant directory */
   .dir{columns:5;column-gap:34px;color:var(--ink-2)}

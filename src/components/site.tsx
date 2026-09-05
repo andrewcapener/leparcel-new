@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { Wordmark } from './Wordmark'
+import { SubscribeForm } from './SubscribeForm'
 import type { Show } from '@/db/schema'
 import { FOUNDED_YEAR } from '@/lib/content'
-import { applicationWindow, fmtDate } from '@/lib/dates'
+import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
 
 /**
  * Site chrome. Everything dated or priced comes off the Show record —
@@ -20,22 +21,23 @@ export function Masthead({ show }: { show: Show }) {
 
   return (
     <>
+      {/* announcement bar — the live site runs the next show's date here */}
       <div className="util">
-        <span>Est. {FOUNDED_YEAR} · Dana Point, California</span>
-        <span className="mid">Show {show.numeral}</span>
-        <span>{applyNote}</span>
+        <span>
+          Next Show! {fmtRange(show.startsOn, show.endsOn)} · {show.venueName}, Dana Point
+        </span>
+        <span className="mid">{applyNote}</span>
       </div>
       <div className="mast">
         <Link href="/" aria-label="Mermade Market, home">
           <Wordmark className="wm" />
         </Link>
         <div className="r">
-          <Link href="/#visiting">Visiting</Link>
-          <Link href="/schedule">Schedule</Link>
-          <Link href="/journal">Journal</Link>
           <Link href="/faq">FAQ</Link>
+          <Link href="/merchants">Merchants</Link>
+          <Link href="/schedule">Schedule</Link>
           <Link href="/apply" className="btn">
-            Apply to sell
+            Apply now
           </Link>
         </div>
       </div>
@@ -43,10 +45,10 @@ export function Masthead({ show }: { show: Show }) {
           nav moves to its own scrollable row. Without it the only way off the
           home page is the footer. */}
       <nav className="mnav" aria-label="Sections">
-        <Link href="/#visiting">Visiting</Link>
+        <Link href="/faq">FAQ</Link>
+        <Link href="/merchants">Merchants</Link>
         <Link href="/schedule">Schedule</Link>
         <Link href="/journal">Journal</Link>
-        <Link href="/faq">FAQ</Link>
         <Link href="/makers/indoor">Sell inside</Link>
         <Link href="/makers/outdoor">Sell outside</Link>
         <Link href="/contact">Contact</Link>
@@ -56,9 +58,6 @@ export function Masthead({ show }: { show: Show }) {
 }
 
 export function Footer({ show }: { show: Show }) {
-  const month = new Date(show.startsOn).toLocaleDateString('en-US', {
-    month: 'long', timeZone: 'America/Los_Angeles',
-  })
   return (
     <footer className="foot">
       <div className="fgrid">
@@ -68,35 +67,35 @@ export function Footer({ show }: { show: Show }) {
             Shop small. Think big.
           </div>
           <div className="bl" style={{ marginTop: 0 }}>
-            A juried market of independent makers. Dana Point, California, since {FOUNDED_YEAR}.
+            A hand-curated market uniting creators with community. Dana Point,
+            California, since {FOUNDED_YEAR}.
           </div>
         </div>
         <div>
-          <h4>The market</h4>
-          <Link href="/#visiting">Visiting</Link>
-          <Link href="/schedule">Schedule</Link>
-          <Link href="/journal">Journal</Link>
-          <Link href="/faq">FAQ</Link>
-          <Link href="/#archive">Archive</Link>
-        </div>
-        <div>
-          <h4>Makers</h4>
-          <Link href="/apply">Apply to sell</Link>
-          <Link href="/makers/indoor">Selling inside</Link>
-          <Link href="/makers/outdoor">Selling outside</Link>
-          <Link href="/faq#makers">Maker questions</Link>
-        </div>
-        <div>
-          <h4>Contact</h4>
-          <Link href="/contact">Say hi</Link>
-          <Link href="/collaborate">Collaborate</Link>
-          <a href="https://instagram.com/mermademarket">Instagram</a>
+          <h4>{show.venueName}</h4>
+          <div className="bl" style={{ marginTop: 0 }}>{show.venueAddress}</div>
           <a href="https://www.facebook.com/mermademarketoc">Facebook</a>
+          <a href="https://instagram.com/mermademarket">Instagram</a>
+        </div>
+        <div>
+          <h4>Stay hooked</h4>
+          <div className="bl" style={{ marginTop: 0, marginBottom: 10 }}>
+            We send show dates and important VIP info to our subscribers.
+          </div>
+          <SubscribeForm compact />
+        </div>
+        <div>
+          <h4>Pages</h4>
+          <Link href="/contact">Contact</Link>
+          <Link href="/faq">FAQ</Link>
+          <Link href="/journal">Journal</Link>
+          <Link href="/apply">Apply</Link>
+          <Link href="/collaborate">Collaborate</Link>
         </div>
       </div>
       <div className="colophon">
         <span>© {new Date().getFullYear()} Mermade Market</span>
-        <span>You scrolled the whole way. Come say hi in {month}.</span>
+        <span>Shop small · Think big</span>
         <span>Dana Point, California</span>
       </div>
     </footer>
