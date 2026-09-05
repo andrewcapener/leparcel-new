@@ -357,22 +357,43 @@ const scheduleA: Part = {
         { n: 'A2.1', text: ['You send us your inventory list with prices at least two weeks before the show, and you deliver the goods at your load-in slot. Load-in for {{showName}} is {{loadIn}}. We count your goods in against your list, and the counted list is the record we settle against.'] },
         {
           n: 'A2.2', lead: 'Tagging.',
-          text: ['Every item carries your vendor code and its price, like MM07 $18. That is all the register needs. There is no barcode, no SKU and nothing to print. Tags go on neatly so they stay put, and no tag is larger than the item it is on.'],
+          text: ['Every item for sale carries your maker code and its price, like MM7 $18. There is no barcode or SKU for us to scan, so that tag is the whole of what the register reads. Printed tags are always better than handwritten. Do not make a tag larger than the item it is on.'],
         },
-        { n: 'A2.3', text: ['The prices on your list are the prices we ring. If a price changes before the show, tell us in writing first.'] },
-        { n: 'A2.4', text: ['We may decline to display an item that is unsafe, materially different from your application, or unsaleable as it arrives, and we will tell you which and why.'] },
         {
-          n: 'A2.5', lead: 'Deductions.',
+          n: 'A2.3', lead: 'Prices, and changing them.',
+          text: ['The prices on your inventory list are the prices we enter into the register. We will not discount, mark down or bundle your goods without your say so. If a price changes, or you add a new item, hand a written note to Elise, Cambi or Hillary, or to whoever is running the register, and we will try to change it that same selling day.'],
+        },
+        {
+          n: 'A2.4', lead: 'Marking down.',
+          /* The register is keyed off the tag, so "20% off everything" is a sum
+             our staff would have to do a hundred times at the till, which is
+             where the errors come from. */
+          text: ['Same goes for marking prices down. If you want to take 20% off, do the maths, change the tags yourself, and give us a new list. Not "20% off everything": we enter your prices by hand, and a blanket instruction is a hundred chances for one of us to get it wrong.'],
+        },
+        { n: 'A2.5', text: ['We may decline to display an item that is unsafe, materially different from your application, or unsaleable as it arrives, and we will tell you which and why.'] },
+        {
+          n: 'A2.6', lead: 'Deductions.',
           text: ['The only amounts we take off your settlement are our commission and anything we supplied on your behalf, charged at what it cost us and itemised on your statement with its reason. An item that arrives untagged is tagged by a member of staff, not charged for.'],
+        },
+        {
+          n: 'A2.7', lead: 'Display items.',
+          /* Our staff sell what carries a tag. A prop with no tag reads as
+             untagged stock, which A2.6 says we tag for you: the two rules
+             collide unless the prop says what it is. */
+          text: ['Put a sticker reading "display use only" on anything at your space that is not for sale. Our staff sell what is tagged, and an untagged item is treated as stock we need to tag. We are not responsible for a display item that sells because it was not marked.'],
         },
       ],
     },
     {
-      id: 'a3', n: 'A3', title: 'Price, display and restocking',
+      id: 'a3', n: 'A3', title: 'Display and restocking',
       clauses: [
-        { n: 'A3.1', text: ['You set the retail price and mark it on the item. We will not discount, mark down or bundle your goods without your written authorisation.'] },
-        { n: 'A3.2', text: ['Merchandising is ours: where your goods sit on the floor, how they are grouped and staged. That is the service you are buying.'] },
-        { n: 'A3.3', text: ['You are welcome to restock during the show, in the slower hours. Everything you bring is priced and tagged before it goes out.'] },
+        /* A3.1 used to say you set the price and mark it on the item, and that
+           we will not discount without your authorisation. Elise pointed out
+           that A2 says both, now at more length: tagging is A2.2 and prices are
+           A2.3. So A3 is what we do rather than what you do, which is the line
+           the two sections were blurring. */
+        { n: 'A3.1', text: ['Merchandising is ours: where your goods sit on the floor, how they are grouped and staged. That is the service you are buying. What each item costs is yours, and A2.3 is how it is set and changed.'] },
+        { n: 'A3.2', text: ['You are welcome to restock during the show, in the slower hours. Everything you bring is priced and tagged before it goes out, the same as everything you delivered at load-in.'] },
       ],
     },
     {
@@ -523,10 +544,28 @@ const scheduleB: Part = {
     {
       id: 'b6', n: 'B6', title: 'Weather outside',
       clauses: [
-        { n: 'B6.1', text: ['If we cancel an outdoor day for weather, your fee for that day carries to the next show, on the same day you booked, at no extra charge.'] },
-        { n: 'B6.2', text: ['If you would rather not take that day at the next show, tell us in writing within {{electionDays}} days of the cancellation and we reimburse {{weatherPct}}% of that day’s fee. We keep the rest against the advertising already spent on your shop.'] },
-        { n: 'B6.3', text: ['If the day goes ahead in poor weather and you choose not to come, there is no refund and no day at a later show.'] },
-        { n: 'B6.4', lead: 'If you cancel a day yourself.', text: ['Your fee is not refunded, but we will carry it once to the next show at no extra charge if you ask us during that show’s application window. Asking is on you. We do not carry a fee forward on our own.'] },
+        /* ⟨COUNSEL⟩ Rewritten 5 Sep 2026. Drew: "perhaps you can specify better
+           what poor weather means here". The honest answer is that no rainfall
+           figure decides it, so B6.4 does not try to name one. What decides it
+           is whether we called the day off, and that is a fact neither side can
+           argue about afterwards. B6.1 now says who decides and on what, and
+           B6.4 turns on the day having run rather than on how bad it was. */
+        {
+          n: 'B6.1', lead: 'When we call a day off.',
+          text: ['The call is ours and we make it as early as we can. We call a day off when conditions or the forecast make it unsafe to put tents up or to have shoppers among them, or when the venue, the city or the county closes the site. Rain, wind or cold on their own do not stop an outdoor day: section 4.1 says the show runs in ordinary bad weather, and it does.'],
+        },
+        { n: 'B6.2', text: ['If we call a day off, your fee for that day carries to the next show, on the same day you booked, at no extra charge.'] },
+        { n: 'B6.3', text: ['If you would rather not take that day at the next show, tell us in writing within {{electionDays}} days of the cancellation and we reimburse {{weatherPct}}% of that day’s fee. We keep the rest against the advertising already spent on your shop.'] },
+        { n: 'B6.4', text: ['If we run the day and you decide not to come, there is no refund and no day at a later show, whatever the weather was doing. A day we have not called off is a day that is going ahead.'] },
+        /* ⟨COUNSEL⟩ Reworded 5 Sep 2026: "wording is weird". It was, and the
+           reason is that it said what does not happen before what does. This
+           says the offer first and the condition second, which is the order a
+           maker reads it in. The policy is unchanged, and Drew's refund audit
+           may change it again. */
+        {
+          n: 'B6.5', lead: 'If you cancel a day yourself.',
+          text: ['We will carry your fee once to the next show, at no extra charge. You have to ask us for it, during that show’s application window, and we do not carry a fee forward on our own. The fee is not refunded either way.'],
+        },
       ],
     },
   ],

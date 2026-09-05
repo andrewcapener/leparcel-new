@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow, activeAddOns } from '@/db/queries'
+import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, PageSection, PriceTable, FactTable } from '@/components/theme/Sections'
@@ -37,10 +37,10 @@ export default async function Agreement() {
 
   const vars = agreementVars(show)
 
-  const spaces = await db.query.spaceTypes.findMany({
-    where: eq(spaceTypes.showId, show.id),
-    orderBy: [asc(spaceTypes.sortOrder)],
-  })
+  // The fourth caller, and the one that kept selling the withdrawn boutique
+  // space in the fee schedule after the other three stopped. Its own copy of
+  // the query never got the is_active filter. There is one function for this.
+  const spaces = await activeSpaceTypes(show.id)
   const extras = await activeAddOns(show.id)
   const indoor = spaces.filter((s) => s.track === 'indoor')
   const outdoor = spaces.filter((s) => s.track === 'outdoor')
@@ -69,7 +69,7 @@ export default async function Agreement() {
           { label: 'Commission inside', value: `${show.commissionBps / 100}% of the pre-tax retail price. Nothing outside.` },
           { label: 'Application fee', value: 'None.' },
           { label: 'Paying for your space', value: `Within ${show.paymentWindowHours} hours of your acceptance, or the offer lapses (2.3).` },
-          { label: 'Cancelling', value: 'Non-refundable (3.2). An outdoor day can be carried forward once, if you ask (B6.4).' },
+          { label: 'Cancelling', value: 'Non-refundable (3.2). An outdoor day can be carried forward once, if you ask (B6.5).' },
           { label: 'Getting paid inside', value: 'Statement and payment within a week of the last day (A6.2).' },
           { label: 'If an item goes missing', value: 'Credited at retail less commission (A8.4).' },
         ]}

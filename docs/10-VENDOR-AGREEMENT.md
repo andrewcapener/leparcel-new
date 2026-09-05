@@ -698,6 +698,13 @@ item that arrives untagged is tagged by a member of staff and not charged for.
 
 ## A3. Price, display and markdowns
 
+> ⟨DECISION⟩ **5 Sep 2026, superseded in code.** Elise: "some of A3 is
+> redundant to A2, maybe we combine". It was: pricing and tagging appeared in
+> both. src/lib/agreement.ts now puts what the maker does in A2 (A2.2 tagging,
+> A2.3 prices and changing them, A2.4 marking down, A2.7 display items) and
+> leaves A3 for what Mermade does, retitled "Display and restocking". The
+> numbering below is the draft's, not the shipped one.
+
 **A3.1 You set the retail price** and mark it on the item. Mermade will not
 discount, mark down or bundle your goods without your prior written
 authorisation.

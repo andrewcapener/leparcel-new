@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
-import { activeShow, activeAddOns, pgCode } from '@/db/queries'
+import { activeShow, activeAddOns, activeSpaceTypes, pgCode } from '@/db/queries'
 import {
   shows, vendors, applications, bookings, bookingAddons, spaceTypes, addOns,
   auditLog, emailOutbox, subscribers, CATEGORIES, type ApplicationStatus,
@@ -243,7 +243,10 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
       errors: { spaces: 'Check at least one space' },
     }
   }
-  const allSpaces = await db.query.spaceTypes.findMany({ where: eq(spaceTypes.showId, show.id) })
+  // Active only, and the error below is already worded for it. This validated
+  // against every space the show has ever had, so a withdrawn one could still
+  // be submitted by anyone who kept the page open or built the POST by hand.
+  const allSpaces = await activeSpaceTypes(show.id)
   const requested = requestedIds
     .map((id) => allSpaces.find((s) => s.id === id))
     .filter((s): s is NonNullable<typeof s> => Boolean(s))
