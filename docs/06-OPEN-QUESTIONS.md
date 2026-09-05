@@ -62,7 +62,7 @@ Right now nothing requires vendor liability insurance and the site disclaims res
 - **Do nothing.** Not recommended — see `00-BUSINESS-AUDIT.md` §1.3.
 
 ### 8. Payment window
-Currently **36 hours**, the tightest of any show I looked at. With instant online payment the pressure to keep it that tight disappears. I'd set **48 hours**. Your call — it's a per-show setting.
+**RESOLVED 5 Sep 2026 by Drew: 48 hours.** It was 36, the tightest of any show I looked at; with instant online payment the pressure to keep it that tight disappears. It lives on the Show record and is edited at `/admin/show`, so it is a field change, not a redraft. Worth revisiting after one season of real lapse data.
 
 ### 9. Payout timing
 Currently stated as both "7–10 days" and "within one week" on different pages. Pick one and say it in business days. I recommend **10 business days**, because it keeps money in your balance through the return window (see `04` §8 — refunds hit *your* balance, and you can't claw back from a vendor you've already paid).

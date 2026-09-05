@@ -165,8 +165,12 @@
    type. No plate behind it: the file is already the white cut, so a white
    rectangle would only box it in. The login screen keeps the plate, because
    there the mark would sit on a light ground. */
-.adm .adm-mark { display: inline-block; line-height: 0 }
-.adm .adm-mark img { display: block; width: 128px; height: auto }
+/* Their white mark, trimmed. The file they ship is 320x132 of canvas holding
+   155x74 of artwork, so left-aligning the <img> still left the mark itself
+   sitting well in from the nav rows below it. Trimmed to its own bounding box
+   it aligns on the sidebar's own padding like everything else. */
+.adm .adm-mark { display: block; line-height: 0; margin-left: 2px }
+.adm .adm-mark img { display: block; width: 124px; height: auto }
 .adm .adm-mark:hover { opacity: .78 }
 .adm .adm-side-kicker {
   font-family: var(--font-c); font-weight: 600; text-transform: uppercase;

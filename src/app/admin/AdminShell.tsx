@@ -52,7 +52,7 @@ export function AdminShell({
                 behind it on a near-black sidebar. */}
             <Link href="/" className="adm-mark" aria-label="Mermade Market, back to the public site">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/theme/img/Mermade-Market-Icon-white.png" alt="" width={320} height={132} />
+              <img src="/theme/img/mermade-mark-white-trimmed.png" alt="" width={155} height={74} />
             </Link>
             <span className="adm-side-kicker">Admin</span>
           </div>
