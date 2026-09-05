@@ -7,8 +7,8 @@ import { z } from 'zod'
 import { db } from '@/db'
 import { activeShow, activeAddOns, pgCode } from '@/db/queries'
 import {
-  shows, vendors, applications, bookings, spaceTypes, addOns, auditLog,
-  emailOutbox, subscribers, CATEGORIES, type ApplicationStatus,
+  shows, vendors, applications, bookings, bookingAddons, spaceTypes, addOns,
+  auditLog, emailOutbox, subscribers, CATEGORIES, type ApplicationStatus,
 } from '@/db/schema'
 import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
 import { usd } from '@/lib/money'
@@ -382,17 +382,45 @@ export async function decide(fd: FormData): Promise<void> {
           await db.update(vendors).set({ vendorCode: code }).where(eq(vendors.id, vendor.id))
         }
 
+        // The add-ons they asked for on the application. Requests until this
+        // moment; from here they are money, so the price is SNAPSHOTTED onto
+        // booking_addons the same way commission_bps is (docs/03-DATA-MODEL.md
+        // §6). Repricing an add-on later never changes what this maker owes.
+        //
+        // A code that is no longer offered is dropped rather than guessed at,
+        // and the drop is on the audit row so it is visible in review.
+        let wanted: string[] = []
+        try { wanted = JSON.parse(app.requestedAddons) } catch { /* pre-0002 row */ }
+        const offered = wanted.length > 0 ? await activeAddOns(show.id) : []
+        const granted = offered.filter(
+          (a) => wanted.includes(a.code) && (a.track === null || a.track === app.track),
+        )
+        const dropped = wanted.filter((c) => !granted.some((a) => a.code === c))
+        const addonsCents = granted.reduce((sum, a) => sum + a.priceCents, 0)
+
         const due = new Date(Date.now() + show.paymentWindowHours * 3600_000).toISOString()
         const bookingId = randomUUID()
         await db.insert(bookings).values({
           id: bookingId, showId: show.id, vendorId: vendor.id, applicationId: appId,
           spaceTypeId: space.id, vendorCode: code,
           priceCents: space.priceCents,
+          addonsCents,
           commissionBps: show.commissionBps,   // immutable snapshot
           status: 'awaiting_payment', paymentDueAt: due,
         })
-        await log('booking', bookingId, 'created', null,
-          { priceCents: space.priceCents, commissionBps: show.commissionBps, code })
+        for (const a of granted) {
+          await db.insert(bookingAddons).values({
+            id: randomUUID(), bookingId, addOnId: a.id, priceCents: a.priceCents,
+          })
+        }
+        await log('booking', bookingId, 'created', null, {
+          priceCents: space.priceCents,
+          addonsCents,
+          addons: granted.map((a) => ({ code: a.code, priceCents: a.priceCents })),
+          droppedAddons: dropped,
+          commissionBps: show.commissionBps,
+          code,
+        })
 
         await mail(
           vendor.email,
@@ -401,6 +429,8 @@ export async function decide(fd: FormData): Promise<void> {
             + `${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${show.venueName}\n`
             + `Your vendor code is ${code}. Tag every item ${code} plus the price. That's all the register needs.\n\n`
             + `Space: ${space.label}\nBooth fee: ${usd(space.priceCents)}\n`
+            + granted.map((a) => `${a.name}: ${usd(a.priceCents)}\n`).join('')
+            + (granted.length > 0 ? `Total: ${usd(space.priceCents + addonsCents)}\n` : '')
             + `${app.track === 'indoor' ? `Commission: ${show.commissionBps / 100}% on indoor sales\n` : ''}`
             + `\nPay to confirm within ${show.paymentWindowHours} hours. After that the space returns to the pool.\n\n— Mermade Market`,
           'accepted',
