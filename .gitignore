@@ -6,3 +6,14 @@ node_modules
 *.db-shm
 *.db-wal
 /public/build-info.json
+
+# Scratch files. A throwaway query script written at the repo root got swept
+# into a commit by `git add -A`; these patterns stop that recurring.
+/.peek.ts
+/.realrow*.ts
+/*.peek.ts
+
+# Body-face candidates for the typography comparison. A proposal, not a
+# dependency: only the face that actually gets chosen moves up into
+# public/theme/fonts/ and gets committed.
+/public/theme/fonts/candidates/
