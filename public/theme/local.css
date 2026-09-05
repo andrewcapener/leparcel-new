@@ -1602,3 +1602,19 @@ h3, .h3 { line-height: 1.15; }
   text-transform: none;
   color: rgb(var(--text-color) / 0.62);
 }
+
+/* The inspiration links, at the top of each "how to display" section.
+   They were a "Click here" eleven hundred characters into two thousand, inside
+   a collapsed accordion: present, and unfindable. A maker planning a space is
+   the person who most wants to see one, so the section opens with them. */
+.mk-sections .disclosure__content .mk-inspo {
+  margin: 0 0 1.1em;
+  padding: 0.85em 1em;
+  border-left: 2px solid rgb(var(--heading-color));
+  background: rgb(var(--text-color) / 0.035);
+}
+.mk-sections .disclosure__content .mk-inspo a {
+  color: rgb(var(--link-color));
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
