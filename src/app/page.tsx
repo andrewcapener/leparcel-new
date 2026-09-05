@@ -95,6 +95,64 @@ export default async function Home() {
           <div className="v num">2015</div>
         </div>
       </div>
+      {/* ── rich-text · "SHOP SMALL. Think BIG." ─────────────────── */}
+      <section className="mission">
+        <h2>Shop small. <em>Think big.</em></h2>
+        <p>{C.mission}</p>
+      </section>
+
+      {/* ── map · venue, address, hours, directions ──────────────── */}
+      <section className="venue">
+        <Photo src="/photos/venue.jpg" alt={`${show.venueName}, Dana Point`} sizes="(max-width:900px) 100vw, 52vw" />
+        <div className="tx">
+          <h2>{show.name} at the {show.venueName}</h2>
+          <div className="ad">{show.venueAddress}</div>
+          <div className="hrs">
+            {show.hoursNote.split(' · ').map((d) => {
+              const [day, ...rest] = d.split(', ')
+              return (
+                <div key={d}>
+                  <span className="d">{day}</span>
+                  <span className="num">{rest.join(', ')}</span>
+                </div>
+              )
+            })}
+          </div>
+          <div>
+            <a
+              className="btn"
+              target="_blank"
+              rel="noreferrer"
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(show.venueAddress)}`}
+            >
+              Directions
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── scrolling-banner ─────────────────────────────────────── */}
+      <div className="marquee" aria-hidden="true">
+        <div className="track">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span key={i}>Shop small · Think big · Mermade Market · </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── multi-column · the days, off the Show record ──────────── */}
+      <div className="days">
+        {show.hoursNote.split(' · ').map((d) => {
+          const [day, ...rest] = d.split(', ')
+          return (
+            <div className="c" key={d}>
+              <div className="n">{day}</div>
+              <div className="t num">{rest.join(', ')}</div>
+            </div>
+          )
+        })}
+      </div>
+
       {C.press.verified && (
         <div className="pressline">
           <span className="q">“{C.press.quote}”</span>

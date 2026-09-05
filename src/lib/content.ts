@@ -33,6 +33,16 @@ export const founderLetter = {
   photoIsPlaceholder: true,
 }
 
+/**
+ * The tagline block that sits under the hero on the old site's home page
+ * (its rich-text section). Their line, their mission, written to
+ * docs/12-VOICE.md rather than lifted word for word.
+ */
+export const mission =
+  'A hand-curated market that puts independent makers in front of the people '
+  + 'who came looking for them. Two shows a year in Dana Point, free to walk '
+  + 'into, and every shop in the room chosen on purpose.'
+
 export const claim = {
   eyebrow: 'The market',
   lead: 'We look at everything, and we say ',
