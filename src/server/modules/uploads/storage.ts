@@ -15,7 +15,7 @@
  * needs to reach the browser bundle.
  */
 import {
-  SNIFF_BYTES, isPhotoKey, isPhotoType, sniffPhotoType,
+  SNIFF_BYTES, PHOTO_TYPES, isPhotoKey, isPhotoType, sniffPhotoType,
   MAX_PHOTO_BYTES, type PhotoType,
 } from './photos'
 import { photoUploads, redactUpload, type PhotoUploads } from './config'
@@ -44,6 +44,52 @@ export function publicPhotoUrl(key: string, cfg = photoUploads()): string | null
   return `${cfg.baseUrl}/storage/v1/object/public/${cfg.bucket}/${encodeKey(key)}`
 }
 
+/**
+ * Create the bucket, once, if it is not there.
+ *
+ * Setting up uploads used to be two steps in two different places: paste the
+ * service role key into Vercel, then remember to make a bucket in Supabase
+ * with the right name and the right visibility. The key half is a secret and
+ * has to be done by a person. The bucket half is not: the name is ours, the
+ * settings are ours, and getting either wrong fails at the moment a maker
+ * tries to upload rather than at the moment somebody could fix it. So we make
+ * it ourselves, with the limits already applied.
+ *
+ * Public, because config.ts explains at length why these particular objects
+ * are public. Capped at MAX_PHOTO_BYTES and restricted to the image types we
+ * accept, so the bucket enforces at the edge what the route and the submit
+ * check enforce in code.
+ *
+ * A 409 means somebody else created it first, which is success. Anything else
+ * is reported by the caller that asked for it.
+ */
+let bucketEnsured = false
+
+async function ensureBucket(cfg: PhotoUploads): Promise<void> {
+  if (bucketEnsured) return
+  const res = await fetch(`${cfg.baseUrl}/storage/v1/bucket`, {
+    method: 'POST',
+    headers: { ...headers(cfg), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: cfg.bucket,
+      name: cfg.bucket,
+      public: true,
+      file_size_limit: MAX_PHOTO_BYTES,
+      allowed_mime_types: [...PHOTO_TYPES],
+    }),
+    signal: AbortSignal.timeout(SIGN_TIMEOUT_MS),
+    cache: 'no-store',
+  })
+  if (res.ok || res.status === 409) {
+    bucketEnsured = true
+    if (res.ok) console.log(`[uploads] created storage bucket "${cfg.bucket}"`)
+    return
+  }
+  throw new Error(
+    redactUpload(`could not create bucket: HTTP ${res.status} ${(await res.text()).slice(0, 200)}`),
+  )
+}
+
 export type SignedUpload = { key: string; uploadUrl: string; publicUrl: string }
 
 /**
@@ -60,7 +106,7 @@ export async function signPhotoUpload(key: string): Promise<SignedUpload> {
   if (!cfg) throw new Error('Photo uploads are not configured')
   if (!isPhotoKey(key)) throw new Error('Refusing to sign an unrecognised key')
 
-  const res = await fetch(
+  const sign = () => fetch(
     `${cfg.baseUrl}/storage/v1/object/upload/sign/${cfg.bucket}/${encodeKey(key)}`,
     {
       method: 'POST',
@@ -70,6 +116,17 @@ export async function signPhotoUpload(key: string): Promise<SignedUpload> {
       cache: 'no-store',
     },
   )
+
+  let res = await sign()
+  // The bucket is created on the first upload of a deployment rather than up
+  // front, so that a project which already has one never pays for the call.
+  if (res.status === 400 || res.status === 404) {
+    const why = await res.clone().text()
+    if (/bucket not found/i.test(why)) {
+      await ensureBucket(cfg)
+      res = await sign()
+    }
+  }
   if (!res.ok) {
     throw new Error(redactUpload(`sign failed: HTTP ${res.status} ${(await res.text()).slice(0, 300)}`))
   }
