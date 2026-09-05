@@ -1434,3 +1434,82 @@ h3, .h3 { line-height: 1.15; }
   line-height: 1.5;
 }
 .account-form .ap-form textarea { padding-block: 0.9em; }
+
+/* ── The accordions ───────────────────────────────────────────────────────
+   Every FAQ on the site is one component: the shopper FAQ, the prices and
+   rules on /apply, and the long rules on both maker pages. So this is the
+   one place to lift them, and lifting one lifts all four.
+
+   Symmetry's own mechanics are already right: a real <details>, and a marker
+   built from two 1px bars where one rotates away on open, which is the plus
+   becoming a minus. What was wrong was scale. A 1.3em question with 20px of
+   padding reads as a list of links, not as a set of questions worth opening,
+   and the marker sat at 11px where the eye could not find it.
+
+   The question is the thing you scan, so it takes heading ink and heading
+   size. The row gets room. The marker gets found. */
+.collapsible-tabs__tab .disclosure__title {
+  padding-top: 26px;
+  padding-bottom: 26px;
+  padding-right: 52px;
+  font-size: clamp(1.0625rem, 1.6vw, 1.3125rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgb(var(--heading-color));
+  text-wrap: balance;
+  transition: color 140ms ease;
+}
+.collapsible-tabs__tab .disclosure__title:hover { color: rgb(var(--link-color)); }
+.collapsible-tabs__tab .disclosure__title:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+/* The marker: bigger, and set in from the edge so it reads as part of the
+   row rather than hard against the rule. */
+.collapsible-tabs__tab .disclosure__title::before,
+.collapsible-tabs__tab .disclosure__title::after {
+  width: 15px;
+  height: 1.5px;
+  right: 4px;
+  transition: transform 260ms cubic-bezier(.4, 0, .2, 1), opacity 200ms ease;
+}
+
+/* Hairlines, and no doubled rule where two blocks meet. */
+.collapsible-tabs .disclosure { border-top: 0; border-bottom: 0; }
+.collapsible-tabs__tab {
+  border-bottom: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+}
+.collapsible-tabs__block:first-of-type .collapsible-tabs__tab {
+  border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+}
+
+/* The answer sits at a reading measure under a question that can run wider,
+   and keeps its distance from the next question. */
+.collapsible-tabs__tab .disclosure__content {
+  max-width: 68ch;
+  padding-bottom: 30px;
+  font-size: var(--base-text-size);
+  line-height: 1.7;
+}
+.collapsible-tabs__tab .disclosure__content > :first-child { margin-top: 0; }
+.collapsible-tabs__tab .disclosure__content > :last-child { margin-bottom: 0; }
+
+/* The group heading is a label over its set, not another title competing with
+   the page's own. */
+.collapsible-tabs__heading {
+  margin-top: 2.6em;
+  margin-bottom: 0.9em;
+  font-family: var(--nav-font-family);
+  font-size: var(--smaller-text-size-1);
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapsible-tabs__tab .disclosure__title,
+  .collapsible-tabs__tab .disclosure__title::before,
+  .collapsible-tabs__tab .disclosure__title::after { transition: none; }
+}
