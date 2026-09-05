@@ -12,8 +12,16 @@ async function signIn(fd: FormData) {
   if (!password) redirect(process.env.NODE_ENV !== 'production' ? target : '/admin/login?err=1')
   // Trimmed on both sides: password managers and mobile keyboards append a
   // space often enough that it is worth not failing on it.
-  if (String(fd.get('password')).trim() !== password) {
-    redirect(`/admin/login?err=1&next=${encodeURIComponent(target)}`)
+  const typed = String(fd.get('password')).trim()
+  if (typed !== password) {
+    // Carry both lengths back. A mismatch there means the password being
+    // typed is simply not the one configured, which is the difference
+    // between "I need the right password" and "the admin is broken" — and
+    // that difference is otherwise invisible from the outside.
+    redirect(
+      `/admin/login?err=1&len=${typed.length}&want=${password.length}`
+      + `&next=${encodeURIComponent(target)}`,
+    )
   }
 
   const jar = await cookies()
@@ -30,7 +38,7 @@ async function signIn(fd: FormData) {
 export default async function AdminLogin({
   searchParams,
 }: {
-  searchParams: Promise<{ err?: string; next?: string }>
+  searchParams: Promise<{ err?: string; next?: string; len?: string; want?: string }>
 }) {
   const sp = await searchParams
   return (
@@ -46,7 +54,14 @@ export default async function AdminLogin({
         <label className="field" htmlFor="password">
           <span className="lb">Password</span>
           <input className="inp" id="password" name="password" type="password" autoFocus required />
-          {sp.err && <span className="err">That password is not right.</span>}
+          {sp.err && (
+            <span className="err">
+              That password is not right.
+              {sp.len && sp.want && sp.len !== sp.want && (
+                <> You typed {sp.len} characters; this deployment expects {sp.want}.</>
+              )}
+            </span>
+          )}
         </label>
         <button className="btn" type="submit" style={{ marginTop: 14, width: '100%' }}>
           Sign in

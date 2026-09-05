@@ -6,7 +6,15 @@ export default async function proxy(req: NextRequest) {
   if (pathname === '/admin/login') return NextResponse.next()
 
   if (process.env.NODE_ENV === 'production' && !adminPassword()) {
-    return new NextResponse('Admin is locked: ADMIN_PASSWORD is not configured.', { status: 503 })
+    // Naming the environment matters: the usual cause is a preview or
+    // branch deployment that never got the variable, which from the outside
+    // is indistinguishable from the admin being broken.
+    const envName = process.env.VERCEL_ENV ?? 'this deployment'
+    return new NextResponse(
+      `Admin is locked: neither ADMIN_PASSWORD nor ADMIN_PASS is set for ${envName}. `
+      + 'Set one in the hosting environment and redeploy.',
+      { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' } },
+    )
   }
 
   const ok = await isValidSession(req.cookies.get(ADMIN_COOKIE)?.value)
