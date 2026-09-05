@@ -25,13 +25,17 @@ Environment variables:
 | `SHEETS_TAB` | no | Which tab to write. Defaults to `Applications`, and is created if missing. |
 | `SHEETS_WEBHOOK_URL` | fallback | Apps Script web app `/exec` URL, used only when the service account is not set. |
 | `SHEETS_WEBHOOK_SECRET` | with the above | The shared secret the Apps Script checks. |
+| `SUPABASE_URL` | to take photographs | The project URL, e.g. `https://abcdefgh.supabase.co`. `NEXT_PUBLIC_SUPABASE_URL` is read as a fallback because that is the name the dashboard prints. |
+| `SUPABASE_SERVICE_ROLE_KEY` | with the above | Server only. It signs the upload URLs and reads objects back to check them. It never reaches a browser and never appears in a log or an error. |
+| `SUPABASE_PHOTOS_BUCKET` | no | Which bucket the photographs go in. Defaults to `application-photos`. |
 
 Seeding: `SEED_MODE=show npm run db:seed` seeds only the show and prices (production);
 the default seeds 30 demo applicants too. A non-empty database is never wiped unless
 `SEED_FORCE=1` is set.
 
-`npm test` runs the commission property test (200,000 randomized cases) and the
-Sheets sync tests (row mapping, retry policy, transport selection).
+`npm test` runs the commission property test (200,000 randomized cases), the
+Sheets sync tests (row mapping, retry policy, transport selection), and the
+photo upload tests (storage key format, the posted field, the byte sniff).
 
 ---
 
@@ -112,6 +116,88 @@ run, the sync still posts and simply cannot remember, so run it.
 
 ---
 
+## One photograph on the application
+
+The jury queue leads on the work: every row in `/admin/jury` opens on
+`applications.photos[0]`. Until now the form never asked for an image, so the
+only photo path in the product was a line of copy asking makers to email one
+to a person.
+
+The form now takes **one photograph, optional**. Optional on purpose: the
+application has to be as easy as it can be, and Instagram and Website are
+both required fields, which is how the jury has always looked at a maker's
+work. The field says why in one line and never blocks a submit.
+
+The column is still a JSON array and the whole path is written for a list, so
+raising the cap is one constant (`MAX_PHOTOS` in
+`src/server/modules/uploads/photos.ts`) and no migration.
+
+**The bytes never pass through this server.** The browser asks
+`/api/uploads/application-photos` for a short-lived signed upload URL and PUTs
+the file straight to Supabase. The server names the key, gates on the
+application window, and checks the object before the application is written.
+
+### The bucket, once
+
+1. Supabase dashboard ▸ **Storage ▸ New bucket**.
+2. Name it **`application-photos`**, and mark it **Public**.
+3. Leave the policies alone. Public means public *reads*; writes still need a
+   signed URL, and only this server can mint one.
+4. Optional but sensible: set the bucket's file size limit to **10 MB** and
+   its allowed MIME types to `image/jpeg, image/png, image/webp, image/heic,
+   image/heif`, which is the same allowlist the code enforces.
+5. In Vercel ▸ Settings ▸ Environment Variables set `SUPABASE_URL` and
+   `SUPABASE_SERVICE_ROLE_KEY` (Settings ▸ API ▸ `service_role`, the secret
+   one, not `anon`). Redeploy: env vars are baked in at build time.
+
+`/api/health` reports `photos: { configured, bucket, host }`, or which
+variable is missing.
+
+### Public, and why
+
+Application photographs are the maker's own promotional work, the same images
+already on the Instagram account the form requires. Nothing in them is
+personal data held on someone's behalf, and the jury reads a hundred cards at
+a time: signed URLs expire, so a contact sheet would have to mint hundreds per
+render and no browser or CDN could cache any of them.
+
+So the bucket is public with unguessable keys:
+`applications/{show}/{uuid}/{uuid}.{ext}`, with no name, no email and never
+the maker's own filename in it. Listing is not public, so there is nothing to
+enumerate.
+
+**PII documents are a different bucket.** W-9s, seller's permits and IDs go in
+a private bucket behind short-TTL signed URLs, per CLAUDE.md rule 9. That is
+not this bucket and not this code.
+
+The full reasoning is in the header of `src/server/modules/uploads/config.ts`,
+which is where to change it if the call is ever revisited.
+
+### What the server checks
+
+- **The key.** Only a key this app could have minted is accepted, so a
+  hand-built POST cannot walk out of the prefix or point at another bucket.
+- **The bytes.** One ranged GET reads the object's real size out of
+  `content-range` and its real format out of the first two dozen bytes. The
+  content type the browser declared is a claim and is never taken on its own;
+  a PDF, an SVG or an MP4 renamed `.jpg` is refused.
+- **The window.** Upload URLs are minted only while applications are open, or
+  for a staff browser carrying the launch-preview cookie.
+
+A photograph that fails is dropped and the reason goes on the audit row. It
+never costs a maker their application.
+
+`npm test` covers the key format, the posted field, and the byte sniff.
+
+### Housekeeping
+
+An abandoned application leaves its upload behind. The keys are unguessable
+and an image is fractions of a cent, so nothing breaks; when it is worth
+tidying, everything for a season is under one prefix,
+`applications/{show_id}/`.
+
+---
+
 ## What to click, in order
 
 | Step | Where | What to look for |
@@ -171,6 +257,7 @@ src/
     apply/              prospectus + the application form
     admin/              jury · roster · show settings · outbox
     api/calendar/       .ics generation
+    api/uploads/        signed upload URLs for the application photograph
     actions.ts          every server action; all writes go through here
   components/
     Wordmark.tsx        the real mark, as inline SVG
@@ -178,6 +265,9 @@ src/
   db/
     schema.ts           the subset of 03-DATA-MODEL.md this slice needs
     seed.ts             1 show, 10 space types, 4 add-ons, 30 applicants
+  server/modules/
+    sheets/             the Google Sheet sync
+    uploads/            the photograph rules, the bucket, and the byte check
   lib/
     money.ts            integer cents; the only place commission is computed
     money.test.ts       the property test CLAUDE.md rule 2 requires

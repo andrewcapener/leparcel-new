@@ -1,13 +1,16 @@
-import { eq, and, desc, sql } from 'drizzle-orm'
+import Link from 'next/link'
+import { eq, and, desc, inArray, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import {
   applications, vendors, spaceTypes, bookings,
   APPLICATION_STATUSES, type ApplicationStatus,
 } from '@/db/schema'
-import { fmtDate } from '@/lib/dates'
-import Link from 'next/link'
-import { ApplicationCard } from './ApplicationCard'
+import { fmtDateTime } from '@/lib/dates'
+import { bpsLabel } from '@/lib/money'
+import { PageHead, Stats, Stat, Tabs, Tab } from '../ui'
+import { Icon } from '../Icon'
+import { ApplicationRow } from './ApplicationRow'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,18 +24,19 @@ const LABEL: Record<ApplicationStatus, string> = {
 const num = (v: number | string | null | undefined) => Number(v ?? 0)
 
 /**
- * The jury queue, as a contact sheet.
+ * The jury queue.
  *
- * A juror works through roughly a hundred applications in a sitting and is
- * judging one thing: the work. So the work is what the page is made of. The
- * counting questions are answered once at the top (tiles, spaces left,
- * category balance) and then the screen is photographs.
+ * A dense table, not a contact sheet. The season this is being built for
+ * expects hundreds of applications, and a grid of cards at that volume is
+ * several screens of scrolling before the first decision. The thumbnail
+ * identifies the maker; the chevron expands the row in place when the work
+ * itself needs looking at; the shop name opens the full review, which is
+ * where deciding happens and where the photographs are full size.
  *
- * What used to be here was a seven-column table carrying five decision pills
- * on every row: five hundred identical buttons down the page, with the work
- * itself reduced to two 52px thumbnails in the first column. Nothing led,
- * nothing receded. Deciding now happens on the review screen, where the work
- * is full size and the sticky rail already holds the decision.
+ * The counting questions are answered once above the table: how many spaces
+ * are left on each track, and which categories are already carrying three
+ * makers. The status filter is the tab strip, so the counts and the
+ * navigation are one control rather than two that can disagree.
  */
 export default async function Jury({
   searchParams,
@@ -40,8 +44,8 @@ export default async function Jury({
   searchParams: Promise<{ status?: string }>
 }) {
   const { status } = await searchParams
-  const active = (APPLICATION_STATUSES as readonly string[]).includes(status ?? '')
-    ? (status as ApplicationStatus)
+  const active = status === 'all' || (APPLICATION_STATUSES as readonly string[]).includes(status ?? '')
+    ? (status as ApplicationStatus | 'all')
     : 'new'
 
   const show = await activeShow()
@@ -52,22 +56,22 @@ export default async function Jury({
     .from(applications)
     .where(eq(applications.showId, show.id))
     .groupBy(applications.status)
-  const countOf = (s: string) => counts.find((c) => c.status === s)?.n ?? 0
+  const countOf = (s: string) => num(counts.find((c) => c.status === s)?.n)
+  const total = counts.reduce((a, c) => a + num(c.n), 0)
 
   const rows = await db
-    .select({
-      app: applications,
-      vendor: vendors,
-      space: spaceTypes,
-    })
+    .select({ app: applications, vendor: vendors, space: spaceTypes })
     .from(applications)
     .innerJoin(vendors, eq(applications.vendorId, vendors.id))
     .leftJoin(spaceTypes, eq(applications.spaceTypeId, spaceTypes.id))
-    .where(and(eq(applications.showId, show.id), eq(applications.status, active)))
+    .where(and(
+      eq(applications.showId, show.id),
+      ...(active === 'all' ? [] : [eq(applications.status, active)]),
+    ))
     .orderBy(desc(applications.submittedAt))
 
-  /* Category balance — encodes the actual curation rule ("one to three makers
-     per category") into the tool instead of leaving it to memory.
+  /* Category balance, which encodes the actual curation rule ("one to three
+     makers per category") into the tool instead of leaving it to memory.
      docs/01-PRODUCT-SPEC.md §3.2 */
   const balance = await db
     .select({ category: applications.category, n: sql<number>`count(*)` })
@@ -81,78 +85,84 @@ export default async function Jury({
     .from(bookings)
     .where(eq(bookings.showId, show.id))
 
-  /* Spaces remaining, per track, because they fill at different speeds and one
-     combined number hides the track that is already full. A `both` acceptance
-     holds a space on each side. Capacities live on the Show record. */
+  /* Spaces remaining, per track, because they fill at different speeds and
+     one combined number hides the track that is already full. A `both`
+     acceptance holds a space on each side. Capacities live on the Show. */
   const acceptedByTrack = await db
     .select({ track: applications.track, n: sql<number>`count(*)` })
     .from(applications)
     .where(and(eq(applications.showId, show.id), eq(applications.status, 'accepted')))
     .groupBy(applications.track)
   const held = (track: 'indoor' | 'outdoor') =>
-    acceptedByTrack
-      .filter((r) => r.track === track || r.track === 'both')
+    acceptedByTrack.filter((r) => r.track === track || r.track === 'both')
       .reduce((a, r) => a + num(r.n), 0)
   const indoorLeft = show.indoorCapacity - held('indoor')
   const outdoorLeft = show.outdoorCapacity - held('outdoor')
 
-  const undecided = num(countOf('new')) + num(countOf('under_review')) + num(countOf('shortlist'))
+  const undecided = countOf('new') + countOf('under_review') + countOf('shortlist')
+
+  /* The next application still to decide, newest first, in the same order
+     the tabs walk. It is the one action this screen has, so it is the one
+     black button on it. */
+  const [nextUp] = await db
+    .select({ id: applications.id })
+    .from(applications)
+    .where(and(
+      eq(applications.showId, show.id),
+      inArray(applications.status, ['new', 'under_review', 'shortlist']),
+    ))
+    .orderBy(desc(applications.submittedAt))
+    .limit(1)
+
+  const tab = (s: ApplicationStatus | 'all') => `/admin/jury?status=${s}`
+  const heading = active === 'all' ? 'Every application' : LABEL[active]
 
   return (
-    <div style={{ padding: '26px 26px 80px' }}>
-      <header className="jr-h">
-        <h1>Jury · {show.name}</h1>
-        <span className="meta">
-          Applications close {fmtDate(show.applicationsCloseAt)} ·{' '}
-          {show.commissionBps / 100}% commission · {show.paymentWindowHours}h payment window
-        </span>
-      </header>
-
-      {/* The counting questions, answered before the reviewer scrolls: how many
-          sit in each state, and which one to open next. Every tile is the
-          filter for its own column, so the counts and the navigation are one
-          control rather than a tab strip repeating the numbers. */}
-      <nav className="jr-stats" aria-label="Filter the queue by state">
-        {APPLICATION_STATUSES.map((s) => (
-          <Link
-            key={s}
-            href={`/admin/jury?status=${s}`}
-            className="jr-stat"
-            aria-current={s === active ? 'page' : undefined}
-          >
-            <span className="k">{LABEL[s]}</span>
-            <div className="v">{countOf(s)}</div>
+    <>
+      <PageHead
+        title="Review queue"
+        sub={`${total} ${total === 1 ? 'application' : 'applications'} to ${show.name} · applications close ${fmtDateTime(show.applicationsCloseAt)} · ${bpsLabel(show.commissionBps)} commission`}
+      >
+        {nextUp && (
+          <Link className="adm-btn" href={`/admin/applications/${nextUp.id}?from=${active}`}>
+            <Icon name="chevron" size={16} />
+            Next to decide
           </Link>
-        ))}
-        <div className="jr-stat" data-warn={indoorLeft < 0 ? '1' : undefined}>
-          <span className="k">Indoor left</span>
-          <div className="v">{indoorLeft}<small> of {show.indoorCapacity}</small></div>
-        </div>
-        <div className="jr-stat" data-warn={outdoorLeft < 0 ? '1' : undefined}>
-          <span className="k">Outdoor left</span>
-          <div className="v">{outdoorLeft}<small> of {show.outdoorCapacity}</small></div>
-        </div>
-        <div className="jr-stat">
-          <span className="k">Booked spaces</span>
-          <div className="v">{sold}</div>
-        </div>
-      </nav>
+        )}
+      </PageHead>
 
-      <div className="jr-strip">
-        <span className="g">
-          <span className="k">Still to decide</span>
-          <span className="num">{undecided}</span>
-        </span>
+      <Stats>
+        <Stat
+          label="Still to decide" icon="clock" value={undecided}
+          note={`${countOf('new')} new, ${countOf('under_review')} under review, ${countOf('shortlist')} shortlisted.`}
+        />
+        <Stat
+          label="Indoor left" icon="roster" value={indoorLeft} unit={`of ${show.indoorCapacity}`}
+          warn={indoorLeft < 0}
+          note="Consignment at the central register."
+        />
+        <Stat
+          label="Outdoor left" icon="tent" value={outdoorLeft} unit={`of ${show.outdoorCapacity}`}
+          warn={outdoorLeft < 0}
+          note="Booth licence, no commission."
+        />
+        <Stat
+          label="Spaces booked" icon="money" value={num(sold)}
+          note="Bookings created on acceptance, paid or awaiting payment."
+        />
+      </Stats>
+
+      <div className="adm-strip">
         <span className="g">
           <span className="k">Accepted by category</span>
           {balance.length === 0
-            ? <span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-lbl)' }}>nothing accepted yet</span>
+            ? <span className="mono">nothing accepted yet</span>
             : balance.map((b) => (
                 <span
                   key={b.category}
-                  className="chip"
+                  className="adm-tag"
                   data-warn={num(b.n) > 3 ? '1' : undefined}
-                  title={num(b.n) > 3 ? 'Over the one-to-three-per-category rule' : undefined}
+                  title={num(b.n) > 3 ? 'Over the one to three per category rule' : undefined}
                 >
                   {b.category} {b.n}
                 </span>
@@ -160,19 +170,56 @@ export default async function Jury({
         </span>
       </div>
 
-      <h2 className="jr-h2" id="jr-sheet-h">
-        {LABEL[active]} · {rows.length} {rows.length === 1 ? 'application' : 'applications'}, newest first
-      </h2>
+      <Tabs label="Filter the queue by state">
+        <Tab href={tab('all')} label="All" count={total} on={active === 'all'} />
+        {APPLICATION_STATUSES.map((s) => (
+          <Tab key={s} href={tab(s)} label={LABEL[s]} count={countOf(s)} on={active === s} />
+        ))}
+      </Tabs>
 
       {rows.length === 0 ? (
-        <p className="jr-empty">Nothing in {LABEL[active]}.</p>
+        <p className="adm-empty">Nothing in {heading.toLowerCase()}.</p>
       ) : (
-        <ul className="jr-sheet" aria-labelledby="jr-sheet-h">
+        <table className="adm-tbl" style={{ marginTop: 4 }}>
+          <caption className="adm-sr">
+            {heading}, {rows.length} {rows.length === 1 ? 'application' : 'applications'} to{' '}
+            {show.name}, newest first. Each row expands to show the work.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col"><span className="adm-sr">Photograph</span></th>
+              <th scope="col">Maker</th>
+              <th scope="col" className="c-1">Category</th>
+              <th scope="col" className="c-2">Track</th>
+              <th scope="col" className="r c-2">Price band</th>
+              <th scope="col" className="c-3">Flags</th>
+              <th scope="col" className="c-1">Status</th>
+              <th scope="col" className="r"><span className="adm-sr">Triage</span></th>
+              <th scope="col" className="r"><span className="adm-sr">Expand</span></th>
+            </tr>
+          </thead>
           {rows.map(({ app, vendor }) => (
-            <ApplicationCard key={app.id} app={app} vendor={vendor} from={active} />
+            <ApplicationRow key={app.id} app={app} vendor={vendor} from={active} />
           ))}
-        </ul>
+        </table>
       )}
-    </div>
+
+      <div className="adm-foot">
+        <p className="adm-note">
+          <strong>The chevron expands a row in place</strong> with the rest of the photographs and
+          the maker&rsquo;s own words, so the work can be looked at without losing your place.
+          Opening the shop name goes to the full review, where the decision is made.
+        </p>
+        <p className="adm-note">
+          <strong>There is no scoring.</strong> The team judges the work and says so. Notes and the
+          decision live on the review screen, and every move is audit-logged.
+        </p>
+        <p className="adm-note">
+          <strong>Paperwork is not shown here.</strong> A seller&rsquo;s permit has no bearing on
+          whether the work is good, so compliance is enforced on the roster after acceptance,
+          where the duty actually attaches.
+        </p>
+      </div>
+    </>
   )
 }

@@ -48,16 +48,13 @@ export default async function AdminLogin({
 }) {
   const sp = await searchParams
   return (
-    <div style={{ minHeight: '70vh', display: 'grid', placeItems: 'center', padding: 26 }}>
-      <form action={signIn} style={{ width: 320 }}>
-        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 'var(--t-d3)', marginBottom: 6 }}>
-          Staff sign-in
-        </h1>
-        <p style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginBottom: 20 }}>
-          Mermade Market admin
-        </p>
+    <div className="adm-login">
+      <form action={signIn}>
+        <span className="adm-plate plate">Mermade</span>
+        <h1 className="adm-title" style={{ fontSize: 30 }}>Staff sign-in</h1>
+        <p className="adm-sub">Mermade Market admin</p>
         <input type="hidden" name="next" value={sp.next ?? '/admin/jury'} />
-        <label className="field" htmlFor="password">
+        <label className="adm-field" htmlFor="password" style={{ marginTop: 26 }}>
           <span className="lb">Password</span>
           <input className="inp" id="password" name="password" type="password" autoFocus required />
           {sp.err && (
@@ -68,7 +65,7 @@ export default async function AdminLogin({
             </span>
           )}
         </label>
-        <button className="btn" type="submit" style={{ marginTop: 14, width: '100%' }}>
+        <button className="adm-btn" type="submit" style={{ width: '100%', justifyContent: 'center' }}>
           Sign in
         </button>
       </form>

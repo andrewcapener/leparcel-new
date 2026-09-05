@@ -1,17 +1,14 @@
-import { Fragment } from 'react'
 import { desc } from 'drizzle-orm'
 import { db } from '@/db'
 import { emailOutbox } from '@/db/schema'
 import { fmtDate, fmtDateTime } from '@/lib/dates'
+import { PageHead, Stats, Stat } from '../ui'
+import { Icon } from '../Icon'
 
 export const dynamic = 'force-dynamic'
 
 const LIMIT = 50
-
-/** Five columns, shared by the header row and every message row. */
-const MAIL_COLS = {
-  '--op-cols': '84px 156px minmax(150px,1fr) minmax(0,1.75fr) 88px 58px',
-} as React.CSSProperties
+const COLS = 6
 
 /** `application_received` reads as "Application received" to a person. */
 const kindOf = (t: string) => {
@@ -33,7 +30,8 @@ const timeOf = (iso: string) => {
  * The record of every message the system has sent. Grouped by the day it went
  * out and scannable across time, kind, recipient and subject, with the body
  * opening in place so checking what a maker actually received never costs a
- * page load.
+ * page load. Same expanding row as the review queue: a checkbox and a CSS
+ * `:has()` rule, so it works with JavaScript off.
  */
 export default async function Outbox() {
   const mails = await db.select().from(emailOutbox).orderBy(desc(emailOutbox.sentAt)).limit(LIMIT)
@@ -45,130 +43,141 @@ export default async function Outbox() {
     .map((t) => ({ t, n: mails.filter((m) => m.template === t).length }))
     .sort((a, b) => b.n - a.n)
 
-  /* Newest first, so a run of messages sent on one day is already contiguous
-     and the days fall out of one pass. */
-  const days: Array<{ day: string; items: typeof mails }> = []
-  for (const m of mails) {
-    const day = fmtDate(m.sentAt)
-    const open = days[days.length - 1]
-    if (open && open.day === day) open.items.push(m)
-    else days.push({ day, items: [m] })
-  }
-
-  const stats: Array<{ k: string; v: string; n: string; warn?: boolean }> = [
-    { k: 'Messages', v: String(mails.length), n: `The last ${LIMIT}, newest first.` },
-    { k: 'Delivered', v: String(count('sent')), n: 'Accepted by Resend.' },
-    { k: 'Logged only', v: String(count('logged')), n: 'Recorded here, not sent. No API key set.' },
-    { k: 'Failed', v: String(failed), n: 'Open the row for what came back.', warn: failed > 0 },
-  ]
+  const days = new Set(mails.map((m) => fmtDate(m.sentAt)))
+  let openDay = ''
 
   return (
-    <div className="op-page">
-      <header className="op-head">
-        <span className="eb">Record</span>
-        <h1 className="t">Outbox</h1>
-        <p className="lede">
-          Every message the system sends, exactly as the maker receives it. Delivery runs through
-          Resend when RESEND_API_KEY is set. &ldquo;Logged only&rdquo; means the message was
-          recorded but sending is not configured. Open a row to read the body.
-        </p>
-      </header>
+    <>
+      <PageHead
+        title="Outbox"
+        sub={`${mails.length} ${mails.length === 1 ? 'message' : 'messages'} · the last ${LIMIT}, newest first · times are Pacific`}
+      />
+
+      <p className="adm-note">
+        Every message the system sends, exactly as the maker receives it. Delivery runs through
+        Resend when RESEND_API_KEY is set. &ldquo;Logged&rdquo; means the message was recorded but
+        sending is not configured. Open a row to read the body.
+      </p>
 
       {mails.length === 0 ? (
-        <p className="op-empty">
-          Nothing sent yet. Accept or decline someone in the jury queue and the message lands here.
+        <p className="adm-empty">
+          Nothing sent yet. Accept or decline someone in the review queue and the message lands
+          here.
         </p>
       ) : (
         <>
-          <div className="op-reads">
-            {stats.map((s) => (
-              <div className="op-read" key={s.k} data-warn={s.warn ? '1' : undefined}>
-                <span className="k">{s.k}</span>
-                <span className="v">{s.v}</span>
-                <span className="n">{s.n}</span>
-              </div>
-            ))}
-          </div>
+          <Stats>
+            <Stat
+              label="Messages" icon="mail" value={mails.length}
+              note={`Across ${days.size} ${days.size === 1 ? 'day' : 'days'}.`}
+            />
+            <Stat label="Delivered" icon="external" value={count('sent')} note="Accepted by Resend." />
+            <Stat
+              label="Logged only" icon="roster" value={count('logged')}
+              note="Recorded here, not sent. No API key set."
+            />
+            <Stat
+              label="Failed" icon="shield" value={failed} warn={failed > 0}
+              note="Open the row for what came back."
+            />
+          </Stats>
 
-          <div className="op-kinds">
-            <span className="k">By kind</span>
-            {kinds.map((k) => (
-              <span key={k.t} className="chip">{kindOf(k.t)} · {k.n}</span>
-            ))}
-          </div>
-
-          <div className="op-sec">
-            <h2>Messages</h2>
-            <span className="c">
-              {days.length} {days.length === 1 ? 'day' : 'days'}
+          <div className="adm-strip">
+            <span className="g">
+              <span className="k">By kind</span>
+              {kinds.map((k) => (
+                <span key={k.t} className="adm-tag">{kindOf(k.t)} {k.n}</span>
+              ))}
             </span>
           </div>
 
-          <div className="op-mail" style={MAIL_COLS}>
-            <div className="hd" aria-hidden="true">
-              <span className="k">Sent</span>
-              <span className="k">Kind</span>
-              <span className="k">To</span>
-              <span className="k">Subject</span>
-              <span className="k">Delivery</span>
-              <span />
-            </div>
+          <div className="adm-sec">
+            <h2>Messages</h2>
+            <span className="c">{mails.length} of the last {LIMIT}</span>
+          </div>
 
-            {days.map((d) => (
-              <Fragment key={d.day}>
-                <h3 className="op-day">
-                  {d.day}
-                  <span className="c">
-                    {d.items.length} {d.items.length === 1 ? 'message' : 'messages'}
-                  </span>
-                </h3>
+          <table className="adm-tbl">
+            <caption className="adm-sr">
+              Every message sent, newest first, grouped by the day it went out. Each row expands
+              to the body of the message.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Sent</th>
+                <th scope="col" className="c-1">Kind</th>
+                <th scope="col">To</th>
+                <th scope="col" className="c-2">Subject</th>
+                <th scope="col" className="c-1">Delivery</th>
+                <th scope="col" className="r"><span className="adm-sr">Expand</span></th>
+              </tr>
+            </thead>
 
-                {d.items.map((m) => (
-                  <details key={m.id}>
-                    <summary>
-                      <span className="at">{timeOf(m.sentAt)}</span>
-                      <span>
-                        <span className="chip">{kindOf(m.template)}</span>
-                      </span>
-                      <span className="to">{m.toEmail}</span>
-                      <span className="sj">{m.subject}</span>
-                      <span>
-                        <span
-                          className="chip"
-                          data-s={m.deliveryStatus === 'sent' ? 'accepted' : undefined}
-                          data-warn={m.deliveryStatus === 'failed' ? '1' : undefined}
-                        >
-                          {m.deliveryStatus === 'logged' ? 'Logged' : m.deliveryStatus}
+            {mails.map((m) => {
+              const day = fmtDate(m.sentAt)
+              const starts = day !== openDay
+              if (starts) openDay = day
+              return (
+                <tbody key={m.id}>
+                  {starts && (
+                    <tr className="grp">
+                      <th scope="colgroup" colSpan={COLS}>
+                        {day}
+                        <span className="c">
+                          {mails.filter((x) => fmtDate(x.sentAt) === day).length} sent
                         </span>
+                      </th>
+                    </tr>
+                  )}
+                  <tr>
+                    <td><span className="mono">{timeOf(m.sentAt)}</span></td>
+                    <td className="c-1"><span className="adm-tag">{kindOf(m.template)}</span></td>
+                    <td><span className="mono">{m.toEmail}</span></td>
+                    <td className="c-2"><span className="adm-nm">{m.subject}</span></td>
+                    <td className="c-1">
+                      <span className="adm-st" data-warn={m.deliveryStatus === 'failed' ? '1' : undefined}>
+                        {m.deliveryStatus === 'logged' ? 'Logged' : m.deliveryStatus}
                       </span>
-                      <span className="ex" aria-hidden="true" />
-                    </summary>
-                    <div className="bd">
-                      <div className="op-subject">{m.subject}</div>
+                    </td>
+                    <td className="r">
+                      <label className="adm-exp">
+                        <input type="checkbox" />
+                        <Icon name="chevron" size={16} />
+                        <span className="adm-sr">
+                          Read the message sent to {m.toEmail}, {m.subject}
+                        </span>
+                      </label>
+                    </td>
+                  </tr>
+                  <tr className="adm-more">
+                    <td colSpan={COLS}>
+                      <p className="adm-nm">{m.subject}</p>
+                      <p className="adm-sub2">
+                        {m.toEmail} · {fmtDateTime(m.sentAt)} · {kindOf(m.template)}
+                      </p>
                       {m.deliveryDetail && (
-                        <p className="op-note" style={{ color: 'var(--warn)', marginBottom: 12 }}>
+                        <p className="adm-note" style={{ color: 'var(--ad-warn)', margin: '12px 0 0' }}>
                           {m.deliveryDetail}
                         </p>
                       )}
-                      <pre>{m.body}</pre>
-                    </div>
-                  </details>
-                ))}
-              </Fragment>
-            ))}
-          </div>
+                      <pre className="adm-pre">{m.body}</pre>
+                    </td>
+                  </tr>
+                </tbody>
+              )
+            })}
+          </table>
 
-          <div className="op-foot">
-            <p className="op-note">
+          <div className="adm-foot">
+            <p className="adm-note">
               The row is written whether or not sending is configured, so this is the audit trail
               even on a machine with no key. Nothing here is editable and nothing is deleted.
             </p>
-            <p className="op-note">
+            <p className="adm-note">
               Times are Pacific. The list holds the last {LIMIT} messages, newest first.
             </p>
           </div>
         </>
       )}
-    </div>
+    </>
   )
 }

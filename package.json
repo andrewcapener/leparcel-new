@@ -9,7 +9,7 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
     "setup": "npm run db:push && npm run db:seed",
-    "test": "tsx src/lib/money.test.ts && tsx src/server/modules/sheets/row.test.ts && tsx src/server/modules/sheets/retry.test.ts && tsx src/server/modules/sheets/transport.test.ts"
+    "test": "tsx src/lib/money.test.ts && tsx src/server/modules/sheets/row.test.ts && tsx src/server/modules/sheets/retry.test.ts && tsx src/server/modules/sheets/transport.test.ts && tsx src/server/modules/uploads/photos.test.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

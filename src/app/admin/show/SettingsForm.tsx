@@ -13,7 +13,7 @@ function Field({
   name: string; label: string; hint?: string; error?: string; children: React.ReactNode
 }) {
   return (
-    <label className="field" htmlFor={name}>
+    <label className="adm-field" htmlFor={name}>
       <span className="lb">{label}</span>
       {children}
       {hint && !error && <span className="hint">{hint}</span>}
@@ -35,7 +35,7 @@ function Block({
   legend: string; why: string; children: React.ReactNode
 }) {
   return (
-    <fieldset className="op-fs">
+    <fieldset className="adm-fs">
       <legend className="k">{legend}</legend>
       <p className="why">{why}</p>
       {children}
@@ -56,7 +56,7 @@ export function SettingsForm({ show }: { show: Show }) {
         legend="Venue"
         why="The home page venue block, the site footer, /schedule, /apply, and the address written into the add to calendar file."
       >
-        <div className="row2">
+        <div className="adm-row2">
           <Field
             name="venueName" label="Venue name" error={e.venueName}
             hint="Rendered after “Dana Point” in the footer and the masthead line."
@@ -76,7 +76,7 @@ export function SettingsForm({ show }: { show: Show }) {
         legend="Dates and hours · all times Pacific"
         why="The hero dates, the masthead banner, /schedule, the calendar file, and the run of show on both maker pages."
       >
-        <div className="row2">
+        <div className="adm-row2">
           <Field
             name="startsOn" label="Show starts" error={e.startsOn}
             hint="First public hour of the show, not load-in."
@@ -96,7 +96,7 @@ export function SettingsForm({ show }: { show: Show }) {
         >
           <input className="inp" id="hoursNote" name="hoursNote" required {...keep('hoursNote', show.hoursNote)} />
         </Field>
-        <div className="row2">
+        <div className="adm-row2">
           <Field
             name="loadInNote" label="Load-in, as shown to makers" error={e.loadInNote}
             hint="Appears on both maker rules pages and on /apply. Prose, e.g. “Thursday 12 November, 1-7pm”."
@@ -116,7 +116,7 @@ export function SettingsForm({ show }: { show: Show }) {
         legend="The application window"
         why="The banner across the top of every public page, whether /apply accepts a submission, and the date the confirmation email promises an answer by."
       >
-        <div className="row2">
+        <div className="adm-row2">
           <Field
             name="applicationsOpenAt" label="Applications open" error={e.applicationsOpenAt}
             hint="Before this, /apply shows the date instead of the form."
@@ -142,7 +142,7 @@ export function SettingsForm({ show }: { show: Show }) {
         legend="Money and capacity"
         why="The rate on /makers/indoor and on the application, the deadline in the acceptance email, and the space counts on both maker pages, /faq and the jury header."
       >
-        <div className="row2">
+        <div className="adm-row2">
           <Field
             name="commissionPct" label="Commission (%)" error={e.commissionPct}
             hint="Applies to future acceptances only. Existing bookings keep the rate they were promised."
@@ -156,7 +156,7 @@ export function SettingsForm({ show }: { show: Show }) {
             <input className="inp num" id="paymentWindowHours" name="paymentWindowHours" type="number" min="1" max="240" required {...keep('paymentWindowHours', String(show.paymentWindowHours))} />
           </Field>
         </div>
-        <div className="row2">
+        <div className="adm-row2">
           <Field
             name="indoorCapacity" label="Indoor capacity" error={e.indoorCapacity}
             hint="Spaces on the floor. The jury header counts committed bookings against this."
@@ -174,8 +174,8 @@ export function SettingsForm({ show }: { show: Show }) {
 
       {/* The bar rides the bottom of the window, so Save is reachable from any
           block and the result of the last save is where the eye already is. */}
-      <div className="op-save">
-        <button className="btn" type="submit" disabled={pending}>
+      <div className="adm-save">
+        <button className="adm-btn" type="submit" disabled={pending}>
           {pending ? 'Saving…' : 'Save settings'}
         </button>
         <p className="msg" data-ok={state.ok ? '1' : '0'} role="status" aria-live="polite">

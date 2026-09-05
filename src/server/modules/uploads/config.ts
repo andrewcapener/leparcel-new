@@ -22,7 +22,7 @@
  *     The queue would feel broken in exactly the way that makes a juror stop
  *     using it.
  *  2. The admin renders `photos[0]` straight into an `<img src>`
- *     (src/app/admin/jury/ApplicationCard.tsx). A public URL is a value that
+ *     (src/app/admin/jury/, and the review screen). A public URL is a value that
  *     stays true for as long as the row does. A signed one is true for an
  *     hour, which is a trap for every screen, export and email that later
  *     wants to show the work.

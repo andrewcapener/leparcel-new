@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { transportDiagnostics } from '@/server/modules/sheets/transport'
+import { photoUploadDiagnostics } from '@/server/modules/uploads/config'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +45,10 @@ export async function GET() {
     // nearly always the forgotten step: the Sheet was never shared with
     // serviceAccountEmail as an Editor.
     sheets: transportDiagnostics(),
+    // Whether the application form can take a photograph at all, and which
+    // variable is missing if it cannot. The bucket name and the project host
+    // are not secrets; the service key never appears here in any form.
+    photos: photoUploadDiagnostics(),
   }
   try {
     const { db, schema } = await import('@/db')

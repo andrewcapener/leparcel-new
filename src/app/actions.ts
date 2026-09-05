@@ -13,7 +13,7 @@ import {
 import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
 import { usd } from '@/lib/money'
 import { syncApplication } from '@/server/modules/sheets/sync'
-import { MIN_PHOTOS, parsePhotoKeys } from '@/server/modules/uploads/photos'
+import { parsePhotoKeys } from '@/server/modules/uploads/photos'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 
@@ -248,59 +248,6 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     .map(String)
     .filter((code) => offered.some((a) => a.code === code))
 
-  /* ── the photographs ──────────────────────────────────────────────────
-   *
-   * The single most important input to a curation decision: /admin/jury is a
-   * contact sheet and every card is `photos[0]`. The browser has already put
-   * the bytes in Supabase Storage through a signed URL; what arrives here is
-   * a list of storage keys, and not one of them is believed.
-   *
-   *   1. parsePhotoKeys drops anything that is not a key this application
-   *      could have minted, so a hand-built POST cannot walk out of the
-   *      prefix or point at another bucket.
-   *   2. verifyPhotoKeys reads the first bytes of each object out of the
-   *      bucket and decides what it really is. The content type the client
-   *      declared at upload is a claim; the magic bytes are the fact.
-   *
-   * A key that fails is dropped rather than taken as a reason to refuse the
-   * whole application: a maker at 11:58pm with five good photographs and one
-   * that went up truncated should be in the queue, not staring at a form. The
-   * drop is on the audit row, which is where an unexplained missing image
-   * gets explained.
-   *
-   * With no storage configured (local development) there is nothing to
-   * collect and nothing to require. The field says so, and the application is
-   * otherwise unaffected.
-   */
-  const uploadsOn = photoUploadsEnabled()
-  let photoUrls: string[] = []
-  let droppedPhotos: Array<{ key: string; reason: string }> = []
-  if (uploadsOn) {
-    const keys = parsePhotoKeys(String(fd.get('photos') ?? ''))
-    if (keys.length < MIN_PHOTOS) {
-      return {
-        ok: false, attempt, values: strings(raw),
-        errors: {
-          photos: 'Add at least one photograph. It is the first thing the jury looks at.',
-        },
-      }
-    }
-    const checked = await verifyPhotoKeys(keys)
-    droppedPhotos = checked.bad
-    photoUrls = checked.good
-      .map((k) => publicPhotoUrl(k))
-      .filter((u): u is string => Boolean(u))
-    if (photoUrls.length === 0) {
-      // Everything they sent came back unreadable. Storage is down, or the
-      // uploads never landed; either way, saying "add them again" is the
-      // only honest instruction.
-      return {
-        ok: false, attempt, values: strings(raw),
-        errors: { photos: 'We could not read those photographs. Please add them again.' },
-      }
-    }
-  }
-
   // Vendors persist across shows — find or create, never duplicate on email.
   const email = d.email.trim().toLowerCase()
   let vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
@@ -325,6 +272,44 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     return {
       ok: false, attempt, values: strings(raw),
       message: 'We already have an application from this email for this show.',
+    }
+  }
+
+  /* ── the photograph ───────────────────────────────────────────────────
+   *
+   * Optional, and one. The application has to be as easy as it can be, so
+   * nothing here can refuse a submission: Instagram and Website are required
+   * fields on this form and are how the jury has always looked at a maker's
+   * work, and a photograph is a shortcut, not the only signal.
+   *
+   * The browser has already put the bytes in Supabase Storage through a
+   * signed URL. What arrives here is a storage key, and it is not believed:
+   *
+   *   1. parsePhotoKeys drops anything that is not a key this application
+   *      could have minted, so a hand-built POST cannot walk out of the
+   *      prefix or point at another bucket.
+   *   2. verifyPhotoKeys reads the first bytes of the object out of the
+   *      bucket and decides what it really is. The content type the client
+   *      declared at upload is a claim; the magic bytes are the fact.
+   *
+   * A key that fails either check is dropped rather than turned into a reason
+   * to refuse the application. The drop is on the audit row, which is where
+   * an unexplained missing image gets explained.
+   *
+   * With no storage configured (local development) there is nothing to
+   * collect. The field says so and the application is otherwise unaffected.
+   */
+  const uploadsOn = photoUploadsEnabled()
+  let photoUrls: string[] = []
+  let droppedPhotos: string[] = []
+  if (uploadsOn) {
+    const keys = parsePhotoKeys(String(fd.get('photos') ?? ''))
+    if (keys.length > 0) {
+      const checked = await verifyPhotoKeys(keys)
+      droppedPhotos = checked.bad.map((b) => b.reason)
+      photoUrls = checked.good
+        .map((k) => publicPhotoUrl(k))
+        .filter((u): u is string => Boolean(u))
     }
   }
 
@@ -390,9 +375,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     {
       status: 'new',
       photos: photoUrls.length,
-      ...(droppedPhotos.length > 0
-        ? { photosDropped: droppedPhotos.map((b) => b.reason) }
-        : {}),
+      ...(droppedPhotos.length > 0 ? { photosDropped: droppedPhotos } : {}),
     },
     '', email,
   )

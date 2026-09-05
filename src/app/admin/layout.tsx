@@ -1,61 +1,70 @@
-import Link from 'next/link'
+import { and, eq, inArray, or, sql } from 'drizzle-orm'
+import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { AdminNav } from './AdminNav'
+import { applications, bookings, emailOutbox } from '@/db/schema'
+import { AdminShell } from './AdminShell'
 // The admin's own stylesheet. Imported here rather than in the root layout so
-// the public site gets the vendored Symmetry theme and nothing else, and so
-// this one loads after it and wins inside /admin.
+// the public site gets the vendored Symmetry theme and nothing else.
 import '../globals.css'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * The admin register: dense and precise, not warm and photographic.
- * docs/08-DESIGN-SYSTEM.md — "Institutional is for the vendors and for a
- * future buyer, not for the shoppers." Two registers, one system: the same
- * two faces as the public site, set tighter and smaller.
+ * The admin register. docs/08-DESIGN-SYSTEM.md §5: a fixed dark sidebar
+ * against a near-white content area, Oswald caps for anything you scan,
+ * Figtree for names and prose, JetBrains Mono for machine text.
  *
- * The bar names the show every screen below it is operating on. Everything in
- * this app is scoped to a show_id, and staff were being asked to hold that in
- * their heads while editing dates and prices that only apply to one of them.
+ * The layout reads the two counts the sidebar badges carry. They are the
+ * only numbers on every screen, so they are the two that answer "is there
+ * anything waiting for me" without opening anything: applications still to
+ * decide, and roster rows that need a person.
  */
+
+const num = (v: number | string | null | undefined) => Number(v ?? 0)
+
+async function navCounts(showId: string | undefined) {
+  if (!showId) return { undecided: 0, needsPerson: 0 }
+  const [undecided] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(applications)
+    .where(and(
+      eq(applications.showId, showId),
+      inArray(applications.status, ['new', 'under_review', 'shortlist']),
+    ))
+  /* The same test the roster sorts on: no documentation, no payment, or no
+     certificate of insurance. Kept in one expression so the badge and the
+     screen can never disagree. */
+  const [needsPerson] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(bookings)
+    .innerJoin(applications, eq(bookings.applicationId, applications.id))
+    .where(and(
+      eq(bookings.showId, showId),
+      or(
+        and(eq(applications.sellerPermit, ''), eq(applications.occasionalSeller, false)),
+        eq(bookings.status, 'awaiting_payment'),
+        eq(applications.hasCoi, false),
+      ),
+    ))
+  return { undecided: num(undecided?.n), needsPerson: num(needsPerson?.n) }
+}
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  // Never let a missing show take the whole admin down: /admin/show is where
-  // you would go to fix it.
+  // Never let a missing show, or a database that is one migration behind,
+  // take the whole admin down: /admin/show is where you would go to fix it,
+  // and /admin/login has to render before there is a session at all.
   const show = await activeShow().catch(() => undefined)
+  const counts = await navCounts(show?.id).catch(() => ({ undecided: 0, needsPerson: 0 }))
+  const failedMail = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(emailOutbox)
+    .where(eq(emailOutbox.deliveryStatus, 'failed'))
+    .then((r) => num(r[0]?.n))
+    .catch(() => 0)
 
   return (
-    <div className="adm">
-      <div className="adm-bar">
-        <Link href="/" className="brand">Mermade</Link>
-        <AdminNav />
-        {/* Applications only render the form inside the window, which is the
-            right public behaviour and means there is no way for staff to look
-            at the form in the weeks before it opens. `?preview=1` renders it
-            read-only. It was reachable only by knowing to type it. */}
-        {/* Two different previews, and they are not the same thing.
-            `?preview=1` renders just the form, read only, outside the window.
-            The launch preview shows the WHOLE site as it will read once
-            applications open: the announcement bar, the home page, the live
-            form. It is a cookie on this browser only, and the server action
-            still refuses a real submission until the real window opens. */}
-        <Link href="/apply?preview=1" target="_blank" rel="noreferrer">
-          Preview application ↗
-        </Link>
-        <Link href="/api/preview?on=1&to=%2F" target="_blank" rel="noreferrer">
-          Preview launch ↗
-        </Link>
-        <span className="who">
-          {/* `.chip` already carries the small uppercase pill this wants, and
-              its data-warn variant is the red one, so the missing-show case
-              reads as the problem it is without a new rule. */}
-          <span className="chip" data-warn={show ? undefined : '1'}>
-            {show ? show.name : 'No active show'}
-          </span>
-          <span aria-hidden="true"> · </span>
-          Staff, on a shared password until real accounts land
-        </span>
-      </div>
+    <AdminShell showName={show?.name} counts={counts} failedMail={failedMail}>
       {children}
-    </div>
+    </AdminShell>
   )
 }

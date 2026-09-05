@@ -6,17 +6,18 @@ import { SettingsForm } from './SettingsForm'
 import { updateSpace, updateAddOn } from '@/app/actions'
 import { fmtDate, fmtDateTime, fmtRange, applicationWindow } from '@/lib/dates'
 import { bpsLabel, usd } from '@/lib/money'
+import { PageHead, Stats, Stat } from '../ui'
 
 export const dynamic = 'force-dynamic'
 
 /** Column tracks shared by a header row and every editable row beneath it. */
-const SPACE_COLS = { '--op-cols': '76px 66px 1fr 1.7fr 106px 84px 72px' } as React.CSSProperties
-const ADDON_COLS = { '--op-cols': '92px 66px 1fr 1.7fr 106px 96px 72px' } as React.CSSProperties
+const SPACE_COLS = { '--cols': '76px 66px 1fr 1.7fr 106px 84px 72px' } as React.CSSProperties
+const ADDON_COLS = { '--cols': '92px 66px 1fr 1.7fr 106px 96px 72px' } as React.CSSProperties
 
 const WINDOW_LABEL = {
-  before: 'Applications not open yet',
-  open: 'Applications open',
-  closed: 'Applications closed',
+  before: 'Applications have not opened yet',
+  open: 'Applications are open',
+  closed: 'Applications are closed',
 } as const
 
 /**
@@ -43,43 +44,13 @@ export default async function ShowSettings() {
     spaces.filter((s) => s.track === track).reduce((n, s) => n + s.capacity, 0)
   const windowState = applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt)
 
-  /* The readouts are the values as the public site renders them, not as the
-     database stores them, so a wrong date is visible before anyone has to
-     read a form field. */
-  const live: Array<{ k: string; v: React.ReactNode; unit?: string; n: string; txt?: boolean }> = [
-    {
-      k: 'Show dates', v: fmtRange(show.startsOn, show.endsOn), txt: true,
-      n: 'The hero, the masthead banner and the calendar file.',
-    },
-    {
-      k: 'Applications open', v: fmtDateTime(show.applicationsOpenAt), txt: true,
-      n: `Close ${fmtDateTime(show.applicationsCloseAt)}, Pacific.`,
-    },
-    {
-      k: 'Roster announced', v: fmtDate(show.rosterAnnouncedOn), txt: true,
-      n: 'The promise on /apply and in every waitlist email.',
-    },
-    {
-      k: 'Commission', v: bpsLabel(show.commissionBps),
-      n: 'Indoor consignment. Snapshotted onto each booking at acceptance.',
-    },
-    {
-      k: 'Payment window', v: show.paymentWindowHours, unit: 'hours',
-      n: 'From acceptance until the space returns to the pool.',
-    },
-    {
-      k: 'Capacity', v: show.indoorCapacity + show.outdoorCapacity, unit: 'spaces',
-      n: `${show.indoorCapacity} indoor, ${show.outdoorCapacity} outdoor.`,
-    },
-  ]
-
   /* Read-only because nothing edits them: the identity of a season is set
      when the show is created, and the slug is a live URL. */
   const identity: Array<{ k: string; v: React.ReactNode }> = [
     { k: 'Show', v: `${show.numeral} · ${show.name}` },
     { k: 'Season', v: `${show.season === 'fall' ? 'Fall' : 'Spring'} ${show.year}` },
     { k: 'Venue', v: `${show.venueName}, ${show.venueAddress}` },
-    { k: 'Slug', v: <code>{show.slug}</code> },
+    { k: 'Slug', v: <span className="mono">{show.slug}</span> },
     {
       k: 'Status',
       v: show.isActive ? 'Active. This is the show the public site renders.' : 'Not active.',
@@ -87,44 +58,53 @@ export default async function ShowSettings() {
   ]
 
   return (
-    <div className="op-page op-narrow">
-      <header className="op-head">
-        <span className="eb">Source of truth</span>
-        <h1 className="t">Show settings</h1>
-        <p className="lede">
-          Every date, price, capacity and rate on the public site is read from this record, so
-          nothing here is typed into a page anywhere else. Changes apply immediately and are
-          audit-logged.
-        </p>
-        <p className="meta">
-          <span>{show.numeral} · {show.name}</span>
-          <span>{fmtRange(show.startsOn, show.endsOn)}</span>
-          <span className="chip" data-s={windowState === 'open' ? 'accepted' : undefined}>
-            {WINDOW_LABEL[windowState]}
-          </span>
-        </p>
-      </header>
+    <div className="adm-narrow">
+      <PageHead
+        title="Show settings"
+        sub={`${show.numeral} · ${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${WINDOW_LABEL[windowState].toLowerCase()}`}
+      />
 
-      <div className="op-reads op-3" style={{ marginBottom: 12 }}>
-        {live.map((f) => (
-          <div className="op-read" key={f.k}>
-            <span className="k">{f.k}</span>
-            <span className={f.txt ? 'v txt' : 'v'}>
-              {f.v}{f.unit && <small>{f.unit}</small>}
-            </span>
-            <span className="n">{f.n}</span>
-          </div>
-        ))}
-      </div>
-      <p className="op-note">
-        The live values, as the public site renders them. Everything below sets them.
+      <p className="adm-note">
+        Every date, price, capacity and rate on the public site is read from this record, so
+        nothing here is typed into a page anywhere else. Changes apply immediately and are
+        audit-logged.
       </p>
 
-      <div className="op-sec">
+      {/* The readouts are the values as the public site renders them, not as
+          the database stores them, so a wrong date is visible before anyone
+          has to read a form field. */}
+      <Stats>
+        <Stat
+          label="Show dates" icon="clock" text value={fmtRange(show.startsOn, show.endsOn)}
+          note="The hero, the masthead banner and the calendar file."
+        />
+        <Stat
+          label="Applications open" icon="queue" text value={fmtDateTime(show.applicationsOpenAt)}
+          note={`Close ${fmtDateTime(show.applicationsCloseAt)}, Pacific.`}
+        />
+        <Stat
+          label="Roster announced" icon="roster" text value={fmtDate(show.rosterAnnouncedOn)}
+          note="The promise on /apply and in every waitlist email."
+        />
+        <Stat
+          label="Commission" icon="money" value={bpsLabel(show.commissionBps)}
+          note="Indoor consignment. Snapshotted onto each booking at acceptance."
+        />
+        <Stat
+          label="Payment window" icon="clock" value={show.paymentWindowHours} unit="hours"
+          note="From acceptance until the space returns to the pool."
+        />
+        <Stat
+          label="Capacity" icon="tent" value={show.indoorCapacity + show.outdoorCapacity} unit="spaces"
+          note={`${show.indoorCapacity} indoor, ${show.outdoorCapacity} outdoor.`}
+        />
+      </Stats>
+
+      <div className="adm-sec">
         <h2>Identity</h2>
         <span className="c">Set when the show is created</span>
       </div>
-      <dl className="op-facts">
+      <dl className="adm-facts">
         {identity.map((f) => (
           <div key={f.k}>
             <dt>{f.k}</dt>
@@ -133,32 +113,32 @@ export default async function ShowSettings() {
         ))}
       </dl>
 
-      <div className="op-sec">
+      <div className="adm-sec">
         <h2>Settings</h2>
         <span className="c">Every field drives a public page</span>
       </div>
       <SettingsForm show={show} />
 
-      <div className="op-sec">
+      <div className="adm-sec">
         <h2>Priced inventory</h2>
         <span className="c">
           {spaces.length} {spaces.length === 1 ? 'space' : 'spaces'}
         </span>
       </div>
-      <p className="op-note tight">
+      <p className="adm-note tight">
         The prices quoted on <strong>/apply</strong>, both maker rules pages and the home page. A
         price edit changes what future applicants are quoted; an accepted booking keeps the price
         it was promised. Codes and tracks are fixed. Save applies one row.
       </p>
       {spaces.length > 0 && (
-        <p className="op-note">
+        <p className="adm-note">
           Indoor spaces total <strong>{spaceCap('indoor')}</strong> against a show capacity of{' '}
           <strong>{show.indoorCapacity}</strong>, outdoor <strong>{spaceCap('outdoor')}</strong>
           {' '}against <strong>{show.outdoorCapacity}</strong>. Full board at today&rsquo;s prices is{' '}
           <strong>{usd(spaces.reduce((n, s) => n + s.priceCents * s.capacity, 0))}</strong>.
         </p>
       )}
-      <div className="op-rows" style={SPACE_COLS}>
+      <div className="adm-rows" style={SPACE_COLS}>
         <div className="hd" aria-hidden="true">
           <span className="k">Code</span>
           <span className="k">Track</span>
@@ -182,29 +162,29 @@ export default async function ShowSettings() {
             </div>
             <input className="inp num" name="capacity" type="number" min={0}
               defaultValue={s.capacity} aria-label={`Capacity of ${s.code}`} />
-            <button className="btn-o" type="submit">
-              Save<span className="op-sr"> {s.code}</span>
+            <button className="adm-btn-q" type="submit">
+              Save<span className="adm-sr"> {s.code}</span>
             </button>
           </form>
         ))}
       </div>
 
-      <div className="op-sec">
+      <div className="adm-sec">
         <h2>Add-ons</h2>
         <span className="c">{extras.length} offered</span>
       </div>
-      <p className="op-note">
+      <p className="adm-note">
         What a maker can ask for on top of a space, priced on the application and on the rules
         pages. Same rule as above: an edit changes what future applicants are quoted, never what an
         accepted maker was promised. &ldquo;Limited&rdquo; shows as LMTD.
       </p>
       {extras.length === 0 ? (
-        <p className="op-empty">
+        <p className="adm-empty">
           No add-ons for this show yet. They are seeded with the show; if this is unexpected,
           migration 0002 has not run against this database.
         </p>
       ) : (
-        <div className="op-rows" style={ADDON_COLS}>
+        <div className="adm-rows" style={ADDON_COLS}>
           <div className="hd" aria-hidden="true">
             <span className="k">Code</span>
             <span className="k">Track</span>
@@ -230,20 +210,20 @@ export default async function ShowSettings() {
                 <input type="checkbox" name="isLimited" defaultChecked={a.isLimited} />
                 Limited
               </label>
-              <button className="btn-o" type="submit">
-                Save<span className="op-sr"> {a.code}</span>
+              <button className="adm-btn-q" type="submit">
+                Save<span className="adm-sr"> {a.code}</span>
               </button>
             </form>
           ))}
         </div>
       )}
 
-      <div className="op-foot">
-        <p className="op-note">
+      <div className="adm-foot">
+        <p className="adm-note">
           <strong>Every edit is audit-logged</strong> with the actor, the timestamp and the before
           and after values.
         </p>
-        <p className="op-note">
+        <p className="adm-note">
           <strong>Commission changes apply to future acceptances only.</strong> A booking
           snapshots its rate at acceptance and keeps it for the life of the show.
         </p>

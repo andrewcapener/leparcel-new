@@ -4,8 +4,8 @@
  * (photos.test.ts) and importable from a route handler, a server action, or
  * a script without dragging Supabase in behind it.
  *
- * Why the jury needs this at all: /admin/jury is a contact sheet and
- * ApplicationCard renders `photos[0]` as the plate. An application with no
+ * Why the jury needs this at all: /admin/jury leads on the work, and
+ * the row renders `photos[0]` as the plate. An application with no
  * photographs is a card with no work on it, which is a maker being judged on
  * a paragraph. The old path was a line of copy asking makers to email images
  * to one of two addresses, which is not a path at all.
@@ -14,17 +14,22 @@
 /* ─────────────────────────── the rules ─────────────────────────── */
 
 /**
- * How many. Three is what we ask for, one is what we require.
+ * How many, and whether any.
  *
- * docs/01-PRODUCT-SPEC.md §3.1 asks for five to eight. That is the right
- * number for a maker with a finished catalogue and the wrong number for one
- * shooting on a phone the night applications close, and a form that refuses
- * the second maker loses an application rather than a photograph. So: ask
- * for three to six, take one.
+ * ONE, and OPTIONAL. docs/01-PRODUCT-SPEC.md §3.1 asks for five to eight
+ * required; the owner's call is that the application has to be as easy as it
+ * can possibly be, and a maker who abandons a form at the upload step is an
+ * application nobody gets to read. Instagram and Website are both required
+ * fields on this form and always have been, so a maker with no photograph
+ * here is still a maker the jury can look at.
+ *
+ * The column stays a JSON array (`applications.photos`), the admin still
+ * reads `photos[0]` as the lead, and the upload path is written for a list.
+ * Raising this number is this line, and nothing else: no migration, no change
+ * to the jury queue, no change to the server checks.
  */
-export const MIN_PHOTOS = 1
-export const ASK_PHOTOS = 3
-export const MAX_PHOTOS = 6
+/** Deliberately typed `number`, not the literal 1: this is a knob. */
+export const MAX_PHOTOS: number = 1
 
 /** Per file. Spec §3.1: "max 10MB each". A modern phone shot is 2-5MB. */
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024
@@ -43,8 +48,17 @@ export const PHOTO_TYPES = [
 ] as const
 export type PhotoType = (typeof PHOTO_TYPES)[number]
 
-/** The `accept` attribute for the file input, from the same list. */
-export const PHOTO_ACCEPT = PHOTO_TYPES.join(',')
+/**
+ * The `accept` attribute for the file input. The extensions are listed as
+ * well as the media types on purpose: some Android pickers match on the
+ * extension and show an empty folder for a type they do not recognise, and
+ * `image/heic` is exactly the type they do not recognise. Widening this to
+ * `image/*` would be worse, not better: the picker would offer files the
+ * server is going to refuse.
+ */
+export const PHOTO_ACCEPT = [
+  ...PHOTO_TYPES, '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif',
+].join(',')
 
 const EXTENSION: Record<PhotoType, string> = {
   'image/jpeg': 'jpg',

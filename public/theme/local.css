@@ -1004,3 +1004,161 @@ h3, .h3 { line-height: 1.15; }
 }
 .preview-bar strong { font-weight: 700; }
 .preview-bar a { color: #E7C88A; text-decoration: underline; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   The photograph on the application. Added with the upload path; everything
+   here is prefixed `ap-` and scoped to the apply page and its confirmation
+   screen.
+
+   It is one optional image. The controls are sized for a thumb before
+   anything else, because a phone is where the photographs are: both pickers
+   are 48px tall, the native file inputs are visually hidden so the labels can
+   be real targets, and the focus ring is drawn on the label from the input's
+   own :focus-visible so a keyboard never loses its place.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ap-photos { margin-top: 6px; }
+.ap-photos--off .note a { text-decoration: underline; }
+
+/* The thumbnail. One column on a phone, a small grid if the cap is ever
+   raised past one. */
+.ap-photos__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+.ap-photos__item { margin: 0; }
+.ap-photos__frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border: 1px solid var(--input-border-color);
+  border-radius: var(--btn-border-radius);
+  background: rgb(var(--text-color) / 0.05);
+}
+.ap-photos__item[data-state="uploading"] .ap-photos__frame { opacity: 0.6; }
+.ap-photos__item[data-state="error"] .ap-photos__frame { border-color: #b3261e; }
+.ap-photos__img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.ap-photos__lead {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  background: rgb(var(--heading-color));
+  color: rgb(var(--bg-color, 255 255 255));
+  font-family: var(--nav-font-family);
+  font-size: var(--smaller-text-size-4);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Remove. A 44px target sitting on the image, not a link under it. */
+.ap-photos__x {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-end: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.ap-photos__x:hover { background: rgb(0 0 0 / 0.75); }
+
+/* Real bytes on the wire, not a spinner that means nothing. */
+.ap-photos__bar {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(var(--text-color) / 0.12);
+  appearance: none;
+}
+.ap-photos__bar::-webkit-progress-bar { background: rgb(var(--text-color) / 0.12); border-radius: 999px; }
+.ap-photos__bar::-webkit-progress-value { background: rgb(var(--heading-color)); border-radius: 999px; }
+.ap-photos__bar::-moz-progress-bar { background: rgb(var(--heading-color)); border-radius: 999px; }
+
+.ap-photos__err {
+  margin: 8px 0 0;
+  color: #b3261e;
+  font-size: var(--smaller-text-size-2);
+  line-height: 1.45;
+}
+.ap-photos__lead-btn {
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--smaller-text-size-2);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* The two ways in. "Choose" has no `capture`, so a phone offers the roll and
+   the camera; "Take a photo" is the one that goes straight to the lens. */
+.ap-photos__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.ap-photos__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.account-form .ap-photos__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin: 0;
+  padding: 0 20px;
+  border: 1px solid rgb(var(--heading-color));
+  border-radius: var(--btn-border-radius);
+  background: rgb(var(--heading-color));
+  color: rgb(var(--bg-color, 255 255 255));
+  font-family: var(--nav-font-family);
+  font-size: var(--nav-text-size);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.account-form .ap-photos__btn--alt {
+  background: none;
+  color: rgb(var(--heading-color));
+}
+.account-form .ap-photos__btn[data-disabled] { opacity: 0.5; cursor: default; }
+/* The input is off-screen, so its focus ring has to be drawn on the label. */
+.ap-photos__input:focus-visible + .ap-photos__btn {
+  outline: 2px solid rgb(var(--heading-color));
+  outline-offset: 3px;
+}
+.ap-photos__count {
+  color: rgb(var(--text-color) / 0.75);
+  font-size: var(--smaller-text-size-2);
+}
+/* Announced politely, and it holds its line so the layout does not jump
+   between "" and a sentence. */
+.ap-photos__status { display: block; min-height: 1.4em; margin-top: 10px; }
