@@ -56,31 +56,41 @@
     --font-r:var(--f-garamond),Georgia,serif;           /* reserve serif, unused */
 
     /* ── type scale ──
-       One scale, ten steps, a ~1.18 ratio through the text sizes and wider
-       jumps across display. Before this the site rendered 43 distinct
-       size/weight/family combinations, including 12, 12.5, 13, 13.5, 14 and
-       14.5 all at once — distinctions no reader can see and no designer
-       chose. Nothing outside this list. */
-    --t-lbl-s:11.5px;  /* colophon, chips */
-    --t-lbl:13px;      /* the tracked uppercase label, the site's workhorse */
-    --t-s:15px;        /* captions, table cells, secondary UI */
-    --t-b:17px;        /* body prose */
-    --t-lead:19px;     /* ledes and intro paragraphs */
-    --t-xl:21px;       /* small headings, prows questions */
-    --t-d4:24px;       /* card titles */
-    --t-d3:28px;       /* sub-heads */
-    --t-d2:34px;       /* section heads, floor of the fluid range */
-    --t-d1:44px;       /* large display, floor of the fluid range */
+       THEIRS, read out of the live site's own CSS variables rather than
+       chosen here:
+         --super-large-text-size 60px  (mobile 27px)
+         --larger-text-size      34px  (mobile 27px)
+         --base-text-size        15px
+         --nav-text-size         14px
+         --button-text-size      13px
+         --logo-text-size        26px
+         --heading-font-weight   600
+         --heading-max-width     15em
+       The previous scale here topped out at 148px and set body at 17px,
+       which is two to three times theirs. Matching their fonts and colours
+       while rendering everything at poster scale is why the site kept not
+       looking like the site. */
+    --t-lbl-s:11px;
+    --t-lbl:13px;      /* their button text */
+    --t-s:14px;        /* their nav */
+    --t-b:15px;        /* their base */
+    --t-lead:17px;
+    --t-xl:19px;
+    --t-d4:22px;
+    --t-d3:26px;       /* their logo size */
+    --t-d2:30px;
+    --t-d1:34px;       /* their "larger" */
 
-    /* Fluid display ramp. Six steps, and the maxima are the scale: before
-       this there were nineteen hand-picked clamps, every one a one-off. */
-    --fs-hero:clamp(50px,11.4vw,148px);  /* the home hero, once */
-    --fs-h1:clamp(42px,9vw,114px);       /* every page's lede */
-    --fs-h2:clamp(34px,5.8vw,74px);      /* section heads */
-    --fs-h2s:clamp(30px,4.6vw,62px);     /* quieter section heads */
-    --fs-h3:clamp(26px,3.5vw,46px);      /* sub-heads */
-    --fs-h4:clamp(21px,2.4vw,30px);      /* small display */
-    --fs-lead:clamp(17px,1.9vw,21px);    /* lead paragraphs */
+    /* Fluid ramp, capped at their maxima and their 27px mobile ceiling. */
+    --fs-hero:clamp(27px,6.4vw,60px);   /* their "super large" */
+    --fs-h1:clamp(27px,5.6vw,60px);
+    --fs-h2:clamp(26px,3.4vw,34px);     /* their "larger" */
+    --fs-h2s:clamp(24px,3vw,30px);
+    --fs-h3:clamp(22px,2.6vw,26px);
+    --fs-h4:clamp(19px,2.2vw,22px);
+    --fs-lead:clamp(16px,1.7vw,19px);
+
+    --heading-mw:15em;   /* their --heading-max-width */
 
     --pad:clamp(20px,4vw,58px);
     --maxw:1600px;       /* max_page_width */
@@ -175,8 +185,8 @@
   .hero .eyebrow{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     letter-spacing:.22em;font-size:var(--t-s);color:rgba(251,248,240,.92);margin-bottom:12px;
     text-shadow:0 1px 18px rgba(0,0,0,.4)}
-  .hero h1{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
-    font-size:var(--fs-hero);line-height:.86;letter-spacing:-.006em;
+  .hero h1{font-family:var(--font-c);font-weight:600;text-transform:uppercase;max-width:var(--heading-mw);margin-inline:auto;
+    font-size:var(--fs-hero);line-height:1.04;letter-spacing:0;
     text-shadow:0 2px 44px rgba(0,0,0,.34)}
   .hero h1 em{font-style:normal;color:inherit}
   .hero .where{font-family:var(--font-c);font-weight:500;text-transform:uppercase;
@@ -204,8 +214,8 @@
     padding:clamp(46px,7vw,84px) var(--pad);text-align:center}
   .claim .k,.apply .k{color:var(--ink-3)}
   .claim .lede{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
-    font-size:var(--fs-h1);line-height:.88;letter-spacing:-.008em;max-width:none;
-    margin:0 auto}   /* auto so a max-width lede centers with the paragraph under it */
+    font-size:var(--fs-h1);line-height:1.06;letter-spacing:0;
+    max-width:var(--heading-mw);margin:0 auto}   /* auto so a max-width lede centers with the paragraph under it */
   .claim .lede em{font-style:normal;color:var(--accent-tx-tint)}
   .claim p{font-family:var(--font-g);font-size:var(--fs-lead);line-height:1.5;
     max-width:44ch;margin:20px auto 0;opacity:.9}
@@ -586,7 +596,7 @@
     .btn{padding:9px 16px 8px;font-size:var(--t-s)}
     .hero{height:calc(100svh - 184px);min-height:470px}   /* util 53 + mast 75 + mnav 53 */
     .hero .in{padding:0 var(--pad) 18px}
-    .hero h1{font-size:var(--fs-hero)}
+
     .hero .bar{gap:9px;margin-top:16px}
     .hero .when{font-size:var(--t-lead)}
     .hero .where{font-size:var(--t-lbl);letter-spacing:.1em}
@@ -608,7 +618,7 @@
     .mini .row span:nth-child(3),.mini .row span:nth-child(4){display:none}
     /* Display leading is set for 114px type. At the 42px a phone gets, .88
        puts the descenders of one line into the caps of the next. */
-    .claim .lede{line-height:.98;letter-spacing:0}
+    .claim .lede{line-height:1.1}
     .claim{padding:clamp(34px,6vw,46px) var(--pad)}
     .claim p{margin-top:16px}
     .mission{padding:clamp(38px,7vw,60px) var(--pad)}
