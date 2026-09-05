@@ -83,6 +83,11 @@ export const addOns = pgTable('add_ons', {
   priceCents: integer('price_cents').notNull(),
   maxQty: integer('max_qty').notNull().default(1),
   isLimited: boolean('is_limited').notNull().default(false),
+  // How many exist for the show. NULL is uncapped, which is every add-on that
+  // predates priority placement. `isLimited` renders the word "limited" on the
+  // form; this is the number staff can actually count against. For an outdoor
+  // add-on the cap is per day, since each day is its own space type.
+  capacity: integer('capacity'),
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: boolean('is_active').notNull().default(true),
 }, (t) => [uniqueIndex('add_ons_show_code').on(t.showId, t.code)])

@@ -194,7 +194,20 @@ h3, .h3 { line-height: 1.15; }
 /* 720px at 15px is 96 characters a line, about double a comfortable measure.
    Narrowing the container beats enlarging the type, which would be the more
    visible departure. */
-.section-rich-text .container--reading-width { --reading-container-width: 620px; }
+/* One reading width, everywhere.
+
+   There were three. The theme ships 720px, this file pinned prose sections to
+   620px, and the application head had its own 880px, so a reader moving
+   between pages met a different measure on each and the narrow ones read as
+   leftovers from an older build. 880px is the one Drew approved on /apply,
+   and it is the widest of the three, so nothing gets narrower.
+
+   It is a measure, not a cap on the page: full-bleed sections, the banners,
+   the lookbooks, the merchant grid and every table still run edge to edge.
+   This only governs blocks that are running text, where a line that crosses
+   the whole of a 1440px screen is about 180 characters and genuinely hard to
+   track back from. */
+:root { --reading-container-width: 880px; }
 
 /* Money reads as a column, not as prose. */
 .num, td.num, .price-table td:last-child { font-variant-numeric: tabular-nums; }
@@ -331,9 +344,8 @@ h3, .h3 { line-height: 1.15; }
    reference material now lives under it. */
 /* The variable has to be set on the CONTAINER, which is what reads it. Set on
    the header inside it, it does nothing at all. */
-/* Has to out-specify `.section-rich-text .container--reading-width` earlier in
-   this file, which sets the 620px prose measure at (0,2,0). */
-.section-rich-text .container--reading-width.ap-head-w,
+/* Kept as the anchor for the shared measure above: if the reading width ever
+   moves, this is the block it was tuned against. */
 .container--reading-width.ap-head-w { --reading-container-width: 880px; }
 .ap-head {
   padding-block: clamp(2.25rem, 6vw, 4rem) 0;

@@ -182,6 +182,11 @@ async function main() {
     { code: 'ENDCAP-IN',  track: 'indoor' as const,  name: 'Corner or endcap, inside',  priceCents:  4_000, isLimited: true, description: 'An end-of-run space with two shopping sides.' },
     { code: 'ENDCAP-OUT', track: 'outdoor' as const, name: 'Corner or endcap, outside', priceCents:  6_000, isLimited: true, description: 'A corner tent on the outdoor run.' },
     { code: 'TENT_10X10', track: 'outdoor' as const, name: 'Use one of our 10 × 10 tents', priceCents: 10_000, isLimited: true, description: 'Larger than the standard tent, and we set it up.' },
+    // New for 2026, priced and capped by Drew on 5 Sep. Five indoor for the
+    // show; five outdoor PER DAY, which the number below expresses because
+    // each outdoor day is its own space type.
+    { code: 'PRIORITY-IN',  track: 'indoor'  as const, name: 'Priority placement, inside',  priceCents: 10_000, isLimited: true, capacity: 5, description: 'A spot on the busiest run of the room. Five of these exist.' },
+    { code: 'PRIORITY-OUT', track: 'outdoor' as const, name: 'Priority placement, outside', priceCents: 10_000, isLimited: true, capacity: 5, description: 'A tent near the entrance. Five of these exist each day.' },
   ]
   for (const [i, a] of extras.entries()) {
     await db.insert(addOns).values({ id: randomUUID(), showId, sortOrder: i, ...a })
