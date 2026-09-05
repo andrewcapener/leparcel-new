@@ -562,6 +562,26 @@ export function ApplyForm({
                   becomes your first choice, and the rest tell the jury what
                   else works. Outside makers can check more than one day.
                 </p>
+                {/* The hardest question on this form is what a space actually
+                    looks like, and the answer is already on the site. A maker
+                    who has seen the room picks a size with some confidence
+                    instead of defaulting to the smallest one. New tab, because
+                    leaving this page mid-application loses the form. */}
+                <p className="note ap-lookbook">
+                  Not sure which to pick?{' '}
+                  {track !== 'outdoor' && (
+                    <a href="/lookbook/indoor" target="_blank" rel="noopener">
+                      See inside the room
+                    </a>
+                  )}
+                  {track === 'both' && ' or '}
+                  {track !== 'indoor' && (
+                    <a href="/lookbook/outdoor" target="_blank" rel="noopener">
+                      See the outdoor tents
+                    </a>
+                  )}
+                  .
+                </p>
                 {visible.map((s) => {
                   const rank = chosen.indexOf(s)
                   return (

@@ -1513,3 +1513,75 @@ h3, .h3 { line-height: 1.15; }
   .collapsible-tabs__tab .disclosure__title::before,
   .collapsible-tabs__tab .disclosure__title::after { transition: none; }
 }
+
+/* ── The accordions, second pass ───────────────────────────────────────────
+   Leadsower's FAQ is the reference. Two things separate it from what we had.
+
+   Width. Symmetry caps `.collapsible-tabs` at `--reading-container-width`,
+   which is a measure meant for paragraphs of prose. An accordion is not
+   prose: the question is one line and the answer is short, so the cap only
+   stranded the whole set in the middle of a wide page while every other
+   section ran full. It now takes the page container, with a cap high enough
+   that a question never has to travel across a desktop to reach its marker.
+
+   Contrast. There, the question is near-black and the answer is a clear step
+   lighter, so an open panel reads as an aside to its question rather than as
+   more headings. That difference is what makes a long list scannable. */
+.collapsible-tabs {
+  max-width: 1180px;
+  margin-inline: auto;
+}
+
+/* The answer runs wide now. The old 68ch measure was set when the whole
+   column was 880px, where it did nothing; at this width it would have left
+   the answers in a narrow strip under full-width questions. */
+.collapsible-tabs__tab .disclosure__content {
+  max-width: 96ch;
+  color: rgb(var(--text-color) / 0.72);
+  padding-bottom: 34px;
+  line-height: 1.75;
+}
+
+/* Paragraphs inside an answer get real air between them. Several of these
+   answers are three paragraphs long and they were reading as one block. */
+.collapsible-tabs__tab .disclosure__content > * + * { margin-top: 1.15em; }
+.collapsible-tabs__tab .disclosure__content ul,
+.collapsible-tabs__tab .disclosure__content ol { padding-left: 1.25em; }
+.collapsible-tabs__tab .disclosure__content li + li { margin-top: 0.5em; }
+
+/* A link inside an answer has to stay visible against the lighter body. */
+.collapsible-tabs__tab .disclosure__content a {
+  color: rgb(var(--heading-color));
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+/* The question keeps full-strength ink, which is where the contrast comes
+   from, and the marker sits at the far edge of the row the way it does on the
+   reference rather than floating inside it. */
+.collapsible-tabs__tab .disclosure__title {
+  padding-right: 64px;
+  color: rgb(var(--heading-color));
+}
+.collapsible-tabs__tab .disclosure__title::before,
+.collapsible-tabs__tab .disclosure__title::after {
+  width: 18px;
+  right: 2px;
+}
+
+/* Under about 900px the container is already the whole screen, so the cap and
+   the wide measure do nothing and the padding comes back in. */
+@media (max-width: 900px) {
+  .collapsible-tabs__tab .disclosure__title { padding-right: 44px; }
+  .collapsible-tabs__tab .disclosure__title::before,
+  .collapsible-tabs__tab .disclosure__title::after { width: 15px; }
+}
+
+/* The lookbook prompt on the space step. Sits under the hint as a second,
+   quieter line so it reads as an offer rather than another instruction. */
+.account-form .ap-lookbook { margin-top: -6px; }
+.account-form .ap-lookbook a {
+  color: rgb(var(--link-color));
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}

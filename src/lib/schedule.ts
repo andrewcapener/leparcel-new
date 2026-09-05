@@ -44,11 +44,38 @@ export function splitDay(row: string): { day: string; hours: string } {
   return { day: day ?? row, hours: rest.join(', ') }
 }
 
+/** "6pm" and "9am" as minutes past midnight, or null if it is not a time. */
+function minutes(time: string): number | null {
+  const m = time.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i)
+  if (!m) return null
+  const hour12 = Number(m[1])
+  if (hour12 < 1 || hour12 > 12) return null
+  const pm = m[3]!.toLowerCase() === 'pm'
+  const hour = hour12 === 12 ? (pm ? 12 : 0) : hour12 + (pm ? 12 : 0)
+  return hour * 60 + Number(m[2] ?? 0)
+}
+
+/** "9" -> "9am" / "9pm". */
+function withMeridiem(time: string, meridiem: string): string {
+  return time + meridiem
+}
+
 /**
- * The open and close times inside "5-9pm" or "9am - 6pm".
+ * The open and close times inside "5-9pm", "9am - 6pm" or "9 - 6pm".
  *
  * A range usually writes the meridiem once, on the closing time, so a bare
  * opening time borrows it: "5-9pm" opens at 5pm, not at 5.
+ *
+ * Borrowing alone is not enough. A show that runs 9 in the morning to 6 in the
+ * evening is written "9 - 6pm" by every human who has ever written it, and
+ * borrowing turned that into "9pm to 6pm" on the live schedule page: a market
+ * that closes three hours before it opens. So the borrowed meridiem has to
+ * survive a sanity check. If it puts the opening at or after the close, the
+ * range is impossible and the other meridiem is the one that was meant.
+ *
+ * That rule holds both ways round. "5 - 9pm" borrows pm and 5pm is before 9pm,
+ * so it stands. "9 - 6pm" borrows pm, 9pm is after 6pm, so it flips to 9am.
+ * "11 - 1pm" flips to 11am. "12 - 5pm" stays at noon.
  */
 export function bookends(hours: string): { opens: string; closes: string } {
   // Any dash, and the word. This split on a plain hyphen only, and the Show
@@ -60,7 +87,21 @@ export function bookends(hours: string): { opens: string; closes: string } {
   const closes = (rawClose ?? '').trim()
   let opens = (rawOpen ?? '').trim()
   const meridiem = closes.match(/(am|pm)$/i)?.[1]
-  if (opens && meridiem && !/(am|pm)$/i.test(opens)) opens += meridiem
+  // Only a bare clock number borrows. "noon - 4pm" is already a time and
+  // appending to it produced "noonpm".
+  if (opens && meridiem && /^\d{1,2}(:\d{2})?$/.test(opens)) {
+    const borrowed = withMeridiem(opens, meridiem)
+    const other = withMeridiem(opens, meridiem.toLowerCase() === 'pm' ? 'am' : 'pm')
+    const close = minutes(closes)
+    const asBorrowed = minutes(borrowed)
+    const asOther = minutes(other)
+    // Only overrule the borrow when both readings parse and the borrowed one
+    // is genuinely impossible. Anything unparseable is left exactly as typed.
+    opens = close !== null && asBorrowed !== null && asOther !== null
+      && asBorrowed >= close && asOther < close
+      ? other
+      : borrowed
+  }
   return { opens, closes }
 }
 
