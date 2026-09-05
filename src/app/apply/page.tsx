@@ -184,7 +184,11 @@ export default async function Apply({
           Short on purpose. On a 390px screen the form's first step is one
           swipe from here. */}
       <div className="shopify-section section-rich-text">
-        <div className="container container--reading-width">
+        {/* `ap-head-w`, not the bare reading width. 620px is the right measure
+            for a paragraph and the wrong one for a head carrying a four-up
+            figure strip: it squeezed each cell to 155px and wrapped every
+            value onto two lines. The lede keeps a reading measure inside it. */}
+        <div className="container container--reading-width ap-head-w">
           <header className="ap-head">
             <p className="ap-head__eyebrow">
               {show.name} · {fmtRange(show.startsOn, show.endsOn)} · {show.venueName}

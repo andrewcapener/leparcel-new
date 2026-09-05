@@ -29,7 +29,10 @@ const PATHS: Record<IconName, React.ReactNode> = {
   menu: <path d="M3 6h18M3 12h18M3 18h18" />,
   plus: <path d="M12 5v14M5 12h14" />,
   photo: <><rect x="3" y="4.5" width="18" height="15" /><circle cx="8.5" cy="10" r="1.8" /><path d="m3.5 17 5-5 4.5 4.5 3-2.5 4.5 4" /></>,
-  tent: <><path d="M12 3 3 20h18L12 3Z" /><path d="M12 3v17M12 12l-5 8M12 12l5 8" /></>,
+  /* a market canopy, not a warning triangle: a peaked roof, two poles and
+     the ground line under it. The earlier tent was a triangle with a stroke
+     down the middle and read as an alert at 18px. */
+  tent: <><path d="M2.5 13 12 6l9.5 7" /><path d="M4.5 13v6M19.5 13v6M2.5 19h19" /></>,
 }
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {

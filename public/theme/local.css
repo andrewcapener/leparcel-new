@@ -329,8 +329,14 @@ h3, .h3 { line-height: 1.15; }
 /* ── The head ──────────────────────────────────────────────────────────────
    Short on purpose: the page's job is to get a maker into the form, and the
    reference material now lives under it. */
+/* The variable has to be set on the CONTAINER, which is what reads it. Set on
+   the header inside it, it does nothing at all. */
+/* Has to out-specify `.section-rich-text .container--reading-width` earlier in
+   this file, which sets the 620px prose measure at (0,2,0). */
+.section-rich-text .container--reading-width.ap-head-w,
+.container--reading-width.ap-head-w { --reading-container-width: 880px; }
 .ap-head {
-  padding-block: clamp(1.75rem, 6vw, 3rem) 0;
+  padding-block: clamp(2.25rem, 6vw, 4rem) 0;
   scroll-margin-top: 96px;
 }
 .ap-head__eyebrow,
@@ -347,9 +353,9 @@ h3, .h3 { line-height: 1.15; }
 .ap-head__eyebrow { margin: 0 0 0.6em; }
 .ap-head__title { margin: 0; }
 .ap-head__lede {
-  max-width: 46ch;
-  margin: 0.9em 0 0;
-  line-height: 1.6;
+  max-width: 52ch;
+  margin: 1em 0 0;
+  line-height: 1.65;
 }
 
 /* The four figures a maker arrives wanting, answerable without reading.
@@ -357,19 +363,24 @@ h3, .h3 { line-height: 1.15; }
 .ap-glance {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 1.5rem;
-  margin: 1.6rem 0 0;
+  gap: 0 2.5rem;
+  margin: 2.6rem 0 0;
   border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity));
 }
 .ap-glance__item {
-  padding: 0.75rem 0;
+  padding: 1.1rem 0 1.25rem;
   border-bottom: 1px solid rgb(var(--text-color) / var(--divider-opacity));
 }
 .ap-glance dt { margin: 0; }
 .ap-glance dd {
-  margin: 0.25em 0 0;
-  font-weight: 600;
-  line-height: 1.35;
+  margin: 0.45em 0 0;
+  /* Not bold. A date and a price are already the only sentence-case thing in
+     a cell under a tracked uppercase label, so the label/value contrast is
+     doing the work. Bolding them as well made a row of four figures shout in
+     unison, which is how the strip read as cramped even where it was not. */
+  font-weight: 400;
+  font-size: var(--larger-text-size-4, 1.0625rem);
+  line-height: 1.4;
   color: rgb(var(--heading-color));
   font-variant-numeric: tabular-nums;
 }
@@ -381,8 +392,8 @@ h3, .h3 { line-height: 1.15; }
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 24px;
-  margin-top: 1.6rem;
+  gap: 14px 28px;
+  margin-top: 2.6rem;
 }
 .ap-head__actions .btn {
   display: inline-flex;
