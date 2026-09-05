@@ -166,8 +166,8 @@ async function main() {
    */
   const extras = [
     { code: 'SHARE',      track: null,               name: 'Share your space', priceCents: 10_000, isLimited: false, description: 'Split one space with another maker. Both of you apply.' },
-    { code: 'ENDCAP-IN',  track: 'indoor' as const,  name: 'Corner or endcap', priceCents:  4_000, isLimited: true,  description: 'An end-of-run space with two shopping sides.' },
-    { code: 'ENDCAP-OUT', track: 'outdoor' as const, name: 'Corner or endcap', priceCents:  6_000, isLimited: true,  description: 'A corner tent on the outdoor run.' },
+    { code: 'ENDCAP-IN',  track: 'indoor' as const,  name: 'Corner or endcap, inside',  priceCents:  4_000, isLimited: true, description: 'An end-of-run space with two shopping sides.' },
+    { code: 'ENDCAP-OUT', track: 'outdoor' as const, name: 'Corner or endcap, outside', priceCents:  6_000, isLimited: true, description: 'A corner tent on the outdoor run.' },
     { code: 'TENT_10X10', track: 'outdoor' as const, name: 'Use one of our 10 × 10 tents', priceCents: 10_000, isLimited: true, description: 'Larger than the standard tent, and we set it up.' },
   ]
   for (const [i, a] of extras.entries()) {

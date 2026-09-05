@@ -14,16 +14,6 @@ import { journal } from '@/lib/journal'
 export const dynamic = 'force-dynamic'
 
 /** Fact tiles derive from the Show record (CLAUDE.md rule 6), never a literal. */
-function romanToInt(numeral: string) {
-  const v: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100 }
-  let total = 0
-  for (let i = 0; i < numeral.length; i++) {
-    const cur = v[numeral[i]!] ?? 0
-    const next = v[numeral[i + 1]!] ?? 0
-    total += cur < next ? -cur : cur
-  }
-  return total
-}
 
 function showDays(show: { startsOn: string; endsOn: string }) {
   const ms = new Date(show.endsOn).getTime() - new Date(show.startsOn).getTime()
@@ -104,10 +94,6 @@ export default async function Home() {
         <div>
           <div className="k">Since</div>
           <div className="v num">2015</div>
-        </div>
-        <div>
-          <div className="k">Shows held</div>
-          <div className="v num">{romanToInt(show.numeral) - 1}</div>
         </div>
       </div>
       {C.press.verified && (
