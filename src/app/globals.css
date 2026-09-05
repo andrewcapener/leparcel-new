@@ -22,6 +22,8 @@
 
     /* ── the two colours ── */
     --deep:#4A5B52;      /* sage */
+    --deep-2:#3F4E46;    /* one step down: tonal pills and wells on sage */
+    --on-deep-soft:color-mix(in srgb,var(--on-deep) 62%,var(--deep));
     --accent:#CBB27A;    /* pale straw */
     --third:#8A7A6B;     /* warm grey-brown, sparingly */
     --on-deep:#F6F2E8; --on-accent:#211A0C;
@@ -87,7 +89,7 @@
   .util{background:var(--deep);color:var(--on-deep);display:flex;justify-content:center;gap:32px;
     flex-wrap:wrap;padding:9px var(--pad);font-family:var(--font-c);font-weight:600;
     text-transform:uppercase;letter-spacing:.11em;font-size:12.5px}
-  .util .mid{letter-spacing:.11em}
+  .util .mid{letter-spacing:.11em;color:var(--on-deep-soft)}
   .mast{display:flex;align-items:center;gap:22px;padding:17px var(--pad);background:var(--bone);
     position:sticky;top:0;z-index:40;border-bottom:2px solid var(--ink)}
   .mast .wm{width:100px;height:auto;color:var(--ink);flex:none}
@@ -133,6 +135,7 @@
   /* ─────────── 2 · the claim, held alone ─────────── */
   .claim{background:var(--deep);color:var(--on-deep);background-image:var(--grain-light);
     padding:clamp(46px,7vw,84px) var(--pad);text-align:center}
+  .claim .k,.apply .k{color:var(--on-deep-soft)}
   .claim .lede{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(42px,9vw,114px);line-height:.88;letter-spacing:-.008em;max-width:none;margin:0}
   .claim .lede em{font-style:normal;color:var(--accent)}
@@ -289,8 +292,10 @@
   .apply p{font-family:var(--font-g);font-size:19.5px;line-height:1.6;max-width:52ch;
     margin:20px auto 0;opacity:.9}
   .apply .cta{margin-top:28px;display:flex;gap:11px;justify-content:center;flex-wrap:wrap}
+  .apply .btn{background:var(--deep-2);border-color:var(--deep-2)}
+  .apply .btn:hover{background:var(--on-deep);border-color:var(--on-deep);color:var(--ink)}
   .apply .fine{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
-    letter-spacing:.1em;font-size:13px;opacity:.75;margin-top:20px}
+    letter-spacing:.1em;font-size:13px;color:var(--on-deep-soft);margin-top:20px}
 
   /* footer */
   .foot{background:var(--ink);color:var(--shell);background-image:var(--grain-light);
