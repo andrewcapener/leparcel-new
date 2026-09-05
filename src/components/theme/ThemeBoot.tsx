@@ -56,6 +56,9 @@ export function ThemeBoot() {
     loaded.current += 1
     if (loaded.current < SCRIPTS.length || replayed.current) return
     replayed.current = true
+    // Only where the theme's own markup is. /admin renders none of it, and
+    // main.js's setup assumes it is there.
+    if (!document.querySelector('page-header')) return
     document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true, cancelable: false }))
   }
 
@@ -63,11 +66,24 @@ export function ThemeBoot() {
     // The header measures itself: whether the inline nav fits beside the logo,
     // and how tall the bar is. Their page calls these right after the header
     // markup; ours calls them once React owns the DOM.
+    // Both of these read the header out of the DOM and neither tolerates its
+    // absence: inlineNavigationCheck does `.section-header`.querySelector(…)
+    // and throws outright. /admin is inside the root layout, so this
+    // component mounts there too, with none of the theme's markup under it.
+    // The poll below then retried the throw every 50ms for five seconds, a
+    // hundred uncaught TypeErrors deep, on every admin page load.
+    if (!document.querySelector('page-header')) return
+
     const boot = () => {
       const t = (window as unknown as { theme?: Record<string, () => void> }).theme
       if (!t) return false
-      t.inlineNavigationCheck?.()
-      t.setInitialHeaderHeightProperty?.()
+      try {
+        t.inlineNavigationCheck?.()
+        t.setInitialHeaderHeightProperty?.()
+      } catch {
+        // Theme measurement is not worth taking the page down for, and a
+        // throw here means retrying will throw identically.
+      }
       return true
     }
     if (boot()) return

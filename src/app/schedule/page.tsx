@@ -23,6 +23,12 @@ export default async function Schedule() {
   if (!show) throw new Error('No active show.')
 
   const days = show.hoursNote.split(' · ')
+  // True until the trucks and the musicians are actually booked. One flag for
+  // the whole show rather than a repeated row inside each day.
+  const someDayUnbooked = days.some((row) => {
+    const x = extrasFor(splitDay(row).day)
+    return !x || (!x.foodTruck && x.allDay.length === 0 && x.music.length === 0)
+  })
 
   return (
     <SiteShell show={show} template="page template-suffix-schedule">
@@ -39,27 +45,29 @@ export default async function Schedule() {
           {/* A timetable, not centred prose. Times range right in tabular
               numerals so a shopper can scan the left edge for "when does it
               open"; the closing time is a row, not a heading, because it is
-              data inside the day rather than a section of its own. */}
+              data inside the day rather than a section of its own.
+
+              `timetable`, not `price-table`. It used to borrow the pricing
+              tables' class, which carries a mobile rule that hides the second
+              cell — sound there, where that cell is a blurb beside a price,
+              and ruinous here, where it is the whole row. Every day on this
+              page read as a bare list of times on a phone. */}
           {days.map((row) => {
             const { day, hours } = splitDay(row)
             const { opens, closes } = bookends(hours)
             const x = extrasFor(day)
-            const nothingBooked = !x || (!x.foodTruck && x.allDay.length === 0 && x.music.length === 0)
             return (
               <div className="shopify-section section-rich-text" key={row}>
                 <div className="fully-spaced-row--medium" data-cc-animate="">
                   <div className="container container--reading-width">
                     <h2 className="majortitle in-content">{day}</h2>
-                    <div className="rte price-table">
+                    <div className="rte timetable">
                       <table>
                         <caption>{hours}</caption>
                         <tbody>
                           <tr>
                             <th scope="row" className="num">{opens}</th>
-                            <td>
-                              Inside &amp; outdoor market opens.{' '}
-                              <Link href="/merchants">See the maker line up</Link>.
-                            </td>
+                            <td>Inside &amp; outdoor market opens.</td>
                           </tr>
                           {x?.foodTruck && (
                             <tr><th scope="row">Food truck</th><td>{x.foodTruck}</td></tr>
@@ -72,16 +80,6 @@ export default async function Schedule() {
                               <th scope="row" className="num">{m.time}</th><td>{m.what}</td>
                             </tr>
                           ))}
-                          {nothingBooked && (
-                            <tr>
-                              <th scope="row">Music &amp; food</th>
-                              <td>
-                                The live music, the food trucks and the rest of the
-                                day go up about a week before the show. The list
-                                hears first.
-                              </td>
-                            </tr>
-                          )}
                           <tr><th scope="row" className="num">{closes}</th><td>Market closes.</td></tr>
                         </tbody>
                       </table>
@@ -91,6 +89,24 @@ export default async function Schedule() {
               </div>
             )
           })}
+
+          {/* The lineup note and the link to the makers used to be a row
+              inside every day, which printed the same two sentences three
+              times over. They are the same on all three days because they
+              are about the show, not about a day, so they sit once, here,
+              under the timetable they qualify. */}
+          <RichText large={false}>
+            {someDayUnbooked && (
+              <p>
+                The live music, the food trucks and the rest of each day go up
+                about a week before the show. The list hears first.
+              </p>
+            )}
+            <p>
+              <Link href="/merchants">See the maker line up</Link>. Inside is the
+              same all three days; the outdoor tents change daily.
+            </p>
+          </RichText>
 
           {/* The most under-served content on a market site, per
               docs/08-DESIGN-SYSTEM.md §6: the practical questions that decide

@@ -49,23 +49,38 @@
     --foot-bg:#C5B9B9; --foot-text:#524949;   /* their ground, text darkened to 4.6:1 */
     --foot-head:#5A482A; --foot-line:#9C8B8B;
 
-    /* ── type: the theme's own two faces ── */
-    --font-c:var(--f-oswald),'Arial Narrow',sans-serif; /* display, uppercase */
-    --font-g:var(--f-figtree),system-ui,sans-serif;     /* prose */
-    --font-j:var(--f-figtree),system-ui,sans-serif;     /* UI, forms, tables */
-    --font-r:var(--f-garamond),Georgia,serif;           /* reserve serif, unused */
+    /* ── type: the theme's own two faces ──
+       These named --f-* variables came from a next/font setup that went away
+       with the theme port, so nothing defined them and every rule below fell
+       through to Arial Narrow and system-ui. The admin has not been in the
+       market's faces since.
+
+       It does not need next/font. The root layout loads
+       /theme/theme-settings.css on every route, admin included, and that
+       sheet carries the @font-face rules for Figtree and Oswald served from
+       /theme/fonts. Naming the families directly is all that was missing. */
+    --font-c:Oswald,'Arial Narrow',sans-serif;   /* display, uppercase */
+    --font-g:Figtree,system-ui,sans-serif;       /* prose */
+    --font-j:Figtree,system-ui,sans-serif;       /* UI, forms, tables */
+    --font-r:Georgia,'Times New Roman',serif;    /* reserve serif, unused */
 
     /* ── type scale ──
        THEIRS, read out of the live site's own CSS variables rather than
        chosen here:
          --super-large-text-size 60px  (mobile 27px)
-         --larger-text-size      34px  (mobile 27px)
+         --larger-text-size      34px  (mobile 27px)  ← STALE: our own
+             public/theme/local.css raises this to 56px / 36px mobile, and
+             that sheet loads after this one, so the theme's h1 on this site
+             is 56px, not 34px. The two tokens below labelled "their larger"
+             are the pre-override number.
          --base-text-size        15px
          --nav-text-size         14px
          --button-text-size      13px
          --logo-text-size        26px
          --heading-font-weight   600
-         --heading-max-width     15em
+         (--heading-max-width is NOT a theme variable: Symmetry only ever
+          reads it as var(--heading-max-width, none), so the theme's actual
+          value is `none`. The 15em below is ours, a measure, not a port.)
        The previous scale here topped out at 148px and set body at 17px,
        which is two to three times theirs. Matching their fonts and colours
        while rendering everything at poster scale is why the site kept not
@@ -90,7 +105,8 @@
     --fs-h4:clamp(19px,2.2vw,22px);
     --fs-lead:clamp(16px,1.7vw,19px);
 
-    --heading-mw:15em;   /* their --heading-max-width */
+    --heading-mw:15em;   /* ours, a measure. The theme leaves
+                            --heading-max-width undefined; its fallback is `none`. */
 
     --pad:clamp(20px,4vw,58px);
     --maxw:1600px;       /* max_page_width */
@@ -747,3 +763,281 @@
     text-transform:uppercase;background:none;color:var(--ink);cursor:pointer;line-height:1.35}
   .btn-o:hover{background:var(--ink);color:var(--bone)}
 }
+
+/* ─── jury surfaces: /admin/jury and /admin/applications/[id] ───
+   The admin's translation of the public FactTable idea (Sections.tsx): a row
+   of tiles that answers the counting questions, then labelled facts with the
+   figures in a column of their own. Same tokens, tighter register.
+   Appended only. Nothing above this line is modified. ─── */
+@layer base {
+  .jr-h{display:flex;align-items:baseline;gap:8px 18px;flex-wrap:wrap;margin-bottom:18px}
+  .jr-h h1{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.012em;font-size:var(--t-d2);line-height:1.05}
+  .jr-h .meta{font-size:var(--t-lbl);color:var(--ink-3)}
+
+  /* Each tile is the filter for its own column, so the count and the way to
+     reach it are one control rather than a tab strip repeating the numbers. */
+  .jr-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(124px,1fr));
+    border:1px solid var(--line);border-top:2px solid var(--ink)}
+  .jr-stat{display:block;padding:13px 15px 15px;border-right:1px solid var(--line)}
+  .jr-stat:last-child{border-right:0}
+  .jr-stat .v{font-family:var(--font-g);font-size:var(--t-d3);line-height:1;margin-top:8px;
+    font-variant-numeric:tabular-nums;color:var(--ink)}
+  .jr-stat .v small{font-size:var(--t-lbl);color:var(--ink-3);margin-left:2px}
+  a.jr-stat:hover{background:var(--shell)}
+  a.jr-stat[aria-current="page"]{background:var(--ink)}
+  a.jr-stat[aria-current="page"] .k{color:rgba(255,255,255,.78)}
+  a.jr-stat[aria-current="page"] .v,
+  a.jr-stat[aria-current="page"] .v small{color:var(--bone)}
+  .jr-stat[data-warn="1"] .v,.jr-stat[data-warn="1"] .v small{color:var(--warn)}
+
+  /* capacity and category balance, on the tint band directly under the tiles */
+  .jr-strip{display:flex;flex-wrap:wrap;gap:12px 30px;align-items:baseline;padding:13px 15px;
+    background:var(--shell);border:1px solid var(--line);border-top:0;margin-bottom:26px}
+  .jr-strip .g{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+
+  .jr-q td{padding:14px}
+  .jr-q .nm{font-family:var(--font-g);font-size:var(--t-lead);line-height:1.25}
+  .jr-q .nm:hover{text-decoration:underline;text-underline-offset:3px}
+  .jr-sub{font-size:var(--t-lbl);color:var(--ink-3);line-height:1.45;margin-top:4px}
+  /* Three lines of the maker's own pitch: enough to judge, short enough that
+     twenty rows still fit on one screen. */
+  .jr-desc{font-size:var(--t-lbl);color:var(--ink-2);line-height:1.5;margin-top:9px;max-width:46ch;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .jr-th{display:flex;gap:4px}
+  .jr-th img{width:52px;height:52px;object-fit:cover;border-radius:4px;
+    border:1px solid var(--line);display:block}
+  .jr-th .none{width:52px;height:52px;border:1px dashed var(--line);border-radius:4px}
+  .jr-chips{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+  .jr-acts{display:flex;flex-wrap:wrap;gap:5px;max-width:196px}
+  .jr-tot{font-family:var(--font-g);font-size:var(--t-d4);line-height:1}
+  .jr-tot small{font-size:var(--t-lbl);color:var(--ink-3)}
+
+  .jr-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:34px;align-items:start}
+  .jr-rail{position:sticky;top:16px;background:var(--shell);
+    border:1px solid var(--line);border-top:2px solid var(--ink);padding:16px}
+  .jr-sc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .jr-sc .field{margin:0}
+  .jr-sc .inp{padding:8px 10px}
+  @media(max-width:1040px){
+    .jr-grid{grid-template-columns:minmax(0,1fr)}
+    .jr-rail{position:static}
+  }
+
+  .jr-h2{font-family:var(--font-c);font-weight:600;text-transform:uppercase;letter-spacing:.11em;
+    font-size:var(--t-lbl);color:var(--ink-3);margin:32px 0 0;padding-bottom:8px;
+    border-bottom:2px solid var(--ink)}
+  .jr-h2:first-child{margin-top:0}
+  .jr-quote{font-family:var(--font-g);font-size:var(--t-lead);line-height:1.65;max-width:58ch;
+    border-left:2px solid var(--accent);padding-left:16px;margin-top:16px}
+  .jr-facts{width:100%;border-collapse:collapse;font-size:var(--t-s)}
+  .jr-facts th{width:172px;text-align:left;vertical-align:top;font-family:var(--font-c);
+    font-weight:600;font-size:var(--t-lbl);letter-spacing:.11em;text-transform:uppercase;
+    color:var(--ink-3);padding:12px 14px 12px 0;border-bottom:1px solid var(--line)}
+  .jr-facts td{vertical-align:top;padding:12px 0 12px 14px;border-bottom:1px solid var(--line);
+    line-height:1.55}
+  .jr-facts td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;
+    width:112px;padding-left:18px}
+  .jr-ph{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+  .jr-ph img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;
+    border:1px solid var(--line);display:block}
+  @media(max-width:700px){
+    .jr-facts th{width:auto;display:block;padding:12px 0 2px;border-bottom:0}
+    .jr-facts td{display:block;padding:0 0 12px;border-bottom:1px solid var(--line)}
+    .jr-facts td.n{text-align:left;width:auto;padding-left:0}
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   op-* — operations surfaces: /admin/roster, /admin/show, /admin/outbox.
+   Appended only. Nothing above this line is edited.
+
+   Same discipline as the maker fact tables on the public side, in the
+   admin's denser register: a labelled header, the figure in its own
+   column, the rows that need action first. All values come from the
+   tokens already declared at the top of this file.
+   ═══════════════════════════════════════════════════════════════════ */
+@layer base {
+
+  /* page header: title, then one line of what this screen is for */
+  .op-head{margin-bottom:24px;max-width:80ch}
+  .op-head h1{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.012em;font-size:var(--t-d2);line-height:1.04}
+  .op-head .lede{font-size:var(--t-lbl);color:var(--ink-3);line-height:1.6;margin-top:10px}
+
+  /* the shape of the screen at a glance */
+  .op-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(166px,1fr));
+    border:1px solid var(--line);border-top:2px solid var(--ink);margin-bottom:30px}
+  .op-stats > div{padding:16px 18px 18px;border-right:1px solid var(--line)}
+  .op-stats > div:last-child{border-right:0}
+  .op-stats .v{font-family:var(--font-c);font-weight:600;font-size:var(--t-d3);
+    line-height:1;margin-top:10px;font-variant-numeric:tabular-nums}
+  .op-stats .n{display:block;font-size:var(--t-lbl-s);color:var(--ink-3);
+    margin-top:8px;line-height:1.45}
+  .op-stats > div[data-warn="1"]{background:#FBF1EE}
+  .op-stats > div[data-warn="1"] .k,
+  .op-stats > div[data-warn="1"] .v,
+  .op-stats > div[data-warn="1"] .n{color:var(--warn)}
+
+  /* section rule: a heading, an optional count pushed right */
+  .op-sec{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    margin:40px 0 12px;padding-bottom:9px;border-bottom:2px solid var(--ink)}
+  .op-sec h2{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.06em;font-size:var(--t-d4);line-height:1}
+  .op-sec .c{margin-left:auto;font-size:var(--t-lbl);color:var(--ink-3);
+    font-variant-numeric:tabular-nums}
+
+  .op-note{font-size:var(--t-lbl);color:var(--ink-3);line-height:1.6;max-width:76ch}
+  .op-note strong{color:var(--ink);font-weight:600}
+
+  /* a labelled band inside a .tbl, so one column set serves both groups */
+  .tbl tr.op-group th{background:var(--shell);border-bottom:1px solid var(--ink);
+    border-top:1px solid var(--ink);color:var(--ink);padding:8px 14px;white-space:normal}
+  .tbl tr.op-group th .c{color:var(--ink-3);letter-spacing:.09em}
+
+  /* read-only identity facts: label left, value right, figures aligned */
+  .op-facts{border-top:2px solid var(--ink);max-width:660px}
+  .op-facts > div{display:flex;gap:20px;align-items:baseline;padding:10px 0;
+    border-bottom:1px solid var(--line)}
+  .op-facts dt{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.11em;font-size:var(--t-lbl);color:var(--ink-3);flex:none;width:190px}
+  .op-facts dd{margin:0;font-size:var(--t-s);color:var(--ink);min-width:0}
+
+  /* one grouped block of a long form */
+  .op-fs{border:0;padding:0;margin:0 0 34px;min-width:0}
+  .op-fs > legend{padding:0;margin-bottom:5px}
+  .op-fs .why{font-size:var(--t-lbl);color:var(--ink-3);line-height:1.55;
+    max-width:70ch;margin:0 0 18px}
+
+  /* editable rows that must line up under one header (each row is a form) */
+  .op-rows{border-top:2px solid var(--ink)}
+  .op-rows .hd,.op-rows form{display:grid;grid-template-columns:var(--op-cols);
+    gap:12px;align-items:center}
+  .op-rows .hd{padding:9px 0;border-bottom:1px solid var(--line)}
+  .op-rows form{padding:11px 0;border-bottom:1px solid var(--line)}
+  .op-rows .inp{padding:7px 10px;font-size:var(--t-s)}
+  .op-rows .cd{font-size:var(--t-lbl);letter-spacing:.05em;line-height:1.2}
+  .op-rows .tk{text-transform:capitalize;font-size:var(--t-lbl);color:var(--ink-2)}
+  .op-rows .mny{display:flex;align-items:center;gap:5px}
+  .op-rows .mny > span{color:var(--ink-3);font-size:var(--t-lbl)}
+  @media(max-width:1000px){
+    .op-rows .hd{display:none}
+    .op-rows form{grid-template-columns:1fr 1fr;gap:9px;padding:15px 0}
+  }
+
+  /* the outbox: one line per message, body opens in place */
+  .op-mail{border-top:2px solid var(--ink)}
+  .op-mail .hd,.op-mail summary{display:grid;
+    grid-template-columns:150px minmax(140px,1fr) minmax(0,1.8fr) 84px 120px;
+    gap:14px;align-items:center}
+  .op-mail .hd{padding:9px 14px;border-bottom:1px solid var(--line)}
+  .op-mail details{border-bottom:1px solid var(--line)}
+  .op-mail summary{padding:11px 14px;cursor:pointer;list-style:none}
+  .op-mail summary::-webkit-details-marker{display:none}
+  .op-mail summary:hover{background:var(--shell)}
+  .op-mail details[open] > summary{background:var(--shell)}
+  .op-mail .to,.op-mail .sj{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .op-mail .to{font-size:var(--t-lbl);color:var(--ink-2)}
+  .op-mail .sj{font-family:var(--font-g);font-size:var(--t-s);color:var(--ink)}
+  .op-mail .at{font-size:var(--t-lbl-s);color:var(--ink-3);text-align:right;
+    font-variant-numeric:tabular-nums}
+  .op-mail .bd{padding:6px 14px 24px 14px}
+  .op-mail .bd pre{white-space:pre-wrap;font-family:var(--font-j);font-size:var(--t-lbl);
+    line-height:1.62;color:var(--ink-2);margin:0;max-width:74ch}
+  @media(max-width:1000px){
+    .op-mail .hd{display:none}
+    .op-mail summary{grid-template-columns:1fr auto;gap:7px 10px;padding:13px 14px}
+    .op-mail .sj{grid-column:1 / -1;white-space:normal}
+    .op-mail .to{grid-column:1 / -1}
+    .op-mail .at{text-align:left}
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Winning the cascade back.
+
+   The comments in src/app/layout.tsx and src/app/admin/layout.tsx both
+   claimed this sheet "loads after the theme and wins inside /admin". It
+   does not. React hoists stylesheets carrying `data-precedence` above any
+   hand-written <head> children, so Next's CSS chunk for this file is
+   emitted BEFORE every <link> in the root layout:
+
+     <link href="/_next/static/chunks/….css" data-precedence="next">   ← this
+     <link href="/theme/theme-settings.css">
+     <link href="/theme/main.css">
+     …
+     <link href="/theme/local.css">
+
+   Tailwind's `@layer base` is a build-time bucket, not a native cascade
+   layer, so nothing here is layered and every tie goes to the theme on
+   source order. The admin has been rendering Symmetry's element defaults
+   wherever an admin rule was not strictly more specific.
+
+   The fix is specificity, not order: `.adm` is on the admin's root element,
+   so scoping through it beats a bare element selector without needing the
+   link order to change. What follows is only the rules the theme was
+   actually taking, each one paired with the selector that was winning.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* main.css: input[type=text],[type=number],[type=email],… ,textarea (0,1,1)
+   beat `.inp` (0,1,0) outright. Every number and password field in the admin
+   rendered in the theme's chrome while the datetime-local fields next to
+   them, which are not in that selector list, kept ours. One form, two
+   different-looking inputs. */
+.adm .inp,
+.adm select.inp,
+.adm textarea.inp {
+  background: #FFFDF9;
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  padding: 11px 13px;
+  font-family: var(--font-j);
+  /* 16px, not the 15px this file used to ask for. It matches the theme's own
+     --input-text-size, and it is the threshold below which iOS zooms the page
+     on focus. */
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--ink);
+  outline: 0;
+}
+/* main.css: input[…]:active,input[…]:focus (0,2,1) beat `.inp:focus` (0,2,0). */
+.adm .inp:focus,
+.adm select.inp:focus,
+.adm textarea.inp:focus {
+  border-color: var(--deep);
+  box-shadow: 0 0 0 3px rgba(35, 35, 35, .14);
+}
+.adm .inp[aria-invalid="true"] { border-color: var(--warn); background: #FDF6F4; }
+/* main.css: textarea{height:120px} (0,0,1) fixed the height; ours only ever
+   set a min-height, so the box could not grow. */
+.adm textarea.inp { height: auto; min-height: 120px; line-height: 1.55; resize: vertical; }
+
+/* main.css: h1{font-size:var(--larger-text-size)}, which public/theme/local.css
+   raises to 56px desktop / 36px mobile for the public hero scale. The two
+   unclassed <h1>s in the admin were rendering at 56px against a 14px UI. The
+   design system's admin title is 34px. */
+/* `:not([class])` matters. These exist to catch BARE headings, which is what
+   the theme was styling at 56px. A heading that carries a class (.jr-h2,
+   .op-sec, and the rest) has already been given a size on purpose, and
+   `.adm h2` at (0,1,1) would outrank that class at (0,1,0) and undo it. */
+.adm h1:not([class]) { font-family: var(--font-c); font-weight: 600; text-transform: uppercase;
+  font-size: var(--t-d1); line-height: 1.1; letter-spacing: .012em; margin: 0; }
+.adm h2:not([class]) { font-family: var(--font-c); font-weight: 600; text-transform: uppercase;
+  font-size: var(--t-d3); line-height: 1.15; letter-spacing: .02em; margin: 0; }
+.adm h3:not([class]) { font-family: var(--font-c); font-weight: 600; text-transform: uppercase;
+  font-size: var(--t-d4); line-height: 1.2; letter-spacing: .03em; margin: 0; }
+/* Classed headings need nothing from here. The theme's rule they have to beat
+   is the bare `h1{font-size:var(--larger-text-size)}` at (0,0,1), and any
+   class is (0,1,0), so .jr-h2 and .op-sec already win on their own. */
+
+/* main.css: th,td{border-top:1px solid …} — we set border-bottom and never
+   cleared the top, so every admin table row carried two rules stacked. */
+.adm .tbl th, .adm .tbl td { border-top: 0; }
+/* main.css: p,fieldset,table{margin-bottom:1em} beat p{margin:0} on order,
+   loosening every paragraph and table in the admin by a line. */
+.adm p { margin: 0; }
+.adm table { margin-bottom: 0; }
+/* main.css: a{color:rgb(var(--link-color))}, and local.css sets that to the
+   public site's gold. Unclassed admin links were rendering gold on white. */
+.adm a { color: inherit; }
+.adm a:hover { color: var(--deep); }

@@ -50,18 +50,20 @@ export default async function Merchants() {
 
   // Inside is one group, all three days. Outside is one group per space,
   // which is one per day, in the order the spaces are listed on /apply.
-  // `headed: false` is the inside group, whose heading the intro paragraph
-  // above the grid already gives — which is how their page reads. Every
-  // outdoor day carries its own. Keying off the group rather than its index
-  // means a show with outdoor bookings and no indoor ones still labels its
-  // first day.
-  const groups: Array<{ heading: string; rows: Row[]; headed: boolean }> = []
+  //
+  // Every group carries its label, the inside one included. It used to be
+  // the exception, on the grounds that the intro paragraph named it the way
+  // their page does. On the page that read as an oversight: a run of names
+  // with nothing over it, then "OUTDOOR FRIDAY" and "OUTDOOR SUNDAY" neatly
+  // labelled below. A reader should not have to infer a group's identity
+  // from a paragraph two screens up.
+  const groups: Array<{ heading: string; rows: Row[] }> = []
   const inside = roster.filter((m) => m.track === 'indoor')
-  if (inside.length > 0) groups.push({ heading: 'Inside, all 3 days', rows: inside, headed: false })
+  if (inside.length > 0) groups.push({ heading: 'Inside, all 3 days', rows: inside })
   for (const m of roster.filter((r) => r.track === 'outdoor')) {
     const g = groups.find((x) => x.heading === m.space)
     if (g) g.rows.push(m)
-    else groups.push({ heading: m.space, rows: [m], headed: true })
+    else groups.push({ heading: m.space, rows: [m] })
   }
 
   return (
@@ -82,25 +84,27 @@ export default async function Merchants() {
             <>
               {/* Their page sets this as a tracked uppercase eyebrow: 267
                   characters of body copy in a label setting, seven lines on a
-                  phone. Tracked uppercase is for labels. */}
+                  phone. Tracked uppercase is for labels.
+
+                  It is also shorter than theirs. Half of what it said was
+                  directions to the groups below it ("just below", "keep
+                  scrolling"), and the groups now label themselves. What is
+                  left is the part a shopper cannot see from the labels: that
+                  coming twice gets you a different market. */}
               <RichText large={false}>
                 <p>
-                  Just below are the makers that are inside with us at Mermade,
-                  all 3 days. They don&#39;t change, we restock for them. Keep
-                  scrolling and you will find the makers showcasing outside, and
-                  a lot of them change each day. More reason to shop all 3 days
-                  with us.
+                  The makers inside are there all three days and we restock for
+                  them. The tents outside change daily, so Saturday is a
+                  different market from Friday.
                 </p>
               </RichText>
 
               {groups.map((g) => (
                 <div className="merchant-group" key={g.heading}>
                   {/* Above its own group, not below the one before it. */}
-                  {g.headed && (
-                    <div className="container">
-                      <h2 className="merchant-group__heading subheading">{g.heading}</h2>
-                    </div>
-                  )}
+                  <div className="container">
+                    <h2 className="merchant-group__heading subheading">{g.heading}</h2>
+                  </div>
                   <LogoGrid
                     id={`section-merchants-${g.heading.replace(/\W+/g, '-').toLowerCase()}`}
                     cards={g.rows.map((m) => ({ name: m.shopName, href: linkFor(m) }))}

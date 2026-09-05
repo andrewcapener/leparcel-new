@@ -7,7 +7,7 @@ import {
 } from '@/db/schema'
 import { decide } from '@/app/actions'
 import { usd } from '@/lib/money'
-import { fmtDateTime } from '@/lib/dates'
+import { fmtDate, fmtDateTime } from '@/lib/dates'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -16,6 +16,10 @@ const LABEL: Record<ApplicationStatus, string> = {
   new: 'New', under_review: 'Under review', shortlist: 'Shortlist',
   accepted: 'Accepted', waitlist: 'Waitlist', declined: 'Declined',
 }
+
+/** Counts come back from postgres as bigint, which the driver hands over as a
+ *  string. Anything we subtract from a capacity has to go through this. */
+const num = (v: number | string | null | undefined) => Number(v ?? 0)
 
 export default async function Jury({
   searchParams,
@@ -64,70 +68,101 @@ export default async function Jury({
     .from(bookings)
     .where(eq(bookings.showId, show.id))
 
+  /* Spaces remaining, per track, because they fill at different speeds and one
+     combined number hides the track that is already full. A `both` acceptance
+     holds a space on each side. Capacities live on the Show record. */
+  const acceptedByTrack = await db
+    .select({ track: applications.track, n: sql<number>`count(*)` })
+    .from(applications)
+    .where(and(eq(applications.showId, show.id), eq(applications.status, 'accepted')))
+    .groupBy(applications.track)
+  const held = (track: 'indoor' | 'outdoor') =>
+    acceptedByTrack
+      .filter((r) => r.track === track || r.track === 'both')
+      .reduce((a, r) => a + num(r.n), 0)
+  const indoorLeft = show.indoorCapacity - held('indoor')
+  const outdoorLeft = show.outdoorCapacity - held('outdoor')
+
+  const undecided = num(countOf('new')) + num(countOf('under_review')) + num(countOf('shortlist'))
+
   return (
     <div style={{ padding: '26px 26px 80px' }}>
-      <header style={{ display: 'flex', alignItems: 'baseline', gap: 18, marginBottom: 22 }}>
-        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 'var(--t-d2)' }}>Jury · {show.name}</h1>
-        <span style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>
-          {sold} of {show.indoorCapacity + show.outdoorCapacity} spaces committed ·{' '}
+      <header className="jr-h">
+        <h1>Jury · {show.name}</h1>
+        <span className="meta">
+          Applications close {fmtDate(show.applicationsCloseAt)} ·{' '}
           {show.commissionBps / 100}% commission · {show.paymentWindowHours}h payment window
         </span>
       </header>
 
-      {/* pipeline tabs, doubling as the board view's column counts */}
-      <nav style={{
-        display: 'flex', gap: 0, borderBottom: '1px solid var(--ink)', marginBottom: 26,
-        flexWrap: 'wrap',
-      }}>
+      {/* The counting questions, answered before the reviewer scrolls: how many
+          sit in each state, and which one to open next. Every tile is the
+          filter for its own column, so the counts and the navigation are one
+          control rather than a tab strip repeating the numbers. */}
+      <nav className="jr-stats" aria-label="Filter the queue by state">
         {APPLICATION_STATUSES.map((s) => (
           <Link
             key={s}
             href={`/admin/jury?status=${s}`}
-            style={{
-              padding: '10px 16px', fontSize: 'var(--t-lbl-s)', letterSpacing: '.11em',
-              textTransform: 'uppercase', fontWeight: 600,
-              color: s === active ? 'var(--paper)' : 'var(--ink-3)',
-              background: s === active ? 'var(--ink)' : 'transparent',
-            }}
+            className="jr-stat"
+            aria-current={s === active ? 'page' : undefined}
           >
-            {LABEL[s]} <span style={{ opacity: 0.6 }}>{countOf(s)}</span>
+            <span className="k">{LABEL[s]}</span>
+            <div className="v">{countOf(s)}</div>
           </Link>
         ))}
+        <div className="jr-stat" data-warn={indoorLeft < 0 ? '1' : undefined}>
+          <span className="k">Indoor left</span>
+          <div className="v">{indoorLeft}<small> of {show.indoorCapacity}</small></div>
+        </div>
+        <div className="jr-stat" data-warn={outdoorLeft < 0 ? '1' : undefined}>
+          <span className="k">Outdoor left</span>
+          <div className="v">{outdoorLeft}<small> of {show.outdoorCapacity}</small></div>
+        </div>
+        <div className="jr-stat">
+          <span className="k">Booked spaces</span>
+          <div className="v">{sold}</div>
+        </div>
       </nav>
 
-      {balance.length > 0 && (
-        <div style={{
-          display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 26,
-          paddingBottom: 20, borderBottom: '1px solid var(--line)',
-        }}>
-          <span className="chip" style={{ border: 0, paddingLeft: 0 }}>Accepted by category</span>
-          {balance.map((b) => (
-            <span
-              key={b.category}
-              className="chip"
-              data-warn={b.n > 3 ? '1' : undefined}
-              title={b.n > 3 ? 'Over the one-to-three-per-category rule' : undefined}
-            >
-              {b.category} {b.n}
-            </span>
-          ))}
-        </div>
-      )}
+      <div className="jr-strip">
+        <span className="g">
+          <span className="k">Still to decide</span>
+          <span className="num">{undecided}</span>
+        </span>
+        <span className="g">
+          <span className="k">Accepted by category</span>
+          {balance.length === 0
+            ? <span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-lbl)' }}>nothing accepted yet</span>
+            : balance.map((b) => (
+                <span
+                  key={b.category}
+                  className="chip"
+                  data-warn={num(b.n) > 3 ? '1' : undefined}
+                  title={num(b.n) > 3 ? 'Over the one-to-three-per-category rule' : undefined}
+                >
+                  {b.category} {b.n}
+                </span>
+              ))}
+        </span>
+      </div>
 
       {rows.length === 0 ? (
         <p style={{ color: 'var(--ink-3)', fontSize: 'var(--t-s)' }}>Nothing in {LABEL[active]}.</p>
       ) : (
-        <table className="tbl">
+        <table className="tbl jr-q">
+          <caption className="k" style={{ textAlign: 'left', paddingBottom: 10 }}>
+            {LABEL[active]} · {rows.length} {rows.length === 1 ? 'application' : 'applications'}, newest first
+          </caption>
           <thead>
             <tr>
-              <th>Shop</th>
-              <th>Category</th>
-              <th>Track / space</th>
-              <th className="r">Prices</th>
-              <th className="r">Fee</th>
-              <th>Flags</th>
-              <th>Scores</th>
-              <th style={{ width: 320 }}>Decision</th>
+              <th scope="col">Work</th>
+              <th scope="col">Shop</th>
+              <th scope="col">Category</th>
+              <th scope="col" className="r">Prices</th>
+              <th scope="col">Flags</th>
+              <th scope="col" className="r">Score</th>
+              <th scope="col" style={{ width: 210 }}>Decision</th>
             </tr>
           </thead>
           <tbody>
@@ -146,68 +181,56 @@ export default async function Jury({
                 ['Resells', app.madeByYou === 'curate_resell'],
                 ['Flagged vendor', vendor.isFlagged],
               ]
+              let photos: string[] = []
+              try { photos = JSON.parse(app.photos) } catch {}
+              let extraSpaces = 0
+              try { extraSpaces = Math.max(0, JSON.parse(app.requestedSpaceIds).length - 1) } catch {}
               return (
                 <tr key={app.id}>
                   <td>
-                    <Link href={`/admin/applications/${app.id}`}
-                      style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-b)', display: 'block' }}
-                      className="jql">
-                      {vendor.shopName} <span style={{ color: 'var(--deep)', fontSize: 'var(--t-lbl)' }}>→</span>
-                    </Link>
-                    <div style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginTop: 3 }}>
-                      {vendor.contactName} · {vendor.city}, {vendor.state}
+                    <div className="jr-th">
+                      {photos.length === 0
+                        ? <div className="none" aria-hidden="true" />
+                        : photos.slice(0, 3).map((src) => (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img key={src} src={src} alt="" width={52} height={52} />
+                          ))}
                     </div>
-                    <div style={{ fontSize: 'var(--t-lbl)', marginTop: 3 }}>
+                    {photos.length > 3 && (
+                      <div className="jr-sub">+{photos.length - 3} more</div>
+                    )}
+                  </td>
+                  <td>
+                    <Link href={`/admin/applications/${app.id}`} className="nm">
+                      {vendor.shopName}
+                    </Link>
+                    {vendor.showsAttended > 0 && (
+                      <span className="chip" style={{ marginLeft: 8 }}>
+                        Repeat · {vendor.showsAttended}
+                      </span>
+                    )}
+                    <div className="jr-sub">
+                      {vendor.contactName} · {vendor.city}, {vendor.state} ·{' '}
                       <a href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
-                        target="_blank" rel="noreferrer" style={{ color: 'var(--clay)' }}>
+                        target="_blank" rel="noreferrer" style={{ color: 'var(--accent-tx-tint)' }}>
                         {vendor.instagram}
                       </a>
-                      {vendor.showsAttended > 0 && (
-                        <span className="chip" style={{ marginLeft: 8 }}>
-                          Repeat · {vendor.showsAttended}
-                        </span>
-                      )}
                     </div>
-                    <p style={{
-                      fontSize: 'var(--t-lbl)', color: 'var(--ink-2)', marginTop: 8, maxWidth: 380,
-                      lineHeight: 1.5,
-                    }}>
-                      {app.description}
-                    </p>
-                    {(() => {
-                      let ph: string[] = []
-                      try { ph = JSON.parse(app.photos) } catch {}
-                      if (ph.length === 0) return null
-                      return (
-                        <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-                          {ph.slice(0, 4).map((src) => (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img key={src} src={src} alt="" width={64} height={64}
-                              style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)' }} />
-                          ))}
-                        </div>
-                      )
-                    })()}
+                    <p className="jr-desc">{app.description}</p>
                   </td>
-                  <td>{app.category}</td>
                   <td>
-                    <div style={{ textTransform: 'capitalize' }}>{app.track}</div>
-                    <div style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>
-                      {space?.label ?? '—'}
-                      {(() => {
-                        try {
-                          const n = JSON.parse(app.requestedSpaceIds).length
-                          return n > 1 ? ` +${n - 1} more` : ''
-                        } catch { return '' }
-                      })()}
+                    {app.category}
+                    <div className="jr-sub" style={{ textTransform: 'capitalize' }}>{app.track}</div>
+                    <div className="jr-sub">
+                      {space?.label ?? '—'}{extraSpaces > 0 ? ` +${extraSpaces} more` : ''}
                     </div>
                   </td>
-                  <td className="r">
+                  <td className="r num">
                     {usd(app.priceLowCents)}-{usd(app.priceHighCents)}
+                    <div className="jr-sub">{space ? `${usd(space.priceCents)} fee` : 'no fee yet'}</div>
                   </td>
-                  <td className="r">{space ? usd(space.priceCents) : '—'}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', maxWidth: 150 }}>
+                    <div className="jr-chips">
                       {flags.filter(([, on]) => on).map(([l]) => (
                         <span key={l} className="chip" data-warn="1">{l}</span>
                       ))}
@@ -219,22 +242,18 @@ export default async function Jury({
                   <td className="r">
                     {total ? (
                       <>
-                        <div style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-lead)' }}>{total}<span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-lbl)' }}>/20</span></div>
-                        <div style={{ fontSize: 'var(--t-lbl-s)', color: 'var(--ink-3)' }}>
+                        <div className="jr-tot">{total}<small>/20</small></div>
+                        <div className="jr-sub">
                           Q{app.scoreQuality} O{app.scoreOriginality} B{app.scoreBrand} F{app.scoreFit}
                         </div>
                       </>
                     ) : (
                       <span style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>unscored</span>
                     )}
-                    {app.decidedAt && (
-                      <div style={{ fontSize: 'var(--t-lbl-s)', color: 'var(--ink-3)', marginTop: 6 }}>
-                        {fmtDateTime(app.decidedAt)}
-                      </div>
-                    )}
+                    {app.decidedAt && <div className="jr-sub">{fmtDateTime(app.decidedAt)}</div>}
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <div className="jr-acts">
                       {(['shortlist', 'accepted', 'waitlist', 'declined', 'under_review', 'new'] as const)
                         .filter((s) => s !== app.status)
                         .filter((s) => s !== 'new' || app.status === 'declined')
@@ -251,7 +270,7 @@ export default async function Jury({
                         ))}
                     </div>
                     {app.declineReason && (
-                      <p style={{ fontSize: 'var(--t-lbl-s)', color: 'var(--ink-3)', marginTop: 8, maxWidth: 300 }}>
+                      <p className="jr-sub" style={{ maxWidth: 210 }}>
                         Sent: “{app.declineReason}”
                       </p>
                     )}

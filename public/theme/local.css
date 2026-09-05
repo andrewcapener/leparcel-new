@@ -82,7 +82,6 @@
 :focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
-  border-radius: 2px;
 }
 
 /* Their gold is 2.75:1 on white, so every inline link on the site failed AA.
@@ -268,9 +267,8 @@ h3, .h3 { line-height: 1.15; }
   color: rgb(var(--text-color) / 0.7);
   font-weight: 600;
 }
-@media (max-width: 600px) {
-  .price-table td:nth-child(2) { display: none; }   /* the blurb, not the price */
-}
+/* (the rule that used to hide .price-table's second cell on phones lived
+   here; it is replaced by the stacking rule at the end of this file) */
 
 /* Stat tiles: the number carries, the label recedes. This is the cheapest
    place on the site to show the range the heading scale now has. */
@@ -315,3 +313,216 @@ h3, .h3 { line-height: 1.15; }
 .apply-signup { margin-top: 1.6em; }
 .apply-signup .signup-form { max-width: 420px; margin-inline: auto; }
 .apply-signup .signup-form__email { width: 100%; }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   The merchant application form (src/app/apply/ApplyForm.tsx). Everything
+   here is prefixed `ap-`. The theme dresses the fields themselves; what it
+   has no class for is the run of numbered steps, a priced option row, and
+   the tally that adds those options up.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* The plan: five ruled rows, each a link to its step, each 44px tall. */
+.ap-plan { margin-bottom: 2rem; }
+.ap-plan__intro { color: rgb(var(--text-color) / 0.8); }
+.ap-plan__list { margin: 0; padding: 0; list-style: none; }
+.ap-plan__item { border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity)); }
+.ap-plan__item:last-child {
+  border-bottom: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+}
+.ap-plan__item a {
+  display: grid;
+  grid-template-columns: 2.2em 1fr auto;
+  gap: 0 0.8em;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.6em 0;
+  color: inherit;
+  text-decoration: none;
+}
+.ap-plan__item a:hover .ap-plan__title { text-decoration: underline; }
+.ap-plan__n, .ap-plan__state, .ap-step__n {
+  font-family: var(--nav-font-family);
+  font-size: var(--smaller-text-size-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+}
+
+/* A step head: eyebrow, rule above, and the optional flag where it can't be
+   missed. */
+.ap-step__head {
+  padding-top: 1.6rem;
+  border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+}
+.ap-step__n { margin: 0 0 0.35em; }
+.ap-step__flag {
+  margin-inline-start: 0.75em;
+  padding: 0.15em 0.7em;
+  border: 1px solid rgb(var(--text-color) / 0.35);
+  border-radius: 999px;
+}
+
+/* The rejection summary. `.errors` is the theme's box; this is the type in it. */
+.ap-errors__h { margin: 0; font-weight: 700; color: rgb(var(--heading-color)); }
+.ap-errors ul { margin: 0.5em 0 0; padding-inline-start: 1.2em; list-style: disc; }
+.ap-errors li { margin-bottom: 0.3em; }
+
+/* A checkbox group. `fieldset`/`legend` is the grouping a screen reader wants;
+   the legend is set to match `.account-form label` so it reads as one. */
+.ap-group { margin: 0; padding: 0; border: 0; }
+.ap-group__legend {
+  display: block;
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4em;
+}
+
+/* A priced option. The price is its own column so it lines up down the run
+   and never gets lost at the end of a sentence. The whole row is the target.
+   `.account-form label` is (0,1,1), so these have to be (0,2,0) to land. */
+.account-form .ap-option {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0 12px;
+  align-items: start;
+  min-height: 44px;
+  margin: 0 0 8px;
+  padding: 11px 14px;
+  border: 1px solid var(--input-border-color);
+  border-radius: var(--btn-border-radius);
+  font-weight: 400;
+  cursor: pointer;
+}
+.account-form .ap-option:hover { border-color: var(--input-border-color-hover); }
+.account-form .ap-option:has(:checked) {
+  border-color: rgb(var(--heading-color));
+  box-shadow: inset 0 0 0 1px rgb(var(--heading-color));
+}
+.ap-option input[type="checkbox"] { flex: none; width: 24px; height: 24px; margin: 0; }
+.ap-option__body { min-width: 0; }
+.ap-option__name { display: block; font-weight: 600; color: rgb(var(--heading-color)); }
+.ap-option__note {
+  display: block;
+  margin-top: 2px;
+  color: rgb(var(--text-color) / 0.75);
+  font-size: var(--smaller-text-size-2);
+  line-height: 1.45;
+}
+.ap-option__price {
+  font-weight: 600;
+  white-space: nowrap;
+  color: rgb(var(--heading-color));
+  font-variant-numeric: tabular-nums;
+}
+.ap-option__flag {
+  margin-inline-start: 0.6em;
+  padding: 0.1em 0.55em;
+  border: 1px solid rgb(var(--text-color) / 0.35);
+  border-radius: 999px;
+  font-family: var(--nav-font-family);
+  font-size: var(--smaller-text-size-4);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.75);
+}
+
+/* What the boxes above add up to. */
+.ap-tally {
+  padding: 14px 16px;
+  border-radius: var(--btn-border-radius);
+  background: rgb(var(--text-color) / 0.05);
+}
+.ap-tally__line { display: flex; justify-content: space-between; gap: 1em; margin: 0 0 0.4em; }
+.ap-tally__line .num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ap-tally__total {
+  margin-top: 0.6em;
+  padding-top: 0.5em;
+  border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+  font-weight: 700;
+  color: rgb(var(--heading-color));
+}
+.ap-tally__alt, .ap-tally__note {
+  margin: 0 0 0.4em;
+  color: rgb(var(--text-color) / 0.75);
+  font-size: var(--smaller-text-size-2);
+}
+.ap-tally__note { margin: 0.6em 0 0; }
+
+/* The character count sits under its textarea, not a field away from it. */
+.account-form .ap-count-row { margin-top: -14px; margin-bottom: 6px; text-align: end; }
+.ap-count {
+  font-size: var(--smaller-text-size-1);
+  color: rgb(var(--text-color) / 0.7);
+  font-variant-numeric: tabular-nums;
+}
+
+.ap-lede { color: rgb(var(--text-color) / 0.85); }
+.ap-submit__note { margin: 0.9em 0 0; color: rgb(var(--text-color) / 0.8); }
+
+/* On a phone the theme puts 40px between form fields, which is a long scroll
+   for a form this size, and a full-width button is the easier thumb target. */
+@media (max-width: 767.98px) {
+  .ap-form .flexible-layout--form .column { margin-bottom: 20px; }
+  .ap-submit .btn { width: 100%; }
+}
+
+/* ── The timetable ────────────────────────────────────────────────────────
+   docs/08-DESIGN-SYSTEM.md §8: dated or sequenced things as a ruled list
+   with the time in its own column, so the eye runs down the times rather
+   than through the sentences.
+
+   It was borrowing `.price-table`, which is a different shape: three
+   columns, and a mobile rule that drops the middle one. Here the second
+   cell is the whole row, so the schedule rendered as a bare column of times
+   on any phone. Its own class, and its own stacking. */
+.timetable table { width: 100%; margin: 0; }
+.timetable caption {
+  text-align: start;
+  padding-bottom: 0.6em;
+  font-family: var(--nav-font-family);
+  font-size: var(--smaller-text-size-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+}
+.timetable th, .timetable td { text-align: start; vertical-align: baseline; }
+.timetable th[scope="row"] {
+  font-weight: 600;
+  white-space: nowrap;
+  width: 1%;
+  padding-right: 1.4em;
+}
+.timetable th.num { text-align: end; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 600px) {
+  /* Stack rather than hide. The time becomes a small label over its own
+     line and the description keeps the full width. */
+  .timetable th[scope="row"],
+  .timetable td { display: block; width: auto; padding-right: 0; }
+  .timetable th[scope="row"],
+  .timetable th.num {
+    text-align: start;
+    padding-bottom: 0.15em;
+    border-bottom: 0;
+  }
+  .timetable td { padding-top: 0; }
+}
+
+/* The pricing tables, on a phone. This used to be
+     .price-table td:nth-child(2) { display: none }
+   which threw away "what it suits" — the column that tells a maker the
+   difference between a 3ft x 6in and a 3ft x 8in space. That is the column
+   the decision turns on, and a phone is where most of these are read. It
+   stacks under the name now instead of disappearing. */
+@media (max-width: 600px) {
+  .price-table td:nth-child(2) {
+    display: block;
+    font-size: var(--smaller-text-size-1);
+    line-height: 1.45;
+    padding-top: 0.2em;
+  }
+  .price-table th[scope="row"] { white-space: normal; }
+}

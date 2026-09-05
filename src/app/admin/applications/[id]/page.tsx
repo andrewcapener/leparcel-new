@@ -23,11 +23,14 @@ const MADE_BY: Record<string, string> = {
   curate_resell: 'Curates and resells',
 }
 
-function Row({ k, children }: { k: string; children: React.ReactNode }) {
+/** One labelled fact. `n` is the figure column: prices sit there, right
+ *  aligned and tabular, so a column of money reads as a column. */
+function Row({ k, children, n }: { k: string; children: React.ReactNode; n?: React.ReactNode }) {
   return (
     <tr>
-      <th style={{ width: 190, borderBottom: '1px solid var(--line)', verticalAlign: 'top' }}>{k}</th>
+      <th scope="row">{k}</th>
       <td>{children}</td>
+      {n !== undefined && <td className="n num">{n}</td>}
     </tr>
   )
 }
@@ -73,171 +76,223 @@ export default async function ApplicationDetail({
     app.isMlm && 'MLM / direct sales',
     app.usesAiArtwork && 'AI artwork',
     app.madeByYou === 'curate_resell' && 'Resells',
+    vendor.isFlagged && 'Flagged vendor',
   ].filter(Boolean) as string[]
 
+  let photos: string[] = []
+  try { photos = JSON.parse(app.photos) } catch {}
+  let secondary: string[] = []
+  try { secondary = JSON.parse(app.secondaryCategories) } catch {}
+
+  const scored = [app.scoreQuality, app.scoreOriginality, app.scoreBrand, app.scoreFit]
+  const total = scored.reduce((a: number, v) => a + (v ?? 0), 0)
+
   return (
-    <div style={{ padding: '26px 26px 80px', maxWidth: 880 }}>
-      <Link href="/admin/jury" style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.07em', fontSize: 'var(--t-lbl)', color: 'var(--deep)' }}>
+    <div style={{ padding: '26px 26px 80px', maxWidth: 1240 }}>
+      <Link href="/admin/jury" className="k" style={{ color: 'var(--deep)' }}>
         ← Jury queue
       </Link>
 
-      <header style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap', margin: '14px 0 4px' }}>
-        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 'var(--t-d2)' }}>
-          {vendor.shopName}
-        </h1>
+      <header className="jr-h" style={{ margin: '14px 0 4px' }}>
+        <h1>{vendor.shopName}</h1>
         <span className="chip" data-s={app.status}>{LABEL[app.status as ApplicationStatus]}</span>
         {booking?.vendorCode && <span className="chip">{booking.vendorCode}</span>}
-        {flags.map((f) => <span key={f} className="chip" data-warn="1">{f}</span>)}
+        {vendor.showsAttended > 0 && <span className="chip">Repeat · {vendor.showsAttended} shows</span>}
+        {flags.map((f) => (
+          <span key={f} className="chip" data-warn="1"
+            title={f === 'Flagged vendor' ? vendor.flagReason ?? undefined : undefined}>{f}</span>
+        ))}
       </header>
-      <p style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginBottom: 24 }}>
+      <p style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginBottom: 26 }}>
         Submitted {fmtDateTime(app.submittedAt)} · signed “{app.signedName}” · terms v{app.termsVersion}
       </p>
 
-      {(() => {
-        let ph: string[] = []
-        try { ph = JSON.parse(app.photos) } catch {}
-        if (ph.length === 0) return null
-        return (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10, marginBottom: 26 }}>
-            {ph.map((src) => (
-              <a key={src} href={src} target="_blank" rel="noreferrer">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 8, border: '1px solid var(--line)' }} />
-              </a>
-            ))}
-          </div>
-        )
-      })()}
-
-      <table className="tbl" style={{ marginBottom: 30 }}>
-        <tbody>
-          <Row k="Contact">
-            {vendor.contactName} · <a href={`mailto:${vendor.email}`} style={{ color: 'var(--deep)' }}>{vendor.email}</a> · {vendor.phone}
-          </Row>
-          <Row k="Instagram">
-            <a href={`https://instagram.com/${vendor.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" style={{ color: 'var(--deep)' }}>
-              {vendor.instagram} ↗
-            </a>
-            {vendor.website && (
-              <> · <a href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`} target="_blank" rel="noreferrer" style={{ color: 'var(--deep)' }}>{vendor.website} ↗</a></>
-            )}
-          </Row>
-          <Row k="From">{vendor.city}, {vendor.state}</Row>
-          <Row k="Category">{app.category}</Row>
-          <Row k="The work">
-            <div style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-b)', lineHeight: 1.6, maxWidth: '58ch' }}>{app.description}</div>
-          </Row>
-          <Row k="Price range">
-            <span className="num">{usd(app.priceLowCents)}-{usd(app.priceHighCents)}</span>
-          </Row>
-          <Row k="Made by them">{MADE_BY[app.madeByYou] ?? app.madeByYou}</Row>
-          <Row k="Track">
-            <span style={{ textTransform: 'capitalize' }}>{app.track}</span>
-          </Row>
-          <Row k={`Spaces requested (${requested.length})`}>
-            {requested.length === 0 ? '—' : (
-              <div style={{ display: 'grid', gap: 4 }}>
-                {requested.map((s) => (
-                  <div key={s.id}>
-                    {s.label} · <span className="num">{usd(s.priceCents)}</span>
-                    {s.id === app.spaceTypeId && (
-                      <span className="chip" style={{ marginLeft: 8 }}>primary · books on acceptance</span>
-                    )}
-                  </div>
+      {/* Two columns: what the maker sent on the left, the decision on the
+          right. The rail is sticky, so the scores and the six buttons stay
+          reachable however far down the photographs run. */}
+      <div className="jr-grid">
+        <div>
+          {photos.length > 0 && (
+            <>
+              <h2 className="jr-h2">The work · {photos.length} photos</h2>
+              <div className="jr-ph" style={{ marginTop: 16 }}>
+                {photos.map((src) => (
+                  <a key={src} href={src} target="_blank" rel="noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="" />
+                  </a>
                 ))}
               </div>
-            )}
-          </Row>
-          <Row k="Add-ons asked for">
-            {extras.length === 0 ? '—' : (
-              <div style={{ display: 'grid', gap: 4 }}>
-                {extras.map((a) => (
-                  <div key={a.id}>
-                    {a.name} · <span className="num">{usd(a.priceCents)}</span>
-                    {a.isLimited && <span className="chip" style={{ marginLeft: 8 }}>limited</span>}
-                  </div>
-                ))}
-                <div style={{ color: 'var(--ink-3)', fontSize: 'var(--t-lbl)' }}>
-                  Requests. Confirm what you can give them before the invoice goes out.
-                </div>
-              </div>
-            )}
-          </Row>
-          <Row k="Paperwork">
-            {app.sellerPermit
-              ? `Seller's permit on file: ${app.sellerPermit}`
-              : app.occasionalSeller
-                ? 'No permit; says they qualify as an occasional seller (CDTFA 410-D)'
-                : 'Nothing yet. Required before load-in, not before.'}
-            {app.hasCoi && <div>Carries their own liability insurance.</div>}
-          </Row>
-          {booking && (
-            <Row k="Booking">
-              {booking.vendorCode} · {usd(booking.priceCents)} · {booking.commissionBps / 100}% commission ·{' '}
-              {booking.status.replace('_', ' ')}
-            </Row>
+            </>
           )}
-          {app.declineReason && <Row k="Decline reason sent">“{app.declineReason}”</Row>}
-        </tbody>
-      </table>
 
-      {/* ── jury: scores, notes, decision ── */}
-      <h2 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, fontSize: 'var(--t-xl)', marginBottom: 14 }}>Jury</h2>
-      <form action={saveScores} style={{ marginBottom: 20 }}>
-        <input type="hidden" name="applicationId" value={app.id} />
-        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          {([['scoreQuality', 'Quality', app.scoreQuality], ['scoreOriginality', 'Originality', app.scoreOriginality],
-             ['scoreBrand', 'Brand', app.scoreBrand], ['scoreFit', 'Fit', app.scoreFit]] as const).map(([name, label, val]) => (
-            <label key={name} className="field" style={{ margin: 0, width: 110 }}>
-              <span className="lb">{label} /5</span>
-              <input className="inp" name={name} type="number" min={1} max={5} defaultValue={val ?? ''} />
-            </label>
-          ))}
-        </div>
-        <label className="field" style={{ marginTop: 16 }}>
-          <span className="lb">Jury notes (never shown to the maker)</span>
-          <textarea className="inp" name="juryNotes" defaultValue={app.juryNotes} style={{ minHeight: 80 }} />
-        </label>
-        <button className="btn-o" type="submit">Save scores &amp; notes</button>
-      </form>
+          <h2 className="jr-h2">In their words</h2>
+          <p className="jr-quote">{app.description}</p>
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {(['shortlist', 'accepted', 'waitlist', 'declined', 'under_review', 'new'] as const)
-          .filter((s) => s !== app.status)
-          .filter((s) => s !== 'new' || app.status === 'declined')
-          .map((s) => (
-            <form action={decide} key={s}>
-              <input type="hidden" name="applicationId" value={app.id} />
-              <input type="hidden" name="status" value={s} />
-              {s === 'declined' && (
-                <input type="hidden" name="reason"
-                  value="Category was full this season. We take one to three makers per category." />
-              )}
-              <button className="btn-o" type="submit">{LABEL[s]}</button>
-            </form>
-          ))}
-      </div>
-
-      {/* ── audit trail ── */}
-      {trail.length > 0 && (
-        <>
-          <h2 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, fontSize: 'var(--t-xl)', margin: '36px 0 12px' }}>History</h2>
-          <table className="tbl">
+          <h2 className="jr-h2">The maker</h2>
+          <table className="jr-facts" style={{ marginBottom: 4 }}>
             <tbody>
-              {trail.map((t) => (
-                <tr key={t.id}>
-                  <td style={{ whiteSpace: 'nowrap', color: 'var(--ink-3)', fontSize: 'var(--t-lbl)' }}>{fmtDateTime(t.at)}</td>
-                  <td>{t.action.replace('_', ' ')}</td>
-                  <td style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-2)' }}>
-                    {t.after ? JSON.parse(t.after).status ?? '' : ''}
-                    {t.reason && ` · ${t.reason}`}
-                  </td>
-                </tr>
+              <Row k="Category">
+                {app.category}
+                {secondary.length > 0 && (
+                  <span style={{ marginLeft: 8 }}>
+                    {secondary.map((c) => (
+                      <span key={c} className="chip" style={{ marginRight: 5 }}>{c}</span>
+                    ))}
+                  </span>
+                )}
+              </Row>
+              <Row k="Made by them">{MADE_BY[app.madeByYou] ?? app.madeByYou}</Row>
+              <Row k="Price range">
+                <span className="num">{usd(app.priceLowCents)}-{usd(app.priceHighCents)}</span>
+              </Row>
+              <Row k="Track"><span style={{ textTransform: 'capitalize' }}>{app.track}</span></Row>
+              <Row k="Based in">{vendor.city}, {vendor.state}</Row>
+              <Row k="Shows attended">
+                {vendor.showsAttended === 0 ? 'First time applying' : `${vendor.showsAttended} with Mermade`}
+              </Row>
+              <Row k="Instagram">
+                <a href={`https://instagram.com/${vendor.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" style={{ color: 'var(--deep)' }}>
+                  {vendor.instagram} ↗
+                </a>
+                {vendor.website && (
+                  <> · <a href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`} target="_blank" rel="noreferrer" style={{ color: 'var(--deep)' }}>{vendor.website} ↗</a></>
+                )}
+              </Row>
+              <Row k="Contact">
+                {vendor.contactName} · <a href={`mailto:${vendor.email}`} style={{ color: 'var(--deep)' }}>{vendor.email}</a> · {vendor.phone}
+              </Row>
+            </tbody>
+          </table>
+
+          <h2 className="jr-h2">What they asked for</h2>
+          <table className="jr-facts">
+            <tbody>
+              {requested.length === 0 ? (
+                <Row k="Spaces" n="—">No space chosen yet.</Row>
+              ) : requested.map((s) => (
+                <Row
+                  key={s.id}
+                  k={s.id === app.spaceTypeId ? 'Space · primary' : 'Space'}
+                  n={usd(s.priceCents)}
+                >
+                  {s.label}
+                  {s.id === app.spaceTypeId && (
+                    <div style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>
+                      Books on acceptance.
+                    </div>
+                  )}
+                </Row>
+              ))}
+              {extras.map((a) => (
+                <Row key={a.id} k="Add-on asked for" n={usd(a.priceCents)}>
+                  {a.name}
+                  {a.isLimited && <span className="chip" style={{ marginLeft: 8 }}>limited</span>}
+                </Row>
               ))}
             </tbody>
           </table>
-        </>
-      )}
+          {extras.length > 0 && (
+            <p style={{ marginTop: 10, fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>
+              Requests, not sales. Confirm what you can give them before the invoice goes out.
+            </p>
+          )}
+
+          {/* Below the decision, not beside it. Paperwork is a load-in duty,
+              not a curation input, and the jury should never weigh it. */}
+          <h2 className="jr-h2">After acceptance</h2>
+          <table className="jr-facts">
+            <tbody>
+              <Row k="Paperwork" n="">
+                {app.sellerPermit
+                  ? `Seller's permit on file: ${app.sellerPermit}`
+                  : app.occasionalSeller
+                    ? 'No permit; says they qualify as an occasional seller (CDTFA 410-D)'
+                    : 'Nothing yet. Required before load-in, not before.'}
+                {app.hasCoi && <div>Carries their own liability insurance.</div>}
+              </Row>
+              {booking && (
+                <Row k="Booking" n={usd(booking.priceCents)}>
+                  {booking.vendorCode} · {booking.commissionBps / 100}% commission ·{' '}
+                  {booking.status.replace('_', ' ')}
+                </Row>
+              )}
+              {app.declineReason && (
+                <Row k="Decline reason sent" n="">“{app.declineReason}”</Row>
+              )}
+            </tbody>
+          </table>
+
+          {trail.length > 0 && (
+            <>
+              <h2 className="jr-h2">History</h2>
+              <table className="tbl">
+                <tbody>
+                  {trail.map((t) => (
+                    <tr key={t.id}>
+                      <td style={{ whiteSpace: 'nowrap', color: 'var(--ink-3)', fontSize: 'var(--t-lbl)' }}>{fmtDateTime(t.at)}</td>
+                      <td>{t.action.replace('_', ' ')}</td>
+                      <td style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-2)' }}>
+                        {t.after ? JSON.parse(t.after).status ?? '' : ''}
+                        {t.reason && ` · ${t.reason}`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+        </div>
+
+        {/* ── jury: scores, notes, decision ── */}
+        <aside className="jr-rail" aria-label="Jury decision">
+          <h2 className="jr-h2" style={{ marginTop: 0 }}>Jury</h2>
+          <form action={saveScores} style={{ marginTop: 16 }}>
+            <input type="hidden" name="applicationId" value={app.id} />
+            <div className="jr-sc">
+              {([['scoreQuality', 'Quality', app.scoreQuality], ['scoreOriginality', 'Originality', app.scoreOriginality],
+                 ['scoreBrand', 'Brand', app.scoreBrand], ['scoreFit', 'Fit', app.scoreFit]] as const).map(([name, label, val]) => (
+                <label key={name} className="field">
+                  <span className="lb">{label} /5</span>
+                  <input className="inp" name={name} type="number" min={1} max={5} defaultValue={val ?? ''} />
+                </label>
+              ))}
+            </div>
+            <p style={{ marginTop: 12, fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>
+              {total > 0
+                ? <>Saved total <span className="num" style={{ color: 'var(--ink)' }}>{total}/20</span></>
+                : 'Unscored'}
+            </p>
+            <label className="field" style={{ marginTop: 12, marginBottom: 14 }}>
+              <span className="lb">Jury notes (never shown to the maker)</span>
+              <textarea className="inp" name="juryNotes" defaultValue={app.juryNotes} style={{ minHeight: 96 }} />
+            </label>
+            <button className="btn-o" type="submit">Save scores &amp; notes</button>
+          </form>
+
+          <h2 className="jr-h2">Move to</h2>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 14 }}>
+            {(['shortlist', 'accepted', 'waitlist', 'declined', 'under_review', 'new'] as const)
+              .filter((s) => s !== app.status)
+              .filter((s) => s !== 'new' || app.status === 'declined')
+              .map((s) => (
+                <form action={decide} key={s}>
+                  <input type="hidden" name="applicationId" value={app.id} />
+                  <input type="hidden" name="status" value={s} />
+                  {s === 'declined' && (
+                    <input type="hidden" name="reason"
+                      value="Category was full this season. We take one to three makers per category." />
+                  )}
+                  <button className="btn-o" type="submit">{LABEL[s]}</button>
+                </form>
+              ))}
+          </div>
+          <p style={{ marginTop: 12, fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', lineHeight: 1.5 }}>
+            Accepting books the primary space and sends the invoice. Declining sends the reason
+            above it.
+          </p>
+        </aside>
+      </div>
     </div>
   )
 }
