@@ -60,13 +60,13 @@ export const CONTACT_EMAIL = 'hello@mermademarket.com'
 export const POLICY = {
   /** Statement and payment, as a window rather than a single number.
    *
-   *  ⟨DECISION⟩ Elise, 5 Sep 2026: payment really goes out 7 to 10 days after
-   *  the show. The contract said 7, because the old Shopify page promised "pay
-   *  within 1 week" and the contract must not promise slower than the page a
-   *  maker read. But a contract that promises 7 when the work takes 10 is
-   *  breached on day 8, every season, by a business doing nothing wrong. So
-   *  the outer bound is what is promised, and the page quotes the same window.
-   *  Confirm with Drew; one number changes both. docs/10 drafted 30 days. */
+   *  CONFIRMED by Drew, 5 Sep 2026: pay within 10 days. Elise reported that
+   *  payment really goes out 7 to 10 days after the show; the contract had
+   *  said 7, because the old Shopify page promised "pay within 1 week" and the
+   *  contract must not promise slower than the page a maker read. But a
+   *  contract promising 7 when the work takes 10 is breached on day 8, every
+   *  season, by a business doing nothing wrong. The outer bound is what is
+   *  promised; the page quotes the window. docs/10 drafted 30 days. */
   payoutDaysMin: 7,
   payoutDays: 10,
   /** Window to query a statement, from the draft. */

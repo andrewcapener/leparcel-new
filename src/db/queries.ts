@@ -1,5 +1,6 @@
 import { eq, and, asc } from 'drizzle-orm'
 import { db } from './index'
+import { fillCapacity } from '@/lib/counts'
 import { shows, addOns, spaceTypes, type Show, type AddOn, type SpaceType } from './schema'
 
 /**
@@ -81,7 +82,7 @@ export async function activeAddOns(showId: string): Promise<AddOn[]> {
       orderBy: [asc(addOns.sortOrder)],
     })
     addOnsMissingUntil = 0
-    return rows
+    return rows.map((r) => fillCapacity(r))
   } catch (err) {
     const code = pgCode(err)
 
@@ -112,7 +113,9 @@ export async function activeAddOns(showId: string): Promise<AddOn[]> {
         .from(addOns)
         .where(and(eq(addOns.showId, showId), eq(addOns.isActive, true)))
         .orderBy(asc(addOns.sortOrder))
-      return rows.map((r) => ({ ...r, capacity: null }))
+      // No capacity column yet, so {{capacity}} resolves to the vaguer
+      // wording rather than leaving braces on the page.
+      return rows.map((r) => fillCapacity({ ...r, capacity: null }))
     }
 
     if (code !== MISSING_TABLE) throw err
@@ -135,8 +138,11 @@ export async function activeAddOns(showId: string): Promise<AddOn[]> {
  * still has to resolve its space. `is_active` is what hides them.
  */
 export async function activeSpaceTypes(showId: string): Promise<SpaceType[]> {
-  return db.query.spaceTypes.findMany({
+  const rows = await db.query.spaceTypes.findMany({
     where: and(eq(spaceTypes.showId, showId), eq(spaceTypes.isActive, true)),
     orderBy: [asc(spaceTypes.sortOrder)],
   })
+  // Resolved here so every caller gets the same sentence and none of them has
+  // to remember to do it. src/lib/counts.ts explains why.
+  return rows.map((r) => fillCapacity(r))
 }

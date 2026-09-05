@@ -167,7 +167,7 @@ async function main() {
     // left ("3x4", which is what staff and returning makers say) and spells the
     // dimensions out in the caption beside it, so nobody has to guess which
     // number is the depth.
-    { code: 'IN-JR',    track: 'indoor' as const,  label: 'JR Space',            priceCents:  6_000, capacity:  6, dimensions: '2ft wide, 3ft deep', description: 'For our makers 14 and under, to get them excited about being an entrepreneur. We provide the shelving. Only 6 chosen.' },
+    { code: 'IN-JR',    track: 'indoor' as const,  label: 'JR Space',            priceCents:  6_000, capacity:  8, dimensions: '2ft wide, 3ft deep', description: 'For our makers 14 and under, to get them excited about being an entrepreneur. We provide the shelving. Only {{capacity}} chosen.' },
     { code: 'IN-TREAT', track: 'indoor' as const,  label: 'Treats on a Shelf',   priceCents: 10_000, capacity:  4, dimensions: '', description: '5 shelves given to each maker, a sliver of one big shelf you share. Suggested $12 and under.' },
     { code: 'IN-3x4',   track: 'indoor' as const,  label: '3x4',   priceCents: 26_000, capacity: 10, dimensions: '4ft wide, 3ft deep', description: 'Our smallest option. Not used for apparel or art.' },
     { code: 'IN-3x6',   track: 'indoor' as const,  label: '3x6',   priceCents: 28_000, capacity: 13, dimensions: '6ft wide, 3ft deep', description: 'Our best seller. Not suggested for apparel unless you have great vertical space.' },
@@ -196,8 +196,8 @@ async function main() {
     // New for 2026, priced and capped by Drew on 5 Sep. Five indoor for the
     // show; five outdoor PER DAY, which the number below expresses because
     // each outdoor day is its own space type.
-    { code: 'PRIORITY-IN',  track: 'indoor'  as const, name: 'Priority placement, inside',  priceCents: 10_000, isLimited: true, capacity: 5, description: 'A spot on the busiest run of the room. Five of these exist.' },
-    { code: 'PRIORITY-OUT', track: 'outdoor' as const, name: 'Priority placement, outside', priceCents: 10_000, isLimited: true, capacity: 5, description: 'A tent near the entrance. Five of these exist each day.' },
+    { code: 'PRIORITY-IN',  track: 'indoor'  as const, name: 'Priority placement, inside',  priceCents: 10_000, isLimited: true, capacity: 5, description: 'A spot on the busiest run of the room. Only {{capacity}} of these exist.' },
+    { code: 'PRIORITY-OUT', track: 'outdoor' as const, name: 'Priority placement, outside', priceCents: 10_000, isLimited: true, capacity: 5, description: 'A tent near the entrance. Only {{capacity}} exist each day.' },
   ]
   for (const [i, a] of extras.entries()) {
     await db.insert(addOns).values({ id: randomUUID(), showId, sortOrder: i, ...a })
