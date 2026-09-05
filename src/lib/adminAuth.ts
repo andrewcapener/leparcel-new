@@ -9,8 +9,21 @@
 
 export const ADMIN_COOKIE = 'mm_admin'
 
-/** Accepts either name; ADMIN_PASSWORD is canonical, ADMIN_PASS works too. */
-export const adminPassword = () => process.env.ADMIN_PASSWORD ?? process.env.ADMIN_PASS
+/**
+ * Accepts either name; ADMIN_PASSWORD is canonical, ADMIN_PASS works too.
+ *
+ * Trimmed, because pasting a value into a hosting dashboard picks up a
+ * trailing newline or space more often than anyone admits, and the symptom
+ * is indistinguishable from a broken admin: the stored secret no longer
+ * equals anything a human can type. Nobody means to end a password with
+ * whitespace, so trimming can only help. Note it changes the HMAC key, so
+ * whitespace that WAS being stored signs everyone out once.
+ */
+export const adminPassword = () => {
+  const raw = process.env.ADMIN_PASSWORD ?? process.env.ADMIN_PASS
+  const trimmed = raw?.trim()
+  return trimmed ? trimmed : undefined
+}
 
 async function hmacHex(secret: string, message: string) {
   const key = await crypto.subtle.importKey(

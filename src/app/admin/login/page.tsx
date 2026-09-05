@@ -10,7 +10,11 @@ async function signIn(fd: FormData) {
   const next = String(fd.get('next') || '/admin/jury')
   const target = next.startsWith('/admin') ? next : '/admin/jury'
   if (!password) redirect(process.env.NODE_ENV !== 'production' ? target : '/admin/login?err=1')
-  if (String(fd.get('password')) !== password) redirect(`/admin/login?err=1&next=${encodeURIComponent(target)}`)
+  // Trimmed on both sides: password managers and mobile keyboards append a
+  // space often enough that it is worth not failing on it.
+  if (String(fd.get('password')).trim() !== password) {
+    redirect(`/admin/login?err=1&next=${encodeURIComponent(target)}`)
+  }
 
   const jar = await cookies()
   jar.set(ADMIN_COOKIE, await sessionToken(password!), {

@@ -15,6 +15,18 @@ export async function GET() {
       .filter((k) => !/^(VERCEL|NEXT_|NODE|AWS_|TURBO|PATH$|PWD$|HOME$|HOSTNAME$|PORT$|LANG|SHLVL|_)/.test(k))
       .sort(),
     hasAdminPassword: Boolean(process.env.ADMIN_PASSWORD ?? process.env.ADMIN_PASS),
+    // Shape only, never the value: enough to tell "the stored secret is not
+    // what you think it is" from "the admin is broken", without printing a
+    // password into a public endpoint.
+    adminPassword: (() => {
+      const raw = process.env.ADMIN_PASSWORD ?? process.env.ADMIN_PASS
+      if (!raw) return null
+      return {
+        length: raw.trim().length,
+        hadSurroundingWhitespace: raw !== raw.trim(),
+        variable: process.env.ADMIN_PASSWORD ? 'ADMIN_PASSWORD' : 'ADMIN_PASS',
+      }
+    })(),
     hasResendKey: Boolean(process.env.RESEND_API_KEY),
   }
   try {
