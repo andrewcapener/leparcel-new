@@ -5,9 +5,9 @@ import { revalidatePath } from 'next/cache'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
-import { activeShow } from '@/db/queries'
+import { activeShow, activeAddOns, pgCode } from '@/db/queries'
 import {
-  shows, vendors, applications, bookings, spaceTypes, addOns, auditLog,
+  shows, vendors, applications, bookings, spaceTypes, auditLog,
   emailOutbox, subscribers, CATEGORIES, type ApplicationStatus,
 } from '@/db/schema'
 import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
@@ -189,9 +189,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   // Add-on requests. Validated against the catalog so a hand-built POST can't
   // invent an extra, but nothing is priced here: the money becomes real on
   // the booking, where the price is snapshotted (docs/03-DATA-MODEL.md §6).
-  const offered = await db.query.addOns.findMany({
-    where: and(eq(addOns.showId, show.id), eq(addOns.isActive, true)),
-  })
+  const offered = await activeAddOns(show.id)
   const requestedAddons = fd
     .getAll('addons')
     .map(String)
@@ -210,9 +208,13 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     vendor = await db.query.vendors.findFirst({ where: eq(vendors.id, id) })!
   }
 
-  const existing = await db.query.applications.findFirst({
-    where: and(eq(applications.showId, show.id), eq(applications.vendorId, vendor!.id)),
-  })
+  // Just the id: this is an existence test, and selecting the whole row would
+  // also select columns a database behind the code may not have yet.
+  const [existing] = await db
+    .select({ id: applications.id })
+    .from(applications)
+    .where(and(eq(applications.showId, show.id), eq(applications.vendorId, vendor!.id)))
+    .limit(1)
   if (existing) {
     return {
       ok: false, attempt, values: strings(raw),
@@ -221,11 +223,10 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   }
 
   const appId = randomUUID()
-  await db.insert(applications).values({
+  const row = {
     id: appId, showId: show.id, vendorId: vendor!.id,
     track: d.track, spaceTypeId: space.id,
     requestedSpaceIds: JSON.stringify(requestedIds),
-    requestedAddons: JSON.stringify(requestedAddons),
     category: d.category, description: d.description,
     priceLowCents: d.priceLow * 100, priceHighCents: d.priceHigh * 100,
     madeByYou: d.madeByYou,
@@ -237,7 +238,38 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     status: 'new',
     signedName: d.signedName,
     termsVersion: '2026.1',
-  })
+  }
+
+  // A maker's application must never be lost to a database that is one
+  // migration behind the deploy. Save it either way; the add-on requests are
+  // the only thing a pre-0002 database cannot hold.
+  //
+  // The fallback is written out by hand because Drizzle puts a column's
+  // declared default into the INSERT when the field is omitted, so dropping
+  // the key from the object is not enough to keep the column out of the
+  // statement.
+  try {
+    await db.insert(applications).values({
+      ...row, requestedAddons: JSON.stringify(requestedAddons),
+    })
+  } catch (err) {
+    if (pgCode(err) !== '42703') throw err
+    console.warn('[db] applications predates migration 0002; add-on requests not saved')
+    await db.execute(sql`
+      insert into applications (
+        id, show_id, vendor_id, track, space_type_id, requested_space_ids,
+        category, description, price_low_cents, price_high_cents, made_by_you,
+        uses_ai_artwork, is_mlm, seller_permit, occasional_seller, has_coi,
+        status, signed_name, terms_version
+      ) values (
+        ${row.id}, ${row.showId}, ${row.vendorId}, ${row.track}, ${row.spaceTypeId},
+        ${row.requestedSpaceIds}, ${row.category}, ${row.description},
+        ${row.priceLowCents}, ${row.priceHighCents}, ${row.madeByYou},
+        ${row.usesAiArtwork}, ${row.isMlm}, ${row.sellerPermit},
+        ${row.occasionalSeller}, ${row.hasCoi}, ${row.status},
+        ${row.signedName}, ${row.termsVersion}
+      )`)
+  }
 
   await log('application', appId, 'submitted', null, { status: 'new' }, '', email)
 

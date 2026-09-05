@@ -21,7 +21,7 @@ import { shows, addOns, type Show, type AddOn } from './schema'
 const MISSING_COLUMN = '42703'
 const MISSING_TABLE = '42P01'
 
-function pgCode(err: unknown): string | undefined {
+export function pgCode(err: unknown): string | undefined {
   return typeof err === 'object' && err !== null && 'code' in err
     ? String((err as { code: unknown }).code)
     : undefined
