@@ -1,5 +1,5 @@
 import { activeShow } from '@/db/queries'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, ArticleRow } from '@/components/theme/Sections'
 import { journal, excerpt } from '@/lib/journal'
 
@@ -20,16 +20,9 @@ export default async function Journal() {
   }))
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="blog">
           <PageTitle title="Mermade Journal" />
           <ArticleRow heading="" articles={articles} />
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

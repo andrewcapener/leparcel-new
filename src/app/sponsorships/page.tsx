@@ -1,5 +1,5 @@
 import { activeShow } from '@/db/queries'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, RichText, ScrollingBanner } from '@/components/theme/Sections'
 import * as C from '@/lib/content'
 
@@ -28,11 +28,7 @@ export default async function Sponsorships() {
   ]
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="page template-suffix-sponsorships">
           <PageTitle title="Sponsorships" />
 
           <RichText cta={{ href: '/collaborate', label: 'See what a partner gets' }}>
@@ -52,9 +48,6 @@ export default async function Sponsorships() {
             padding={20}
             headingFont={false}
           />
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

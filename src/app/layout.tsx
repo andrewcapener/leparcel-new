@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { ThemeBoot } from '@/components/theme/ThemeBoot'
 
 /**
  * The public site is mermademarket.com's own theme, vendored.
@@ -23,9 +24,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    /* `no-js` is theirs: theme-init.js swaps it for `js`, and a good deal of
-       the theme's CSS — the transparent header among it — is gated on `.js`. */
-    <html className="no-js" lang="en" dir="ltr">
+    /* Their theme gates a lot of CSS on `.js`, including the transparent
+       header. Theirs starts at `no-js` and swaps on load; ours is rendered
+       as `js` so nothing mutates <html> after React has claimed it. Their
+       swap is a no-op against this value. */
+    <html className="js" lang="en" dir="ltr">
       <head>
         <link rel="stylesheet" href="/theme/theme-settings.css" />
         <link rel="stylesheet" href="/theme/main.css" />
@@ -48,16 +51,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="font/woff2"
           crossOrigin="anonymous"
         />
-        {/* Symmetry's own scripts. main.js runs the header, the drawers and
-            the lazy images; the other two are the scroll animations and the
-            marquee. theme-init.js is the configuration object main.js reads,
-            so it has to run first and cannot be deferred. */}
-        <script src="/theme/theme-init.js" />
-        <script src="/theme/main.js" defer />
-        <script src="/theme/animate-on-scroll.js" defer />
-        <script src="/theme/scrolling-banner.js" defer />
       </head>
-      <body className="cc-animate-enabled">{children}</body>
+      <body className="cc-animate-enabled">
+        {children}
+        <ThemeBoot />
+      </body>
     </html>
   )
 }

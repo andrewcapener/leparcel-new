@@ -1,5 +1,5 @@
 import { activeShow } from '@/db/queries'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { RichText, ImageWithText } from '@/components/theme/Sections'
 import { outdoorShots } from '@/lib/lookbook'
 
@@ -13,11 +13,7 @@ export default async function OutdoorLookbook() {
   if (!show) throw new Error('No active show.')
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="page template-suffix-lookbook">
           <RichText title="Outdoor Merchant Lookbook">
             <p>
               Our merchant tents are the bomb! They&#39;re 6.5 x 6.5 feet so
@@ -59,9 +55,6 @@ export default async function OutdoorLookbook() {
               <p>{s.body}</p>
             </ImageWithText>
           ))}
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

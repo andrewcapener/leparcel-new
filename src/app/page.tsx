@@ -1,5 +1,5 @@
 import { activeShow } from '@/db/queries'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { VideoBanner, VideoBand, RichText, MapSection, ScrollingBanner, ArticleRow } from '@/components/theme/Sections'
 import { fmtRange } from '@/lib/dates'
 import { journal, excerpt } from '@/lib/journal'
@@ -30,12 +30,7 @@ export default async function Home() {
   }))
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader transparent />
-
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="index" transparentHeader>
           <VideoBanner
             id="section-hero"
             poster="41df92641ed44b9c95d14621276977b2.thumbnail.0000000000.jpg"
@@ -80,10 +75,6 @@ export default async function Home() {
           />
 
           <ArticleRow heading="Mermade Journal" headingHref="/journal" articles={posts} />
-        </div>
-      </main>
-
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

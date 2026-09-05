@@ -3,7 +3,7 @@ import { eq, and, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, SubheadingSection, LogoGrid, RichText } from '@/components/theme/Sections'
 import { fmtDate } from '@/lib/dates'
 
@@ -60,11 +60,7 @@ export default async function Merchants() {
   }
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="page template-suffix-merchants">
           <PageTitle title={`${show.name} Merchants`} />
 
           {roster.length === 0 ? (
@@ -98,9 +94,6 @@ export default async function Merchants() {
               ))}
             </>
           )}
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

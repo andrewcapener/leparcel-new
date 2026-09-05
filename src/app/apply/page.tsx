@@ -2,7 +2,7 @@ import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow, activeAddOns } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import {
   RichText, MultiColumn, CollapsibleTabs, Banner, type Tab,
 } from '@/components/theme/Sections'
@@ -66,11 +66,7 @@ export default async function Apply({
   }))
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="page template-suffix-merchant-application">
           <RichText
             wide
             title="Merchant Application"
@@ -182,9 +178,6 @@ export default async function Apply({
             heightMobile={460}
             heightDesktop={600}
           />
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

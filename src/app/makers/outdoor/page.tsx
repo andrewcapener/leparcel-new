@@ -2,7 +2,7 @@ import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow, activeAddOns } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, RichText, MultiColumn } from '@/components/theme/Sections'
 import { outdoorMerchants, fill } from '@/lib/page-html'
 import { usd } from '@/lib/money'
@@ -43,11 +43,7 @@ export default async function OutdoorMerchants() {
   })
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="page template-suffix-outdoor-merchants">
           <PageTitle title="Outdoor Merchants" />
 
           <MultiColumn
@@ -74,9 +70,6 @@ export default async function OutdoorMerchants() {
           <RichText large={false}>
             <div dangerouslySetInnerHTML={{ __html: html }} />
           </RichText>
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

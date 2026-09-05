@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { activeShow } from '@/db/queries'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, RichText, RichTextBlocks } from '@/components/theme/Sections'
 import { bookends, extrasFor, splitDay } from '@/lib/schedule'
 
@@ -25,11 +25,7 @@ export default async function Schedule() {
   const days = show.hoursNote.split(' · ')
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="page template-suffix-schedule">
           <PageTitle title="Mermade Market Schedule" />
 
           <RichText title={`@ The Dana Point ${show.venueName}`}>
@@ -78,9 +74,6 @@ export default async function Schedule() {
               }
             })}
           />
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

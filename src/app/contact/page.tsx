@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { activeShow } from '@/db/queries'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { Banner } from '@/components/theme/Sections'
 import { ContactFormSection } from '@/components/theme/ContactFormSection'
 
@@ -14,11 +14,7 @@ export default async function Contact() {
   if (!show) throw new Error('No active show.')
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="page template-suffix-contact">
           <Banner
             id="section-contact-banner"
             image="IMG_2793.jpg"
@@ -39,9 +35,6 @@ export default async function Contact() {
               </div>
             </div>
           </div>
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

@@ -1,5 +1,5 @@
 import { activeShow } from '@/db/queries'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { RichText, MultiColumn, ScrollingBanner } from '@/components/theme/Sections'
 import { ContactFormSection } from '@/components/theme/ContactFormSection'
 import * as C from '@/lib/content'
@@ -36,11 +36,7 @@ export default async function Collaborate() {
   const tierLines = (lines: string[]) => <>{lines.map((l) => <p key={l}>{l} </p>)}</>
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="page template-suffix-collaborate">
           <RichText title="Collaborate">
             <p>{C.mission}</p>
             <p />
@@ -139,9 +135,6 @@ export default async function Collaborate() {
             id="section-collab-banner"
             text="LETS COLLABORATE AND CHANGE THE WORLD. AND BY WORLD WE MEAN OUR COMMUNITY."
           />
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

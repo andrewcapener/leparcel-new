@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { activeShow } from '@/db/queries'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { journal } from '@/lib/journal'
 
 export const dynamic = 'force-dynamic'
@@ -27,11 +27,7 @@ export default async function JournalPost({
   if (!show) throw new Error('No active show.')
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="article">
           <div className="shopify-section page-section-spacing">
             {post.image && (
               <div className="article-image article-image--large align-center">
@@ -63,9 +59,6 @@ export default async function JournalPost({
               </div>
             </div>
           </div>
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }

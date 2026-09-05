@@ -195,12 +195,6 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
       {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
       <a href="#" className="header-shade mobile-nav-toggle" aria-label="Close" />
       </PageHeaderElement>
-      {/* Their theme measures the header the moment it is in the DOM: whether
-          the inline nav fits beside the logo, and how tall the bar is, which
-          is what the transparent header offsets the first section by. Both
-          calls have to run after this markup, exactly as they do on the live
-          page. */}
-      <script dangerouslySetInnerHTML={{ __html: HEADER_BOOT }} />
     </div>
   )
 }
@@ -228,10 +222,6 @@ ${NAV.map((n) => `        <li class="navigation__item${n.featured ? ' featured-l
   <div class="mobile-navigation-drawer__footer"></div>
 </div>`
 
-const HEADER_BOOT = `if (window.theme && theme.inlineNavigationCheck) {
-  theme.inlineNavigationCheck();
-  setTimeout(theme.setInitialHeaderHeightProperty, 0);
-}`
 
 export function PageFooter({ show }: { show: Show }) {
   return (

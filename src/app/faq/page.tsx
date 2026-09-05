@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { activeShow } from '@/db/queries'
-import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { SiteShell } from '@/components/theme/SiteShell'
 import { Banner, FaqHeader, CollapsibleTabs, RichText, type Tab } from '@/components/theme/Sections'
 
 export const dynamic = 'force-dynamic'
@@ -71,11 +71,7 @@ export default async function FAQ() {
   ]
 
   return (
-    <>
-      <AnnouncementBar show={show} />
-      <PageHeader />
-      <main id="content" role="main">
-        <div className="container cf">
+    <SiteShell show={show} template="page template-suffix-faq">
           <Banner
             id="section-faq-banner"
             image="IMG_2793.jpg"
@@ -98,10 +94,7 @@ export default async function FAQ() {
           >
             <p>Didn&#39;t answer your question - reach out</p>
           </RichText>
-        </div>
-      </main>
-      <PageFooter show={show} />
-    </>
+        </SiteShell>
   )
 }
 
