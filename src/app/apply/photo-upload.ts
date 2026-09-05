@@ -16,6 +16,10 @@ export type PhotoItem = {
   /** The maker's own filename. Used for the remove button's accessible name,
    *  shown to them and to nobody else, and never sent to the server. */
   name: string
+  /** The chosen file, kept so a failed upload can be retried without asking
+   *  the maker to find it again. The object URL below already pins the same
+   *  bytes in memory, so holding it costs nothing extra. */
+  file: File
   /** An object URL, so the thumbnail appears the instant a file is picked
    *  rather than after a round trip. */
   preview: string
@@ -24,6 +28,12 @@ export type PhotoItem = {
   pct: number
   /** The storage key, once it is really there. This is what the form posts. */
   key?: string
+  /** The folder this photograph went into, so a remount keeps the session's
+   *  uploads together under one prefix. */
+  batchId?: string
+  /** Set on the first of a batch that ran past the limit, so the field can
+   *  say how many files were left out instead of dropping them in silence. */
+  overflow?: number
   error?: string
 }
 

@@ -8,6 +8,8 @@ import {
 import { submitApplication, type FormState } from '@/app/actions'
 import { CATEGORIES, type AddOn, type Show, type SpaceType } from '@/db/schema'
 import { bpsLabel, usd } from '@/lib/money'
+import { PhotoField } from './PhotoField'
+import type { PhotoItem } from './photo-upload'
 
 const initial: FormState = { ok: false }
 
@@ -65,7 +67,7 @@ const STEPS: Step[] = [
     n: 2,
     id: 'ap-work',
     title: 'What you make',
-    blurb: 'The part the jury reads. Be specific about materials and method.',
+    blurb: 'What the jury decides on. Photographs first, then be specific about materials and method.',
   },
   {
     n: 3,
@@ -110,6 +112,7 @@ const LABELS: Record<string, string> = {
   state: 'State',
   category: 'Primary category',
   madeByYou: 'Made by you',
+  photos: 'Photographs of your work',
   description: 'Describe your product',
   priceLow: 'Lowest price',
   priceHigh: 'Highest price',
@@ -132,7 +135,7 @@ const STEP_OF: Record<string, number> = {
   shopName: 1, contactName: 1, email: 1, phone: 1, instagram: 1, website: 1,
   city: 1, state: 1,
   category: 2, madeByYou: 2, description: 2, priceLow: 2, priceHigh: 2,
-  usesAiArtwork: 2, isMlm: 2,
+  usesAiArtwork: 2, isMlm: 2, photos: 2,
   track: 3, spaces: 3, addons: 3,
   sellerPermit: 4, occasionalSeller: 4, hasCoi: 4,
   agree: 5, signedName: 5,
@@ -190,9 +193,12 @@ function StepHead({ step }: { step: Step }) {
 }
 
 export function ApplyForm({
-  show, spaces, extras,
+  show, spaces, extras, uploads,
 }: {
   show: Show; spaces: SpaceType[]; extras: AddOn[]
+  /** Whether this deployment has Supabase Storage configured. False locally,
+   *  where the photo field explains itself and the form still submits. */
+  uploads: boolean
 }) {
   const [state, action, pending] = useActionState(submitApplication, initial)
   const e = state.errors ?? {}
@@ -207,6 +213,9 @@ export function ApplyForm({
   // multi-choice answer across an attempt intact.
   const [pickedSpaces, setPickedSpaces] = useState<string[]>([])
   const [pickedAddons, setPickedAddons] = useState<string[]>([])
+  // The photographs, for the same reason and one more: an upload that
+  // survived a rejected submit must not have to happen twice on a phone.
+  const [photos, setPhotos] = useState<PhotoItem[]>([])
   const keep = (k: string) => ({ defaultValue: v[k] ?? '' })
 
   // Which step is on screen. This lives outside the <form>, so it survives
@@ -297,7 +306,8 @@ export function ApplyForm({
   const has = (k: string) => Boolean(answered[k])
   const stepDone: Record<number, boolean> = {
     1: ['shopName', 'contactName', 'email', 'phone', 'instagram', 'city', 'state'].every(has),
-    2: has('category') && description.trim().length >= 40 && has('priceLow') && has('priceHigh'),
+    2: has('category') && description.trim().length >= 40 && has('priceLow') && has('priceHigh')
+      && (!uploads || photos.some((p) => p.status === 'done')),
     3: chosen.length > 0,
     4: has('sellerPermit') || occasional || answered.hasCoi === 'on',
     5: answered.agree === 'on' && (answered.signedName ?? '').trim().length >= 2,
@@ -332,23 +342,25 @@ export function ApplyForm({
           })}
           , and we answer either way.
         </p>
-        {/* Their thank-you page asks for photos at two addresses depending on
-            the track. Their own copy garbles the second heading ("Outside
-            makers: Inside makers:"); the two addresses are the part that
-            matters and both are kept. */}
-        <p>
-          <strong>Inside makers:</strong> if you do not have a solid
-          website/instagram, please email photos of your product to{' '}
-          <a href="mailto:hello@mermademarket.com">hello@mermademarket.com</a>{' '}
-          with the subject line: your shop name + the shop space you applied
-          for, e.g. &ldquo;Mama&#39;s Notebooks&rdquo;.
-        </p>
-        <p>
-          <strong>Outside makers:</strong> same, to{' '}
-          <a href="mailto:hillary@mermademarket.com">hillary@mermademarket.com</a>,
-          with your shop name and the day, e.g. &ldquo;Mama&#39;s Babies,
-          Saturday Only&rdquo;.
-        </p>
+        {/* Their old thank-you page asked makers to email photographs to one
+            of two addresses. The form collects them now, so that copy would
+            be false; it only stands in on a deployment with no storage
+            configured, which is the one case where it is still true. */}
+        {uploads ? (
+          <p>
+            Your photographs came in with the application. The jury reads with
+            them in front of them.
+          </p>
+        ) : (
+          <p>
+            <strong>One more thing.</strong> Email photographs of your work to{' '}
+            <a href="mailto:hello@mermademarket.com">hello@mermademarket.com</a>{' '}
+            (outside makers, to{' '}
+            <a href="mailto:hillary@mermademarket.com">hillary@mermademarket.com</a>)
+            with your shop name in the subject line. The jury reads with the
+            photographs in front of them.
+          </p>
+        )}
       </div>
     )
   }
@@ -460,6 +472,11 @@ export function ApplyForm({
         >
           <StepHead step={STEPS[1]!} />
           <div className="flexible-layout flexible-layout--form">
+            {/* First, and largest. The jury queue is a contact sheet and this
+                is the only field that fills it. */}
+            <PhotoField
+              enabled={uploads} items={photos} setItems={setPhotos} error={e.photos}
+            />
             <Field name="category" label="Primary category" error={e.category} half>
               <select name="category" required defaultValue={v.category ?? ''}>
                 <option value="" disabled>Choose one</option>

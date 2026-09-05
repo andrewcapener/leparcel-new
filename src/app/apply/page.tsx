@@ -6,6 +6,7 @@ import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { CollapsibleTabs, Banner, PriceTable, type Tab } from '@/components/theme/Sections'
 import { ApplyForm } from './ApplyForm'
+import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { applyFaq, fill } from '@/lib/page-html'
 import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
 import { SignupForm } from '@/components/theme/SignupForm'
@@ -231,7 +232,10 @@ export default async function Apply({
                     disabled until {fmtDate(show.applicationsOpenAt)}.
                   </p>
                 )}
-                <ApplyForm show={show} spaces={spaces} extras={extras} />
+                <ApplyForm
+                  show={show} spaces={spaces} extras={extras}
+                  uploads={photoUploadsEnabled()}
+                />
               </>
             ) : (
               /* Outside the window this is the whole page's ask, so the
