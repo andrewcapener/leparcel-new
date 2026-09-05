@@ -5,7 +5,12 @@ import { journal, excerpt } from '@/lib/journal'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Mermade Journal' }
+export const metadata = {
+  title: 'Mermade Journal',
+  description:
+    'Meet the makers behind Mermade Market: interviews, shop stories and what goes on behind a hand-curated market in Dana Point.',
+  alternates: { canonical: '/journal' },
+}
 
 /** /blogs/journal — their page title and their article list. */
 export default async function Journal() {

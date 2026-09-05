@@ -5,7 +5,12 @@ import { indoorShots, type LookbookShot } from '@/lib/lookbook'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Indoor Lookbook' }
+export const metadata = {
+  title: 'Indoor Lookbook',
+  description:
+    'What an indoor space looks like at Mermade Market: real shop displays from past shows, to help you plan yours before you apply.',
+  alternates: { canonical: '/lookbook/indoor' },
+}
 
 /**
  * /pages/indoor-lookbook — their rich-text intro then one
@@ -17,7 +22,7 @@ export default async function IndoorLookbook() {
 
   return (
     <SiteShell show={show} template="page template-suffix-lookbook">
-          <RichText title="Indoor Merchant Lookbook">
+          <RichText primary title="Indoor Merchant Lookbook">
             <p>
               It is proven time &amp; time again that when our merchants&#39;
               spaces look their best, they sell more product. Indoor @ Mermade

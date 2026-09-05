@@ -5,7 +5,12 @@ import { outdoorShots, type LookbookShot } from '@/lib/lookbook'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Outdoor Lookbook' }
+export const metadata = {
+  title: 'Outdoor Lookbook',
+  description:
+    'What an outdoor tent looks like at Mermade Market: real booth set-ups from past shows, to help you plan yours before you apply.',
+  alternates: { canonical: '/lookbook/outdoor' },
+}
 
 /** /pages/outdoor-lookbook, in their sections. */
 export default async function OutdoorLookbook() {
@@ -14,7 +19,7 @@ export default async function OutdoorLookbook() {
 
   return (
     <SiteShell show={show} template="page template-suffix-lookbook">
-          <RichText title="Outdoor Merchant Lookbook">
+          <RichText primary title="Outdoor Merchant Lookbook">
             <p>
               Our merchant tents are the bomb! They&#39;re 6.5 x 6.5 feet so
               that we can still fit inside with ease. We also find that people

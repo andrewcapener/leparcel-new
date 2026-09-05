@@ -89,7 +89,13 @@ export function Banner({
                     {subheading}
                   </div>
                 )}
-                <h1 className="text-overlay__title h1 block-heading">{title}</h1>
+                {/* Only when there is something to say. An untitled hero was
+                    emitting an empty h1, which reads as a heading with no
+                    text to a screen reader and spends the page's one h1 on
+                    nothing. */}
+                {title && (
+                  <h1 className="text-overlay__title h1 block-heading">{title}</h1>
+                )}
                 {children && (
                   <div className="text-overlay__rte rte lightly-spaced-row large-text">{children}</div>
                 )}
@@ -138,7 +144,13 @@ export function VideoBanner({
                     {subheading}
                   </div>
                 )}
-                <h1 className="text-overlay__title h1 block-heading">{title}</h1>
+                {/* Only when there is something to say. An untitled hero was
+                    emitting an empty h1, which reads as a heading with no
+                    text to a screen reader and spends the page's one h1 on
+                    nothing. */}
+                {title && (
+                  <h1 className="text-overlay__title h1 block-heading">{title}</h1>
+                )}
                 {children && (
                   <div className="text-overlay__rte rte lightly-spaced-row">{children}</div>
                 )}
@@ -199,7 +211,7 @@ export function VideoBand({
  */
 export function RichText({
   title, children, mark, markWidth = 170, icon, cta, wide = false, scheme = false,
-  large = true,
+  large = true, primary = false,
 }: {
   title?: React.ReactNode
   children: React.ReactNode
@@ -211,6 +223,9 @@ export function RichText({
   wide?: boolean
   /** Their `use-color-scheme--1` band. */
   scheme?: boolean
+  /** Render the title as the page's h1. For a page whose only heading is this
+   *  one, which is both lookbooks. */
+  primary?: boolean
   /** Their `large-text` class, which most but not all of their blocks carry. */
   large?: boolean
 }) {
@@ -229,7 +244,13 @@ export function RichText({
                 <span className="large-light-icon">{icon}</span>
               </div>
             )}
-            {title && <h2 className="majortitle in-content h1">{title}</h2>}
+            {/* `primary` promotes this to the page's h1. The lookbooks have
+                no hero, so their only heading was an h2 and the page had no
+                h1 at all. The class list is unchanged either way, so the two
+                look identical. */}
+            {title && (primary
+              ? <h1 className="majortitle in-content h1">{title}</h1>
+              : <h2 className="majortitle in-content h1">{title}</h2>)}
             <div className={`rte lightly-spaced-row${large ? ' large-text' : ''}`}>{children}</div>
             {mark && (
               <div

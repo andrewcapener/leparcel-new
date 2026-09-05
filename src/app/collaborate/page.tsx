@@ -6,7 +6,12 @@ import * as C from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Collaborate' }
+export const metadata = {
+  title: 'Collaborate',
+  description:
+    'Work with Mermade Market: brand partnerships, live music, food makers and community collaborations at our Dana Point shop small festival.',
+  alternates: { canonical: '/collaborate' },
+}
 
 /**
  * /pages/collaborate, section for section: the intro, the sponsor logo
@@ -37,7 +42,7 @@ export default async function Collaborate() {
 
   return (
     <SiteShell show={show} template="page template-suffix-collaborate">
-          <RichText title="Collaborate">
+          <RichText primary title="Collaborate">
             <p>{C.mission}</p>
             <p />
             <p>Collaborating with us gives you the locals only advantage. </p>

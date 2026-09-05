@@ -5,7 +5,12 @@ import { Banner, FaqHeader, CollapsibleTabs, RichText, type Tab } from '@/compon
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'FAQ' }
+export const metadata = {
+  title: 'FAQ',
+  description:
+    'Answers for shoppers and for makers: parking, admission, dogs and strollers, how the indoor register works, and what it costs to sell at Mermade Market.',
+  alternates: { canonical: '/faq' },
+}
 
 /**
  * /pages/faq — their banner, their two accordion groups, their get-in-touch

@@ -9,7 +9,12 @@ import { fmtDate } from '@/lib/dates'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Merchants' }
+export const metadata = {
+  title: 'Merchants',
+  description:
+    'The makers selling at the next Mermade Market, inside and outside, by category and by day.',
+  alternates: { canonical: '/merchants' },
+}
 
 /**
  * /pages/spring-2026-merchants — their page title, their intro subheading,

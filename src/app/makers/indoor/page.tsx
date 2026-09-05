@@ -13,7 +13,12 @@ import { fmtDate } from '@/lib/dates'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Indoor Merchants' }
+export const metadata = {
+  title: 'Indoor Merchants',
+  description:
+    'Selling inside at Mermade Market: we merchandise your goods, sell them at a central register and pay you after the show. Space sizes, prices and the rules.',
+  alternates: { canonical: '/makers/indoor' },
+}
 
 /**
  * /pages/indoor-merchants — their page title and their rules, unedited, plus

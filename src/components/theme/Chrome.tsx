@@ -161,7 +161,13 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
           <div className="logo-area__middle logo-area__middle--logo-image">
             <div className="logo-area__middle__inner">
               <div className="logo">
-                <h1 className="logo__h1">
+                {/* A div, not an h1. Symmetry marks the logo up as the page's
+                    h1, which is right for a Shopify storefront whose home page
+                    has no other heading. Every page here has a real title, so
+                    the logo was a second h1 on all of them and a third on
+                    /apply, competing with the heading that says what the page
+                    is actually about. */}
+                <div className="logo__h1">
                   <Link className="logo__link" href="/" title="Mermade Market">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -183,7 +189,7 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
                       aria-hidden="true"
                     />
                   </Link>
-                </h1>
+                </div>
               </div>
             </div>
           </div>

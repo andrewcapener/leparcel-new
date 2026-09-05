@@ -5,7 +5,12 @@ import * as C from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Sponsorships' }
+export const metadata = {
+  title: 'Sponsorships',
+  description:
+    'Sponsor Mermade Market and reach thousands of shoppers across a three day shop small festival in Dana Point, California.',
+  alternates: { canonical: '/sponsorships' },
+}
 
 /**
  * /pages/sponsorships — a short page on the live site: the title, the intro,

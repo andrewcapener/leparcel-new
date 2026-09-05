@@ -15,7 +15,12 @@ import { bpsLabel, usd } from '@/lib/money'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Merchant Application' }
+export const metadata = {
+  title: 'Merchant Application',
+  description:
+    'Apply to sell at Mermade Market in Dana Point. Indoor consignment spaces and outdoor tent days, prices, dates and the rules, with no fee to apply.',
+  alternates: { canonical: '/apply' },
+}
 
 /**
  * /apply does two jobs, and they used to be stacked on top of each other:

@@ -1,12 +1,18 @@
 import Link from 'next/link'
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
+import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
 import { PageTitle, RichText, FactTable } from '@/components/theme/Sections'
 import { bookends, extrasFor, splitDay } from '@/lib/schedule'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Mermade Market Schedule' }
+export const metadata = {
+  title: 'Schedule',
+  description:
+    'Show dates and hours for Mermade Market at the Dana Point Community House, plus parking, admission and what is on each day.',
+  alternates: { canonical: '/schedule' },
+}
 
 /**
  * /pages/schedule — their page title, the venue block, then one headed block
@@ -32,6 +38,12 @@ export default async function Schedule() {
 
   return (
     <SiteShell show={show} template="page template-suffix-schedule">
+      {/* The show as an Event, so a search result can carry the dates and the
+          venue instead of only a title. Built from the Show record, so moving
+          the show at /admin/show moves this with it. */}
+      <LdJson data={organizationLd()} />
+      <LdJson data={eventLd(show)} />
+      
           <PageTitle title="Mermade Market Schedule" />
 
           <RichText title={`@ The Dana Point ${show.venueName}`}>

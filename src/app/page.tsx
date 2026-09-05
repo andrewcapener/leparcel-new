@@ -1,5 +1,6 @@
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
+import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
 import { VideoBanner, VideoBand, RichText, MapSection, ScrollingBanner, ArticleRow } from '@/components/theme/Sections'
 import { fmtRange } from '@/lib/dates'
 import { journal, excerpt } from '@/lib/journal'
@@ -31,6 +32,12 @@ export default async function Home() {
 
   return (
     <SiteShell show={show} template="index" transparentHeader>
+      {/* The show as an Event, so a search result can carry the dates and the
+          venue instead of only a title. Built from the Show record, so moving
+          the show at /admin/show moves this with it. */}
+      <LdJson data={organizationLd()} />
+      <LdJson data={eventLd(show)} />
+      
           <VideoBanner
             id="section-hero"
             poster="41df92641ed44b9c95d14621276977b2.thumbnail.0000000000.jpg"

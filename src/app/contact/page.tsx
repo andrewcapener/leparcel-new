@@ -6,7 +6,12 @@ import { ContactFormSection } from '@/components/theme/ContactFormSection'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = { title: 'Contact' }
+export const metadata = {
+  title: 'Contact',
+  description:
+    'Get in touch with Mermade Market in Dana Point, California. Questions about applying, sponsoring, collaborating or visiting the show.',
+  alternates: { canonical: '/contact' },
+}
 
 /** /pages/contact — their banner and their contact form. */
 export default async function Contact() {
