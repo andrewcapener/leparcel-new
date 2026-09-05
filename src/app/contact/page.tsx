@@ -46,6 +46,24 @@ export default async function Contact() {
             </span>
           </div>
           <div className="row">
+            <span className="q">Selling with us</span>
+            <span className="a">
+              Start with the rules for{' '}
+              <Link href="/makers/indoor" style={{ color: 'var(--deep)', textDecoration: 'underline' }}>inside</Link>{' '}
+              or{' '}
+              <Link href="/makers/outdoor" style={{ color: 'var(--deep)', textDecoration: 'underline' }}>outside</Link>.
+              They answer most of it before you write.
+            </span>
+          </div>
+          <div className="row">
+            <span className="q">Sponsorship</span>
+            <span className="a">
+              Put the word sponsorship in the subject line, or read{' '}
+              <Link href="/collaborate" style={{ color: 'var(--deep)', textDecoration: 'underline' }}>what a partnership looks like</Link>{' '}
+              first.
+            </span>
+          </div>
+          <div className="row">
             <span className="q">The show</span>
             <span className="a">{show.venueName}, {show.venueAddress}</span>
           </div>

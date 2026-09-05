@@ -36,6 +36,8 @@ export default async function FAQ() {
     ['Can I share a space', 'Yes, inside or out. Both makers apply, you tell us who you want to share with, and there is a fee for the second name. The space is still one space.'],
     ['Do I need a seller’s permit', 'If you are accepted, yes, or a written statement that you qualify as an occasional seller. We collect it before load-in, not before the jury. Cottage food makers also need a permit for treats, and you should wait until you are in to apply for it.'],
     ['If I am not accepted, can I apply again', 'Yes, and people get in on the second try often. We tell you why either way, so you know what to change or that it was just a crowded season.'],
+    ['What if it rains', 'If we call off an outdoor day, you get the same day at the next show at no charge, or 30% of the fee back. If the show runs in imperfect weather, it runs.'],
+    ['Can my kid sell', 'Yes. Junior makers are 14 and under, with a small shelf space of their own, and we run it when at least two get in. If your business is already going and you happen to be 17, apply for a regular space.'],
   ]
 
   return (
