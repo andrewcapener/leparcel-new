@@ -1618,3 +1618,32 @@ h3, .h3 { line-height: 1.15; }
   text-decoration: underline;
   text-underline-offset: 0.18em;
 }
+
+/* ── The logo, actually centred on a phone ────────────────────────────────
+   Symmetry lays the header out as three flex columns and lets the middle one
+   take what is left. That works while the two outer columns are about the
+   same width. Ours are not: the left holds a hamburger, the right holds the
+   account link and the Apply button, and the right cannot shrink. So the
+   middle column started 28px left of centre at 390px, and the logo with it.
+   Adding the account link is what tipped it.
+
+   Below the nav breakpoint the logo is centred against the header itself
+   rather than against whatever space is left over. `min-height` keeps the
+   row the height the middle column was giving it, since an absolutely
+   positioned child no longer contributes any.
+
+   The box is only as wide as the mark, so it does not reach the hamburger,
+   and pointer-events are handed back to the link so the middle of the header
+   is still a way home. */
+@media (max-width: 767.98px) {
+  .logo-area { position: relative; min-height: 62px; }
+  .logo-area__middle {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    text-align: center;
+    pointer-events: none;
+  }
+  .logo-area__middle .logo__link { pointer-events: auto; }
+}
