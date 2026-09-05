@@ -59,6 +59,9 @@ export default async function IndoorMerchants() {
     outdoorCapacity: show.outdoorCapacity,
     // One source for the payout window, so the fact table, this prose and
     // the signed agreement cannot say three different things.
+    // Load-in day on its own, for copy that names the day rather than the
+    // window (CLAUDE.md rule 6: never a typed date).
+    loadInDay: fmtWeekdayDate(dayBefore(show.startsOn)),
     payoutMin: POLICY.payoutDaysMin,
     payoutMax: POLICY.payoutDays,
     loadIn: show.loadInNote || 'announced with your acceptance',
