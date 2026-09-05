@@ -190,7 +190,7 @@
   .shead .more:hover{color:var(--ink);border-color:var(--ink)}
 
   /* what you'll find — arched cards */
-  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(14px,2vw,26px)}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(14px,2vw,26px);margin-top:38px}
   .grid4 .ph{aspect-ratio:3/4;margin-bottom:12px}
   .grid4 .nm{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:22px;line-height:1}
@@ -199,7 +199,7 @@
   .grid4 .pr{font-size:14px;color:var(--ink-2);margin-top:5px}
 
   /* category chips */
-  .cats{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:38px}
+  .cats{display:flex;flex-wrap:wrap;gap:9px}
   .cats .row{border:2px solid var(--ink);border-radius:999px;padding:8px 16px 7px;
     display:flex;align-items:baseline;gap:9px;justify-content:flex-start}
   .cats .l{font-family:var(--font-c);font-weight:700;text-transform:uppercase;font-size:17px}
@@ -227,7 +227,7 @@
     font-size:19px;color:var(--deep);margin-bottom:7px;letter-spacing:0}
   .prows .a{font-family:var(--font-g);font-size:18px;line-height:1.55;color:var(--ink-2);max-width:none}
   /* airy variant, home only: rules not boxes, and generous cells */
-  .prows.air{border:0;border-top:2px solid var(--ink)}
+  .prows.air{border:0;border-top:2px solid var(--ink);background:transparent}
   .prows.air .row{padding:30px 26px 32px 0;border-right:0;background:transparent}
   .prows.air .q{font-size:21px}
   .prows.air .a{max-width:36ch}

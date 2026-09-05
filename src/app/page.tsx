@@ -169,9 +169,11 @@ export default async function Home() {
         <div className="shead">
           <span className="k">01</span>
           <h2>What you’ll find</h2>
-          <Link href="/#merchants" className="more">
-            All merchants →
-          </Link>
+          {roster.length > 0 && (
+            <Link href="/#directory" className="more">
+              All merchants →
+            </Link>
+          )}
         </div>
         <div className="cats">
           {C.categoryRanges.map((c) => (
@@ -267,7 +269,7 @@ export default async function Home() {
 
       {/* ── 11 · MERCHANTS — linked, because a directory is an asset ── */}
       {roster.length > 0 && (
-        <section className="sec">
+        <section className="sec" id="directory">
           <div className="shead">
             <span className="k">04</span>
             <h2>{show.name} merchants</h2>
