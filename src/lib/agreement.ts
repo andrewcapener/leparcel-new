@@ -165,6 +165,14 @@ const partOne: Part = {
           text: ['All spaces are non-refundable. If you cancel, for any reason, at any time, the fee is not returned. Cancel in writing to {{contactEmail}}. It takes effect when we receive it, and your space is released to another maker.'],
         },
         { n: '3.3', lead: 'Transfer.', text: ['Your fee is not transferable to another maker or another person. Section 4 and section B6 are the only places it moves to another show.'] },
+        {
+          n: '3.4', lead: 'Your sales are not our promise.',
+          /* Elise, 5 Sep 2026. Her wording ended "you will find success"; a
+             sentence like that in a contract is a representation about results,
+             and it is the one sentence a maker who had a bad day would quote.
+             The rule is kept, the promise is not. ⟨COUNSEL⟩ */
+          text: ['The fee buys you the space, not a level of sales. We do not refund a booth fee because you broke even or lost money. What sells is down to your product, your prices and your display, and the guidance on the maker pages is there to help you with all three.'],
+        },
       ],
     },
     {
@@ -397,19 +405,40 @@ const scheduleA: Part = {
     {
       id: 'a7', n: 'A7', title: 'Returns',
       clauses: [
-        { n: 'A7.1', text: ['We set the customer returns policy for the show. If a customer returns one of your items after your statement has been issued, we absorb it. We do not take money back from you after we have paid you.'] },
+        /* Rewritten 5 Sep 2026: Elise said A7 read as though anything could
+           come back at any time, which is not the policy. The policy is the
+           first sentence; the old text only ever covered what happens after a
+           statement, which is the rarer half. */
+        { n: 'A7.1', text: ['A customer may return an item during show hours only, and only with the electronic receipt from our register. Nothing comes back once the show has closed for the day it was bought.'] },
+        { n: 'A7.2', text: ['We set that policy and we apply it. A return inside those limits comes off your sales for the show in the ordinary way.'] },
+        { n: 'A7.3', text: ['If a customer returns one of your items after your statement has been issued, we absorb it. We do not take money back from you after we have paid you.'] },
       ],
     },
     {
       id: 'a8', n: 'A8', title: 'Risk of loss',
       clauses: [
         { n: 'A8.1', text: ['Title to your goods stays with you until we sell them to a customer.'] },
-        { n: 'A8.2', text: ['We take reasonable care of your goods while they are in our possession, and we are responsible for loss or damage caused by our negligence. The room is staffed during open hours and there is security between show days.'] },
+        /* ⟨COUNSEL⟩ Narrowed 5 Sep 2026 at Drew's direction: "there's room for
+           them to charge us for missing goods, we do not want that".
+
+           The money was never in this clause, it was in A8.4, which promised a
+           credit at retail for anything unaccounted for. That is gone.
+
+           This one is narrowed rather than deleted, and deliberately. Taking
+           possession of someone's goods to sell them is a bailment for mutual
+           benefit, and a bailee who disclaims all care is the case California
+           courts like least. Civil Code section 1668 voids an exemption from
+           your own fraud, wilful injury or violation of law outright, and
+           section 8.4 of Part I already says so. A clause promising nothing at
+           all would not survive being tested, and losing it would take the
+           narrower protection with it. What is left is the standard a court
+           would apply anyway, with the open-ended negligence exposure removed. */
+        { n: 'A8.2', text: ['We take reasonable care of your goods while they are in our possession. The room is staffed during open hours and there is security between show days. Beyond that care, and except where section 8.4 of Part I applies, we are not responsible for loss of or damage to your goods.'] },
         {
           n: 'A8.3', lead: 'We are not responsible for:',
           text: [''],
           list: [
-            'ordinary shoplifting and shrinkage despite reasonable care;',
+            'shoplifting, and stock unaccounted for at the end of the show;',
             'damage from customers handling goods normally;',
             'damage in transit to or from the show;',
             'a defect or fragility in the item itself;',
@@ -417,11 +446,11 @@ const scheduleA: Part = {
           ],
         },
         {
-          n: 'A8.4', lead: 'Shrinkage.',
-          text: ['Where an item cannot be accounted for at reconciliation and A8.3 does not explain it, we credit you the item’s retail price less commission: the same net you would have had if it had sold.'],
+          n: 'A8.4', lead: 'Stock that cannot be accounted for.',
+          text: ['A show of this size loses a little stock, and we do not credit it. Your statement pays you for what the register recorded as sold. If a count comes up short we will tell you and show you what we know, but the shortfall is not a credit and not a deduction either: it is simply not a sale.'],
         },
         { n: 'A8.5', text: ['Our liability under this schedule is subject to the cap in section 8.2.'] },
-        { n: 'A8.6', text: ['You are welcome to insure your own goods. Nothing here obliges us to insure them for you.'] },
+        { n: 'A8.6', text: ['Insure your own goods if their value would hurt to lose. Our policy covers Mermade and does not cover your stock, and nothing here obliges us to insure it for you.'] },
       ],
     },
     {
