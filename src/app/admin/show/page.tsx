@@ -73,7 +73,7 @@ export default async function ShowSettings() {
       {/* The readouts are the values as the public site renders them, not as
           the database stores them, so a wrong date is visible before anyone
           has to read a form field. */}
-      <Stats>
+      <Stats cols={3}>
         <Stat
           label="Show dates" icon="clock" text value={fmtRange(show.startsOn, show.endsOn)}
           note="The hero, the masthead banner and the calendar file."

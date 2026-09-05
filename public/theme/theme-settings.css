@@ -8,19 +8,19 @@
 }
 @font-face {
   font-family: Figtree;
-  font-weight: 700;
-  font-style: normal;
-  font-display: fallback;
-  src: url("/theme/fonts/figtree_n7.woff2") format("woff2"),
-       url("/theme/fonts/figtree_n7.woff") format("woff");
-}
-@font-face {
-  font-family: Figtree;
   font-weight: 500;
   font-style: normal;
   font-display: fallback;
   src: url("/theme/fonts/figtree_n5.woff2") format("woff2"),
        url("/theme/fonts/figtree_n5.woff") format("woff");
+}
+@font-face {
+  font-family: Figtree;
+  font-weight: 700;
+  font-style: normal;
+  font-display: fallback;
+  src: url("/theme/fonts/figtree_n7.woff2") format("woff2"),
+       url("/theme/fonts/figtree_n7.woff") format("woff");
 }
 @font-face {
   font-family: Figtree;
@@ -45,14 +45,6 @@
   font-display: fallback;
   src: url("/theme/fonts/oswald_n6.woff2") format("woff2"),
        url("/theme/fonts/oswald_n6.woff") format("woff");
-}
-@font-face {
-  font-family: Figtree;
-  font-weight: 400;
-  font-style: normal;
-  font-display: fallback;
-  src: url("/theme/fonts/figtree_n4.woff2") format("woff2"),
-       url("/theme/fonts/figtree_n4.woff") format("woff");
 }
 @font-face {
   font-family: Oswald;

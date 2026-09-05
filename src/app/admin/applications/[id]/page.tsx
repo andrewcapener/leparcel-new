@@ -200,7 +200,7 @@ export default async function ApplicationDetail({
               </Row>
               <Row k="Made by them">{MADE_BY[app.madeByYou] ?? app.madeByYou}</Row>
               <Row k="Price range" n={`${usd(app.priceLowCents)}–${usd(app.priceHighCents)}`}>
-                What their table will be selling.
+                <span className="adm-sr">What the work sells for.</span>
               </Row>
               <Row k="Track"><span style={{ textTransform: 'capitalize' }}>{app.track}</span></Row>
               <Row k="Based in">{vendor.city}, {vendor.state}</Row>
@@ -208,14 +208,14 @@ export default async function ApplicationDetail({
                 {vendor.showsAttended === 0 ? 'First time applying' : `${vendor.showsAttended} with Mermade`}
               </Row>
               <Row k="Instagram">
-                <a className="adm-lk" href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
+                <a className="adm-a mono" href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
                   target="_blank" rel="noreferrer">
                   {vendor.instagram} <span aria-hidden="true">↗</span>
                 </a>
                 {vendor.website && (
                   <>
                     {' '}
-                    <a className="adm-lk"
+                    <a className="adm-a mono"
                       href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
                       target="_blank" rel="noreferrer">
                       {vendor.website} <span aria-hidden="true">↗</span>
@@ -226,7 +226,7 @@ export default async function ApplicationDetail({
               <Row k="Contact">
                 {vendor.contactName}
                 <span className="adm-sub2">
-                  <a href={`mailto:${vendor.email}`}>{vendor.email}</a> · {vendor.phone}
+                  <a className="adm-a" href={`mailto:${vendor.email}`}>{vendor.email}</a> · {vendor.phone}
                 </span>
               </Row>
             </tbody>

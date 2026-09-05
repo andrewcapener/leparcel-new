@@ -161,6 +161,13 @@
   letter-spacing: .1em; font-size: 15px; line-height: 1;
 }
 .adm .adm-plate:hover { background: var(--sd-tx); color: #0B0B0B }
+/* The sidebar carries their own white mark instead of the wordmark set in
+   type. No plate behind it: the file is already the white cut, so a white
+   rectangle would only box it in. The login screen keeps the plate, because
+   there the mark would sit on a light ground. */
+.adm .adm-mark { display: inline-block; line-height: 0 }
+.adm .adm-mark img { display: block; width: 128px; height: auto }
+.adm .adm-mark:hover { opacity: .78 }
 .adm .adm-side-kicker {
   font-family: var(--font-c); font-weight: 600; text-transform: uppercase;
   letter-spacing: .28em; font-size: var(--t-cap-s); color: var(--sd-tx-2);
@@ -233,7 +240,9 @@
   font-family: var(--font-c); font-weight: 600; text-transform: uppercase;
   letter-spacing: .2em; font-size: var(--t-cap); color: var(--ad-ink-3);
 }
-.adm .adm-top .sep { color: var(--ad-line-2) }
+/* A breadcrumb separator carries structure, so it is text and it has to be
+   read: --ad-line-2 is a rule colour and lands at 1.51:1. */
+.adm .adm-top .sep { color: var(--ad-ink-3) }
 .adm .adm-top .now { font-family: var(--font-m); font-size: var(--t-mono-s); color: var(--ad-ink-3) }
 .adm .adm-top .r { margin-left: auto; display: flex; align-items: center; gap: 8px }
 /* the bordered square button, top right */
@@ -307,6 +316,11 @@
   letter-spacing: .12em; font-size: var(--t-cap); color: var(--ad-ink-2);
 }
 .adm .adm-lk:hover { color: var(--ad-ink); text-decoration: underline; text-underline-offset: 4px }
+.adm .adm-a {
+  color: var(--ad-ink); text-decoration: underline; text-underline-offset: 3px;
+  text-decoration-color: var(--ad-line-2);
+}
+.adm .adm-a:hover { text-decoration-color: var(--ad-ink) }
 .adm .adm-lk .who {
   font-family: var(--font-g); font-weight: 400; font-size: var(--t-s);
   letter-spacing: 0; text-transform: none; color: var(--ad-ink-3);
@@ -321,6 +335,8 @@
   display: grid; gap: 14px; margin-bottom: 16px;
   grid-template-columns: repeat(auto-fit, minmax(206px, 1fr));
 }
+.adm .adm-stats[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)) }
+@media (max-width: 900px) { .adm .adm-stats[data-cols="3"] { grid-template-columns: 1fr } }
 .adm .adm-stat {
   display: flex; flex-direction: column; min-width: 0;
   padding: 18px 20px 20px; background: var(--ad-card);
@@ -721,6 +737,9 @@
 .adm .adm-login { min-height: 100dvh; display: grid; place-items: center; padding: 26px }
 .adm .adm-login form { width: min(360px, 100%) }
 .adm .adm-login .plate { margin-bottom: 22px }
+/* the sticker reversed, because a white plate on a near-white page is not a
+   plate. Same shape, same type, the ground swapped. */
+.adm .adm-login .plate { background: var(--ad-ink); color: #fff }
 
 /* ═══════════════ responsive ═══════════════
    Phone: the sidebar becomes a drawer. Closed, it is `visibility:hidden`,

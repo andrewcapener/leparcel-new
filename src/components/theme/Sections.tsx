@@ -456,7 +456,14 @@ export function FaqHeader() {
   )
 }
 
-export type Tab = { q: string; a: React.ReactNode }
+export type Tab = {
+  q: string
+  a: React.ReactNode
+  /** Fragment a link can point at, e.g. `/makers/indoor#labels`. */
+  id?: string
+  /** Open on load. The rules pages open their first section and no others. */
+  open?: boolean
+}
 
 /**
  * `section-collapsible-tabs` — their accordion. Native <details>, so it opens
@@ -464,9 +471,12 @@ export type Tab = { q: string; a: React.ReactNode }
  * the slide animation.
  */
 export function CollapsibleTabs({
-  heading, id, tabs,
+  heading, id, tabs, intro,
 }: {
   heading?: string; id?: string; tabs: Tab[]
+  /** A block between the heading and the first tab. The rules pages put the
+   *  short list of rules that cost money there. */
+  intro?: React.ReactNode
 }) {
   return (
     <div className="shopify-section section-collapsible-tabs">
@@ -475,10 +485,11 @@ export function CollapsibleTabs({
           {heading && (
             <h2 className="collapsible-tabs__heading collapsible-tabs__content" id={id}>{heading}</h2>
           )}
+          {intro}
           {tabs.map((t) => (
-            <div className="collapsible-tabs__block" key={t.q}>
+            <div className="collapsible-tabs__block" key={t.q} id={t.id}>
               <div className="collapsible-tabs__tab">
-                <details className="disclosure">
+                <details className="disclosure" open={t.open}>
                   <summary className="disclosure__title">{t.q}</summary>
                   <div className="disclosure__panel has-motion">
                     <div className="disclosure__content rte">{t.a}</div>

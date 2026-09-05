@@ -1173,3 +1173,249 @@ h3, .h3 { line-height: 1.15; }
 /* Announced politely, and it holds its line so the layout does not jump
    between "" and a sentence. */
 .ap-photos__status { display: block; min-height: 1.4em; margin-top: 10px; }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   The maker rules pages (/makers/indoor, /makers/outdoor).
+   Added September 2026. `mk-` is ours.
+
+   Both pages used to end in one column of about eight thousand pixels of
+   their original prose. The words are unchanged; they are now cut into named
+   sections rendered by the theme's own accordion, with the rules that carry
+   money lifted out into a list above them (docs/08-DESIGN-SYSTEM.md §8: use
+   the shape the content is).
+
+   The accordion itself needs nothing new: `.collapsible-tabs` and
+   `.disclosure` are the theme's, they are a real <details>/<summary>, and the
+   focus ring comes from the :focus-visible rule near the top of this file.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* An open section can be a thousand words, so a link to a later one lands
+   under the sticky header without this. */
+.mk-sections .collapsible-tabs__block { scroll-margin-top: 96px; }
+
+/* Their summary lines are the page's table of contents, so they read as
+   labels rather than as prose: Oswald, uppercase, and tight enough that ten
+   of them fit on one screen. 20px vertical padding on a 1.4 line box is a
+   56px target, well over WCAG 2.2 SC 2.5.8. */
+.mk-sections .collapsible-tabs__tab .disclosure__title {
+  padding-right: 40px;
+  font-family: var(--nav-font-family);
+  font-weight: var(--nav-font-weight);
+  font-size: var(--base-text-size);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(var(--heading-color));
+}
+/* The theme draws its +/− at the right edge of the summary; keep the plus
+   sign clear of the last word on a narrow screen. */
+.mk-sections .disclosure__content { color: rgb(var(--text-color) / 0.9); }
+.mk-sections .disclosure__content > .rte--long > *:first-child { margin-top: 0; }
+
+/* The rules that carry money. Not a card and not a callout box: a ruled list
+   under a label, in the same idiom as the fact table above it, so it reads as
+   part of the same instrument rather than as an alert. */
+.mk-rules {
+  margin: 0 0 10px;
+  padding: 1.4em 0 0.2em;
+  border-top: 2px solid rgb(var(--heading-color));
+  text-align: start;
+}
+.mk-rules__title {
+  margin: 0 0 0.2em;
+  font-family: var(--nav-font-family);
+  font-weight: var(--nav-font-weight);
+  font-size: var(--smaller-text-size-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+}
+.mk-rules__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mk-rules__list li {
+  margin: 0;
+  padding: 0.7em 0 0.7em 1.5em;
+  border-bottom: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+  font-size: var(--smaller-text-size-1);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  position: relative;
+}
+/* A rule you are held to, marked once at the left. The glyph is decorative,
+   so it is drawn rather than typed and a screen reader never says "bullet". */
+.mk-rules__list li::before {
+  content: "";
+  position: absolute;
+  top: 1.15em;
+  left: 0.15em;
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid rgb(var(--heading-color));
+  transform: rotate(45deg);
+}
+.mk-rules__note {
+  margin: 0.9em 0 0;
+  font-size: var(--smaller-text-size-2);
+  line-height: 1.5;
+  color: rgb(var(--text-color) / 0.75);
+}
+
+/* A fact table or a timetable inside a section is followed by prose, and its
+   last rule would otherwise sit right on top of the next sentence. */
+.mk-sections .disclosure__content .fact-table,
+.mk-sections .disclosure__content .timetable { margin-bottom: 1.4em; }
+
+/* The prose inside a section is reference, read once and returned to, so it
+   keeps the long-form ruler and never centres. */
+.mk-sections .rte--long p:last-child,
+.mk-sections .rte--long ul:last-child { margin-bottom: 0; }
+
+@media (max-width: 600px) {
+  .mk-sections .collapsible-tabs__tab .disclosure__title {
+    padding-top: 16px;
+    padding-bottom: 16px;
+    font-size: var(--smaller-text-size-1);
+  }
+  .mk-rules { padding-top: 1.1em; }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * Legal pages: /agreement, /terms, /privacy.  Prefix `lg-`.
+ *
+ * A contract is a numbered tree, and the theme has no shape for one. This is
+ * the smallest set of rules that makes it readable: a hanging clause number
+ * that does not push the text off a phone, a contents list that looks like a
+ * contents list, headings that clear the sticky header when you jump to them,
+ * and a reading-width measure the theme's own `container--reading-width`
+ * already provides.
+ *
+ * Nothing here restyles a theme component. Colours are the theme's tokens.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* Anchor targets sit under the header when you jump to them. */
+.lg-legal :target,
+.lg-section,
+.lg-clause { scroll-margin-top: 90px; }
+
+/* ── contents ── */
+.lg-contents {
+  margin: 0 0 40px;
+  padding: 20px 22px 24px;
+  border: 1px solid rgb(var(--text-color) / 0.2);
+  border-radius: var(--btn-border-radius, 0);
+}
+.lg-contents__title {
+  margin: 0 0 12px;
+  font-family: var(--nav-font-family);
+  font-size: var(--nav-text-size);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lg-contents ol { margin: 0; padding: 0; list-style: none; }
+.lg-contents__parts > li { margin-bottom: 16px; }
+.lg-contents__parts > li > a {
+  font-weight: 600;
+  text-decoration: none;
+}
+.lg-contents__parts > li > a:hover { text-decoration: underline; }
+.lg-contents__sections { margin-top: 6px !important; }
+.lg-contents__sections li { margin: 0 0 4px; line-height: 1.4; }
+.lg-contents__sections a {
+  color: rgb(var(--text-color));
+  text-decoration: none;
+}
+.lg-contents__sections a:hover { text-decoration: underline; }
+.lg-contents__sections--flat li { margin-bottom: 6px; }
+.lg-contents a:focus-visible {
+  outline: 2px solid rgb(var(--heading-color));
+  outline-offset: 2px;
+}
+
+/* The clause or section number. Tabular so 1.1 and 12.3 line up. */
+.lg-num {
+  display: inline-block;
+  min-width: 2.4em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* ── parts and sections ── */
+.lg-part__title { margin: 0 0 8px; }
+.lg-part__scope {
+  margin: 0 0 28px;
+  color: rgb(var(--text-color) / 0.8);
+  font-style: italic;
+}
+.lg-section { margin: 0 0 32px; }
+.lg-section__title { margin: 0 0 12px; }
+/* The number sits in the display face at heading size, where a 2.4em well is
+   a hole. It only has to clear "A10", so it gets its own measure. */
+.lg-section__title .lg-num { min-width: 1.5em; margin-right: 0.15em; }
+.lg-prose .lg-section__title { margin-top: 32px; }
+
+/* ── clauses ──
+ * On a phone the number runs inline with the text, because a hanging indent
+ * costs a fifth of a 390px line. From 700px up it hangs in the margin, which
+ * is what makes a long contract scannable. */
+.lg-clause { margin: 0 0 14px; }
+.lg-clause__body { margin: 0; }
+.lg-clause__cont { margin: 8px 0 0; }
+.lg-clause__n {
+  margin-right: 0.5em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.lg-clause__list {
+  margin: 8px 0 0;
+  padding-left: 1.3em;
+  list-style: disc;
+}
+.lg-clause__list li { margin-bottom: 4px; }
+
+@media (min-width: 700px) {
+  .lg-clause { position: relative; padding-left: 3.6em; }
+  .lg-clause__n {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3.2em;
+    margin: 0;
+  }
+}
+
+/* ── back to contents ── */
+.lg-backtop {
+  margin: 24px 0 0;
+  font-size: var(--smaller-text-size-2);
+}
+.lg-backtop a { color: rgb(var(--text-color) / 0.85); }
+
+/* Figures in a column have to be tabular, or a stack of prices does not line
+   up on the decimal and money reads weaker than it is. Forced wherever a
+   number sits in a column rather than in a sentence. */
+.price-table, .timetable, .fact-table, .ap-glance, .ap-tally,
+.stat__value, .num, td.num, th.num {
+  font-variant-numeric: tabular-nums lining;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* The form card matches the head above it. It was 720px under an 880px head,
+   which put a visible step in the left edge of the page halfway down. */
+.ap-card { max-width: 880px; }
+
+/* Room inside the field. The theme's own padding is tuned for its narrower
+   inputs; at this width a value sat hard against the border. */
+.account-form .ap-form input[type="text"],
+.account-form .ap-form input[type="email"],
+.account-form .ap-form input[type="tel"],
+.account-form .ap-form input[type="url"],
+.account-form .ap-form input[type="number"],
+.account-form .ap-form select,
+.account-form .ap-form textarea {
+  padding: 0.95em 1em;
+  line-height: 1.5;
+}
+.account-form .ap-form textarea { padding-block: 0.9em; }

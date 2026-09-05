@@ -726,10 +726,17 @@ export function ApplyForm({
           <StepHead step={STEPS[4]!} />
           <div className="flexible-layout flexible-layout--form">
             <div className="column column--full">
+              {/* Everything a maker is agreeing to, reachable from the place
+                  they agree to it. All four open in a new tab so a half-filled
+                  form is never lost to a click. */}
               <p className="ap-lede">
-                The rules for your track, before you sign:{' '}
-                <Link href="/makers/indoor">inside</Link> ·{' '}
-                <Link href="/makers/outdoor">outside</Link>.
+                Before you sign, the rules for your track:{' '}
+                <Link href="/makers/indoor" target="_blank" rel="noreferrer">inside</Link> ·{' '}
+                <Link href="/makers/outdoor" target="_blank" rel="noreferrer">outside</Link>.
+                {' '}The full{' '}
+                <Link href="/agreement" target="_blank" rel="noreferrer">vendor agreement</Link>
+                {' '}and our{' '}
+                <Link href="/terms" target="_blank" rel="noreferrer">terms and privacy</Link>.
               </p>
               <label className="check-option" htmlFor="agree">
                 <input
@@ -739,7 +746,11 @@ export function ApplyForm({
                   aria-invalid={e.agree ? 'true' : undefined}
                 />
                 <span>
-                  I’ve read and accept the Mermade Market vendor agreement (v2026.1).
+                  I have read and accept the{' '}
+                  <Link href="/agreement" target="_blank" rel="noreferrer">
+                    Mermade Market vendor agreement
+                  </Link>
+                  {' '}(v2026.1).
                 </span>
               </label>
               {e.agree && (

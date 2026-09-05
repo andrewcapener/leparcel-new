@@ -31,7 +31,7 @@ not use. Both real ones are free on Google Fonts, so we simply use them.
 or type into.**
 
 Oswald → hero, section heads, nav, buttons, chips, eyebrows, table headers,
-MM codes, ticker, admin page titles.
+MM codes, ticker, and every tracked caps label in the admin.
 Figtree → body copy, ledes, the founder letter, grid answers, form inputs, hints,
 table cells, prices, everything an operator reads at 14px.
 
@@ -40,6 +40,7 @@ table cells, prices, everything an operator reads at 14px.
 --font-g: var(--f-figtree), system-ui, sans-serif;       /* prose */
 --font-j: var(--f-figtree), system-ui, sans-serif;       /* UI, forms, tables */
 --font-r: var(--f-garamond), Georgia, serif;             /* reserve serif, unused */
+--font-m: 'JetBrains Mono', ui-monospace, monospace;     /* admin machine text, §5.1 */
 ```
 
 EB Garamond stays loaded as `--font-r` and nothing uses it. It was the previous
@@ -63,7 +64,8 @@ by link but not in the nav, the sitemap, or search.
 | `band` | clamp(42, 9vw, 114) / .88 | Cond 700 upper | The one-claim band |
 | `display` | clamp(34, 5.8vw, 74) / .90 | Cond 700 upper | Apply block, section heads |
 | `heading` | clamp(30, 4.3vw, 52) / .94 | Cond 700 upper | Founder letter, subheads |
-| `title-adm` | 34 / 1 | Cond 700 upper | Admin page titles |
+| `title-adm` | clamp(27, 3.1vw, 38) / 1.06 | Figtree 500, sentence case | Admin page titles. **Not** uppercase and not Oswald: see §5.1 |
+| `mono` | 11.5–12.5 / 1.55 | JetBrains Mono 400 | Admin machine text: subtitles, dates, ids, emails, counts |
 | `prose` | 18.5 / 1.62 | Figtree 400 | Body copy |
 | `prose-s` | 17 / 1.55 | Figtree 400 | Grid answers, captions in prose |
 | `ui` | 14-17 / 1.5-1.6 | Figtree 400 | Interface text, table cells |
@@ -151,21 +153,103 @@ image.
 
 ## 5. Two registers, one system
 
-The same tokens serve both audiences — the shift is in density, not in palette.
+The two halves of this product are not one design at two densities. They share a
+business and a wordmark; almost nothing else.
 
 | | **Shopper pages** (`/`, `/schedule`, `/journal`) | **Vendor + admin** (`/apply`, `/portal`, `/admin`, `/pos`) |
 |---|---|---|
 | Voice | Warm, plain, reassuring | Precise, complete, unambiguous |
-| Type | Huge Oswald display, Figtree prose | Oswald labels, Figtree data, tabular numerals always |
-| Imagery | Dominant | None |
-| Colour | Sage fields, straw highlights | Neutral ground; sage for status and links, straw for shortlist |
-| Radii | Pills and arches | Pills, but small — `.btn-o` is 13px, five fit in one table cell |
-| Job | Make her want to come | Make a maker trust you with $280 and a season of inventory |
+| Type | Huge Oswald display, Figtree prose | Oswald caps labels, Figtree names and titles, mono for machine text |
+| Imagery | Dominant | Identification only, never decoration |
+| Ground | Bone and shell, gold accent | Near-black sidebar, near-white content, no accent |
+| Radii | Pills and arches | 2px, or none |
+| Job | Make her want to come | Make the next action obvious to someone eight hours into a load-in day |
 
-**The admin half is for Drew, Hillary and a future buyer — not for shoppers.** It should
+**The admin half is for Drew, Hillary and a future buyer, not for shoppers.** It should
 look like an instrument. Warmth is not the opposite of precision; noise is.
 
----
+### 5.1 The admin language
+
+**Locked September 2026,** on Drew's call: the Mermade admin follows the design
+language of slowpokeshop.com, which he also built and knows works for this kind of
+work. The implementation of record is `src/app/globals.css`, which is imported by
+`src/app/admin/layout.tsx` and by nothing else, and the components in
+`src/app/admin/ui.tsx`.
+
+**Layout.** A fixed dark sidebar, 300px, `#0B0B0B`, against a near-white content
+area, `#FAFAF8`. The sidebar carries the wordmark on a small white sticker plate,
+the word ADMIN under it in tracked caps, then the nav. Each nav row is a
+full-width outlined block: a 20px line icon, a letter-spaced caps label, and a
+count badge on the rows that have one. The content column opens with a slim strip
+reading ADMIN PANEL, the show it is scoped to, and a bordered square button top
+right.
+
+**Type, which is where the personality lives.** Three registers, and the pairing is
+the whole move:
+
+- **Oswald, uppercase, tracked** for anything you scan: nav rows, table headers,
+  tabs, buttons, small labels, statuses.
+- **Figtree, sentence case, plain** for the page title, which is large and
+  low-contrast and never uppercase, and for names and prose. Figtree is the plain
+  grotesque this system already owns; a third sans face would cost a download and
+  say nothing the mono does not say better.
+- **JetBrains Mono** for machine text: the subtitle under every page title, dates,
+  ids, emails, counts, money in a secondary position, permit digits, the body of a
+  sent message. Free under the OFL and self-hosted at
+  `public/theme/fonts/jetbrains-mono-var-latin.woff2`. It was chosen for its tall
+  x-height, which matches Figtree's closely enough that a name in the sans and an
+  email in the mono read as one stacked cell rather than two typefaces.
+
+The signature is the title pair: a large plain sentence-case title with a grey
+monospace line under it carrying the counts. "Review queue" over
+"30 applications to Fall 2026 · applications close Sep 18, 11:59 PM".
+
+**The shapes.** Five, and every screen is built from them:
+
+- **Stat card** — a bordered white card: caps label top left, line icon top right,
+  one loud plain figure, a quiet mono note. Three or four across.
+- **Action card** — wider, in the same style: icon, caps title, one mono line
+  saying what is waiting. The whole card is the link.
+- **Progress** — figure loud, unit quiet beside it, a solid black bar, a mono
+  status line, a right-aligned caps link. Used for spaces filled and fees
+  collected.
+- **Tabs with count pills** — the filter strip above a table. Each tab is a caps
+  label with its count in a pill; the active one takes a thick underline and its
+  pill fills. `aria-current="page"` always accompanies it.
+- **Table** — a real `<table>` with `<caption>` and `<th scope>`. Small tracked
+  caps headers, hairlines only, generous row height. Where an entity has a primary
+  and a secondary identifier they stack in one cell: name in Figtree over email in
+  grey mono. Money and counts are right-aligned and tabular. **Status is plain
+  text, never a coloured badge.** A small square thumbnail can lead a row, for
+  identification and not for judgement. A chevron on the right expands the row in
+  place.
+
+**Buttons.** The primary is a solid black rectangle with white tracked caps, top
+right of the page, one per screen at most. Row actions are quiet outlined caps
+buttons. Secondary navigation is a caps link with a trailing arrow.
+
+**Colour does one job each.** Ink on off-white carries everything. Red
+(`--ad-warn`) marks only what is genuinely wrong. The bright blue appears in
+exactly one place, as the 2px outline on the active nav row, and it is never the
+only signal: that row also carries `aria-current="page"`, a white label and a
+filled marker.
+
+**Expanding a row.** The queue expands in place rather than opening a drawer: a
+checkbox inside the chevron label, a CSS `:has()` rule on the row's `<tbody>`, no
+JavaScript. Written so a browser without `:has()` renders every row expanded
+rather than hiding content it cannot reveal.
+
+**On a phone.** The sidebar becomes a drawer behind a menu button in the top
+strip. Closed, it is `visibility: hidden`, which takes every link in it out of the
+tab order without any focus management. Table columns step out from the right as
+the viewport narrows, lowest value first, and everything they carried is still in
+the expanded row.
+
+**Accessibility is not a later pass.** Sidebar labels run at least 7:1 on the dark
+ground, the blue outline 4.4:1, body grey 6.7:1 and muted grey 4.9:1 on the
+content ground. Every table has a caption, every icon is `aria-hidden` with a
+label beside it, every repeated control carries the shop name in visually hidden
+text so a hundred rows do not announce a hundred identical "Shortlist"s.
 
 ## 6. Content rules that outrank styling
 

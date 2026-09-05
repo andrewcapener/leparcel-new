@@ -32,6 +32,9 @@ export const PAGES: Array<{ path: string; visibility: Visibility; note: string }
   { path: '/lookbook/indoor', visibility: 'nav',      note: 'Indoor space lookbook' },
   { path: '/lookbook/outdoor',visibility: 'nav',      note: 'Outdoor tent lookbook' },
   { path: '/sponsorships',    visibility: 'nav',      note: 'Sponsorships' },
+  { path: '/agreement',       visibility: 'nav',      note: 'The vendor agreement every maker signs' },
+  { path: '/terms',           visibility: 'nav',      note: 'Terms of use for the site' },
+  { path: '/privacy',         visibility: 'nav',      note: 'What the site collects and where it goes' },
 ]
 
 /** Spread into a page's `metadata` to keep it out of search results. */

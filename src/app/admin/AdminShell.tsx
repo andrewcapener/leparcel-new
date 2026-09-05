@@ -47,7 +47,13 @@ export function AdminShell({
       <div className="adm-shell">
         <aside className="adm-side" id="adm-side">
           <div className="adm-side-hd">
-            <Link href="/" className="adm-plate">Mermade</Link>
+            {/* Their own white mark rather than the wordmark set in type. It
+                is the same file the public footer uses, and it needs no plate
+                behind it on a near-black sidebar. */}
+            <Link href="/" className="adm-mark" aria-label="Mermade Market, back to the public site">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/theme/img/Mermade-Market-Icon-white.png" alt="" width={320} height={132} />
+            </Link>
             <span className="adm-side-kicker">Admin</span>
           </div>
 

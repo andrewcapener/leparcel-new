@@ -12,6 +12,17 @@
 > front of a lawyer" at the end.
 >
 > Companion research: `11-AGREEMENT-RESEARCH.md`.
+>
+> **Published, September 2026.** This draft now renders as a public page at
+> `/agreement`, from `src/lib/agreement.ts`, with every date, price, rate and
+> window read off the Show record. The published text carries **no** ⟨DECISION⟩
+> or ⟨COUNSEL⟩ markers, because an applicant signs it. That makes one rule
+> load-bearing: where a decision below is still open, the published clause does
+> not invent a policy to fill the gap. It reads the number off the Show record,
+> defers to the acceptance email or the load-in instructions, or states the
+> market's own published position from the live pages in `src/lib/page-html.ts`.
+> Every clause where the last of those applied is listed under
+> "Where the agreement and the code disagree" at the end of this document.
 
 ---
 
@@ -115,17 +126,20 @@ live application page, which states "No Application Fee!" as a headline promise.
 > non-refundable regardless of outcome.
 
 **2.3** Acceptance is an offer, not a booking. **A space is confirmed only when
-the booth fee is paid in full. You have 36 hours** from your acceptance to pay.
+the booth fee is paid in full. You have `shows.payment_window_hours`** from your
+acceptance to pay.
 If payment is not received in that window, the offer lapses, the space returns to
 inventory, and it is offered to the next waitlisted maker in your category.
 
-> ⟨DECISION — still open, low stakes⟩ 36 hours is your real published policy and
-> the draft now matches it. It is still the tightest window of any market I found
-> (West Coast Craft gives 48, most give days), and the reason it was tight — the
-> manual invoice-and-chase loop — disappears once payment is instant in the portal.
-> The auto-offer to the next waitlisted maker is what makes a short window safe,
-> because a lapsed space refills itself. Worth revisiting after one season with
-> real data on how many acceptances lapse.
+> ⟨DECISION — **resolved from the repo, September 2026**⟩ The number is no longer
+> in the prose. It is `shows.payment_window_hours`, edited at `/admin/show`, and
+> the published clause renders whatever it says. **It currently says 48**, moved
+> from 36 by Drew (the change is recorded in `src/db/seed.ts`), which also matches
+> `06-OPEN-QUESTIONS.md` §8 and West Coast Craft. The 36 that used to be in this
+> paragraph was the last hardcoded copy of it and it was already wrong.
+>
+> Still worth revisiting after one season with real lapse data, but that is now a
+> field edit and not a redraft.
 
 ## 3. Booth fees, cancellation and refunds
 
@@ -154,7 +168,28 @@ receipt. Your space is released and may be offered to another maker.
 > the sting. Not drafted — flagging it as the option you'd reach for first.
 
 **3.3 Transfer.** Booth fees are not transferable to another maker, another
-Show, or another person, except as §4 provides.
+Show, or another person, except as §4 and §B6 provide.
+
+> ⟨DECISION — **found in the live copy, and it changes §3.2**⟩ The transfer right
+> this document floated as an option you might reach for one day **is already a
+> published promise**, on the outdoor maker page, in their words:
+>
+> > "We do however, offer up your fee to carry through to the next show with no
+> > extra charge. It's up to you to contact us during the application period to
+> > make sure everything still applies. If you don't reach out to us, it's on you."
+>
+> So "all spaces are non-refundable" is true about *cash* and has never been the
+> whole policy. The published agreement now carries the carry-forward at **§B6.4**,
+> in the market's own shape: not refunded, carried once, only if the maker asks
+> inside the next application window, never automatic.
+>
+> **What you have to decide: does it apply inside as well?** The promise appears
+> only on the outdoor page, so that is where it has been drafted. Indoor spaces run
+> $60 to $450 and the work you have already done for an indoor maker who cancels is
+> merchandising planning, not advertising, so there is an argument either way.
+> Extending it costs you nothing in cash and removes most of the sting from a
+> policy that is a regional outlier. Leaving it outdoor-only keeps a promise you
+> have already made and adds nothing.
 
 ## 4. Weather, postponement and cancellation of the Show
 
@@ -181,21 +216,49 @@ attendance. If we postpone:
   against your next Show within 18 months**, or, at our option, a refund;
 - (c) we will announce a postponement as early as we reasonably can.
 
-⟨DECISION⟩ (b) offers a credit rather than cash. Cash is more generous and a
-better vendor story; credit protects your working capital in exactly the season
-where a postponement has already hurt revenue. Pick one deliberately.
+⟨DECISION — **still open, and it is yours**⟩ (b) offers a credit rather than cash.
+Cash is more generous and a better vendor story; credit protects your working
+capital in exactly the season where a postponement has already hurt revenue.
+Nothing in the repo answers it, because you have postponed but never had to
+settle up afterwards. What each costs, at your numbers: a postponed November with
+~100 makers and a mixed indoor/outdoor book is roughly **$30,000 to $40,000 of
+booth fees**. Under the credit version you keep the cash and owe the space next
+season. Under the refund version you write the cheques in the month the revenue
+did not arrive. The draft, and the published page, take the credit, with the
+refund at your option, which is the middle. Overrule it if you would rather be
+able to say "we refund".
 
 **4.3 Cancellation by Mermade.** If we cancel the Show outright and do not
 reschedule it, we will refund the booth fee. We are not liable for any other
 loss — travel, lodging, inventory produced, lost sales, or anything else.
 
-**4.4 Outdoor weather reimbursement.** Your existing 30% outdoor weather
-reimbursement, if you keep it, belongs here with its trigger written down.
-⟨DECISION⟩ It is currently undefined — 30% of what, triggered by what
-measurement, decided by whom? An undefined discretionary refund is worse than
-either a firm rule or no rule, because every vendor argues the edge. Either
-define it (e.g. "if NWS-recorded rainfall at the venue exceeds X inches during
-published Show hours, outdoor booth fees are reimbursed 30%") or remove it.
+**4.4 Outdoor weather reimbursement.** ⟨DECISION — **resolved from the live copy,
+and it was never as undefined as it looked**⟩ I said this clause was undefined.
+It is not. The outdoor maker page defines it, and the definition is a good deal
+tighter than "30% of something":
+
+> "If it rains the week leading up to the show, we will use our best judgement as
+> to whether the outside show will go on each day. […] If we cancel the show
+> because it will be too stormy […] we will give you the opportunity to
+> automatically participate in the next show, on the same day you purchased. If
+> you decide to not do the next show, we will reimburse you for 30% of your shop
+> fee. We cannot fully reimburse you because of the marketing efforts […] If the
+> show is still happening despite less-than-perfect weather and *you choose not to
+> come*, *we will not give you another day in a future show*."
+
+So the trigger is **Mermade cancelling an outdoor day**, not a rainfall reading;
+the 30% is **of that day's booth fee**; and it is only paid to a maker who
+declines the rolled-forward day. That is a rule you can apply without arguing,
+which is what I wanted from a measurement, and it is already what makers have
+been told. It is drafted at **§B6** and the published page carries it there.
+
+**The one piece still open** is who decides and on what: "our best judgement"
+about the week ahead is a judgment call in a clause otherwise made of facts. A
+rainfall or wind trigger would remove the argument but would also stop you
+cancelling on Wednesday for a Saturday forecast, which is the call you actually
+have to make. My read: keep the judgment, keep the announcement obligation, and
+write down the *deadline* instead of the *measurement*, i.e. we decide by a stated
+hour the day before. That is a decision, so it is not drafted.
 
 **4.5 Force majeure.** Neither party is liable for failure to perform caused by
 events beyond its reasonable control, including fire, flood, earthquake, severe
@@ -221,6 +284,29 @@ is a genuinely new clause spreading fast through the field — Crafty Wonderland
 Patchwork Show (*"Products with AI generated images are also prohibited"*) both
 added it, in near-identical language, independently. Your application already
 asks the question; this is the clause that gives the answer teeth.
+
+> ⟨DECISION — **new, and it is a real contradiction, not a wording problem**⟩
+> §5.1 as originally drafted said you may sell "only goods you designed and made
+> yourself", and §5.3 banned "resold or wholesale goods". **Your own application
+> invites the opposite.** `src/app/actions.ts` asks `madeByYou` with three
+> answers, one of which is `curate_resell`; the FAQ says *"If you have a curated
+> shop where you wholesale items from a factory (like clothing) or wholesale from
+> other shops, it's all good"*; and `Vintage` is a seeded category with a seeded
+> price range. An agreement that bans what the form invites is the first thing a
+> declined maker would point at.
+>
+> The published clause therefore reads on the misrepresentation, not on the making:
+> goods you make, goods made under your supervision, **and goods you sourced or
+> curated and described to us honestly**. What stays banned is selling someone
+> else's work as your own.
+>
+> **Confirm this is what you mean.** If the real rule is "handmade only, and the
+> FAQ is out of date", then the FAQ, the application's third answer and the Vintage
+> category all have to go, and that is a bigger change than a clause.
+>
+> The same evidence softened the MLM ban. The FAQ carves out an MLM-derived product
+> the maker actually makes, as long as the shop name does not carry the company's
+> name, so §5.3 carries that carve-out rather than a flat prohibition.
 
 **5.4 Verification.** We may ask you at any time for reasonable evidence that
 your goods are made as represented — process photos, studio images, material
@@ -303,6 +389,25 @@ checked, because it is the difference between being covered and believing you ar
 The draft below assumes **Option A**, because it is the version that needs
 contract language. Option B replaces this section with a single sentence and a
 line item in the fee.
+
+> ⟨DECISION — **the published page could not carry Option A, and here is why**⟩
+> The application form, three fields above the signature, says: *"I carry my own
+> liability insurance (**recommended, not required**)"*
+> (`src/app/apply/ApplyForm.tsx`). A maker cannot tick that box and sign a §7.2
+> that requires $1M/$2M and a certificate before load-in in the same submission.
+> One of the two has to move, and choosing which one is choosing an insurance
+> policy, which is your call and the broker's.
+>
+> So the published §7 states what is true today and leaves the door open: we carry
+> our own policy, it covers us and not you, we recommend you carry your own, and
+> **if the venue or your acceptance requires a certificate we will tell you and you
+> send it before load-in**, naming Mermade and the venue. That is enforceable if
+> you switch to requiring COIs mid-season, and it does not contradict the form.
+>
+> Make the broker call. It is still the highest-value hour in this section: yes
+> with a small delta and you can advertise "coverage included" and delete a hundred
+> certificate chases a show; no and §7.2 becomes a hard requirement and the form
+> checkbox becomes a required field.
 
 **7.2** You must maintain commercial general liability insurance of not less than
 **$1,000,000 per occurrence and $2,000,000 aggregate**, naming **Mermade Market
@@ -489,13 +594,37 @@ record for settlement.
 `MM07 $18`. That is all the register needs and all you have to do. There is no
 barcode, no SKU, and nothing to print.
 
-**A2.3 ⟨DECISION⟩ The $100 label-noncompliance deduction is not in this draft.**
+**A2.3 ⟨DECISION — my read stands, and the site now argues with it⟩ The $100
+label-noncompliance deduction is not in this draft.**
 `00-BUSINESS-AUDIT.md` §2.1 puts it plainly: the penalty exists because the old
 manual tally could not function without perfect vendor compliance, which
 converted an engineering problem into a penalty pointed at your own vendors. The
 new register reads vendor code plus price directly. If an item arrives untagged,
 the fix is a staff member writing a tag, not a hundred-dollar charge. If you keep
 any deduction, make it cost-based and small.
+
+> **September 2026, and this is now urgent rather than academic.** `/makers/indoor`
+> publishes all three penalties in a block headed *"Rules that cost money"*: $100
+> for arriving after 6pm on set-up night, $100 for bad labels or none, $20 for
+> jewelry with no bags. The published agreement says the opposite at **§A2.5**:
+> deductions are our commission plus anything we supplied on your behalf at cost,
+> itemised with a reason, and an untagged item is tagged by staff and not charged
+> for.
+>
+> **Both pages are live and one of them is wrong.** §14.4 says the agreement wins,
+> which means as it stands a maker can be told $100 on the rules page and $0 in the
+> contract they signed. Pick one before applications open:
+>
+> - **Drop the penalties** (my read, and the audit's): the agreement is already
+>   drafted for it, and `/makers/indoor` loses six lines.
+> - **Keep them**: then they belong in §A2.5 as named amounts, they need to be
+>   Show-record fields rather than constants in a page component, and the $20
+>   packaging charge should be renamed to what it is, "packaging supplied", and
+>   billed at cost.
+>
+> The $100 late-arrival charge is a third thing again: it is a load-in charge, not
+> a settlement deduction, it is not modelled anywhere, and the published agreement
+> does not carry it. If you want it, it needs drafting.
 
 **A2.4** Mermade may decline to display any item that is unsafe, materially
 different from your application, or unsaleable as delivered, and will tell you.
@@ -506,7 +635,12 @@ different from your application, or unsaleable as delivered, and will tell you.
 discount, mark down or bundle your goods without your prior written
 authorisation.
 
-**A3.2** ⟨DECISION⟩ If you want end-of-show markdown authority, it belongs here as
+**A3.2** ⟨DECISION — **answered by default, and nothing needs building**⟩ There is
+no markdown field on the application, so for Fall 2026 the answer is the drafted
+one: no markdown without written authorisation, which is what §A3.1 says and what
+the published page carries. If you want the opt-in for a later show it is one
+checkbox on the form and one column. If you want end-of-show markdown authority,
+it belongs here as
 an **opt-in** on the application ("I authorise Mermade to discount my unsold
 goods by up to X% during the final N hours"), never as a default. Retail
 consignment shops take automatic markdown authority because they hold goods for
@@ -545,11 +679,31 @@ until paid, less commission and any deduction you have agreed to in writing.
 settlement statement showing units sold, retail price, sales tax collected,
 commission retained, any deductions with their reason, and the net amount due.
 
-**A6.3 ⟨DECISION⟩ Mermade will pay the net amount within 30 days of the Show
-closing**, by the payout method on your vendor record. Thirty days is the
-benchmark in gallery and event consignment. Faster is a better vendor story and
-your platform will make it possible; slower invites chasing, which is the thing
-you are trying to stop doing.
+**A6.3 ⟨DECISION — 30 days was wrong the day I wrote it. It is now 7, and you
+should confirm that.⟩** Thirty days is the benchmark in gallery and event
+consignment, and it is also **three times slower than what you already publish**.
+`/makers/indoor` says, in the market's own words, *"We carefully track each sale
+using unique IDs per maker & pay within 1 week of the market's last day."* A
+contract that promises slower than the page the maker read before signing is the
+worst of the three options.
+
+So the published clause pays and sends the statement together, **within
+`POLICY.payoutDays` days of the Show closing, currently 7**, and the dispute
+window runs 14 days from the statement. Two things follow, and both are yours to
+confirm:
+
+1. **It only works because §A7.1 says Mermade absorbs post-settlement returns.**
+   `06-OPEN-QUESTIONS.md` §9 argues for 10 business days precisely so the money is
+   still in your balance through the return window. Absorbing returns removes that
+   objection. Keep the two answers together: if you decide returns come off the
+   maker's next statement, the payout window has to grow again.
+2. **Seven days is a promise about operations, not about software.** Payouts are
+   manual until Stripe Connect lands. If seven days is not what actually happens,
+   change the number here *and* on `/makers/indoor` in the same edit, because the
+   pair of them is what a maker reads.
+
+The number lives in `POLICY` in `src/lib/agreement.ts` with the rest of the
+windows, and it should become a Show-record column the next time the schema moves.
 
 **A6.4 Disputes.** Tell us in writing within **14 days** of the settlement
 statement if you think it is wrong, and we will reconcile against the

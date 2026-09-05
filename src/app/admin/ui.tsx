@@ -34,8 +34,15 @@ export function PageHead({
   )
 }
 
-export function Stats({ children }: { children: React.ReactNode }) {
-  return <div className="adm-stats">{children}</div>
+export function Stats({
+  children, cols,
+}: {
+  children: React.ReactNode
+  /** Fix the column count. Six cards on an auto-fit grid land four and two,
+   *  which paints an empty half-row; three and three does not. */
+  cols?: 3
+}) {
+  return <div className="adm-stats" data-cols={cols}>{children}</div>
 }
 
 export function Stat({
