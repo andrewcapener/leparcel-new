@@ -86,6 +86,22 @@ export default async function ApplicationDetail({
         Submitted {fmtDateTime(app.submittedAt)} · signed “{app.signedName}” · terms v{app.termsVersion}
       </p>
 
+      {(() => {
+        let ph: string[] = []
+        try { ph = JSON.parse(app.photos) } catch {}
+        if (ph.length === 0) return null
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10, marginBottom: 26 }}>
+            {ph.map((src) => (
+              <a key={src} href={src} target="_blank" rel="noreferrer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 8, border: '1px solid var(--line)' }} />
+              </a>
+            ))}
+          </div>
+        )
+      })()}
+
       <table className="tbl" style={{ marginBottom: 30 }}>
         <tbody>
           <Row k="Contact">
@@ -164,8 +180,9 @@ export default async function ApplicationDetail({
       </form>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {(['shortlist', 'accepted', 'waitlist', 'declined', 'under_review'] as const)
+        {(['shortlist', 'accepted', 'waitlist', 'declined', 'under_review', 'new'] as const)
           .filter((s) => s !== app.status)
+          .filter((s) => s !== 'new' || app.status === 'declined')
           .map((s) => (
             <form action={decide} key={s}>
               <input type="hidden" name="applicationId" value={app.id} />

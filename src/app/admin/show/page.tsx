@@ -1,8 +1,8 @@
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { shows, spaceTypes } from '@/db/schema'
-import { usd } from '@/lib/money'
 import { SettingsForm } from './SettingsForm'
+import { updateSpace } from '@/app/actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,25 +35,33 @@ export default async function ShowSettings() {
         Priced inventory
       </h2>
       <p style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 14, maxWidth: 72 + 'ch' }}>
-        Read-only for now. Space prices are quoted to applicants and snapshotted onto bookings,
-        so editing them mid-window needs more care than a text field.
+        Price edits change what future applicants are quoted; accepted bookings keep the price
+        they were promised. Codes and tracks are fixed.
       </p>
-      <table className="tbl">
-        <thead>
-          <tr><th>Code</th><th>Track</th><th>Label</th><th className="r">Price</th><th className="r">Capacity</th></tr>
-        </thead>
-        <tbody>
-          {spaces.map((s) => (
-            <tr key={s.id}>
-              <td>{s.code}</td>
-              <td style={{ textTransform: 'capitalize' }}>{s.track}</td>
-              <td>{s.label}<div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{s.description}</div></td>
-              <td className="r">{usd(s.priceCents)}</td>
-              <td className="r">{s.capacity}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div style={{ display: 'grid', gap: 0, borderTop: '2px solid var(--ink)' }}>
+        {spaces.map((s) => (
+          <form action={updateSpace} key={s.id}
+            style={{ display: 'grid', gridTemplateColumns: '90px 80px 1.2fr 1.6fr 110px 90px auto',
+              gap: 12, alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
+            <input type="hidden" name="id" value={s.id} />
+            <span style={{ fontFamily: 'var(--font-c)', fontWeight: 600, fontSize: 13, letterSpacing: '.05em' }}>{s.code}</span>
+            <span style={{ textTransform: 'capitalize', fontSize: 13, color: 'var(--ink-2)' }}>{s.track}</span>
+            <input className="inp" name="label" defaultValue={s.label} aria-label="Label" style={{ padding: '7px 10px', fontSize: 14 }} />
+            <input className="inp" name="description" defaultValue={s.description} aria-label="Description" style={{ padding: '7px 10px', fontSize: 13 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ color: 'var(--ink-3)', fontSize: 13 }}>$</span>
+              <input className="inp num" name="price" type="number" min={0} step={5}
+                defaultValue={s.priceCents / 100} aria-label="Price in dollars" style={{ padding: '7px 10px', fontSize: 14 }} />
+            </div>
+            <input className="inp num" name="capacity" type="number" min={0}
+              defaultValue={s.capacity} aria-label="Capacity" style={{ padding: '7px 10px', fontSize: 14 }} />
+            <button className="btn-o" type="submit">Save</button>
+          </form>
+        ))}
+      </div>
+      <p style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 10 }}>
+        Price · capacity per row. Save applies that row only.
+      </p>
     </div>
   )
 }

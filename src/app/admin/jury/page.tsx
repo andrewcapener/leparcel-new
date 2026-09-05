@@ -173,6 +173,20 @@ export default async function Jury({
                     }}>
                       {app.description}
                     </p>
+                    {(() => {
+                      let ph: string[] = []
+                      try { ph = JSON.parse(app.photos) } catch {}
+                      if (ph.length === 0) return null
+                      return (
+                        <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                          {ph.slice(0, 4).map((src) => (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img key={src} src={src} alt="" width={64} height={64}
+                              style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--line)' }} />
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </td>
                   <td>{app.category}</td>
                   <td>
@@ -220,8 +234,9 @@ export default async function Jury({
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {(['shortlist', 'accepted', 'waitlist', 'declined', 'under_review'] as const)
+                      {(['shortlist', 'accepted', 'waitlist', 'declined', 'under_review', 'new'] as const)
                         .filter((s) => s !== app.status)
+                        .filter((s) => s !== 'new' || app.status === 'declined')
                         .map((s) => (
                           <form action={decide} key={s}>
                             <input type="hidden" name="applicationId" value={app.id} />

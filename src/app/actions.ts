@@ -461,3 +461,40 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
   revalidatePath('/admin/show')
   return { ok: true, attempt, message: 'Saved.' }
 }
+
+/**
+ * Edits one space type: label, description, price, capacity. Codes and
+ * tracks are fixed identities. Price edits affect future quotes only;
+ * accepted bookings carry their snapshotted price (CLAUDE.md rule 6).
+ */
+export async function updateSpace(fd: FormData): Promise<void> {
+  const id = String(fd.get('id'))
+  const space = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, id) })
+  if (!space) return
+
+  const priceDollars = Number(fd.get('price'))
+  const capacity = Number(fd.get('capacity'))
+  const label = String(fd.get('label') ?? '').trim()
+  const description = String(fd.get('description') ?? '').trim()
+  if (!label || !Number.isFinite(priceDollars) || priceDollars < 0
+    || !Number.isInteger(capacity) || capacity < 0) return
+
+  const next = {
+    label,
+    description,
+    priceCents: Math.round(priceDollars * 100),
+    capacity,
+  }
+  const before: Record<string, unknown> = {}
+  const after: Record<string, unknown> = {}
+  for (const k of Object.keys(next) as Array<keyof typeof next>) {
+    if (space[k] !== next[k]) { before[k] = space[k]; after[k] = next[k] }
+  }
+  if (Object.keys(after).length === 0) return
+
+  await db.update(spaceTypes).set(next).where(eq(spaceTypes.id, id))
+  await log('space_type', id, 'settings_change', before, after, '', 'staff')
+  revalidatePath('/admin/show')
+  revalidatePath('/apply')
+  revalidatePath('/')
+}
