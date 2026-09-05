@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ThemeBoot } from '@/components/theme/ThemeBoot'
+import { NewsletterPopup } from '@/components/theme/NewsletterPopup'
 
 /**
  * The public site is mermademarket.com's own theme, vendored.
@@ -35,6 +36,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="stylesheet" href="/theme/animate-on-scroll.css" />
         <link rel="stylesheet" href="/theme/video.css" />
         <link rel="stylesheet" href="/theme/collapsible-tabs.css" />
+        <link rel="stylesheet" href="/theme/modal.css" />
+        <link rel="stylesheet" href="/theme/pop-up.css" />
         {/* Ours, loaded last. See the file for what is in it and why. */}
         <link rel="stylesheet" href="/theme/local.css" />
         <link
@@ -54,6 +57,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="cc-animate-enabled">
         {children}
+        {/* Theirs, in their markup, writing to our subscribers table. It
+            suppresses itself on /admin and /apply. */}
+        <NewsletterPopup />
         <ThemeBoot />
       </body>
     </html>

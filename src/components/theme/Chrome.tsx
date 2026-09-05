@@ -187,6 +187,23 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
           </div>
           <div className="logo-area__right">
             <div className="logo-area__right__inner">
+              {/* Theirs carries an Account link here, to Shopify's customer
+                  login. Ours is the vendor portal: the same place in the
+                  header, pointing at the thing that replaces it. The word is
+                  hidden on a phone, as theirs is, so the Apply button keeps
+                  the room. */}
+              <Link href="/account" className="header-account-link" aria-label="Account">
+                <span className="header-account-link__text visually-hidden-mobile">Account</span>
+                <span className="header-account-link__icon mobile-only">
+                  <svg className="icon" width="24" height="24" viewBox="0 0 24 24"
+                    aria-hidden="true" focusable="false" role="presentation">
+                    <g fill="none" fillRule="evenodd">
+                      <path d="M12 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.429a3.571 3.571 0 1 0 0 7.142 3.571 3.571 0 0 0 0-7.142Z" fill="currentColor" />
+                      <path d="M3 18.25c0-2.486 4.542-4 9.028-4 4.486 0 8.972 1.514 8.972 4v3H3v-3Z" stroke="currentColor" strokeWidth="1.5" />
+                    </g>
+                  </svg>
+                </span>
+              </Link>
               <Link href="/apply" className="btn btn--primary header-apply-link">Apply</Link>
             </div>
           </div>

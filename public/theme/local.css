@@ -620,3 +620,73 @@ h3, .h3 { line-height: 1.15; }
   .timetable--run tbody td { display: block; border-bottom: 0; padding-left: 0; }
   .timetable--run tbody tr + tr { border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity)); }
 }
+
+/* ── The "Stay Hooked" pop-up ─────────────────────────────────────────────
+   Their section, their photograph, their copy. Two things the vendored
+   sheets cannot supply on their own:
+
+   1. modal.css ships with unresolved custom media queries (`@media(--sm-up)`)
+      that Shopify's build was supposed to compile away, so the rules inside
+      them are dead here. The window sizing is restated below.
+   2. Their inline `data-shopify` <style> block carried the per-section
+      colours and the white veil over the photograph. That block is not in
+      the theme files, so it is here. */
+.popup-section .modal__window {
+  --bg-color: 255 255 255;
+  --heading-color: 7 7 7;
+  --text-color: 7 7 7;
+  --link-color: 7 7 7;
+  background: #fff;
+  color: #070707;
+  width: 100%;
+  min-width: 0;
+  max-width: min(640px, calc(100vw - var(--gutter, 20px) * 2));
+}
+@media (min-width: 768px) { .popup-section .modal__window { width: 640px; } }
+/* The photograph reads as a ground, not a picture: 50% white over it, exactly
+   as their inline style sets it. */
+.popup-section__background-image::after {
+  content: "";
+  background-color: #fff;
+  opacity: 0.5;
+}
+.popup-section .modal__content { position: relative; }
+.popup-section .section__block { position: relative; }
+.popup-section .modal__close-btn {
+  /* Theirs sits on the photograph, so it needs its own ground to stay legible
+     whatever is behind it. */
+  background: #fff;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.popup-section .form-width { max-width: 420px; }
+
+/* The account link, beside the Apply button. Their header styles the class
+   but the theme's own sheet only carries one rule for it, so the spacing and
+   the phone behaviour are here. */
+.logo-area__right__inner { display: flex; align-items: center; gap: 16px; }
+.header-account-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-family: var(--nav-font-family);
+  font-size: var(--nav-text-size);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: inherit;
+}
+.header-account-link__icon { display: none; }
+.header-account-link__icon .icon { width: 24px; height: 24px; }
+@media (max-width: 767.98px) {
+  .visually-hidden-mobile { position: absolute !important; overflow: hidden; clip: rect(0 0 0 0);
+    width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; }
+  .header-account-link__icon { display: inline-flex; }
+  .logo-area__right__inner { gap: 10px; }
+}
+
+/* The pop-up photograph is a ground: it has to cover its box, not sit in it. */
+.popup-section__background-image img { width: 100%; height: 100%; object-fit: cover; }
