@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { siteUrl } from '@/lib/site-url'
+import { isCanonicalHost, siteUrl } from '@/lib/site-url'
 import { img } from '@/lib/theme-img'
 import { ThemeBoot } from '@/components/theme/ThemeBoot'
 import { NewsletterPopup } from '@/components/theme/NewsletterPopup'
@@ -52,7 +52,11 @@ export const metadata: Metadata = {
     images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Mermade Market' }],
   },
   twitter: { card: 'summary_large_image', images: [OG_IMAGE] },
-  robots: { index: true, follow: true },
+  // Off until SITE_URL names the real domain, so a stand-in host is never
+  // indexed against the one it stands in for. lib/site-url.ts explains why.
+  robots: isCanonicalHost()
+    ? { index: true, follow: true }
+    : { index: false, follow: false },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

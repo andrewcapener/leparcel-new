@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { transportDiagnostics } from '@/server/modules/sheets/transport'
 import { photoUploadDiagnostics } from '@/server/modules/uploads/config'
+import { isCanonicalHost, siteUrl } from '@/lib/site-url'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +30,18 @@ export async function GET() {
         variable: process.env.ADMIN_PASSWORD ? 'ADMIN_PASSWORD' : 'ADMIN_PASS',
       }
     })(),
+    // The one switch that has to be thrown at cutover. Until SITE_URL names
+    // the real domain, every canonical URL points at the Vercel host and the
+    // site is noindex so that host never competes with mermademarket.com.
+    // Setting it fixes the URLs and opens the site to crawlers together.
+    site: {
+      url: siteUrl(),
+      isCanonicalHost: isCanonicalHost(),
+      indexable: isCanonicalHost(),
+      cutoverStep: isCanonicalHost()
+        ? null
+        : 'Set SITE_URL=https://mermademarket.com in Vercel and redeploy when the domain points here.',
+    },
     hasResendKey: Boolean(process.env.RESEND_API_KEY),
     // The sender now defaults to hello@mermademarket.com rather than Resend's
     // onboarding sandbox, which only ever delivered to the Resend account
