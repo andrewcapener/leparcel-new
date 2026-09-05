@@ -5,6 +5,7 @@ import { activeShow } from '@/db/queries'
 import { shows, bookings, vendors, applications } from '@/db/schema'
 import { Photo } from '@/components/Photo'
 import { FilmBlock } from '@/components/FilmBlock'
+import { HeroVideo } from '@/components/HeroVideo'
 import { Masthead, Footer } from '@/components/site'
 import { SubscribeForm } from '@/components/SubscribeForm'
 import { fmtRange, fmtDate, applicationWindow } from '@/lib/dates'
@@ -20,6 +21,15 @@ function showDays(show: { startsOn: string; endsOn: string }) {
   const ms = new Date(show.endsOn).getTime() - new Date(show.startsOn).getTime()
   return Math.round(ms / 86_400_000) + 1
 }
+
+/** Gallery tiles. The photographs are ours to swap file by file; the
+ *  captions describe the market rather than the theme's "Tell your story". */
+const GALLERY = [
+  { photo: '/photos/tents.jpg', sub: 'Outside', title: 'A new set of tents every day' },
+  { photo: '/photos/floor.jpg', sub: 'Inside', title: 'One room, one register' },
+  { photo: '/photos/loadin.jpg', sub: 'Load-in', title: 'The night before' },
+  { photo: '/photos/vendor.jpg', sub: 'Makers', title: 'Chosen one at a time' },
+]
 
 const FEATURED = [
   { photo: '/photos/mk1.jpg', line: 'Wheel-thrown stoneware' },
@@ -57,6 +67,7 @@ export default async function Home() {
           Dates, "free", and one action above the fold. The single
           biggest miss the content audit found. */}
       <Photo src="/photos/hero.jpg" alt="" priority className="hero">
+          <HeroVideo youtubeId={C.heroVideoId} />
           <img className="stamp" src="/mermade-ribbon.png" alt="" />
           <div className="in">
             <div className="eyebrow">Hand curated · Shop Small Festival</div>
@@ -262,6 +273,34 @@ export default async function Home() {
           ))}
         </div>
       </section>
+
+      {/* ── testimonials · renders only with real quotes (content.ts) ── */}
+      {C.testimonials.length > 0 && (
+        <section className="quotes">
+          <div className="k">From the people</div>
+          <div className="grid">
+            {C.testimonials.map((t) => (
+              <blockquote key={t.author}>
+                “{t.quote}”
+                <cite>{t.author}</cite>
+              </blockquote>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── gallery ──────────────────────────────────────────────── */}
+      <div className="gal">
+        {GALLERY.map((g) => (
+          <figure key={g.photo}>
+            <Photo src={g.photo} alt="" sizes="(max-width:900px) 50vw, 25vw" />
+            <figcaption>
+              <div className="sub">{g.sub}</div>
+              <div className="ttl">{g.title}</div>
+            </figcaption>
+          </figure>
+        ))}
+      </div>
 
       {/* ── 8 · FILM — real archive footage, played on click ────── */}
       <FilmBlock />

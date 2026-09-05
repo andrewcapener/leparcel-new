@@ -105,6 +105,20 @@ export const newsletter = {
 
 /** Archive films, Andrew's footage. The first plays in the home film block;
  *  the rest link out from the archive band. */
+/** The clip the old site runs behind its hero (its background-video
+ *  section's video_external). Swappable for our own footage. */
+export const heroVideoId = 'caKMa9MVyEo'
+
+/**
+ * Shopper quotes for the testimonials row. EMPTY ON PURPOSE.
+ *
+ * The old site's testimonials section still carries the theme's demo text
+ * and a placeholder author name. Inventing replacements would be publishing
+ * fabricated reviews, so the section renders only when this array has real
+ * quotes in it, the same way `press.verified` gates the press line.
+ */
+export const testimonials: Array<{ quote: string; author: string }> = []
+
 export const films = [
   { youtubeId: 'O0l3_CsZTAY', label: 'From the archive' },
   { youtubeId: 'MAD5S4cPgsQ', label: 'Winter 2024' },
