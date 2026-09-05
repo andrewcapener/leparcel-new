@@ -9,6 +9,7 @@ import { ApplyForm } from './ApplyForm'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { applyFaq, fill } from '@/lib/page-html'
 import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
+import { previewingOpenWindow } from '@/lib/preview'
 import { SignupForm } from '@/components/theme/SignupForm'
 import { bpsLabel, usd } from '@/lib/money'
 
@@ -44,7 +45,14 @@ export default async function Apply({
 }: {
   searchParams: Promise<{ preview?: string }>
 }) {
-  // ?preview=1 shows the form outside the application window — view only.
+  // Two different previews, and they are not the same thing.
+  //   ?preview=1        renders the form outside the window, view only.
+  //   the launch preview  renders the WHOLE site as it will read once
+  //                       applications open, on one staff browser, set from
+  //                       /admin. This page gated on the date alone, so the
+  //                       launch preview flipped the announcement bar and the
+  //                       home page and then left the form shut, which is the
+  //                       one page anyone previewing a launch wants to see.
   // Submission is still enforced server-side in actions.ts, which rejects
   // anything outside the window regardless of how the form was reached.
   const preview = (await searchParams).preview === '1'
@@ -61,6 +69,11 @@ export default async function Apply({
   const forTrack = (t: 'indoor' | 'outdoor') =>
     extras.filter((a) => a.track === null || a.track === t)
   const win = applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt)
+  // Either preview opens the form on screen. Neither opens it to the public:
+  // the server action that accepts a submission checks the real window and
+  // does not consult these (src/app/actions.ts).
+  const previewingLaunch = await previewingOpenWindow()
+  const showForm = win === 'open' || preview || previewingLaunch
   const days = show.hoursNote.split(' · ')
 
   const openMs = new Date(show.applicationsOpenAt).getTime()
@@ -213,7 +226,7 @@ export default async function Apply({
             {/* One button, and a link. The prospectus is reference, so it
                 does not get the weight of the thing the page is for. */}
             <div className="ap-head__actions">
-              {(win === 'open' || preview) && (
+              {showForm && (
                 <a className="btn ap-head__go" href="#apply">Start your application</a>
               )}
               <a className="ap-head__alt" href="#details">
@@ -229,7 +242,7 @@ export default async function Apply({
         <div className="custom-html">
           <div id="apply" className="ap-anchor" />
           <div className="container">
-            {win === 'open' || preview ? (
+            {showForm ? (
               <>
                 {win !== 'open' && (
                   <p className="ap-preview" role="status">
