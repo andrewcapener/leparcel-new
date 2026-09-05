@@ -102,6 +102,8 @@ function ordinal(n: number): string {
 
 /** Field names in the error summary, in the words the label uses. */
 const LABELS: Record<string, string> = {
+  permitStatus: 'Seller’s permit',
+  sellerPermit: 'Permit number',
   shopName: 'Shop or brand name',
   contactName: 'Your name',
   email: 'Email',
@@ -134,7 +136,7 @@ const STEP_OF: Record<string, number> = {
   city: 1, state: 1,
   category: 2, madeByYou: 2, description: 2, priceLow: 2, priceHigh: 2,
   usesAiArtwork: 2, isMlm: 2,
-  track: 3, spaces: 3, addons: 3,
+  track: 3, spaces: 3, addons: 3, permitStatus: 3, sellerPermit: 3,
   agree: 4, signedName: 4,
 }
 
@@ -216,6 +218,10 @@ export function ApplyForm({
   // tent on their own day, so the question never shows for them.
   const [pickedSlots, setPickedSlots] = useState<string[]>([])
   const [wantsCall, setWantsCall] = useState(false)
+  // Controlled so the permit number can appear the moment someone says they
+  // have one. The team's rule is to ask for as little as possible after the
+  // application, so anything they can give us now, we take now.
+  const [permit, setPermit] = useState(v.permitStatus ?? '')
   const keep = (k: string) => ({ defaultValue: v[k] ?? '' })
 
   // Which step is on screen. This lives outside the <form>, so it survives
@@ -661,14 +667,39 @@ export function ApplyForm({
                 <Field
                   name="permitStatus" label="Selling outside: your seller’s permit"
                   error={e.permitStatus}
-                  hint="Outside, you sell for your own account, so California requires this of you and requires us to hold the record. We sort the paperwork out after you are accepted. We just want to know what you have."
+                  hint="Outside, you sell for your own account, so California requires this of you and requires us to hold the record. Nothing here stops you applying, and we can help if you need it."
                 >
-                  <select className="inp" id="permitStatus" name="permitStatus" defaultValue={v.permitStatus ?? ''}>
+                  <select
+                    className="inp" id="permitStatus" name="permitStatus"
+                    value={permit} onChange={(ev) => setPermit(ev.target.value)}
+                  >
                     <option value="">Choose one</option>
                     <option value="have">I have a California seller’s permit</option>
                     <option value="occasional">I don’t, I’m an occasional seller</option>
                     <option value="unsure">I’m not sure yet, help me</option>
                   </select>
+                </Field>
+              </div>
+            )}
+
+            {track !== 'indoor' && permit === 'have' && (
+              <div className="column column--full">
+                {/* Only once they have said they have one. Asking everybody for a
+                    number most of them do not have is the errand that emptied
+                    the old paperwork step; asking the one person who just told
+                    us they have it is a single field they can answer. Optional,
+                    so a maker who cannot find it right now still submits. */}
+                <Field
+                  name="sellerPermit" label="Your permit number (optional)"
+                  error={e.sellerPermit}
+                  hint="If you have it to hand, this saves us both an email later. If not, leave it and we will ask once you are accepted."
+                >
+                  {/* No inputMode: a permit number carries a hyphen, and a
+                      numeric keypad on a phone has no key for it. */}
+                  <input
+                    type="text" name="sellerPermit"
+                    autoCapitalize="characters" autoCorrect="off" {...keep('sellerPermit')}
+                  />
                 </Field>
               </div>
             )}
