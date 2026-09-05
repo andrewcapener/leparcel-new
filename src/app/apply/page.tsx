@@ -36,6 +36,7 @@ export default async function Apply({
         <p className="lede" style={{ maxWidth: '22ch' }}>
           Show us <em>what you make.</em>
         </p>
+        <p>We look at everything, and we say no a lot. Here is how to be a yes.</p>
       </section>
 
       {/* The two tracks share a brand and this form and nothing else.

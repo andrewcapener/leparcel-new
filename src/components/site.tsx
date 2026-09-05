@@ -29,7 +29,6 @@ export function Masthead({ show }: { show: Show }) {
         <Link href="/" aria-label="Mermade Market, home">
           <Wordmark className="wm" />
         </Link>
-        <div className="tag">Shop Small Festival</div>
         <div className="r">
           <Link href="/#visiting">Visiting</Link>
           <Link href="/schedule">Schedule</Link>

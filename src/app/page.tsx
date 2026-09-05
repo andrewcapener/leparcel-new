@@ -67,6 +67,7 @@ export default async function Home() {
       <Photo src="/photos/hero.jpg" alt="" priority className="hero">
           <img className="stamp" src="/mermade-ribbon.png" alt="" />
           <div className="in">
+            <div className="eyebrow">Shop Small Festival</div>
             <h1>
               A hundred makers,
               <br />
@@ -84,16 +85,6 @@ export default async function Home() {
             </div>
           </div>
       </Photo>
-
-      {/* ── 2 · THE CLAIM, held alone ───────────────────────────── */}
-      <section className="claim">
-        <div className="k">{C.claim.eyebrow}</div>
-        <p className="lede">
-          {C.claim.lead}
-          <em>{C.claim.emphasis}</em>
-          {C.claim.tail}
-        </p>
-      </section>
 
       {/* ── 3 · FACTS + PRESS ───────────────────────────────────── */}
       <div className="facts">

@@ -114,6 +114,9 @@
   .hero{position:relative;height:min(calc(100svh - 132px),850px);min-height:560px}
   .hero .in{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;
     justify-content:flex-end;padding:0 var(--pad) 32px;color:#FBF8F0}
+  .hero .eyebrow{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.22em;font-size:14px;color:var(--accent);margin-bottom:12px;
+    text-shadow:0 1px 18px rgba(0,0,0,.4)}
   .hero h1{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(50px,11.4vw,148px);line-height:.86;letter-spacing:-.006em;
     text-shadow:0 2px 44px rgba(0,0,0,.34)}
@@ -143,9 +146,9 @@
     max-width:44ch;margin:20px auto 0;opacity:.9}
 
   /* ─────────── 3 · factbar + press ─────────── */
-  .facts{display:flex;flex-wrap:wrap;background:var(--shell);border-bottom:2px solid var(--ink)}
-  .facts div{flex:1 1 155px;padding:22px 18px;text-align:center;border-right:1px solid var(--line)}
-  .facts div:last-child{border-right:0}
+  .facts{display:flex;flex-wrap:wrap;background:var(--shell);border-bottom:2px solid var(--ink);
+    padding:10px 0}
+  .facts div{flex:1 1 155px;padding:22px 18px;text-align:center}
   .facts .v{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(28px,3.6vw,44px);line-height:1;margin-top:7px}
   .facts .v.hl{color:var(--deep)}
@@ -327,9 +330,8 @@
     .hero .when{font-size:21px}
     .hero .cal{margin-left:0;font-size:14px;padding:8px 15px 7px}
     .hero .stamp{width:84px;top:15px}
-    .facts div{flex:1 1 45%;border-right:0}
-    .facts div:nth-child(odd){border-right:1px solid var(--line)}
-    .facts div:last-child{flex-basis:100%;border-right:0;border-top:1px solid var(--line)}
+    .facts{padding:4px 0}
+    .facts div{flex:1 1 32%;padding:16px 10px}
     .cats{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px;margin-right:calc(var(--pad) * -1);
       -webkit-overflow-scrolling:touch;scrollbar-width:none}
     .cats::-webkit-scrollbar{display:none}
