@@ -9,7 +9,7 @@ import {
 } from '@/components/theme/Sections'
 import { indoorSections, fill } from '@/lib/page-html'
 import { usd } from '@/lib/money'
-import { fmtDate } from '@/lib/dates'
+import { POLICY } from '@/lib/agreement'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,6 +56,10 @@ export default async function IndoorMerchants() {
   const vars = {
     indoorCapacity: show.indoorCapacity,
     outdoorCapacity: show.outdoorCapacity,
+    // One source for the payout window, so the fact table, this prose and
+    // the signed agreement cannot say three different things.
+    payoutMin: POLICY.payoutDaysMin,
+    payoutMax: POLICY.payoutDays,
     loadIn: show.loadInNote || 'announced with your acceptance',
     takedown: show.takedownNote || 'announced with your acceptance',
     day1: days[0] ?? '',
@@ -94,15 +98,18 @@ export default async function IndoorMerchants() {
           <FactTable
             title="The deal, in short"
             rows={[
-              { label: 'How it works', value: 'You build your space on load-in day and go home. Our staff run the floor and the registers.' },
-              { label: 'Our commission', value: <><strong>{show.commissionBps / 100}%</strong> of what sells. You keep the rest.</> },
-              { label: 'Booth fee', value: indoor.length > 0
-                ? `${usd(Math.min(...indoor.map((x) => x.priceCents)))} to ${usd(Math.max(...indoor.map((x) => x.priceCents)))}, by space size`
-                : 'See the table below' },
+              /* Elise's wording, 5 Sep 2026, with the numbers still coming off
+                 the Show record and POLICY so nothing here can drift from what
+                 a maker signs. */
+              { label: 'How it works', value: 'Let us sell your items for you. You set up your mini shop space with each item tagged, and we keep it clean and restocked for you.' },
+              { label: 'Our commission', value: <>We keep <strong>{show.commissionBps / 100}%</strong> of sales, and you keep the rest.</> },
+              /* The range came off the page at Elise's request: the sizes and
+                 their prices are on the application, where a maker is choosing
+                 one rather than being met with a spread. */
+              { label: 'Booth fee', value: <>Varies by space size. <Link href="/apply">See the application</Link> for details.</> },
               { label: 'Load-in', value: show.loadInNote || 'Announced with your acceptance' },
               { label: 'Take-down', value: show.takedownNote || 'Announced with your acceptance' },
-              { label: 'Getting paid', value: 'Within a week of the last day, with a statement showing every sale under your code.' },
-              { label: 'Applications close', value: fmtDate(show.applicationsCloseAt) },
+              { label: 'Getting paid', value: `${POLICY.payoutDaysMin} to ${POLICY.payoutDays} days after the show, with a follow-up email showing your space's report under your unique ID.` },
             ]}
             cta={{ href: '/apply', label: 'Apply to sell' }}
           />

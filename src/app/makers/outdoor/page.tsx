@@ -8,6 +8,7 @@ import {
   PageTitle, RichText, FactTable, PriceTable, CollapsibleTabs, type Tab,
 } from '@/components/theme/Sections'
 import { outdoorSections, fill } from '@/lib/page-html'
+import { POLICY } from '@/lib/agreement'
 import { usd } from '@/lib/money'
 import { fmtDate } from '@/lib/dates'
 
@@ -54,6 +55,10 @@ export default async function OutdoorMerchants() {
   const vars = {
     indoorCapacity: show.indoorCapacity,
     outdoorCapacity: show.outdoorCapacity,
+    // One source for the payout window, so the fact table, this prose and
+    // the signed agreement cannot say three different things.
+    payoutMin: POLICY.payoutDaysMin,
+    payoutMax: POLICY.payoutDays,
     loadIn: show.loadInNote || 'announced with your acceptance',
     takedown: show.takedownNote || 'announced with your acceptance',
     day1: days[0] ?? '',

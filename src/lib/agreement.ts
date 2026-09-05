@@ -58,11 +58,17 @@ export const CONTACT_EMAIL = 'hello@mermademarket.com'
  * Where a number came from is recorded next to it. Nothing here was invented.
  */
 export const POLICY = {
-  /** Statement and payment. The market's own published promise on
-   *  /makers/indoor is "pay within 1 week of the market's last day", so the
-   *  contract does not promise slower than the page the maker read.
-   *  docs/10 drafted 30 days; that is the open decision. */
-  payoutDays: 7,
+  /** Statement and payment, as a window rather than a single number.
+   *
+   *  ⟨DECISION⟩ Elise, 5 Sep 2026: payment really goes out 7 to 10 days after
+   *  the show. The contract said 7, because the old Shopify page promised "pay
+   *  within 1 week" and the contract must not promise slower than the page a
+   *  maker read. But a contract that promises 7 when the work takes 10 is
+   *  breached on day 8, every season, by a business doing nothing wrong. So
+   *  the outer bound is what is promised, and the page quotes the same window.
+   *  Confirm with Drew; one number changes both. docs/10 drafted 30 days. */
+  payoutDaysMin: 7,
+  payoutDays: 10,
   /** Window to query a statement, from the draft. */
   disputeDays: 14,
   /** Window to collect unsold goods before they may be donated. From the draft. */
@@ -507,6 +513,7 @@ export function agreementVars(show: Show): PageVars {
     paymentWindow: show.paymentWindowHours,
     commissionPct: show.commissionBps / 100,
     payoutDays: POLICY.payoutDays,
+    payoutDaysMin: POLICY.payoutDaysMin,
     disputeDays: POLICY.disputeDays,
     abandonDays: POLICY.abandonDays,
     electionDays: POLICY.electionDays,
