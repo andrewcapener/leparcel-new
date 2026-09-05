@@ -77,11 +77,22 @@ export function ApplyForm({
           })}
           , and we answer either way.
         </p>
+        {/* Their thank-you page asks for photos at two addresses depending on
+            the track. Their own copy garbles the second heading ("Outside
+            makers: Inside makers:"); the two addresses are the part that
+            matters and both are kept. */}
         <p>
-          <strong>Inside Makers:</strong> if you do not have a solid
+          <strong>Inside makers:</strong> if you do not have a solid
           website/instagram, please email photos of your product to{' '}
           <a href="mailto:hello@mermademarket.com">hello@mermademarket.com</a>{' '}
-          with the subject line: your shop name + the shop space you applied for.
+          with the subject line: your shop name + the shop space you applied
+          for, e.g. &ldquo;Mama&#39;s Notebooks&rdquo;.
+        </p>
+        <p>
+          <strong>Outside makers:</strong> same, to{' '}
+          <a href="mailto:hillary@mermademarket.com">hillary@mermademarket.com</a>,
+          with your shop name and the day, e.g. &ldquo;Mama&#39;s Babies,
+          Saturday Only&rdquo;.
         </p>
       </div>
     )

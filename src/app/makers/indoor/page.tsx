@@ -53,7 +53,10 @@ export default async function IndoorMerchants() {
                 <p><strong>Indoor Pricing</strong></p>
                 <p><em>Space Size</em></p>
                 {indoor.map((s) => (
-                  <p key={s.id}>{s.label} {usd(s.priceCents)}</p>
+                  <p key={s.id}>
+                    {s.label} {usd(s.priceCents)}
+                    {s.description && ` (${s.description.replace(/\.$/, '')})`}
+                  </p>
                 ))}
               </>,
               <>

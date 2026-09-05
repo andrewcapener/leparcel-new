@@ -13,7 +13,13 @@
  * criticism to the wrong person's booth. Re-derive this file rather than
  * reordering it by hand.
  */
-export type LookbookShot = { file: string; title: string; body: string }
+export type LookbookShot = {
+  file: string
+  title: string
+  body: string
+  /** Their caption has one link in it; this is where it points. */
+  link?: { text: string; href: string }
+}
 
 export const indoorShots: LookbookShot[] = [
   {
@@ -240,6 +246,7 @@ export const outdoorShots: LookbookShot[] = [
     title: 'STUNNING',
     body:
       'She was selling her grazing boards and wanted to lay out all the ideas of foods she offers here on this beautiful table. Her backdrop was massive dried palms & her simple circular sign that was handmade. She crushed it! She used risers & dried florals & all the things to help inspire the customer during the next time they host. She\'s inspiring! This is also Hillary, before she started working at Mermade! Shes so talented! (if you want to order..get it here! )',
+    link: { text: 'here!', href: 'https://www.punchdrunkplatterco.com/' },
   },
   {
     file: 'Screen_Shot_2024-03-14_at_4.58.46_PM.png',

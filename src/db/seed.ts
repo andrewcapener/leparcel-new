@@ -148,7 +148,7 @@ async function main() {
     { code: 'IN-3x4',   track: 'indoor' as const,  label: "3' × 4' space",       priceCents: 26_000, capacity: 10, description: 'Compact. Suits jewelry and paper.' },
     { code: 'IN-3x6',   track: 'indoor' as const,  label: "3' × 6' space",       priceCents: 28_000, capacity: 13, description: 'The standard indoor space.' },
     { code: 'IN-3x8',   track: 'indoor' as const,  label: "3' × 8' space",       priceCents: 34_000, capacity:  8, description: 'Room for a rack alongside a table.' },
-    { code: 'IN-3x12',  track: 'indoor' as const,  label: "3' × 12' space",      priceCents: 45_000, capacity:  2, description: 'The largest indoor footprint. Apparel does well in it.' },
+    { code: 'IN-3x12',  track: 'indoor' as const,  label: "3' × 12' space",      priceCents: 45_000, capacity:  2, description: '1-2 makers will get this, apparel is great for this.' },
     { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 25, description: 'A tent for the day. You run your own payments and keep 100%.' },
     { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 25, description: 'A tent for the day. You run your own payments and keep 100%.' },
     { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 25, description: 'A tent for the day. You run your own payments and keep 100%.' },

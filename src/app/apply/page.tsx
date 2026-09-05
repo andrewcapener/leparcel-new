@@ -84,7 +84,12 @@ export default async function Apply({
               <>
                 <p><strong>Indoor Pricing </strong></p>
                 <p><em>Space Size</em></p>
-                {indoor.map((s) => <p key={s.id}>{s.label} {usd(s.priceCents)}</p>)}
+                {indoor.map((s) => (
+                  <p key={s.id}>
+                    {s.label} {usd(s.priceCents)}
+                    {s.description && ` (${s.description.replace(/\.$/, '')})`}
+                  </p>
+                ))}
                 <p><strong>ADD ON:</strong></p>
                 {forTrack('indoor').map((a) => (
                   <p key={a.id}>{a.name}: {usd(a.priceCents)}{a.isLimited ? ' (LMTD)' : ''}</p>
@@ -94,7 +99,12 @@ export default async function Apply({
               </>,
               <>
                 <p><strong>Outdoor Pricing </strong></p>
-                {outdoor.map((s) => <p key={s.id}>{s.label} {usd(s.priceCents)}</p>)}
+                {outdoor.map((s) => (
+                  <p key={s.id}>
+                    {s.label} {usd(s.priceCents)}
+                    {s.description && ` (${s.description.replace(/\.$/, '')})`}
+                  </p>
+                ))}
                 <p><strong>ADD ON:</strong></p>
                 {forTrack('outdoor').map((a) => (
                   <p key={a.id}>{a.name}: {usd(a.priceCents)}{a.isLimited ? ' (LMTD)' : ''}</p>

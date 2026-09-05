@@ -52,7 +52,10 @@ export default async function OutdoorMerchants() {
               <>
                 <p><strong>Outdoor Pricing</strong></p>
                                 {outdoor.map((s) => (
-                  <p key={s.id}>{s.label} {usd(s.priceCents)}</p>
+                  <p key={s.id}>
+                    {s.label} {usd(s.priceCents)}
+                    {s.description && ` (${s.description.replace(/\.$/, '')})`}
+                  </p>
                 ))}
               </>,
               <>

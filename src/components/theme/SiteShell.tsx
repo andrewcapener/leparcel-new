@@ -33,6 +33,9 @@ export function SiteShell({
 }) {
   return (
     <div className={`template-${template}`}>
+      {/* Theirs, and the first focusable thing on the page: a keyboard user
+          should not have to tab the whole header to reach the content. */}
+      <a className="skip-link visually-hidden" href="#content">Skip to content</a>
       <AnnouncementBar show={show} />
       <PageHeader transparent={transparentHeader} />
       <main id="content" role="main">

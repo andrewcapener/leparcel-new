@@ -90,6 +90,15 @@ select 'email_outbox',        count(*) from email_outbox where to_email like '%@
 -- commit;
 
 
+-- 3b · One content fix that lives in data, not code.
+--      Their price list qualifies the largest indoor space; ours seeded a
+--      paraphrase. Bring production in line (or edit it at /admin/show).
+update space_types
+   set description = '1-2 makers will get this, apparel is great for this.'
+ where code = 'IN-3x12'
+   and show_id = (select id from shows where is_active);
+
+
 -- 4 ·  After the delete, these should all be zero.
 select 'vendors left'      as thing, count(*) from vendors      where email like '%@example.com'
 union all

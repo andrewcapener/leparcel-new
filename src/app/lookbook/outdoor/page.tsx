@@ -1,7 +1,7 @@
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { RichText, ImageWithText } from '@/components/theme/Sections'
-import { outdoorShots } from '@/lib/lookbook'
+import { outdoorShots, type LookbookShot } from '@/lib/lookbook'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,9 +52,27 @@ export default async function OutdoorLookbook() {
               title={s.title}
               flip={i % 2 === 0}
             >
-              <p>{s.body}</p>
+              <p>{caption(s)}</p>
             </ImageWithText>
           ))}
         </SiteShell>
+  )
+}
+
+/**
+ * A caption, with their one embedded link put back where their text has it.
+ * The bodies are plain strings so the pairing stays re-derivable; the link is
+ * carried alongside rather than inlined as markup.
+ */
+function caption(s: LookbookShot) {
+  if (!s.link) return s.body
+  const at = s.body.lastIndexOf(s.link.text)
+  if (at === -1) return s.body
+  return (
+    <>
+      {s.body.slice(0, at)}
+      <a href={s.link.href} target="_blank" rel="noreferrer">{s.link.text}</a>
+      {s.body.slice(at + s.link.text.length)}
+    </>
   )
 }

@@ -50,13 +50,18 @@ export default async function Merchants() {
 
   // Inside is one group, all three days. Outside is one group per space,
   // which is one per day, in the order the spaces are listed on /apply.
-  const groups: Array<{ heading: string; rows: Row[] }> = []
+  // `headed: false` is the inside group, whose heading the intro paragraph
+  // above the grid already gives — which is how their page reads. Every
+  // outdoor day carries its own. Keying off the group rather than its index
+  // means a show with outdoor bookings and no indoor ones still labels its
+  // first day.
+  const groups: Array<{ heading: string; rows: Row[]; headed: boolean }> = []
   const inside = roster.filter((m) => m.track === 'indoor')
-  if (inside.length > 0) groups.push({ heading: 'Inside, all 3 days', rows: inside })
+  if (inside.length > 0) groups.push({ heading: 'Inside, all 3 days', rows: inside, headed: false })
   for (const m of roster.filter((r) => r.track === 'outdoor')) {
     const g = groups.find((x) => x.heading === m.space)
     if (g) g.rows.push(m)
-    else groups.push({ heading: m.space, rows: [m] })
+    else groups.push({ heading: m.space, rows: [m], headed: true })
   }
 
   return (
@@ -85,7 +90,7 @@ export default async function Merchants() {
 
               {groups.map((g, i) => (
                 <div key={g.heading}>
-                  {i > 0 && <SubheadingSection>{g.heading}</SubheadingSection>}
+                  {g.headed && <SubheadingSection>{g.heading}</SubheadingSection>}
                   <LogoGrid
                     id={`section-merchants-${i}`}
                     cards={g.rows.map((m) => ({ name: m.shopName, href: linkFor(m) }))}

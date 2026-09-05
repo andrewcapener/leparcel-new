@@ -1,6 +1,6 @@
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
-import { RichText, MultiColumn, ScrollingBanner } from '@/components/theme/Sections'
+import { Banner, RichText, MultiColumn, ScrollingBanner } from '@/components/theme/Sections'
 import { ContactFormSection } from '@/components/theme/ContactFormSection'
 import * as C from '@/lib/content'
 
@@ -134,6 +134,16 @@ export default async function Collaborate() {
           <ScrollingBanner
             id="section-collab-banner"
             text="LETS COLLABORATE AND CHANGE THE WORLD. AND BY WORLD WE MEAN OUR COMMUNITY."
+          />
+
+          {/* Their closing full-bleed photograph, a one-slide slideshow. */}
+          <Banner
+            id="section-collab-close"
+            image="7H3A8680.jpg"
+            title=""
+            heightMobile={460}
+            heightDesktop={600}
+            shadow={false}
           />
         </SiteShell>
   )

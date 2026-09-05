@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
@@ -21,8 +22,12 @@ export default async function JournalPost({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const post = journal.find((p) => p.slug === slug)
-  if (!post) notFound()
+  const at = journal.findIndex((p) => p.slug === slug)
+  if (at === -1) notFound()
+  const post = journal[at]!
+  // The list is newest first, so the next entry is the older article.
+  const older = journal[at + 1]
+  const newer = journal[at - 1]
   const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
@@ -56,9 +61,61 @@ export default async function JournalPost({
                   className="rte cf spaced-row"
                   dangerouslySetInnerHTML={{ __html: post.body }}
                 />
+
+                {/* Their article meta: the date, the tags, and the walk
+                    through the archive. Tag pages are theirs, not ours, so a
+                    tag reads as a label rather than a link to a route we do
+                    not have. */}
+                <div className="meta">
+                  <span className="iconmeta time">
+                    <time dateTime={post.date}>
+                      {new Date(post.date).toLocaleDateString('en-US', {
+                        timeZone: 'America/Los_Angeles',
+                        year: 'numeric', month: 'long', day: 'numeric',
+                      })}
+                    </time>
+                  </span>
+                  {post.tags.length > 0 && (
+                    <div className="iconmeta tags">
+                      <span className="label">Tagged:</span>
+                      {post.tags.map((t) => <span key={t}>{t}</span>)}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pagination-row pagination-row-tabular">
+                  <span className="prev">
+                    {older && (
+                      <Link href={`/journal/${older.slug}`}>
+                        <span className="icon--small icon-natcol has-ltr-icon"><Chevron dir="left" /></span>{' '}
+                        <span>Older articles</span>
+                      </Link>
+                    )}
+                  </span>
+                  <span className="back"><Link href="/journal">Back to Journal</Link></span>
+                  <span className="next">
+                    {newer && (
+                      <Link href={`/journal/${newer.slug}`}>
+                        <span>Newer articles</span>{' '}
+                        <span className="icon--small icon-natcol has-ltr-icon"><Chevron dir="right" /></span>
+                      </Link>
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </SiteShell>
+  )
+}
+
+/** Their feather chevron, as the article pagination uses it. */
+function Chevron({ dir }: { dir: 'left' | 'right' }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      className={`icon feather feather-chevron-${dir}`} aria-hidden="true" focusable="false" role="presentation">
+      <path d={dir === 'left' ? 'm15 18-6-6 6-6' : 'm9 18 6-6-6-6'} />
+    </svg>
   )
 }
