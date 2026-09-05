@@ -13,13 +13,18 @@ import { shows, addOns, type Show, type AddOn } from './schema'
  *
  * So the reads that touch anything migration 0002 added degrade instead of
  * throwing: the two Show notes come back empty and the add-on list comes
- * back empty until the migration has run. Nothing else changes, and the
- * fallback is remembered so a cold database costs one failed query, not one
- * per request.
+ * back empty until the migration has run. Nothing else changes.
+ *
+ * The fallback is remembered, so a database behind the code costs one failed
+ * query a minute rather than one per request, but it EXPIRES. A warm server
+ * that latched the fallback has to notice the migration when it lands, or it
+ * would serve the degraded page until it happened to be recycled.
  */
 
 const MISSING_COLUMN = '42703'
 const MISSING_TABLE = '42P01'
+/** How long to trust a fallback before probing the real schema again. */
+const RECHECK_AFTER_MS = 60_000
 
 export function pgCode(err: unknown): string | undefined {
   return typeof err === 'object' && err !== null && 'code' in err
@@ -27,16 +32,18 @@ export function pgCode(err: unknown): string | undefined {
     : undefined
 }
 
-let showsArePre0002 = false
+let showsPre0002Until = 0
 
 /** The active Show, whether or not migration 0002 has run. */
 export async function activeShow(): Promise<Show | undefined> {
-  if (!showsArePre0002) {
+  if (Date.now() >= showsPre0002Until) {
     try {
-      return await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+      const full = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+      showsPre0002Until = 0
+      return full
     } catch (err) {
       if (pgCode(err) !== MISSING_COLUMN) throw err
-      showsArePre0002 = true
+      showsPre0002Until = Date.now() + RECHECK_AFTER_MS
       console.warn('[db] shows predates migration 0002; run drizzle/0002_addons-and-loadin.sql')
     }
   }
@@ -60,19 +67,21 @@ export async function activeShow(): Promise<Show | undefined> {
   return row ? { ...row, loadInNote: '', takedownNote: '' } : undefined
 }
 
-let addOnsTableMissing = false
+let addOnsMissingUntil = 0
 
 /** Every active add-on for a show, or none if the table isn't there yet. */
 export async function activeAddOns(showId: string): Promise<AddOn[]> {
-  if (addOnsTableMissing) return []
+  if (Date.now() < addOnsMissingUntil) return []
   try {
-    return await db.query.addOns.findMany({
+    const rows = await db.query.addOns.findMany({
       where: and(eq(addOns.showId, showId), eq(addOns.isActive, true)),
       orderBy: [asc(addOns.sortOrder)],
     })
+    addOnsMissingUntil = 0
+    return rows
   } catch (err) {
     if (pgCode(err) !== MISSING_TABLE) throw err
-    addOnsTableMissing = true
+    addOnsMissingUntil = Date.now() + RECHECK_AFTER_MS
     console.warn('[db] add_ons is missing; run drizzle/0002_addons-and-loadin.sql')
     return []
   }
