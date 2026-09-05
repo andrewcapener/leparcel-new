@@ -82,81 +82,52 @@ the page reads underwhelming no matter how good the palette is.
 
 ## 2. Color
 
-```css
-/* neutrals */
---bone:   #F6F2E8;  /* page ground */
---shell:  #EDE7D9;  /* recessed panels, factbar, letter */
---dune:   #E2D9C6;  /* the one deeper neutral — email capture */
---ink:    #191714;  /* primary text, dark surfaces */
---ink-2:  #4A463B;  /* secondary text */
---ink-3:  #8A8377;  /* labels, captions, muted */
---line:   #DDD5C5;  /* hairlines */
+**Ported September 2026.** These are the Shopify theme's own values, read out of
+`config/settings_data.json`, not a palette designed for this project. The
+decision was to keep the site people already recognise rather than introduce a
+new one.
 
-/* the two colours */
---deep:   #4A5B52;  /* sage */
---accent: #CBB27A;  /* pale straw */
---third:  #8A7A6B;  /* warm grey-brown, sparingly */
---on-deep:   #F6F2E8;
---on-accent: #211A0C;
---warn:   #8C3A2A;  /* admin only, never decorative */
-```
+| Token | Value | Theme setting |
+|---|---|---|
+| `--bone` | `#FFFFFF` | `bg_col` |
+| `--shell` | `#F6F7F7` | faint tint band (ours, between white and scheme 1) |
+| `--dune` | `#EBEFED` | `color_scheme_1_col` |
+| `--ink` | `#171717` | `font_col_heads` |
+| `--ink-2` | `#5C5C5C` | `font_col_base` |
+| `--line` | `#DFE3E8` | `head_nav_div_col` |
+| `--deep` | `#232323` | `btn_color` |
+| `--accent` | `#BC9658` | `font_col_link`, `btn_color_hover` |
+| `--foot-bg` | `#C5B9B9` | `foot_bg_col` |
+| `--foot-text` | `#746767` | `foot_text_col` |
 
-**Two colours, not three.** Sage and straw are both earth pigments; they have been used
-together for about four thousand years and cannot date, because they were never in
-fashion to begin with. The fun comes from how confidently they are used — 114px of
-straw on a sage field — not from how bright they are.
+Buttons are `#232323` with white caps, `slightlyrounded` (3px), going gold on
+hover — `btn_color` / `btn_color_text` / `btn_color_hover`. The gold is the one
+accent and it does exactly one job: links, hovers, and the emphasised half of a
+headline.
 
-**Sage is a field colour.** It carries the utility bar, the claim band and the apply
-block as full-bleed backgrounds, and it does double duty as the link/hover colour on
-bone. It is dark enough (L≈36) to behave like ink with a cast rather than as a brand
-blue. Do not lighten it toward mid-tone; a mid-tone field is what made the earlier
-slate-blue version read like a municipal website.
+**What this replaced.** The previous palette was sage `#4A5B52` and straw
+`#CBB27A` over bone and shell, with full-bleed colour bands. It was more
+distinctive. It was also not what the business's audience has been looking at
+for eleven years, and that was the call: a returning shopper should not have to
+wonder whether they are in the right place. Recovering it means editing one
+token block; nothing else in the stylesheet names a colour.
 
-**Straw is a highlight, never a text colour on bone.** `#CBB27A` on `#F6F2E8` is about
-1.9:1 — it is legal only as a fill behind `--on-accent`, or as display type over
-photography and over `--ink`/`--deep` fields. Never set body or label text in straw
-on a light ground.
+## 3. Imagery
 
-**Contrast:** `--ink` on `--bone` is 14.6:1. `--ink-2` on `--bone` is 7.3:1. `--ink-3`
-is captions only, never body text. `--deep` on `--bone` is 6.4:1 — safe for links and
-small labels, which is why every `--clay` role from the old system moved to it.
-`--on-accent` on `--accent` is 8.9:1.
+The theme applies one thing to a photograph: `image_overlay_bg` black at
+`image_overlay_opacity` 12%, with white text over it. That is now all `.ph`
+does, and photographs are shown square.
 
-**Legacy aliases.** `--paper`, `--paper-2`, `--paper-3`, `--clay`, `--sage`, `--dark`
-are kept in `:root` and point at the new tokens so components written against
-"Salt & Sun" still render. Do not write new code against them.
+**What this replaced.** A film pipeline — a soft-light duotone in sage and
+straw, halation, two grain tiles, a vignette — plus an arched top on cards
+that rhymed with the Community House trusses, plus paper grain on every flat
+colour field. All of it is removed rather than dialled down, because a
+half-applied treatment reads as a mistake where none reads as a decision.
 
----
-
-## 3. Imagery — the film pipeline
-
-Photography is the brand. Direction: **documentary, 35mm, natural light, people over
-products.** Faces, hands, kids, the actual room. Not flat-lays on white.
-
-Every image passes through the same treatment so a vendor's phone snapshot and a hired
-shoot land in the same world. This is a **pipeline, not a per-photo mood**:
-
-1. **A tinted duotone wash** — `linear-gradient(165deg, var(--accent), var(--deep))` at
-   `mix-blend-mode: soft-light`, 0.7. This is what ties every photograph to the palette,
-   and it means changing `--deep` re-grades the whole library.
-2. **Bidirectional grain.** Silver halide both lightens and darkens — `mix-blend-mode:
-   overlay` on mid-gray noise, never `multiply`.
-3. **Halation.** Warm bloom off highlights — a `screen`-blended radial, blurred ~26px.
-   The single biggest tell of real film versus a digital filter.
-4. **Lifted blacks + warm vignette.** Film never reaches true black. Never let a shadow
-   hit `#000`; the vignette is warm-toned, never neutral gray.
-
-Reference implementation: `.ph`, `.ph::before`, `.hal`, `.gr`, `.gr2`, `.vig`,
-`.vig-soft` in `globals.css`. Ship it as one `<Photo>` component so it can never be
-applied inconsistently.
-
-**Captions** are condensed label size: `Fall 2025 · Community House, Dana Point`. They
-are what make photographs read as documentation rather than decoration.
-
-**Video** — see `01-PRODUCT-SPEC.md` §2.2. Same grade, same grain, Mux or Cloudflare
-Stream, poster frames, captions on testimonials, `prefers-reduced-motion` respected.
-
----
+The one exception is the hero, which keeps a centre-weighted scrim behind its
+type. That is not decoration: white type at 100px over a bright photograph is
+unreadable without it, and the old site solved the same problem with a darker
+image.
 
 ## 4. Layout
 

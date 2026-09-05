@@ -18,38 +18,44 @@
 @layer base {
 
   :root{
-    /* ── neutrals ── */
-    --bone:#F6F2E8; --shell:#EDE7D9; --dune:#E2D9C6;
-    --ink:#191714; --ink-2:#4A463B; --ink-3:#8A8377;
-    --line:#DDD5C5;
+    /* ── Ported from the Shopify theme's own settings, not chosen fresh.
+       bg_col #ffffff · font_col_heads #171717 · font_col_base #5c5c5c
+       font_col_link #bc9658 · head_nav_div_col #dfe3e8
+       btn_color #232323 / text #ffffff / hover #bc9658
+       foot_bg_col #c5b9b9 · foot_text_col #746767 · color_scheme_1_col #ebefed
+       ── */
+    --bone:#FFFFFF;      /* page */
+    --shell:#F6F7F7;     /* faint tint band */
+    --dune:#EBEFED;      /* colour scheme 1 */
+    --ink:#171717;       /* headings */
+    --ink-2:#5C5C5C;     /* body */
+    --ink-3:#8C8C8C;     /* muted */
+    --line:#DFE3E8;
 
-    /* ── the two colours ── */
-    --deep:#4A5B52;      /* sage */
-    --deep-2:#3F4E46;    /* one step down: tonal pills and wells on sage */
-    --on-deep-soft:color-mix(in srgb,var(--on-deep) 62%,var(--deep));
-    --accent:#CBB27A;    /* pale straw */
-    --third:#8A7A6B;     /* warm grey-brown, sparingly */
-    --on-deep:#F6F2E8; --on-accent:#211A0C;
-    --warn:#8C3A2A;
+    --deep:#232323;      /* buttons and strong ink */
+    --deep-2:#000000;    /* button hover on scheme blocks */
+    --accent:#BC9658;    /* the gold: links, hovers, emphasis */
+    --third:#8F7B7B;
+    --on-deep:#FFFFFF; --on-accent:#FFFFFF;
+    --on-deep-soft:rgba(255,255,255,.72);
+    --warn:#C20000;
 
-    /* ── type ──
-       Mermade's own faces, taken from the Shopify theme settings rather than
-       chosen fresh: Oswald for anything display or label, Figtree for reading
-       and for UI. Every rule in this file goes through these three variables,
-       so the whole site follows from here.
-       --font-r keeps EB Garamond available for long-form reading if we ever
-       want a serif back; nothing uses it today. */
+    --foot-bg:#C5B9B9; --foot-text:#746767;
+    --foot-head:#777070; --foot-line:#8F7B7B;
+
+    /* ── type: the theme's own two faces ── */
     --font-c:var(--f-oswald),'Arial Narrow',sans-serif; /* display, uppercase */
     --font-g:var(--f-figtree),system-ui,sans-serif;     /* prose */
     --font-j:var(--f-figtree),system-ui,sans-serif;     /* UI, forms, tables */
-    --font-r:var(--f-garamond),Georgia,serif;           /* reserve serif */
+    --font-r:var(--f-garamond),Georgia,serif;           /* reserve serif, unused */
 
     --pad:clamp(20px,4vw,58px);
-    --arch:999px 999px 6px 6px;
+    --maxw:1600px;       /* max_page_width */
+    --arch:3px;          /* button_shape: slightlyrounded */
 
     /* ── legacy aliases: older components still reference these ── */
     --paper:var(--bone); --paper-2:var(--shell); --paper-3:var(--dune);
-    --dark:var(--ink); --clay:var(--deep); --sage:var(--deep);
+    --dark:#232323; --clay:var(--deep); --sage:var(--deep);
   }
 
   *{box-sizing:border-box} html,body{margin:0}
@@ -66,7 +72,7 @@
   }
   body{background:var(--bone);color:var(--ink);font-family:var(--font-j);font-weight:400;
     -webkit-font-smoothing:antialiased;font-size:17px;line-height:1.6;
-    background-image:var(--grain-dark)}
+    }
   h1,h2,h3,h4{margin:0;font-weight:400;text-wrap:balance} p{margin:0;text-wrap:pretty} figure{margin:0}
   a{color:inherit;text-decoration:none}
   :focus-visible{outline:3px solid var(--deep);outline-offset:3px}
@@ -80,10 +86,8 @@
 
   /* ─────────── film pipeline ─────────── */
   .ph{position:relative;overflow:hidden;background:#141210;isolation:isolate}
-  .ph .src{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;
-    filter:saturate(.94) contrast(.98) brightness(1.03)}
-  .ph::before{content:"";position:absolute;inset:0;z-index:1;mix-blend-mode:soft-light;opacity:.7;
-    background:linear-gradient(165deg,var(--accent),var(--deep))}
+  .ph .src{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+  .ph::before{content:"";position:absolute;inset:0;z-index:1;background:#000;opacity:.12}
   .hal{position:absolute;inset:0;z-index:2;mix-blend-mode:screen;opacity:.14;filter:blur(26px);
     background:radial-gradient(68% 54% at 50% 33%,rgba(255,180,96,.46),rgba(255,150,60,0) 72%)}
   .gr{position:absolute;inset:0;z-index:3;mix-blend-mode:overlay;opacity:.34;background-size:150px;
@@ -93,31 +97,31 @@
   .vig{position:absolute;inset:0;z-index:4;
     background:linear-gradient(180deg,rgba(12,10,8,.36),transparent 30%,rgba(12,10,8,.16) 56%,rgba(10,8,6,.82))}
   .vig-soft{background:radial-gradient(120% 90% at 50% 40%,transparent 44%,rgba(18,14,9,.28))}
-  .arch{border-radius:var(--arch)}
+  .arch{border-radius:0}
 
   /* ─────────── masthead ─────────── */
-  .util{background:var(--deep);color:var(--on-deep);display:flex;justify-content:center;gap:32px;
+  .util{background:var(--ink);color:#fff;display:flex;justify-content:center;gap:32px;
     flex-wrap:wrap;padding:9px var(--pad);font-family:var(--font-c);font-weight:600;
     text-transform:uppercase;letter-spacing:.11em;font-size:12.5px}
-  .util .mid{letter-spacing:.11em;color:var(--on-deep-soft)}
-  .mast{display:flex;align-items:center;gap:22px;padding:17px var(--pad);background:var(--bone);
-    position:sticky;top:0;z-index:40;border-bottom:2px solid var(--ink)}
+  .util .mid{letter-spacing:.11em;color:rgba(255,255,255,.68)}
+  .mast{display:flex;align-items:center;gap:22px;padding:17px var(--pad);background:#fff;
+    position:sticky;top:0;z-index:40;border-bottom:1px solid var(--line)}
   .mast .wm{width:100px;height:auto;color:var(--ink);flex:none}
   .mast .tag{font-family:var(--font-c);font-weight:600;font-size:12px;letter-spacing:.11em;
     text-transform:uppercase;color:var(--ink-3);line-height:1.5;max-width:23ch}
   .mast .r{margin-left:auto;display:flex;align-items:center;gap:24px}
-  .mast .r a{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
-    letter-spacing:.07em;font-size:16px;color:var(--ink)}
-  .mast .r a:hover{color:var(--deep)}
+  .mast .r a{font-family:var(--font-c);font-weight:500;text-transform:uppercase;
+    letter-spacing:.08em;font-size:14px;color:var(--ink-2)}
+  .mast .r a:hover{color:var(--accent)}
 
   /* Mobile-only nav row. Hidden on desktop, where the masthead carries it. */
   .mnav{display:none}
 
-  .btn{display:inline-block;padding:11px 21px 10px;border-radius:999px;font-family:var(--font-c);
-    font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:16px;
-    background:var(--deep);color:var(--on-deep);border:2px solid var(--deep);cursor:pointer}
-  .btn:hover{background:var(--ink);border-color:var(--ink);color:var(--bone)}
-  .btn.warm{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+  .btn{display:inline-block;padding:12px 24px 11px;border-radius:var(--arch);font-family:var(--font-c);
+    font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:15px;
+    background:var(--deep);color:var(--on-deep);border:1px solid var(--deep);cursor:pointer}
+  .btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.warm{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.warm:hover{background:var(--ink);border-color:var(--ink);color:var(--bone)}
   .btn.line{background:transparent;border-color:currentColor;color:inherit}
   button.btn{font-family:var(--font-c)}
@@ -162,9 +166,9 @@
     filter:drop-shadow(0 3px 16px rgba(0,0,0,.45))}
 
   /* ─────────── 2 · the claim, held alone ─────────── */
-  .claim{background:var(--deep);color:var(--on-deep);background-image:var(--grain-light);
+  .claim{background:var(--dune);color:var(--ink);
     padding:clamp(46px,7vw,84px) var(--pad);text-align:center}
-  .claim .k,.apply .k{color:var(--on-deep-soft)}
+  .claim .k,.apply .k{color:var(--ink-3)}
   .claim .lede{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(42px,9vw,114px);line-height:.88;letter-spacing:-.008em;max-width:none;
     margin:0 auto}   /* auto so a max-width lede centers with the paragraph under it */
@@ -189,7 +193,7 @@
   /* ─────────── 4 · founder letter ─────────── */
   .letter{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);
     gap:clamp(28px,5vw,62px);align-items:center;background:var(--shell);
-    background-image:var(--grain-dark);
+    
     padding:clamp(38px,6vw,78px) var(--pad)}
   .letter .fig .ph,.letter .ph{aspect-ratio:4/5;border-radius:var(--arch)}
   .letter .cap{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
@@ -274,7 +278,7 @@
     letter-spacing:.1em;font-size:16px;color:#FBF8F0}
 
   /* dark — eleven years */
-  .dark{background:var(--ink);color:var(--shell);background-image:var(--grain-light);
+  .dark{background:var(--ink);color:var(--shell);
     padding:clamp(56px,8.5vw,104px) var(--pad)}
   .dark h2{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(32px,5.3vw,64px);line-height:.92;max-width:16ch}
@@ -292,7 +296,7 @@
     border-bottom:2px solid var(--accent);padding-bottom:2px}
 
   /* email capture */
-  .sub{background:var(--dune);background-image:var(--grain-dark);
+  .sub{background:var(--dune);
     padding:clamp(42px,6vw,78px) var(--pad);
     display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,54px);align-items:center}
   .sub h2{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
@@ -318,8 +322,8 @@
   .jhero{aspect-ratio:16/10}
   /* A post with no hero image still holds its place in the grid, so one
      missing photo doesn't knock the rest of the rows out of line. */
-  .jnone{aspect-ratio:4/5;border-radius:var(--arch);background:var(--deep);
-    background-image:var(--grain-light);margin-bottom:13px}
+  .jnone{aspect-ratio:4/5;border-radius:0;background:var(--deep);
+    margin-bottom:13px}
   .jlead{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
     gap:clamp(24px,4vw,54px);align-items:center}
   .jlead .ph{aspect-ratio:4/5}
@@ -409,30 +413,30 @@
 
   /* apply */
   .apply{padding:clamp(50px,8vw,100px) var(--pad);text-align:center;
-    background:var(--deep);color:var(--on-deep);background-image:var(--grain-light)}
+    background:var(--dune);color:var(--ink);}
   .apply h2{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(34px,5.8vw,74px);line-height:.9;max-width:17ch;margin:0 auto}
   .apply h2 em{font-style:normal;color:var(--accent)}
   .apply p{font-family:var(--font-g);font-size:19.5px;line-height:1.6;max-width:52ch;
     margin:20px auto 0;opacity:.9}
   .apply .cta{margin-top:28px;display:flex;gap:11px;justify-content:center;flex-wrap:wrap}
-  .apply .btn{background:var(--deep-2);border-color:var(--deep-2)}
-  .apply .btn:hover{background:var(--on-deep);border-color:var(--on-deep);color:var(--ink)}
+  .apply .btn{background:var(--deep);border-color:var(--deep)}
+  .apply .btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
   .apply .fine{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     letter-spacing:.1em;font-size:13px;color:var(--on-deep-soft);margin-top:20px}
 
   /* footer */
-  .foot{background:var(--ink);color:var(--shell);background-image:var(--grain-light);
+  .foot{background:var(--foot-bg);color:var(--foot-text);
     padding:clamp(38px,5vw,62px) var(--pad) 28px}
   .fgrid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:34px}
-  .fgrid h4{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+  .fgrid h4{font-family:var(--font-c);font-weight:600;text-transform:uppercase;color:var(--foot-head);
     letter-spacing:.1em;font-size:12px;color:var(--accent);margin:0 0 11px}
-  .fgrid a{display:block;font-size:15px;line-height:1.9;color:#C7C0B2}
-  .fgrid a:hover{color:#fff}
-  .fgrid .wm{width:106px;color:var(--shell)}
-  .fgrid .bl{font-family:var(--font-g);font-size:16px;line-height:1.55;color:#B3ACA0;
+  .fgrid a{display:block;font-size:15px;line-height:1.9;color:var(--foot-text)}
+  .fgrid a:hover{color:var(--ink)}
+  .fgrid .wm{width:106px;color:var(--ink)}
+  .fgrid .bl{font-family:var(--font-g);font-size:16px;line-height:1.55;color:var(--foot-text);
     margin-top:13px;max-width:30ch}
-  .colophon{margin-top:34px;padding-top:15px;border-top:1px solid rgba(237,231,217,.18);
+  .colophon{margin-top:34px;padding-top:15px;border-top:1px solid var(--foot-line);
     display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
     font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     letter-spacing:.09em;font-size:12px;color:var(--ink-3)}

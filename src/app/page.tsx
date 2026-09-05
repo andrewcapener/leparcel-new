@@ -68,11 +68,10 @@ export default async function Home() {
             <div className="when num" style={{ marginTop: 20 }}>
               {fmtRange(show.startsOn, show.endsOn)}
             </div>
-            <div className="where">{show.venueName}, Dana Point</div>
+            <div className="where">{show.venueName}, Dana Point · Free to attend</div>
             <div className="bar">
               <Link href="/apply" className="btn">Apply to sell</Link>
               <a href={`/api/calendar/${show.slug}`} className="cal">Add to calendar ↓</a>
-              <span className="free">Free to attend</span>
             </div>
           </div>
       </Photo>
