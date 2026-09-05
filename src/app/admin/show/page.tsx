@@ -1,5 +1,6 @@
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
+import { activeShow } from '@/db/queries'
 import { shows, spaceTypes } from '@/db/schema'
 import { SettingsForm } from './SettingsForm'
 import { updateSpace } from '@/app/actions'
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic'
  * Edits are audit-logged; commission changes never touch existing bookings.
  */
 export default async function ShowSettings() {
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
   const spaces = await db.query.spaceTypes.findMany({
     where: eq(spaceTypes.showId, show.id),

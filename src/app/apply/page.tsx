@@ -1,6 +1,7 @@
 import { eq, asc, and } from 'drizzle-orm'
 import Link from 'next/link'
 import { db } from '@/db'
+import { activeShow, activeAddOns } from '@/db/queries'
 import { shows, spaceTypes, addOns } from '@/db/schema'
 import { Masthead, Footer } from '@/components/site'
 import { ApplyForm } from './ApplyForm'
@@ -18,7 +19,7 @@ export default async function Apply({
   // Submission is still enforced server-side in actions.ts, which rejects
   // anything outside the window regardless of how the form was reached.
   const preview = (await searchParams).preview === '1'
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
   const spaces = await db.query.spaceTypes.findMany({
@@ -26,10 +27,7 @@ export default async function Apply({
     orderBy: [asc(spaceTypes.sortOrder)],
   })
 
-  const extras = await db.query.addOns.findMany({
-    where: and(eq(addOns.showId, show.id), eq(addOns.isActive, true)),
-    orderBy: [asc(addOns.sortOrder)],
-  })
+  const extras = await activeAddOns(show.id)
 
   const indoor = spaces.filter((s) => s.track === 'indoor')
   const outdoor = spaces.filter((s) => s.track === 'outdoor')

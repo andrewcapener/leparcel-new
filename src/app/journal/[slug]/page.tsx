@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { db } from '@/db'
+import { activeShow } from '@/db/queries'
 import { shows } from '@/db/schema'
 import { Masthead, Footer } from '@/components/site'
 import { Photo } from '@/components/Photo'
@@ -18,7 +19,7 @@ export default async function JournalPost({
   const { slug } = await params
   const post = journal.find((p) => p.slug === slug)
   if (!post) notFound()
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
   return (

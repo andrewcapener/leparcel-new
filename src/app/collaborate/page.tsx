@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
+import { activeShow } from '@/db/queries'
 import { shows } from '@/db/schema'
 import { Masthead, Footer } from '@/components/site'
 import { Photo } from '@/components/Photo'
@@ -15,7 +16,7 @@ export const dynamic = 'force-dynamic'
  * included and the price comes from a conversation.
  */
 export default async function Collaborate() {
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
   const stats: Array<[string, string]> = [

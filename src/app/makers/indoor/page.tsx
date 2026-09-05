@@ -1,6 +1,7 @@
 import { eq, asc, and } from 'drizzle-orm'
 import Link from 'next/link'
 import { db } from '@/db'
+import { activeShow, activeAddOns } from '@/db/queries'
 import { shows, spaceTypes, addOns } from '@/db/schema'
 import { Masthead, Footer } from '@/components/site'
 import { Photo } from '@/components/Photo'
@@ -22,17 +23,14 @@ export const metadata = {
  * (CLAUDE.md rule 6). Nothing here is typed in by hand.
  */
 export default async function IndoorRules() {
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
   const spaces = await db.query.spaceTypes.findMany({
     where: and(eq(spaceTypes.showId, show.id), eq(spaceTypes.track, 'indoor')),
     orderBy: [asc(spaceTypes.sortOrder)],
   })
-  const extras = (await db.query.addOns.findMany({
-    where: and(eq(addOns.showId, show.id), eq(addOns.isActive, true)),
-    orderBy: [asc(addOns.sortOrder)],
-  })).filter((a) => a.track === null || a.track === 'indoor')
+  const extras = (await activeAddOns(show.id)).filter((a) => a.track === null || a.track === 'indoor')
 
   const shops = spaces.reduce((n, s) => n + s.capacity, 0)
   const low = Math.min(...spaces.map((s) => s.priceCents))

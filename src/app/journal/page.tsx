@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import Link from 'next/link'
 import { db } from '@/db'
+import { activeShow } from '@/db/queries'
 import { shows } from '@/db/schema'
 import { Masthead, Footer } from '@/components/site'
 import { Photo } from '@/components/Photo'
@@ -10,7 +11,7 @@ import { fmtDate } from '@/lib/dates'
 export const dynamic = 'force-dynamic'
 
 export default async function Journal() {
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
   const [lead, ...rest] = journal

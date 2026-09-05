@@ -1,5 +1,6 @@
 import { eq, and, desc, sql } from 'drizzle-orm'
 import { db } from '@/db'
+import { activeShow } from '@/db/queries'
 import {
   shows, applications, vendors, spaceTypes, bookings,
   APPLICATION_STATUSES, type ApplicationStatus,
@@ -26,7 +27,7 @@ export default async function Jury({
     ? (status as ApplicationStatus)
     : 'new'
 
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
   const counts = await db

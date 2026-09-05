@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
+import { activeShow } from '@/db/queries'
 import {
   shows, vendors, applications, bookings, spaceTypes, addOns, auditLog,
   emailOutbox, subscribers, CATEGORIES, type ApplicationStatus,
@@ -143,7 +144,7 @@ const ApplicationSchema = z.object({
 
 export async function submitApplication(prev: FormState, fd: FormData): Promise<FormState> {
   const attempt = (prev.attempt ?? 0) + 1
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) return { ok: false, attempt, message: 'No active show.' }
 
   if (applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt) !== 'open') {
@@ -430,7 +431,7 @@ const ShowSettingsSchema = z.object({
  */
 export async function updateShow(prev: FormState, fd: FormData): Promise<FormState> {
   const attempt = (prev.attempt ?? 0) + 1
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) return { ok: false, attempt, message: 'No active show.' }
 
   const raw = Object.fromEntries(fd.entries())

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { eq, and, asc } from 'drizzle-orm'
 import { db } from '@/db'
+import { activeShow } from '@/db/queries'
 import { shows, bookings, vendors, applications } from '@/db/schema'
 import { Photo } from '@/components/Photo'
 import { FilmBlock } from '@/components/FilmBlock'
@@ -28,7 +29,7 @@ const FEATURED = [
 ]
 
 export default async function Home() {
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
   // The roster is GENERATED from confirmed bookings — never a hand-kept list.

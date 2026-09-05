@@ -1,5 +1,6 @@
 import { eq, and, asc, sql } from 'drizzle-orm'
 import { db } from '@/db'
+import { activeShow } from '@/db/queries'
 import { shows, bookings, vendors, applications, spaceTypes } from '@/db/schema'
 import { markPaid } from '@/app/actions'
 import { usd, splitCommission } from '@/lib/money'
@@ -8,7 +9,7 @@ import { fmtDateTime } from '@/lib/dates'
 export const dynamic = 'force-dynamic'
 
 export default async function Roster() {
-  const show = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
+  const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
   const rows = await db
