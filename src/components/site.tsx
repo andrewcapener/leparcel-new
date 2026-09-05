@@ -2,8 +2,18 @@ import Link from 'next/link'
 import { Wordmark } from './Wordmark'
 import { SubscribeForm } from './SubscribeForm'
 import type { Show } from '@/db/schema'
-import { FOUNDED_YEAR } from '@/lib/content'
-import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
+import { fmtRange } from '@/lib/dates'
+
+/**
+ * The venue as the live site writes it, in the announcement bar and the
+ * footer: "Dana Point Community House". The Show record stores the venue on
+ * its own ("Community House") so the city is not baked into the name, so the
+ * two are joined here rather than in the database.
+ */
+const VENUE_LONG = (show: Show) =>
+  show.venueName.toLowerCase().startsWith('dana point')
+    ? show.venueName
+    : `Dana Point ${show.venueName}`
 
 /**
  * Site chrome. Everything dated or priced comes off the Show record —
@@ -11,22 +21,13 @@ import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
  */
 
 export function Masthead({ show }: { show: Show }) {
-  const win = applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt)
-  const applyNote =
-    win === 'before'
-      ? `Applications open ${fmtDate(show.applicationsOpenAt, { year: undefined })}`
-      : win === 'open'
-        ? `Applications close ${fmtDate(show.applicationsCloseAt, { year: undefined })}`
-        : 'Applications closed · waitlist open'
-
   return (
     <>
-      {/* announcement bar — the live site runs the next show's date here */}
+      {/* Announcement bar. mermademarket.com runs one line here and nothing
+          else: "Next Show! May 15-17, 2026 Dana Point Community House". The
+          dates come off the Show record; the sentence is theirs. */}
       <div className="util">
-        <span>
-          Next Show! {fmtRange(show.startsOn, show.endsOn)} · {show.venueName}, Dana Point
-        </span>
-        <span className="mid">{applyNote}</span>
+        <span>Next Show! {fmtRange(show.startsOn, show.endsOn)} {VENUE_LONG(show)}</span>
       </div>
       <div className="mast">
         <Link href="/" aria-label="Mermade Market, home">
@@ -42,16 +43,12 @@ export function Masthead({ show }: { show: Show }) {
         </div>
       </div>
       {/* On a phone the masthead has room for the mark and one button, so the
-          nav moves to its own scrollable row. Without it the only way off the
-          home page is the footer. */}
+          nav moves to its own row — the same three links the live site puts in
+          its mobile drawer. Everything else is in the footer, as it is there. */}
       <nav className="mnav" aria-label="Sections">
         <Link href="/faq">FAQ</Link>
         <Link href="/merchants">Merchants</Link>
         <Link href="/schedule">Schedule</Link>
-        <Link href="/journal">Journal</Link>
-        <Link href="/makers/indoor">Sell inside</Link>
-        <Link href="/makers/outdoor">Sell outside</Link>
-        <Link href="/contact">Contact</Link>
       </nav>
     </>
   )
@@ -67,12 +64,13 @@ export function Footer({ show }: { show: Show }) {
             Shop small. Think big.
           </div>
           <div className="bl" style={{ marginTop: 0 }}>
-            A hand-curated market uniting creators with community. Dana Point,
-            California, since {FOUNDED_YEAR}.
+            Mermade Market is a hand curated market. Uniting creators with
+            community, we feature 100+ indoor &amp; outdoor merchants every
+            spring &amp; winter!
           </div>
         </div>
         <div>
-          <h2 className="fh">{show.venueName}</h2>
+          <h2 className="fh">{VENUE_LONG(show)}</h2>
           <div className="bl" style={{ marginTop: 0 }}>{show.venueAddress}</div>
           <a href="https://www.facebook.com/mermademarketoc">Facebook</a>
           <a href="https://instagram.com/mermademarket">Instagram</a>
@@ -80,23 +78,22 @@ export function Footer({ show }: { show: Show }) {
         <div>
           <h2 className="fh">Stay hooked</h2>
           <div className="bl" style={{ marginTop: 0, marginBottom: 10 }}>
-            We send show dates and important VIP info to our subscribers.
+            We send show dates, and important VIP info to our subscribers.
           </div>
           <SubscribeForm compact />
         </div>
-        <div>
-          <h2 className="fh">Pages</h2>
+        {/* The live footer runs this column unlabelled, so the heading is
+            for screen readers only. */}
+        <nav aria-label="More pages">
           <Link href="/contact">Contact</Link>
           <Link href="/faq">FAQ</Link>
           <Link href="/journal">Journal</Link>
           <Link href="/apply">Apply</Link>
           <Link href="/collaborate">Collaborate</Link>
-        </div>
+        </nav>
       </div>
       <div className="colophon">
-        <span>© {new Date().getFullYear()} Mermade Market</span>
-        <span>Shop small · Think big</span>
-        <span>Dana Point, California</span>
+        <span>&copy; {new Date().getFullYear()} Mermade Market</span>
       </div>
     </footer>
   )

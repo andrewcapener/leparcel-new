@@ -29,7 +29,8 @@ export const PAGES: Array<{ path: string; visibility: Visibility; note: string }
   { path: '/makers/indoor',   visibility: 'nav',      note: 'Indoor maker rules' },
   { path: '/makers/outdoor',  visibility: 'nav',      note: 'Outdoor maker rules' },
   { path: '/merchants',       visibility: 'nav',      note: 'This show\'s confirmed lineup' },
-  { path: '/lookbook',        visibility: 'nav',      note: 'Indoor space lookbook' },
+  { path: '/lookbook/indoor', visibility: 'nav',      note: 'Indoor space lookbook' },
+  { path: '/lookbook/outdoor',visibility: 'nav',      note: 'Outdoor tent lookbook' },
   { path: '/sponsorships',    visibility: 'nav',      note: 'Sponsorships' },
 ]
 

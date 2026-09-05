@@ -2,7 +2,7 @@ import { eq, and, asc } from 'drizzle-orm'
 import Link from 'next/link'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { bookings, vendors, applications } from '@/db/schema'
+import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
 import { Masthead, Footer } from '@/components/site'
 import { fmtDate } from '@/lib/dates'
 
@@ -14,12 +14,15 @@ export const metadata = {
 }
 
 /**
- * The merchants page the header links to.
+ * The merchants page, grouped the way the live one is: the inside makers who
+ * are there all three days, then the outside tents day by day.
  *
- * The list is GENERATED from confirmed bookings, never hand-kept, so it
- * fills in as makers pay and confirm and it cannot go stale. Before the
- * roster is announced it says so rather than showing last season's lineup,
- * which is the one thing a hand-kept page could not do.
+ * The difference is that the list is GENERATED from confirmed bookings, never
+ * hand-kept, so it fills in as makers pay and confirm and it cannot go stale.
+ * Before the roster is announced it says so rather than showing last season's
+ * lineup, which is the one thing a hand-kept page could not do. The outdoor
+ * groups come from the booked space's label, so a day only appears once
+ * someone is selling on it.
  */
 export default async function Merchants() {
   const show = await activeShow()
@@ -30,13 +33,34 @@ export default async function Merchants() {
       shopName: vendors.shopName,
       instagram: vendors.instagram,
       website: vendors.website,
-      track: applications.track,
+      track: spaceTypes.track,
+      space: spaceTypes.label,
+      sortOrder: spaceTypes.sortOrder,
     })
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
     .innerJoin(applications, eq(bookings.applicationId, applications.id))
+    .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
     .where(and(eq(bookings.showId, show.id), eq(bookings.status, 'confirmed')))
-    .orderBy(asc(vendors.shopName))
+    .orderBy(asc(spaceTypes.sortOrder), asc(vendors.shopName))
+
+  type Row = (typeof roster)[number]
+  // Inside is one group, all three days. Outside is one group per space,
+  // which is one per day, in the order the spaces are listed on /apply.
+  const groups: Array<{ heading: string; note: string; rows: Row[] }> = []
+  const inside = roster.filter((m) => m.track === 'indoor')
+  if (inside.length > 0) {
+    groups.push({
+      heading: 'Inside, all three days',
+      note: 'They don’t change, and we restock for them.',
+      rows: inside,
+    })
+  }
+  for (const m of roster.filter((r) => r.track === 'outdoor')) {
+    const g = groups.find((x) => x.heading === m.space)
+    if (g) g.rows.push(m)
+    else groups.push({ heading: m.space, note: 'Outside', rows: [m] })
+  }
 
   const linkFor = (m: (typeof roster)[number]) => {
     const w = m.website?.trim()
@@ -70,20 +94,36 @@ export default async function Merchants() {
           </div>
         </section>
       ) : (
-        <section className="sec">
-          <div className="shead">
-            <span className="k">{roster.length} confirmed</span>
-            <h2>Selling this show</h2>
-          </div>
-          <div className="dir">
-            {roster.map((m) => {
-              const href = linkFor(m)
-              return href
-                ? <a key={m.shopName} href={href} target="_blank" rel="noreferrer">{m.shopName}</a>
-                : <span key={m.shopName}>{m.shopName}</span>
-            })}
-          </div>
-        </section>
+        <>
+          <section className="sec" style={{ paddingBottom: 0 }}>
+            <div className="shead">
+              <span className="k">{roster.length} confirmed</span>
+              <h2>Selling this show</h2>
+            </div>
+            <p className="rules">
+              Just below are the makers that are inside with us at Mermade, all
+              3 days. Keep scrolling and you will find the makers showcasing
+              outside, and a lot of them change each day. More reason to shop
+              all 3 days with us!
+            </p>
+          </section>
+          {groups.map((g) => (
+            <section className="sec" style={{ paddingTop: 'clamp(34px,4vw,52px)' }} key={g.heading}>
+              <div className="shead">
+                <span className="k">{g.note}</span>
+                <h2>{g.heading}</h2>
+              </div>
+              <div className="dir">
+                {g.rows.map((m) => {
+                  const href = linkFor(m)
+                  return href
+                    ? <a key={m.shopName} href={href} target="_blank" rel="noreferrer">{m.shopName}</a>
+                    : <span key={m.shopName}>{m.shopName}</span>
+                })}
+              </div>
+            </section>
+          ))}
+        </>
       )}
 
       <Footer show={show} />

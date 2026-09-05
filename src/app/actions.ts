@@ -39,7 +39,9 @@ async function log(
  * prototype behavior. A delivery failure never fails the caller's action:
  * the application is already saved, and the row records what happened.
  */
-async function mail(toEmail: string, subject: string, body: string, template: string) {
+async function mail(
+  toEmail: string, subject: string, body: string, template: string, replyTo?: string,
+) {
   const id = randomUUID()
   await db.insert(emailOutbox).values({ id, toEmail, subject, body, template })
 
@@ -57,6 +59,7 @@ async function mail(toEmail: string, subject: string, body: string, template: st
         to: [toEmail],
         subject,
         text: body,
+        ...(replyTo ? { reply_to: replyTo } : {}),
       }),
     })
     if (!res.ok) {
@@ -97,6 +100,49 @@ export async function subscribe(_prev: FormState, fd: FormData): Promise<FormSta
     // already subscribed — same success message, never leak list membership
   }
   return { ok: true, message: 'You’re on the list. We’ll write when the roster is set.' }
+}
+
+/* ═══════════════════════ contact ═══════════════════════ */
+
+const MessageSchema = z.object({
+  name: z.string().min(2, 'Required'),
+  email: z.string().email('Enter a valid email address'),
+  message: z.string().min(10, 'Tell us a little more').max(4000, '4000 characters max'),
+  /** Which form it came from, so the subject line says so. */
+  topic: z.string().optional(),
+})
+
+/**
+ * The contact and collaborate forms. mermademarket.com runs a Shopify contact
+ * form on both pages; this is the same three fields going to the same inbox.
+ *
+ * The message lands in the outbox table either way, so nothing is lost when
+ * RESEND_API_KEY is unset or delivery fails, and Elise can read every enquiry
+ * at /admin/outbox. Reply-to is the sender, so hitting reply works.
+ */
+export async function sendMessage(prev: FormState, fd: FormData): Promise<FormState> {
+  const attempt = (prev.attempt ?? 0) + 1
+  const raw = Object.fromEntries(fd.entries()) as Record<string, string>
+  const parsed = MessageSchema.safeParse(raw)
+  if (!parsed.success) {
+    const errors: Record<string, string> = {}
+    for (const i of parsed.error.issues) errors[String(i.path[0])] = i.message
+    return { ok: false, errors, values: raw, attempt, message: 'Have a look below.' }
+  }
+  const d = parsed.data
+  const topic = d.topic === 'collaborate' ? 'Collaboration' : 'Contact form'
+
+  await mail(
+    process.env.CONTACT_TO ?? 'hello@mermademarket.com',
+    `${topic}: ${d.name}`,
+    `${d.name} <${d.email}>\n\n${d.message}`,
+    'contact',
+    d.email,
+  )
+  return {
+    ok: true,
+    message: 'Got it. Someone reads every one of these, usually within a day or two.',
+  }
 }
 
 /* ═══════════════════════ application ═══════════════════════ */

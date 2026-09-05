@@ -3,9 +3,9 @@ import { activeShow } from '@/db/queries'
 import { Photo } from '@/components/Photo'
 import { HeroVideo } from '@/components/HeroVideo'
 import { Masthead, Footer } from '@/components/site'
-import { fmtRange, fmtDate } from '@/lib/dates'
+import { fmtRange } from '@/lib/dates'
 import * as C from '@/lib/content'
-import { journal } from '@/lib/journal'
+import { journal, excerpt } from '@/lib/journal'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,10 +41,12 @@ export default async function Home() {
             <br />
             <em>makers market</em>
           </h1>
+          {/* One line, as the live site runs it: "May 15-17, 2026 | Dana Point
+              Community House". */}
           <div className="when num" style={{ marginTop: 20 }}>
-            {fmtRange(show.startsOn, show.endsOn)}
+            {fmtRange(show.startsOn, show.endsOn)} <span aria-hidden="true">|</span>{' '}
+            Dana Point {show.venueName}
           </div>
-          <div className="where">{show.venueName}, Dana Point</div>
           <div className="bar">
             <Link href="/apply" className="btn">Apply now</Link>
           </div>
@@ -63,16 +65,12 @@ export default async function Home() {
         <div className="tx">
           <h2>Mermade Market {show.name} showcase</h2>
           <div className="ad">{show.venueAddress}</div>
+          {/* One line a day, unsplit, the way the live map section writes it:
+              "May 15, 9am - 6pm (Fri)". */}
           <div className="hrs">
-            {show.hoursNote.split(' · ').map((d) => {
-              const [day, ...rest] = d.split(', ')
-              return (
-                <div key={d}>
-                  <span className="d">{day}</span>
-                  <span className="num">{rest.join(', ')}</span>
-                </div>
-              )
-            })}
+            {show.hoursNote.split(' · ').map((d) => (
+              <div key={d}><span className="num">{d}</span></div>
+            ))}
           </div>
           <div>
             <a
@@ -98,10 +96,10 @@ export default async function Home() {
 
       {/* ── featured-blog ────────────────────────────────────────── */}
       <section className="sec">
-        <div className="shead">
-          <span className="k">The journal</span>
-          <h2>Mermade Journal</h2>
-          <Link href="/journal" className="more">All posts →</Link>
+        {/* The live featured-blog section is a centred linked heading and three
+            cards carrying an excerpt. No eyebrow, no "all posts" link. */}
+        <div className="shead center">
+          <h2><Link href="/journal">Mermade Journal</Link></h2>
         </div>
         <div className="jgrid">
           {journal.slice(0, 3).map((jp) => (
@@ -110,7 +108,7 @@ export default async function Home() {
                 ? <Photo src={jp.image} alt="" tone="soft" sizes="(max-width:900px) 50vw, 30vw" />
                 : <div className="jnone" aria-hidden="true" />}
               <div className="nm">{jp.title}</div>
-              <div className="dt num">{fmtDate(jp.date)}</div>
+              <p className="ex">{excerpt(jp)}</p>
             </Link>
           ))}
         </div>

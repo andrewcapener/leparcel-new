@@ -188,6 +188,10 @@ export default async function IndoorRules() {
             it. If it is your first show and you want help planning the space, ask us before
             load-in rather than at 6pm on load-in day.
           </p>
+          <p>
+            <Link href="/lookbook/indoor">The indoor lookbook</Link> is twenty-three real
+            spaces from past shows at every size, with our notes on what each one got right.
+          </p>
         </Rules>
       </Sec>
 

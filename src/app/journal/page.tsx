@@ -5,7 +5,7 @@ import { activeShow } from '@/db/queries'
 import { shows } from '@/db/schema'
 import { Masthead, Footer } from '@/components/site'
 import { Photo } from '@/components/Photo'
-import { journal } from '@/lib/journal'
+import { journal, excerpt } from '@/lib/journal'
 import { fmtDate } from '@/lib/dates'
 
 export const dynamic = 'force-dynamic'
@@ -38,7 +38,7 @@ export default async function Journal() {
               <div className="k">Latest</div>
               <h2>{lead.title}</h2>
               <div className="dt num">{fmtDate(lead.date)}</div>
-              {lead.paras[0] && <p>{lead.paras[0]}</p>}
+              <p>{excerpt(lead)}</p>
               <span className="more">Read it →</span>
             </div>
           </Link>
@@ -58,6 +58,7 @@ export default async function Journal() {
                 : <div className="jnone" aria-hidden="true" />}
               <div className="nm">{p.title}</div>
               <div className="dt num">{fmtDate(p.date)}</div>
+              <p className="ex">{excerpt(p)}</p>
             </Link>
           ))}
         </div>

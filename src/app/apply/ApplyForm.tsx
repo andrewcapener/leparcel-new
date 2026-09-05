@@ -45,16 +45,30 @@ export function ApplyForm({
   )
 
   if (state.ok) {
+    // The live site's /pages/thank-you, in its own words.
     return (
       <section className="apply">
         <div className="k">Received</div>
-        <h2 style={{ marginTop: 18 }}>That’s in. We read every one.</h2>
+        <h2 style={{ marginTop: 18 }}>Thank you <em>for applying!</em></h2>
         <p>
-          You’ll get a confirmation email in a moment. The {show.name} roster is announced{' '}
+          Yeeew! You took the time and we appreciate it. We know it wasn’t easy.
+          A member of our team will be in touch, and if we have questions you’ll
+          hear from us sooner than later. Please be patient and know we are doing
+          our best to curate the best market we could give you.
+        </p>
+        <p style={{ marginTop: 16 }}>
+          You’ll get a confirmation email in a moment. The {show.name} roster is
+          announced{' '}
           {new Date(show.rosterAnnouncedOn).toLocaleDateString('en-US', {
             timeZone: 'America/Los_Angeles', month: 'long', day: 'numeric',
           })}
           , and we answer either way.
+        </p>
+        <p style={{ marginTop: 16 }}>
+          If you don’t have a solid website or Instagram, email photos of your
+          product to{' '}
+          <a href="mailto:hello@mermademarket.com">hello@mermademarket.com</a>{' '}
+          with your shop name and the space you applied for in the subject line.
         </p>
       </section>
     )

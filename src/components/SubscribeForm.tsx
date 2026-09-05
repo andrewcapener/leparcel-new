@@ -31,7 +31,7 @@ export function SubscribeForm({ fine, compact }: { fine?: string; compact?: bool
         />
         <button className="go" type="submit" disabled={pending}
           style={{ background: 'none', border: 0, cursor: 'pointer', fontFamily: 'inherit' }}>
-          {pending ? 'Joining…' : 'Join →'}
+          {pending ? 'Joining…' : 'Subscribe'}
         </button>
       </div>
       {state.errors?.email && <span className="err">{state.errors.email}</span>}

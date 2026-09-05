@@ -146,7 +146,6 @@
   .util{background:var(--ink);color:#fff;display:flex;justify-content:center;gap:32px;
     flex-wrap:wrap;padding:9px var(--pad);font-family:var(--font-c);font-weight:600;
     text-transform:uppercase;letter-spacing:.11em;font-size:var(--t-lbl)}
-  .util .mid{letter-spacing:.11em;color:rgba(255,255,255,.68)}
   .mast{display:flex;align-items:center;gap:22px;padding:17px var(--pad);background:#fff;
     position:sticky;top:0;z-index:40;border-bottom:1px solid var(--line)}
   .mast .wm{width:100px;height:auto;color:var(--ink);flex:none}
@@ -266,6 +265,9 @@
     letter-spacing:.07em;font-size:var(--t-b);color:var(--deep);
     border-bottom:2px solid var(--deep);padding-bottom:2px}
   .shead .more:hover{color:var(--ink);border-color:var(--ink)}
+  /* The live featured-blog heading is centred over the row, on its own. */
+  .shead.center{justify-content:center;text-align:center}
+  .shead.center h2 a:hover{color:var(--deep)}
 
   /* what you'll find — arched cards */
   .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(14px,2vw,26px);margin-top:38px}
@@ -309,6 +311,38 @@
   .prows.air .row{padding:30px 26px 32px 0;border-right:0;background:transparent}
   .prows.air .q{font-size:var(--t-xl)}
   .prows.air .a{max-width:36ch}
+  /* A question-and-answer list where the answers vary from one line to twenty:
+     a grid makes every row as tall as its longest cell and leaves holes, so
+     these flow into columns instead and pack. Reading order stays sensible —
+     down one column, then the next. */
+  .prows.flow{display:block;columns:3;column-gap:clamp(24px,3vw,44px)}
+  .prows.flow .row{break-inside:avoid;padding:0 0 26px;margin-bottom:26px;
+    border-right:0;border-bottom:1px solid var(--line)}
+  .prows.flow .a{max-width:none}
+  @media(max-width:1100px){.prows.flow{columns:2}}
+  @media(max-width:640px){.prows.flow{columns:1}}
+  /* The run of show is a time column and a what column, not a card grid. */
+  .runsheet .prows{grid-template-columns:1fr}
+  .runsheet .prows .row{display:grid;grid-template-columns:150px minmax(0,1fr);
+    gap:0 22px;align-items:baseline;padding:16px 0;
+    border-bottom:1px solid var(--line)}
+  .runsheet .prows .q{font-size:var(--t-b);letter-spacing:.09em;color:var(--deep)}
+  .runsheet .prows .a{max-width:62ch;font-size:var(--t-b)}
+  @media(max-width:640px){
+    .runsheet .prows .row{grid-template-columns:1fr;gap:5px}
+  }
+  /* Inline links inside a sentence carry the underline rather than a colour
+     change alone, so they are distinguishable without relying on hue
+     (WCAG 2.2 SC 1.4.1). SC 2.5.8's Inline exception covers the hit area. */
+  .prows .a a,.claim p a{color:var(--deep);text-decoration:underline;
+    text-underline-offset:2px}
+  .prows .a a:hover,.claim p a:hover{color:var(--ink)}
+
+  /* ─────────── contact / collaborate form ─────────── */
+  .cform{display:grid;gap:0}
+  .cform .btn{margin-top:12px;justify-self:start}
+  .sent{font-family:var(--font-g);font-size:var(--fs-lead);line-height:1.5;
+    color:var(--ink);max-width:44ch}
 
   /* film */
   .film{position:relative}
@@ -357,16 +391,20 @@
 
   /* journal */
   .jgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(18px,2.5vw,34px)}
-  .jgrid .ph{aspect-ratio:4/5;margin-bottom:13px}
+  /* 16:9, the ratio the live article cards are cropped to. */
+  .jgrid .ph{aspect-ratio:16/9;margin-bottom:13px}
   .jcard .nm{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     font-size:var(--t-xl);line-height:1.05}
   .jcard .dt{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     letter-spacing:.09em;font-size:var(--t-lbl);color:var(--ink-3);margin-top:6px}
+  /* The live cards carry an excerpt under the title, not a date. */
+  .jcard .ex{font-family:var(--font-g);font-size:var(--t-s);line-height:1.55;
+    color:var(--ink-2);margin-top:8px}
   .jcard:hover .nm{color:var(--deep)}
   .jhero{aspect-ratio:16/10}
   /* A post with no hero image still holds its place in the grid, so one
      missing photo doesn't knock the rest of the rows out of line. */
-  .jnone{aspect-ratio:4/5;border-radius:0;background:var(--deep);
+  .jnone{aspect-ratio:16/9;border-radius:0;background:var(--deep);
     margin-bottom:13px}
   .jlead{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
     gap:clamp(24px,4vw,54px);align-items:center}
@@ -529,7 +567,16 @@
   .lbgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
     gap:clamp(10px,1.6vw,20px)}
   .lbgrid .ph{aspect-ratio:4/5}
-  @media(max-width:900px){.lbgrid{grid-template-columns:1fr 1fr}}
+  /* Each shot carries the market's own note on why that space worked, so the
+     caption sits with the photograph rather than in a block above the grid. */
+  .lbi figcaption{margin-top:11px}
+  .lbi figcaption .nm{font-family:var(--font-c);font-weight:600;
+    text-transform:uppercase;letter-spacing:.05em;font-size:var(--t-b);
+    color:var(--ink);margin-bottom:5px}
+  .lbi figcaption p{font-family:var(--font-g);font-size:var(--t-s);
+    line-height:1.55;color:var(--ink-2)}
+  @media(max-width:1100px){.lbgrid{grid-template-columns:1fr 1fr}}
+  @media(max-width:700px){.lbgrid{grid-template-columns:1fr}}
 
   /* the newsletter form as it sits in the footer */
   .subf.compact .f{display:flex;gap:7px;flex-wrap:wrap}
@@ -557,6 +604,11 @@
   .apply .cta{margin-top:28px;display:flex;gap:11px;justify-content:center;flex-wrap:wrap}
   .apply .btn{background:var(--deep);border-color:var(--deep)}
   .apply .btn:hover{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+  /* The outline variant has to restate itself here: .apply .btn is the more
+     specific selector, so without this the secondary button in the band comes
+     out dark on dark. */
+  .apply .btn.line{background:transparent;border-color:var(--ink);color:var(--ink)}
+  .apply .btn.line:hover{background:var(--ink);border-color:var(--ink);color:var(--bone)}
   .apply .fine{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     letter-spacing:.1em;font-size:var(--t-lbl);color:var(--ink-3);margin-top:20px}
 
@@ -572,21 +624,18 @@
   .fgrid .bl{font-family:var(--font-g);font-size:var(--t-b);line-height:1.55;color:var(--foot-text);
     margin-top:13px;max-width:30ch}
   .colophon{margin-top:34px;padding-top:15px;border-top:1px solid var(--foot-line);
-    display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
+    display:flex;justify-content:center;flex-wrap:wrap;gap:12px;
     font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     letter-spacing:.09em;font-size:var(--t-lbl);color:var(--ink-3)}
 
   @media(max-width:900px){
-    .util{gap:0;justify-content:flex-start;overflow:hidden;white-space:nowrap;
-      padding:8px var(--pad);font-size:var(--t-lbl-s)}
-    .util .mid{display:none}
+    .util{gap:0;justify-content:center;overflow:hidden;white-space:nowrap;
+      padding:8px var(--pad);font-size:var(--t-lbl-s);letter-spacing:.06em}
     .mast{padding:13px var(--pad)} .mast .wm{width:80px} .mast .tag{display:none}
     .mast .r{gap:15px} .mast .r a:not(.btn){display:none}
-    .mnav{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;
-      padding:9px var(--pad) 10px;background:var(--bone);
-      border-bottom:1px solid var(--line);
-      -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent);
-      mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent)}
+    .mnav{display:flex;gap:7px;justify-content:center;overflow-x:auto;
+      scrollbar-width:none;padding:9px var(--pad) 10px;background:var(--bone);
+      border-bottom:1px solid var(--line)}
     .mnav::-webkit-scrollbar{display:none}
     .mnav a{flex:none;font-family:var(--font-c);font-weight:600;
       text-transform:uppercase;font-size:var(--t-lbl);letter-spacing:.09em;

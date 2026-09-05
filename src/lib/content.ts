@@ -34,14 +34,14 @@ export const founderLetter = {
 }
 
 /**
- * The tagline block that sits under the hero on the old site's home page
- * (its rich-text section). Their line, their mission, written to
- * docs/12-VOICE.md rather than lifted word for word.
+ * The rich-text block under the hero. This is mermademarket.com's own
+ * sentence, kept word for word — the brief is to replicate the live site
+ * first and elevate afterwards, and this line is the market's, not ours.
  */
 export const mission =
-  'A hand-curated market that puts independent makers in front of the people '
-  + 'who came looking for them. Two shows a year in Dana Point, free to walk '
-  + 'into, and every shop in the room chosen on purpose.'
+  'Mermade is a hand-curated market with a mission to unite creators and '
+  + 'community. Our culturally iconic spring & winter markets have become a '
+  + 'local staple, celebrated by our loyal following.'
 
 export const claim = {
   eyebrow: 'The market',

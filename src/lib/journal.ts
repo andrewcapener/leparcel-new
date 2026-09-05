@@ -5,10 +5,24 @@
  */
 export type JournalPost = {
   slug: string; title: string; date: string; image: string | null; paras: string[]
+  /** The card blurb. Lifted from the live site where the live site has one. */
+  excerpt?: string
+}
+
+/**
+ * The line under a card title on the home page and the journal index. The
+ * live site truncates the article to about 160 characters and adds an
+ * ellipsis, so posts without a hand-written excerpt get the same treatment.
+ */
+export function excerpt(p: JournalPost): string {
+  if (p.excerpt) return p.excerpt
+  const first = p.paras[0] ?? ''
+  return first.length > 160 ? `${first.slice(0, 160).trimEnd()}...` : first
 }
 
 export const journal: JournalPost[] = [
-  { slug: "wildflowers", title: "Wildflowers, for rent and for sale", date: "2025-07-21", image: "/journal/wildflowers.jpg",
+  { slug: "wildflowers", title: "Wildflowers for rent/for sale", date: "2025-07-21", image: "/journal/wildflowers.jpg",
+    excerpt: "All of these displays have been hung at our most recent Mermade Market. They would be BEAUTIFUL at a baby shower, whimsical party, any party that needs some space taken...",
     paras: [
       "If they say \"2D\" they'd be best hung on a wall or on top of a table for a tablescape to break up the boring candles & dinnerware! The 3D ones can also be laid down or hung on a wall, but could also be seen from front & back!",
       "*We have listed all of them for either rent or sale. If they sell, they'll be removed from here. If they rent out, great, we can probably use them in a future mermade. Just didnt want to toss em out or give them the right home! We spent HOURS on these and they really do take your breathe away when you see them in person.",
@@ -24,10 +38,12 @@ export const journal: JournalPost[] = [
       "6.3 Feet / Medium / Large",
     ] },
   { slug: "meet-the-maker-kingdom-state", title: "Meet the Maker: Kingdom & State", date: "2025-05-19", image: "/journal/meet-the-maker-kingdom-state.jpg",
+    excerpt: "Meet the Makers, Melanie + Lindsay, owner of Kingdom & State. We acquired Kingdom and State in July 2024 after it had gone dormant for a couple years prior. It...",
     paras: [
       "Share",
     ] },
   { slug: "drawersco", title: "Meet the Maker: Lisa Andersen of Drawers Co.", date: "2024-11-08", image: "/journal/drawersco.jpg",
+    excerpt: "Meet the Maker, Lisa, who has ingeniously created the coolest company to help mom's lives a lot easier. She has created an underwear system for kids that is color coded, by size!...",
     paras: [
       "Share",
     ] },

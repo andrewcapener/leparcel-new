@@ -1,19 +1,18 @@
-import { eq } from 'drizzle-orm'
-import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { shows } from '@/db/schema'
 import { Masthead, Footer } from '@/components/site'
 import { Photo } from '@/components/Photo'
-import { FOUNDED_YEAR } from '@/lib/content'
+import { MessageForm } from '@/components/MessageForm'
+import { FOUNDED_YEAR, mission } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Ported from the old site's collaborate + sponsorships pages. The audience
- * numbers and the four tiers are the business's own published figures
- * (mermademarket.com/pages/collaborate, retrieved Sept 2026). No rate card
- * is published anywhere, so none is invented here: the tiers say what is
- * included and the price comes from a conversation.
+ * /pages/collaborate on the live site, section for section: the intro, the
+ * MERSTATS block, the four sponsorship tiers, the other collaborations, and
+ * the "Let's Collab" form. The audience numbers and the tier contents are the
+ * business's own published figures (retrieved Sept 2026) and the prose is
+ * theirs. No rate card is published anywhere, so none is invented here: the
+ * tiers say what is included and the price comes from a conversation.
  */
 export default async function Collaborate() {
   const show = await activeShow()
@@ -86,15 +85,15 @@ export default async function Collaborate() {
     <>
       <Masthead show={show} />
       <section className="claim">
-        <div className="k">Sponsorships &amp; collaborations</div>
-        <h1 className="lede">Partner with<br /><em>the market.</em></h1>
-        <p>
-          Twice a year we fill a room in Dana Point with people who came on purpose.
-          A partnership here borrows the trust we spent eleven years building, which is
-          exactly why we say no to most of them.
-        </p>
+        <div className="k">Collaborate</div>
+        <h1 className="lede">The locals only<br /><em>advantage.</em></h1>
+        <p>{mission}</p>
+        <p>Collaborating with us gives you the locals only advantage.</p>
       </section>
 
+      <div className="shead" style={{ padding: '0 var(--pad)', marginBottom: 20 }}>
+        <span className="k">Merstats</span>
+      </div>
       <div className="facts">
         {stats.map(([k, v]) => (
           <div key={k}>
@@ -108,15 +107,15 @@ export default async function Collaborate() {
         <div className="shead"><span className="k">01</span><h2>Who is in the room</h2></div>
         <div className="rules">
           <p>
-            Our shoppers are local, loyal, and careful. They plan the weekend around the
-            show, they bring friends, and they come back in the spring. They are also hard
-            to sell to, which is the point: they trust what we put in front of them because
-            we have been careful with it since {FOUNDED_YEAR}.
+            Our customer base is loyal, sensible and affluent. They are decision
+            makers who wear the pants and hold the wallet. They&rsquo;re keen on
+            intention and balance. They&rsquo;re not easily sold, but faithful to
+            a fault. They are lifers.
           </p>
           <p>
-            That is the whole offer. Not impressions, not a booth in a field. A few thousand
-            people who already decided to spend a Saturday with things made by hand, and a
-            brand standing next to those things with our name on it.
+            Through the years we&rsquo;ve been meticulous about who and what we
+            put in front of our people. This has given us a unique advantage in
+            our local community, and gives you the opportunity to build trust.
           </p>
         </div>
       </section>
@@ -125,7 +124,7 @@ export default async function Collaborate() {
         <Photo src="/photos/before.jpg" alt="The market on a show morning." />
         <div className="cp">
           <span>{show.name}</span>
-          <span>{show.venueName}, Dana Point</span>
+          <span>Dana Point {show.venueName}</span>
         </div>
       </div>
 
@@ -167,16 +166,22 @@ export default async function Collaborate() {
         </div>
       </section>
 
+      <section className="sec">
+        <div style={{ maxWidth: 620, margin: '0 auto' }}>
+          <div className="shead"><span className="k">04</span><h2>Let&rsquo;s collab</h2></div>
+          <p className="rules" style={{ marginBottom: 26 }}>
+            In support of shopping small and thinking big, we&rsquo;re also open
+            to hear your ideas on how we can collaborate.
+          </p>
+          <MessageForm topic="collaborate" />
+        </div>
+      </section>
+
       <section className="apply">
-        <div className="k">Interested</div>
-        <h2 style={{ marginTop: 18 }}>Tell us what you <em>have in mind.</em></h2>
-        <p>
-          Write to{' '}
-          <a href="mailto:hello@mermademarket.com?subject=Sponsorship" style={{ textDecoration: 'underline' }}>
-            hello@mermademarket.com
-          </a>{' '}
-          with the word sponsorship, and we&rsquo;ll take it from there.
-        </p>
+        <h2>
+          Let&rsquo;s collaborate and change the world.{' '}
+          <em>And by world we mean our community.</em>
+        </h2>
       </section>
       <Footer show={show} />
     </>

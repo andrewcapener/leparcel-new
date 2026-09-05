@@ -1,57 +1,121 @@
-import { eq } from 'drizzle-orm'
 import Link from 'next/link'
-import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { shows } from '@/db/schema'
 import { Masthead, Footer } from '@/components/site'
-import { FOUNDED_YEAR } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Ported from the old site's FAQ + indoor/outdoor merchant pages, rewritten
- * to the voice doc. Facts (dogs, payout timing, tent dimensions, rotation)
- * come from mermademarket.com; nothing dated or priced is hardcoded.
+ * /pages/faq on the live site: two headed groups, "Shop Small" and
+ * "Merchants", then the two rules-page links and a get-in-touch band.
+ *
+ * The answers are the market's own words. The only edits are the ones
+ * CLAUDE.md rule 6 forces: capacities read off the Show record instead of
+ * being typed in, because the live copy says 35-40 here and 45 / 25 on the
+ * indoor and outdoor pages, and one of those numbers is stale.
  */
 export default async function FAQ() {
   const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
   const shoppers: Array<[string, React.ReactNode]> = [
-    ['What is this exactly', `Three days, twice a year, free to walk in. Half the makers set up shop inside the Community House, where you shop with a basket and pay once at the register. The other half sell in person from market tents outside, and the outside changes every day. Live music and food run the weekend.`],
-    ['Do I pay to get in', `No. Free, every show since ${FOUNDED_YEAR}.`],
-    ['Strollers', 'Yes. A single stroller or a carrier is easiest in the morning crowd.'],
-    ['Dogs', 'Well-mannered dogs on leash are welcome. Keep them close and pick up after them.'],
-    ['How the register works', 'Inside, there is one checkout at the front, run by our staff. Grab a basket, shop the whole room, pay once.'],
-    ['Should I come more than once', 'People do. The outdoor tents change daily, so Saturday is a different market than Friday.'],
+    ['What is Mermade Market', <>
+      Mermade Market is a 3-day, free, heavily curated, fresh, twice a year
+      show. We believe strongly in shopping local &amp; small &amp; we love
+      that our community is on board with us. Half of our makers are inside
+      the whale room and the rest are outside in our Mermade Market tents.
+      {' '}
+      Much different than shows around here in So. Cal, the inside portion is
+      a central checkout. Shoppers come in, grab a basket (and some taffy for
+      kids &amp; kicks), and shop without the makers there. Our customers
+      really love this because they can shop as they please. Our inside makers
+      find that they love it too because they don&rsquo;t have to be sales
+      people for 3 days and can also keep their day job and family life
+      doesn&rsquo;t need to be interrupted. The other portion of the market is
+      outside, with {show.outdoorCapacity} rotating makers each day! These are
+      the makers that love to talk to you &amp; show you their amazing goods.
+      We also like to call it a festival of sorts with our live music,
+      delicious food &amp; misc events like bubbles, hair wraps &amp; others
+      that show up! It&rsquo;s a real good time and we are thrilled to have you
+      with us! Come say hi!
+    </>],
+    ['Is Mermade Market free', 'Free to shop! Bring your favorite shopping friends and stay all day!'],
+    ['Stroller / dog friendly', <>
+      Yes! Single strollers are highly suggested &amp; or baby carriers because
+      it can get busy, especially the morning hours.
+      {' '}
+      Well mannered dogs are also warmly welcomed at Mermade Market, please
+      keep them close to you &amp; be aware the other dogs will be there! Pick
+      up after them, and keep them on a leash please!
+    </>],
   ]
 
   const makers: Array<[string, React.ReactNode]> = [
-    ['What are my chances', 'We take one to three makers per category. A fresh product, or a new spin on a familiar one, puts you at the front. Strong photography helps more than anything else you control.'],
-    ['How merchants are chosen', 'We read applications as they come in and we look hard at your Instagram. Fresh work and clear branding get in. A crowded category is the most common reason good work does not.'],
-    ['Does everything need to be handmade', 'Mostly. A thoughtfully curated shop can work, especially outside. MLM and direct-sales brands are a no, always.'],
-    ['I make original art', <>The indoor room is not a gallery: work under $100 sells there, and originals do better outside where you can talk about them. Apply for the track that fits your prices.</>],
-    ['How indoor consignment works', <>You set up your space on load-in day, then leave the selling to us. Our staff runs the registers, every item carries your tag, and we pay you within a week of the show&rsquo;s last day. We ask for your inventory list two weeks before the show. <Link href="/makers/indoor" style={{ color: 'var(--deep)', textDecoration: 'underline' }}>The full indoor rules</Link> cover load-in, display and labeling.</>],
-    ['How outdoor works', <>We set up the tents for you, roughly six and a half feet square. You pick the day or days that fit your life, sell in person, and keep everything. Checking more days tells us you are flexible, which helps your odds. <Link href="/makers/outdoor" style={{ color: 'var(--deep)', textDecoration: 'underline' }}>The full outdoor rules</Link> cover what to bring and what happens if it rains.</>],
-    ['Can I do indoor and outdoor', 'A few makers do each show. Check both on the application and we will place you where it works, though not both at once.'],
-    ['Can I share a space', 'Yes, inside or out. Both makers apply, you tell us who you want to share with, and there is a fee for the second name. The space is still one space.'],
-    ['Do I need a seller’s permit', 'If you are accepted, yes, or a written statement that you qualify as an occasional seller. We collect it before load-in, not before the jury. Cottage food makers also need a permit for treats, and you should wait until you are in to apply for it.'],
-    ['If I am not accepted, can I apply again', 'Yes, and people get in on the second try often. We tell you why either way, so you know what to change or that it was just a crowded season.'],
-    ['What if it rains', 'If we call off an outdoor day, you get the same day at the next show at no charge, or 30% of the fee back. If the show runs in imperfect weather, it runs.'],
-    ['Can my kid sell', 'Yes. Junior makers are 14 and under, with a small shelf space of their own, and we run it when at least two get in. If your business is already going and you happen to be 17, apply for a regular space.'],
+    ['What are my chances of being accepted as a merchant?', <>
+      Our inside space (all 3 days) only allows {show.indoorCapacity}. Outside,
+      {' '}{show.outdoorCapacity} each day. If you create a fresh product we
+      haven&rsquo;t seen before, or put a new spin to something we have seen,
+      chances are high you&rsquo;ll get in. You have great branding &amp; a
+      vision for your online brand? Yes, can&rsquo;t wait to have you.
+    </>],
+    ['How are merchants selected?', <>
+      The moment applications open &amp; start coming in, we get the wheels
+      turning. We are emailing applicants, requesting new content or a
+      photographs we can&rsquo;t find online, and we have them categorized. New
+      makers / repeat makers / need improvement makers. We choose the freshest,
+      best branded shops that come in. We also only select 1-3 makers in each
+      category.
+    </>],
+    ['Do you accept painters / artists?', <>
+      Depends on the art. If your art is being sold in galleries, let&rsquo;s
+      just tell you right now, our show is NOT a gallery. While some of our
+      customers love taking home a special piece, if you&rsquo;re expecting
+      every customer to be ready to throw down some money for an amazing
+      original, it might not happen. If you MUST come to Mermade for networking
+      and some ad space, then great, we can provide that, but please apply for
+      the outside section and keep your prices realistic. If you want to be an
+      &ldquo;inside maker&rdquo;, you must make your work under $100, even
+      maybe under $50. Prints are fine but don&rsquo;t sell like they do
+      outside.
+    </>],
+    ['Does my product need to be handmade?', <>
+      For the most part, yes. We do not allow for &ldquo;MLM&rdquo; companies.
+      If you have a curated shop where you wholesale items from a factory (like
+      clothing) or wholesale from other shops, it&rsquo;s all good. We
+      understand a lot of shops do that and it makes sense that not everyone can
+      handmake everything. If we think you have a vision &amp; are working hard
+      to sell that product, let&rsquo;s do this.
+    </>],
+    ['If I’m not accepted this time, can I apply again?', <>
+      Yes! We don&rsquo;t <em>want</em> to accept our old vendors a million
+      times. We gotta keep it FRESH. If you weren&rsquo;t accepted, you were
+      most likely given a reason why so that you can fix it by the next time!
+      That&rsquo;s the great thing about being a creator. Creating &amp;
+      changing often is a beautiful work of art! Or you weren&rsquo;t accepted
+      because there simply was too many jewelry makers and we just can&rsquo;t
+      have you all! No hard feelings!
+    </>],
+    ['Indoor merchant info', <>
+      For information about being an indoor merchant{' '}
+      <Link href="/makers/indoor">click here</Link>.
+    </>],
+    ['Outdoor merchant info', <>
+      For information about being an outdoor merchant{' '}
+      <Link href="/makers/outdoor">click here</Link>.
+    </>],
   ]
 
   return (
     <>
       <Masthead show={show} />
       <section className="claim">
-        <div className="k">Good to know</div>
+        <div className="k">Mermade Market FAQ</div>
         <h1 className="lede">Questions,<br /><em>answered.</em></h1>
+        <p>Frequently asked questions for both shoppers and merchants.</p>
       </section>
 
       <section className="sec">
-        <div className="shead"><span className="k">01</span><h2>Coming to the show</h2></div>
-        <div className="prows air">
+        <div className="shead"><span className="k">01</span><h2>Shop small</h2></div>
+        <div className="prows air flow">
           {shoppers.map(([q, a]) => (
             <div className="row" key={q}><span className="q">{q}</span><span className="a">{a}</span></div>
           ))}
@@ -59,8 +123,8 @@ export default async function FAQ() {
       </section>
 
       <section className="sec" id="makers" style={{ paddingTop: 0 }}>
-        <div className="shead"><span className="k">02</span><h2>Selling at the show</h2></div>
-        <div className="prows air">
+        <div className="shead"><span className="k">02</span><h2>Merchants</h2></div>
+        <div className="prows air flow">
           {makers.map(([q, a]) => (
             <div className="row" key={q}><span className="q">{q}</span><span className="a">{a}</span></div>
           ))}
@@ -68,14 +132,11 @@ export default async function FAQ() {
       </section>
 
       <section className="apply">
-        <div className="k">Still wondering</div>
-        <h2 style={{ marginTop: 18 }}>Ask us the thing.</h2>
-        <p>
-          <a href="mailto:hello@mermademarket.com" style={{ textDecoration: 'underline' }}>hello@mermademarket.com</a>
-          {' '}reaches a person.
-        </p>
+        <div className="k">Get in touch</div>
+        <h2 style={{ marginTop: 18 }}>Didn&rsquo;t answer your question? <em>Reach out.</em></h2>
         <div className="cta">
-          <Link href="/apply" className="btn">Apply to sell</Link>
+          <Link href="/contact" className="btn">Contact us</Link>
+          <Link href="/apply" className="btn-o">Apply to sell</Link>
         </div>
       </section>
       <Footer show={show} />

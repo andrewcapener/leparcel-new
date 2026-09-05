@@ -194,6 +194,10 @@ export default async function OutdoorRules() {
             them on when the sun drops. The makers who skip lights are the ones who watch the
             evening happen two tents down.
           </p>
+          <p>
+            <Link href="/lookbook/outdoor">The outdoor lookbook</Link> is eighteen tents from
+            past shows, with our notes on what each of them got right.
+          </p>
         </Rules>
       </Sec>
 
