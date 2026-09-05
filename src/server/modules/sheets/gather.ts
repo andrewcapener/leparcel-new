@@ -34,6 +34,7 @@ const APP_COLUMNS = {
   requestedSpaceIds: applications.requestedSpaceIds,
   requestedAddons: applications.requestedAddons,
   loadInSlots: applications.loadInSlots,
+  wantsOnboardingCall: applications.wantsOnboardingCall,
   submittedAt: applications.submittedAt,
 } as const
 

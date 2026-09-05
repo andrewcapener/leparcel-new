@@ -370,6 +370,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     await db.insert(applications).values({
       ...row, requestedAddons: JSON.stringify(requestedAddons),
       loadInSlots: JSON.stringify(row.track === 'outdoor' ? [] : loadInSlots),
+      wantsOnboardingCall: fd.get('wantsOnboardingCall') === '1',
     })
   } catch (err) {
     if (pgCode(err) !== '42703') throw err

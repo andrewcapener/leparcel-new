@@ -258,6 +258,11 @@ export default async function ApplicationDetail({
                   {loadInSlots.join(' · ')}
                 </Row>
               )}
+              {app.wantsOnboardingCall && (
+                <Row k="Zoom call" n="Asked">
+                  Wants a place on the pre-show call about their space.
+                </Row>
+              )}
               {extras.map((a) => (
                 <Row key={a.id} k="Add-on asked for" n={usd(a.priceCents)}>
                   {a.name}

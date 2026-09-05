@@ -161,6 +161,12 @@ export const applications = pgTable('applications', {
   // staff were assigning arrival times with nothing to assign them from.
   // Outdoor makers set up their own tent on their own day and are not asked.
   loadInSlots: text('load_in_slots').notNull().default('[]'),
+  // Wants a place on the pre-show Zoom call about building a space that
+  // sells. Mostly first-timers take it, but both tracks are offered it and
+  // returning makers join too, so it is not gated on anything. The call dates
+  // are set about a month out, long after this is asked, so the application
+  // collects the interest and staff schedule from the list.
+  wantsOnboardingCall: boolean('wants_onboarding_call').notNull().default(false),
 
   category: text('category').notNull(),
   secondaryCategories: text('secondary_categories').notNull().default('[]'), // JSON

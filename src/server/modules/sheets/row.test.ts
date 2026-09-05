@@ -37,7 +37,7 @@ const application = {
   usesAiArtwork: false,
   isMlm: false,
   requestedSpaceIds: JSON.stringify(['sp-3x6', 'sp-out-sat']),
-  loadInSlots: '[]', requestedAddons: JSON.stringify(['ENDCAP-IN', 'SHARE']),
+  loadInSlots: '[]', wantsOnboardingCall: false, requestedAddons: JSON.stringify(['ENDCAP-IN', 'SHARE']),
   // Postgres hands timestamptz back in this shape: a space, not a T.
   submittedAt: '2026-09-05 01:38:42.097708+00',
 }
@@ -108,7 +108,7 @@ check('admin link', row.adminLink === 'https://mermademarket.com/admin/applicati
     application: {
       ...application,
       requestedSpaceIds: JSON.stringify(['sp-3x6', 'sp-retired']),
-      loadInSlots: '[]', requestedAddons: JSON.stringify(['GONE']),
+      loadInSlots: '[]', wantsOnboardingCall: false, requestedAddons: JSON.stringify(['GONE']),
     },
     vendor, catalog, siteUrl: 'https://x.test',
   })
@@ -175,5 +175,17 @@ const empty = applicationRow({
   vendor, catalog, siteUrl: 'https://mermademarket.com',
 })
 check('no set-up times is empty, not "[]"', empty.loadInSlots === '', empty.loadInSlots)
+
+/* The pre-show Zoom call. Staff build the call list from this column, so a no
+   has to be a visible "No" rather than a blank they have to interpret. */
+{
+  const wants = applicationRow({
+    application: { ...application, wantsOnboardingCall: true },
+    vendor, catalog, siteUrl: 'https://mermademarket.com',
+  })
+  check('wants the call', wants.onboardingCall === 'Yes', wants.onboardingCall)
+  check('does not want it', empty.onboardingCall === 'No', empty.onboardingCall)
+  check('it is a column', SHEET_HEADERS.includes('Wants Zoom call'))
+}
 
 console.log('sheets: row mapping holds (labels, cents, Pacific, flags, PII)')

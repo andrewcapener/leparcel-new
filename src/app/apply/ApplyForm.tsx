@@ -219,6 +219,7 @@ export function ApplyForm({
   // Load-in slots an indoor maker can make. Outdoor makers set up their own
   // tent on their own day, so the question never shows for them.
   const [pickedSlots, setPickedSlots] = useState<string[]>([])
+  const [wantsCall, setWantsCall] = useState(false)
   const keep = (k: string) => ({ defaultValue: v[k] ?? '' })
 
   // Which step is on screen. This lives outside the <form>, so it survives
@@ -654,6 +655,31 @@ export function ApplyForm({
                 </fieldset>
               </div>
             )}
+
+            <div className="column column--full">
+              <fieldset className="ap-group" aria-describedby="call-hint">
+                <legend className="ap-group__legend">A hand with your space</legend>
+                <p className="note" id="call-hint">
+                  Before every show we run a short Zoom call on building a space
+                  that sells: display, shelving, lighting, what works and what
+                  we see go wrong. Mostly it is makers doing this for the first
+                  time, and everyone is welcome. Dates go out with your
+                  acceptance.
+                </p>
+                <label className="ap-option ap-option--tight">
+                  <input
+                    type="checkbox" name="wantsOnboardingCall" value="1"
+                    checked={wantsCall}
+                    onChange={(ev) => setWantsCall(ev.target.checked)}
+                  />
+                  <span className="ap-option__body">
+                    <span className="ap-option__name">
+                      Yes, put me on a call
+                    </span>
+                  </span>
+                </label>
+              </fieldset>
+            </div>
 
             {visibleExtras.length > 0 && (
               <div className="column column--full">
