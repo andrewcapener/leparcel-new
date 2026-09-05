@@ -1,24 +1,43 @@
 import Link from 'next/link'
+import { activeShow } from '@/db/queries'
+import { AdminNav } from './AdminNav'
 // The admin's own stylesheet. Imported here rather than in the root layout so
 // the public site gets the vendored Symmetry theme and nothing else, and so
 // this one loads after it and wins inside /admin.
 import '../globals.css'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * The admin register: dense and precise, not warm and photographic.
  * docs/08-DESIGN-SYSTEM.md — "Institutional is for the vendors and for a
- * future buyer, not for the shoppers." Two registers, one system.
+ * future buyer, not for the shoppers." Two registers, one system: the same
+ * two faces as the public site, set tighter and smaller.
+ *
+ * The bar names the show every screen below it is operating on. Everything in
+ * this app is scoped to a show_id, and staff were being asked to hold that in
+ * their heads while editing dates and prices that only apply to one of them.
  */
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Never let a missing show take the whole admin down: /admin/show is where
+  // you would go to fix it.
+  const show = await activeShow().catch(() => undefined)
+
   return (
     <div className="adm">
       <div className="adm-bar">
         <Link href="/" className="brand">Mermade</Link>
-        <Link href="/admin/jury">Jury</Link>
-        <Link href="/admin/roster">Roster</Link>
-        <Link href="/admin/show">Show settings</Link>
-        <Link href="/admin/outbox">Outbox</Link>
-        <span className="who">Staff · shared password until real accounts land</span>
+        <AdminNav />
+        <span className="who">
+          {/* `.chip` already carries the small uppercase pill this wants, and
+              its data-warn variant is the red one, so the missing-show case
+              reads as the problem it is without a new rule. */}
+          <span className="chip" data-warn={show ? undefined : '1'}>
+            {show ? show.name : 'No active show'}
+          </span>
+          <span aria-hidden="true"> · </span>
+          Staff, on a shared password until real accounts land
+        </span>
       </div>
       {children}
     </div>

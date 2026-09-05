@@ -196,3 +196,74 @@ photography. Never the primary mark.
 **Still needed:** a one-line horizontal lockup, an **MM monogram** (the vendor-code
 system is a brand asset nobody's using), reversed and single-color variants, clear-space
 rules, and a portrait of Elise to replace the placeholder in the founder letter.
+
+---
+
+## 8. The information system
+
+Added September 2026, after the maker-rules pages were rebuilt. The direction
+Drew asked for: "I want our organization of information to be incredibly well
+presented." This is the part of the system that decides *shape*, not style,
+and it applies in both registers.
+
+### The rule behind all of it
+
+**Answer the obvious questions before you explain anything.** Every page that
+carries facts opens with the facts, in a form you can read without reading,
+and puts the prose underneath. A maker deciding whether to apply has six
+questions. They should be able to answer all six in about ten seconds, and
+then read two thousand words only if they want to.
+
+The failure this replaced: three columns of identical 15px paragraphs, where
+the commission rate, the booth fee and the deadline were sentences in the
+middle of the third one.
+
+### The four shapes
+
+Use the shape that matches what the information *is*. Don't reach for a
+paragraph when the content is a table.
+
+**Fact table** (`FactTable`) — a short list of label/value pairs answering the
+questions a reader arrives with. Labels are Oswald 600 uppercase and small,
+values are Figtree and can be a phrase or a whole sentence. Six to eight rows;
+past that it stops being scannable and you want a section instead. Give it a
+CTA when the obvious next move is one link.
+
+**Price table** (`PriceTable`) — anything with money in it. Three columns:
+what it is, what it suits, what it costs. Figures live in their own
+right-aligned column with tabular numerals so they stack and compare. Add-ons
+go in a labelled sub-band inside the same table, never in a second table, so a
+maker sees the whole cost of a decision in one place.
+
+**Stat row** (`StatRow`) — three to five tiles for counts, where the number is
+the message. The figure is large, its label is small and uppercase beneath it.
+Never invent a figure to fill a tile; a tile that has no real number does not
+ship (see §6).
+
+**Timetable** — dated or sequenced things as a ruled list with the date in its
+own column. Used for the show schedule and for "dates that matter" on /apply.
+The reader's eye should run down the dates, not through the sentences.
+
+### In the admin
+
+The same four shapes, in the institutional register: smaller, denser, no
+photography, ruled rather than airy. A screen staff sit in for hours has one
+extra obligation, which is to make the *next action* obvious. So:
+
+- Open with a stat row of the counts the operator is working against.
+- Sort so the rows that need action come first. A roster is not an alphabet.
+- Every table is a real `<table>` with real `<th>` scope, tabular numerals,
+  and no more columns than the decision needs.
+- Group a long form into named sections. `/admin/show` drives every date,
+  price and rate on the public site, and it should read like an instrument
+  panel, not a wall of inputs.
+
+### What not to do
+
+- Don't put a number in prose if it belongs in a column.
+- Don't use a card where a row will do. Cards cost vertical space and give
+  nothing back unless there is an image.
+- Don't repeat a page's title as the heading of a section inside it.
+- Don't write a label that restates the value ("Booth fee: the booth fee").
+- Don't ship a shape with placeholder content in it. An empty table is a bug;
+  a table you filled with guesses is worse.

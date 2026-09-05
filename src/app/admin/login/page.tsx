@@ -9,17 +9,23 @@ async function signIn(fd: FormData) {
   const password = adminPassword()
   const next = String(fd.get('next') || '/admin/jury')
   const target = next.startsWith('/admin') ? next : '/admin/jury'
-  if (!password) redirect(process.env.NODE_ENV !== 'production' ? target : '/admin/login?err=1')
+  // No password configured. Locally that is the open-door dev default; in
+  // production it is a misconfigured deployment, and saying so is the honest
+  // answer to the question the old length-leak was trying to answer.
+  if (!password) redirect(process.env.NODE_ENV !== 'production' ? target : '/admin/login?err=unset')
   // Trimmed on both sides: password managers and mobile keyboards append a
   // space often enough that it is worth not failing on it.
   const typed = String(fd.get('password')).trim()
   if (typed !== password) {
-    // Carry both lengths back. A mismatch there means the password being
-    // typed is simply not the one configured, which is the difference
-    // between "I need the right password" and "the admin is broken" — and
-    // that difference is otherwise invisible from the outside.
+    // Only ever that it was wrong. This used to carry both the typed length
+    // and the configured length back in the query string as a debugging aid,
+    // which put the exact length of the production admin password into the
+    // URL bar, browser history, the referrer on any outbound click, and every
+    // access log in front of this app, on demand, to anyone. `empty` is the
+    // one distinction worth keeping: it separates a password manager that
+    // filled nothing from a password that is simply wrong.
     redirect(
-      `/admin/login?err=1&len=${typed.length}&want=${password.length}`
+      `/admin/login?err=${typed.length === 0 ? 'empty' : '1'}`
       + `&next=${encodeURIComponent(target)}`,
     )
   }
@@ -38,7 +44,7 @@ async function signIn(fd: FormData) {
 export default async function AdminLogin({
   searchParams,
 }: {
-  searchParams: Promise<{ err?: string; next?: string; len?: string; want?: string }>
+  searchParams: Promise<{ err?: string; next?: string }>
 }) {
   const sp = await searchParams
   return (
@@ -55,11 +61,10 @@ export default async function AdminLogin({
           <span className="lb">Password</span>
           <input className="inp" id="password" name="password" type="password" autoFocus required />
           {sp.err && (
-            <span className="err">
-              That password is not right.
-              {sp.len && sp.want && sp.len !== sp.want && (
-                <> You typed {sp.len} characters; this deployment expects {sp.want}.</>
-              )}
+            <span className="err" role="alert">
+              {sp.err === 'empty' ? 'Enter the staff password.'
+                : sp.err === 'unset' ? 'This deployment has no staff password set, so no password will work. Set ADMIN_PASSWORD and redeploy.'
+                : 'That password is not right.'}
             </span>
           )}
         </label>

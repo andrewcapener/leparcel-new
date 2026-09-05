@@ -145,3 +145,45 @@ Mid-November and May leaves a big gap. A smaller summer or holiday pop-up is the
 
 ### 27. Paid early access
 Free entry is core and I wouldn't touch it. A capped, ticketed **Friday 8–9am early hour** at $25 is the standard way to monetize without breaking the free promise — and it's recurring revenue a buyer will price in. Worth one test.
+
+---
+
+## Application field gaps against the live Shopify form (found 5 Sept 2026)
+
+Their live application is a Globo Form Builder form on mermademarket.com. Its
+field list was read out of the page's own config and compared with
+`applications` and `vendors` in `src/db/schema.ts`. Everything below is
+collected today and is not captured by our form. Ranked by what it costs.
+
+1. **Zelle / Venmo handle.** Their form asks for it, required, on every
+   application. Indoor is consignment: Mermade owes 45 makers money after the
+   show, payouts are manual, and without this staff chase every one of them
+   for a handle in the week the money is due. This is the one to close first.
+   It is PII adjacent, so it belongs on `vendors`, is never rendered to the
+   jury, and never appears in a log or an error.
+2. **TFF permit number.** Their form asks food makers for an annual Temporary
+   Food Facility number from the OC Health Agency. We have a generic
+   `seller_permit`, which is a different document for a different purpose. A
+   food maker without a TFF number cannot legally sell, so this is a load-in
+   blocker, not a nicety.
+3. **"How will your space be different."** A curation question, and the jury
+   is the audience for it. We collect `description` and price band; this asks
+   the maker to describe the display, which is what the room actually looks
+   like.
+4. **Street address and zip.** We keep city and state. They keep the full
+   address, which is what an invoice and a mailed cheque need.
+5. **Outdoor waitlist opt-in.** Their form has an explicit "outside merchant
+   waitlist" box. Ours has no way for a maker to say "put me on the list if
+   the day I want is full", so that intent is lost.
+6. **Merstaff opt-in.** Their form asks whether the maker wants to work the
+   event. Small, but it is free labour they are currently collecting and we
+   are not.
+7. **Six separate acknowledgements.** Theirs has six `acceptTerms` boxes, one
+   per clause. We record one `signed_name` and a `terms_version`. Which shape
+   we want is a question for counsel, not a guess: see
+   `docs/10-VENDOR-AGREEMENT.md`, still unreviewed.
+
+Each of 1 through 6 needs a forward-only migration and a matching field on
+`ApplyForm`. None of them were added in the pass that found them, because the
+form was being reworked at the same time and a silent field-name change breaks
+the server action that parses it.
