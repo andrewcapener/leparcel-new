@@ -214,7 +214,7 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
         <label className="field" style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <input type="checkbox" name="hasCoi" defaultChecked={v.hasCoi === 'on'} style={{ marginTop: 3 }} />
           <span style={{ fontSize: 14, lineHeight: 1.5 }}>
-            I can provide a certificate of insurance before the show
+            I carry my own liability insurance (recommended, not required)
           </span>
         </label>
 

@@ -131,7 +131,7 @@ export default async function ApplicationDetail({
               : app.occasionalSeller
                 ? 'No permit; says they qualify as an occasional seller (CDTFA 410-D)'
                 : 'Nothing yet. Required before load-in, not before.'}
-            {app.hasCoi && <div>Can provide a certificate of insurance.</div>}
+            {app.hasCoi && <div>Carries their own liability insurance.</div>}
           </Row>
           {booking && (
             <Row k="Booking">
