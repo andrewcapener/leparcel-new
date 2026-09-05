@@ -47,3 +47,34 @@ export function laWallToIso(wall: string): string {
 export function isoToLaWall(iso: string): string {
   return new Date(iso).toLocaleString('sv-SE', { timeZone: TZ }).slice(0, 16).replace(' ', 'T')
 }
+
+/**
+ * The day before the show opens, which is indoor load-in.
+ *
+ * The maker rules name that day twice ("set-up runs Thursday Nov 12", "there
+ * is no Friday morning set-up"), and CLAUDE.md rule 6 says a date never gets
+ * typed into a page. Both come off `startsOn`: load-in is the day before,
+ * Friday is the first show day.
+ */
+export function dayBefore(iso: string): string {
+  const d = new Date(iso)
+  d.setUTCDate(d.getUTCDate() - 1)
+  return d.toISOString()
+}
+
+/** "Thursday November 12". Composed rather than asked for in one call,
+ *  because the locale puts a comma after the weekday and these read as prose:
+ *  "runs Thursday November 12 until 7pm", not "runs Thursday, November 12". */
+export function fmtWeekdayDate(iso: string): string {
+  return `${fmtWeekday(iso)} ${fmtDate(iso, { year: undefined })}`
+}
+
+/** "Friday" */
+export function fmtWeekday(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { timeZone: TZ, weekday: 'long' })
+}
+
+/** "November 13" */
+export function fmtDayMonth(iso: string): string {
+  return fmtDate(iso, { year: undefined })
+}

@@ -8,6 +8,7 @@ import {
   PageTitle, RichText, FactTable, PriceTable, CollapsibleTabs, type Tab,
 } from '@/components/theme/Sections'
 import { indoorSections, fill } from '@/lib/page-html'
+import { dayBefore, fmtDayMonth, fmtWeekday, fmtWeekdayDate } from '@/lib/dates'
 import { usd } from '@/lib/money'
 import { POLICY } from '@/lib/agreement'
 
@@ -84,8 +85,10 @@ export default async function IndoorMerchants() {
      show uses different numbers (docs/06-OPEN-QUESTIONS.md). Until then they
      read out of money.ts like every other figure on the site, in cents. */
   const LATE_FEE_CENTS = 10_000
-  const LABEL_FEE_CENTS = 10_000
-  const JEWELRY_BAG_FEE_CENTS = 2_000
+  /* The label and jewelry-bag fees came off this summary on 5 Sep 2026: it is
+     a short list of what a maker must do before the show, and those two are
+     things that happen at it. Both are still in the vendor agreement, which is
+     the binding version, and both are still explained in the sections below. */
 
   return (
     <SiteShell show={show} template="page template-suffix-indoor-merchants">
@@ -142,32 +145,21 @@ export default async function IndoorMerchants() {
                 <h3 className="mk-rules__title">The deadlines that matter</h3>
                 <ul className="mk-rules__list">
                   <li>
-                    Set-up runs one evening and closes at 6pm. We hold the door
-                    to 7pm for {usd(LATE_FEE_CENTS)}, and after that the floor is
-                    merchandised and we cannot add a shop to it.
+                    Indoor set-up runs {fmtWeekdayDate(dayBefore(show.startsOn))} until 7pm.
+                    If you show up after 6:00pm, even at 6:01pm, we charge you{' '}
+                    {usd(LATE_FEE_CENTS)} because we will be delayed.
                   </li>
                   <li>
-                    There is no Friday morning set-up. If that evening does not
-                    work for you, outside is the better track.
+                    There is no {fmtWeekday(show.startsOn)} morning{' '}
+                    ({fmtDayMonth(show.startsOn)}) set-up for indoor makers. If that prior
+                    day does not work with your schedule, and you cannot find help to
+                    replace you, outside may be your better option.
                   </li>
                   <li>
-                    Your inventory list and prices reach us two weeks before the
-                    show. They are what we build the register from.
+                    Your inventory list and prices must be given to us two weeks before
+                    the show. We remind you plenty about this and give great instruction
+                    on how to succeed in this.
                   </li>
-                  <li>
-                    Every product carries your MM code and its price. It is how
-                    a sale finds its way back to you, so anything unlabelled is
-                    relabelled by us at {usd(LABEL_FEE_CENTS)}.
-                  </li>
-                  <li>
-                    Prices are set when the labels are printed. Tell us before
-                    you change one.
-                  </li>
-                  <li>
-                    Jewelry sells with a bag or a box, so leave a supply at your
-                    space. We buy them in at {usd(JEWELRY_BAG_FEE_CENTS)} if you run out.
-                  </li>
-                  <li>Put your shop name somewhere a shopper can see it.</li>
                 </ul>
                 <p className="mk-rules__note">
                   Each one is explained in full below. The binding version is the{' '}

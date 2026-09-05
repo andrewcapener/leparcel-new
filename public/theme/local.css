@@ -1245,10 +1245,14 @@ h3, .h3 { line-height: 1.15; }
 }
 .mk-rules__list li {
   margin: 0;
-  padding: 0.7em 0 0.7em 1.5em;
+  /* Body size, not a step under it. These are the rules a maker is actually
+     held to, and they were set smaller than the paragraphs around them, which
+     is backwards: the small print here is the part that costs money. The
+     leading opens with it, since two of them now run to three lines. */
+  padding: 0.85em 0 0.85em 1.6em;
   border-bottom: 1px solid rgb(var(--text-color) / var(--divider-opacity));
-  font-size: var(--smaller-text-size-1);
-  line-height: 1.5;
+  font-size: var(--base-text-size);
+  line-height: 1.6;
   font-variant-numeric: tabular-nums;
   position: relative;
 }
@@ -1257,7 +1261,7 @@ h3, .h3 { line-height: 1.15; }
 .mk-rules__list li::before {
   content: "";
   position: absolute;
-  top: 1.15em;
+  top: 1.35em;
   left: 0.15em;
   width: 7px;
   height: 7px;
