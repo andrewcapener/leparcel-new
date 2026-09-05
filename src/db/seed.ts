@@ -130,17 +130,19 @@ async function main() {
     venueAddress: '24642 San Juan Avenue, Dana Point, CA 92629',
     startsOn: '2026-11-13T12:00:00-08:00',
     endsOn: '2026-11-15T12:00:00-08:00',
-    hoursNote: 'Friday 13 November, 5-9pm · Saturday 14th, 10am-5pm · Sunday 15th, 10am-4pm',
+    hoursNote: 'Friday 13 November, 9am-6pm · Saturday 14th, 9am-5pm · Sunday 15th, 9am-5pm',
     // Prose, not dates: staff edit these at /admin/show when the venue moves.
     // Shape carried over from the old site's indoor maker rules.
     loadInNote: 'Thursday 12 November, 1-7pm, in staggered arrival slots',
-    takedownNote: 'Sunday 15 November at 4pm sharp',
+    takedownNote: 'Sunday 15 November at 5pm sharp',
     // CONFIRMED by Drew, 25 Aug 2026: applications open Monday 7 September.
-    // Close date mirrors the Spring window's shape (Mon 2 – Fri 13 March, 11 days)
-    // — confirm before launch. Editable in /admin/show, never in code.
+    // The window is 14 full days, confirmed by Drew on 5 Sep 2026, which puts
+    // the close on Sunday 20 September at 11:59pm PT. The FAQ prints the count
+    // from these two timestamps, so the sentence and the deadline cannot drift
+    // apart. Editable in /admin/show, never in code.
     applicationsOpenAt: '2026-09-07T09:00:00-07:00',
-    applicationsCloseAt: '2026-09-18T23:59:00-07:00',
-    rosterAnnouncedOn: '2026-10-05T12:00:00-07:00',
+    applicationsCloseAt: '2026-09-20T23:59:00-07:00',
+    rosterAnnouncedOn: '2026-09-28T12:00:00-07:00',
     commissionBps: 2000,
     paymentWindowHours: 48,   // moved from 36 to 48 per Drew, Sept 2026 (audit §2.3)
     // The old maker rules pages say 45 shops inside and 25 tents a day
@@ -155,16 +157,21 @@ async function main() {
   // Real prices from mermademarket.com/pages/merchant-application (Aug 2026).
   // Indoor is granular by footprint; outdoor is priced per DAY, not per weekend.
   const spaces = [
-    { code: 'IN-JR',    track: 'indoor' as const,  label: 'JR Space',            priceCents:  6_000, capacity:  2, description: "For makers 14 and under. 2' wide, 3' deep, shelf provided." },
+    // Descriptions carry facts a maker cannot see from the label: an age
+    // limit, a price cap, what is provided. They deliberately do NOT say what
+    // a space is good for. Suggesting jewelry suits the small one and apparel
+    // the large one steers a maker away from a space that would have worked,
+    // and it is the jury's call anyway. The sized spaces say their size in
+    // the label and nothing more.
+    { code: 'IN-JR',    track: 'indoor' as const,  label: 'JR Space',            priceCents:  6_000, capacity:  2, description: 'For makers 14 and under. 2ft wide, 3ft deep, shelf provided.' },
     { code: 'IN-TREAT', track: 'indoor' as const,  label: 'Treats on a Shelf',   priceCents: 10_000, capacity:  4, description: 'Five shelves beside the register. Items $10 and under, one maker per treat.' },
-    { code: 'IN-BTQ',   track: 'indoor' as const,  label: 'BTQ Space',           priceCents: 15_000, capacity:  6, description: 'Small boutique footprint.' },
-    { code: 'IN-3x4',   track: 'indoor' as const,  label: "3' × 4' space",       priceCents: 26_000, capacity: 10, description: 'Compact. Suits jewelry and paper.' },
-    { code: 'IN-3x6',   track: 'indoor' as const,  label: "3' × 6' space",       priceCents: 28_000, capacity: 13, description: 'The standard indoor space.' },
-    { code: 'IN-3x8',   track: 'indoor' as const,  label: "3' × 8' space",       priceCents: 34_000, capacity:  8, description: 'Room for a rack alongside a table.' },
-    { code: 'IN-3x12',  track: 'indoor' as const,  label: "3' × 12' space",      priceCents: 45_000, capacity:  2, description: '1-2 makers will get this, apparel is great for this.' },
-    { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 25, description: 'A tent for the day. You run your own payments and keep 100%.' },
-    { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 25, description: 'A tent for the day. You run your own payments and keep 100%.' },
-    { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 25, description: 'A tent for the day. You run your own payments and keep 100%.' },
+    { code: 'IN-3x4',   track: 'indoor' as const,  label: '4ft wide, 3ft deep',   priceCents: 26_000, capacity: 10, description: '' },
+    { code: 'IN-3x6',   track: 'indoor' as const,  label: '6ft wide, 3ft deep',   priceCents: 28_000, capacity: 13, description: '' },
+    { code: 'IN-3x8',   track: 'indoor' as const,  label: '8ft wide, 3ft deep',   priceCents: 34_000, capacity:  8, description: '' },
+    { code: 'IN-3x12',  track: 'indoor' as const,  label: '12ft wide, 3ft deep',  priceCents: 45_000, capacity:  2, description: '' },
+    { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 25, description: '10ft wide, 10ft deep. We provide the tent. You run your own payments and keep 100%.' },
+    { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 25, description: '10ft wide, 10ft deep. We provide the tent. You run your own payments and keep 100%.' },
+    { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 25, description: '10ft wide, 10ft deep. We provide the tent. You run your own payments and keep 100%.' },
   ]
   const spaceIds: Record<string, string> = {}
   for (const [i, s] of spaces.entries()) {
@@ -219,7 +226,7 @@ async function main() {
       const handle = shopName.toLowerCase().replace(/[^a-z0-9]+/g, '')
       const track = i % 5 === 0 ? 'outdoor' : 'indoor'
       const OUT = ['OUT-FRI', 'OUT-SAT', 'OUT-SUN'] as const
-      const IN = ['IN-3x6', 'IN-3x4', 'IN-3x6', 'IN-3x8', 'IN-BTQ', 'IN-3x6',
+      const IN = ['IN-3x6', 'IN-3x4', 'IN-3x6', 'IN-3x8', 'IN-3x4', 'IN-3x6',
                   'IN-3x12', 'IN-3x6', 'IN-TREAT', 'IN-3x4', 'IN-JR', 'IN-3x6'] as const
       const spaceCode: string = track === 'outdoor' ? OUT[i % 3]! : IN[i % IN.length]!
 

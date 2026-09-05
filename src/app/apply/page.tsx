@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { eq, asc } from 'drizzle-orm'
+import { eq, and, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow, activeAddOns } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
@@ -59,8 +59,10 @@ export default async function Apply({
   const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
+  // Active only. A withdrawn space keeps its row so that applications which
+  // already chose it still resolve, but it must never appear on the form.
   const spaces = await db.query.spaceTypes.findMany({
-    where: eq(spaceTypes.showId, show.id),
+    where: and(eq(spaceTypes.showId, show.id), eq(spaceTypes.isActive, true)),
     orderBy: [asc(spaceTypes.sortOrder)],
   })
   const extras = await activeAddOns(show.id)
@@ -102,12 +104,14 @@ export default async function Apply({
   }
 
   /* The prospectus. One shape for all of it: a summary line you can read
-     without opening anything, and the detail inside. The price summaries
-     carry the figure, so a maker who only wants the number never opens the
-     table. */
+     without opening anything, and the detail inside. The summaries name the
+     structural difference between the two tracks, who does the selling, and
+     the prices live in the table each one opens onto rather than in the
+     heading. A maker meeting a dollar range before they know what it buys
+     reads it as a bill. */
   const details: Tab[] = [
     {
-      q: `Inside spaces${indoorRange ? `: ${indoorRange}, ${bpsLabel(show.commissionBps)} commission` : ''}`,
+      q: 'Selling inside: we sell it for you',
       a: (
         <>
           <PriceTable caption="Indoor spaces" spaces={indoor} extras={forTrack('indoor')} />
@@ -119,7 +123,7 @@ export default async function Apply({
       ),
     },
     {
-      q: `Outside days${outdoorRange ? `: ${outdoorRange}, no commission` : ''}`,
+      q: 'Selling outside: you sell it yourself',
       a: (
         <>
           <PriceTable caption="Outdoor days" spaces={outdoor} extras={forTrack('outdoor')} />
@@ -183,12 +187,15 @@ export default async function Apply({
         : `${fmtDate(show.applicationsCloseAt, { year: undefined })}, 11:59pm PT`,
     },
     { label: 'Line-up announced', value: fmtDate(show.rosterAnnouncedOn, { year: undefined }) },
-    ...(indoorRange
-      ? [{ label: 'Inside spaces', value: `${indoorRange} plus ${bpsLabel(show.commissionBps)}` }]
-      : []),
-    ...(outdoorRange
-      ? [{ label: 'Outside days', value: `${outdoorRange}, no commission` }]
-      : []),
+    // No price range up here. A maker's first sight of the page was
+    // "$60-$450 plus 20%" beside two dates, which reads as a bill before they
+    // know what they get for it. The real difference between the two tracks
+    // is not what they cost, it is who does the selling and how you pay for
+    // it, and that is the question a maker actually arrives with. The full
+    // price table is one scroll down, where the figures sit next to what they
+    // buy. The rate comes off the Show record, never typed here.
+    { label: 'Inside', value: `We sell for you, ${bpsLabel(show.commissionBps)} commission` },
+    { label: 'Outside', value: 'You sell in person, no commission' },
   ]
 
   return (

@@ -65,6 +65,10 @@ export const spaceTypes = pgTable('space_types', {
   priceCents: integer('price_cents').notNull(),
   capacity: integer('capacity').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
+  // Withdrawn spaces are deactivated, never deleted: an application that chose
+  // one still has to resolve its space. The boutique footprint was pulled on
+  // 5 Sep 2026 and this is what keeps it off the form.
+  isActive: boolean('is_active').notNull().default(true),
 }, (t) => [uniqueIndex('space_types_show_code').on(t.showId, t.code)])
 
 /* ───────────────────── add-ons (priced extras) ─────────────────────

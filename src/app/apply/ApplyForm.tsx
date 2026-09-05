@@ -73,7 +73,8 @@ const STEPS: Step[] = [
     n: 3,
     id: 'ap-space',
     title: 'Where you want to be',
-    blurb: 'Check every space you would say yes to. Prices are per show.',
+    blurb: 'Check every space you would say yes to. Choosing inside and outside, '
+      + 'or more than one day, raises your chance of getting in.',
   },
   {
     n: 4,

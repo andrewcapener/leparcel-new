@@ -78,10 +78,15 @@ export const categoryRanges = [
   { label: 'Food & pantry', range: '$6-$45' },
 ]
 
+/**
+ * The venue history came out on 5 Sep 2026: it named the Ocean Institute, which
+ * Mermade left years ago, and readers took it for a current address. Nothing
+ * here names a building we are not in.
+ */
 export const archiveNote = {
   eyebrow: '04 · The archive',
-  heading: 'Eleven years, three venues.',
-  body: 'We’ve outgrown two buildings. The Ocean Institute first, then River Street, now the Community House on San Juan Avenue.',
+  heading: 'Eleven years of shows.',
+  body: 'Twice a year since ' + FOUNDED_YEAR + ', in Dana Point. We are at the Community House on San Juan Avenue.',
 }
 
 /**
