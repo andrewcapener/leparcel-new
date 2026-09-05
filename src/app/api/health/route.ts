@@ -30,14 +30,14 @@ export async function GET() {
       }
     })(),
     hasResendKey: Boolean(process.env.RESEND_API_KEY),
-    // The commonest reason a form "does not work" when the key IS set:
-    // without EMAIL_FROM the sender falls back to Resend's onboarding
-    // address, which Resend only delivers to the account owner. Every
-    // message to anyone else fails, the outbox records it, and nothing on
-    // the site says so. The domain in the address is not a secret.
-    emailFrom: process.env.EMAIL_FROM ?? null,
+    // The sender now defaults to hello@mermademarket.com rather than Resend's
+    // onboarding sandbox, which only ever delivered to the Resend account
+    // owner. What is left to check is on Resend's side: the domain has to be
+    // verified there or every send fails, the outbox records it, and nothing
+    // on the site says so. The domain in the address is not a secret.
+    emailFrom: process.env.EMAIL_FROM ?? 'Mermade Market <hello@mermademarket.com> (default)',
     emailFromIsResendSandbox:
-      !process.env.EMAIL_FROM || /onboarding@resend\.dev/.test(process.env.EMAIL_FROM),
+      /onboarding@resend\.dev/.test(process.env.EMAIL_FROM ?? ''),
     contactTo: process.env.CONTACT_TO ?? 'hello@mermademarket.com (default)',
     // Which Google Sheets transport this deployment would use, and which
     // piece is missing if it is none. Names and shapes only, never the key,

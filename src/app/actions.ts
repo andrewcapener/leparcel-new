@@ -43,6 +43,18 @@ async function log(
  * prototype behavior. A delivery failure never fails the caller's action:
  * the application is already saved, and the row records what happened.
  */
+/**
+ * Who mail comes from when EMAIL_FROM is not set.
+ *
+ * This used to fall back to Resend's onboarding sandbox, which only ever
+ * delivers to the Resend account owner: every acceptance and every contact
+ * reply would have gone nowhere and looked sent. The real address is the one
+ * makers already write to, so it is the default rather than a variable
+ * somebody has to remember. Resend still has to have mermademarket.com
+ * verified for it to leave the building; /api/health says whether it does.
+ */
+const DEFAULT_EMAIL_FROM = 'Mermade Market <hello@mermademarket.com>'
+
 async function mail(
   toEmail: string, subject: string, body: string, template: string, replyTo?: string,
 ) {
@@ -59,7 +71,7 @@ async function mail(
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM ?? 'Mermade Market <onboarding@resend.dev>',
+        from: process.env.EMAIL_FROM ?? DEFAULT_EMAIL_FROM,
         to: [toEmail],
         subject,
         text: body,

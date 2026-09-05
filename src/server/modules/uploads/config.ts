@@ -61,6 +61,40 @@ function clean(value: string | undefined): string {
 }
 
 /**
+ * The project URL, worked out from the database connection string.
+ *
+ * A Supabase DATABASE_URL already names the project, in one of two shapes:
+ *
+ *   postgresql://postgres:PW@db.<ref>.supabase.co:5432/postgres
+ *   postgresql://postgres.<ref>:PW@aws-0-<region>.pooler.supabase.com:6543/postgres
+ *
+ * and the project URL is always https://<ref>.supabase.co. Deriving it means
+ * turning uploads on takes one secret rather than two, which matters because
+ * the one that was missing was never the secret: SUPABASE_URL is public
+ * information that still had to be found, copied and pasted correctly before
+ * a photograph could go anywhere.
+ *
+ * An explicit SUPABASE_URL always wins. This only fills the gap, and only for
+ * a connection string that is recognisably Supabase; anything else returns
+ * empty and uploads stay off, which is the same honest state as before.
+ */
+function supabaseUrlFromDatabaseUrl(): string {
+  const raw = clean(process.env.DATABASE_URL)
+  if (!raw) return ''
+  let url: URL
+  try { url = new URL(raw) } catch { return '' }
+
+  // Pooler: the project ref is the part of the username after the dot.
+  if (url.hostname.endsWith('.pooler.supabase.com')) {
+    const ref = decodeURIComponent(url.username).split('.')[1] ?? ''
+    return /^[a-z0-9]{16,}$/.test(ref) ? `https://${ref}.supabase.co` : ''
+  }
+  // Direct: db.<ref>.supabase.co
+  const direct = url.hostname.match(/^db\.([a-z0-9]{16,})\.supabase\.co$/)
+  return direct ? `https://${direct[1]}.supabase.co` : ''
+}
+
+/**
  * The Supabase Storage configuration, or null when this deployment has none.
  *
  * SUPABASE_URL is read with the NEXT_PUBLIC_ spelling as a fallback only
@@ -68,7 +102,9 @@ function clean(value: string | undefined): string {
  * read from a public variable, and nothing here is bundled into the client.
  */
 export function photoUploads(): PhotoUploads | null {
-  const baseUrl = clean(process.env.SUPABASE_URL) || clean(process.env.NEXT_PUBLIC_SUPABASE_URL)
+  const baseUrl = clean(process.env.SUPABASE_URL)
+    || clean(process.env.NEXT_PUBLIC_SUPABASE_URL)
+    || supabaseUrlFromDatabaseUrl()
   const serviceKey = clean(process.env.SUPABASE_SERVICE_ROLE_KEY)
   if (!baseUrl || !serviceKey) return null
   return {
@@ -92,12 +128,15 @@ export function photoUploadDiagnostics(): Record<string, unknown> {
   if (cfg) {
     return { configured: true, bucket: cfg.bucket, host: new URL(cfg.baseUrl).host }
   }
+  const derived = supabaseUrlFromDatabaseUrl()
   const missing = [
-    !clean(process.env.SUPABASE_URL) && !clean(process.env.NEXT_PUBLIC_SUPABASE_URL)
+    !clean(process.env.SUPABASE_URL) && !clean(process.env.NEXT_PUBLIC_SUPABASE_URL) && !derived
       ? 'SUPABASE_URL' : null,
     !clean(process.env.SUPABASE_SERVICE_ROLE_KEY) ? 'SUPABASE_SERVICE_ROLE_KEY' : null,
   ].filter(Boolean)
-  return { configured: false, missing }
+  // Say when the URL came from DATABASE_URL, so an operator reading this knows
+  // the one remaining variable really is the only one left to set.
+  return { configured: false, missing, urlDerivedFromDatabaseUrl: Boolean(derived) }
 }
 
 /**
