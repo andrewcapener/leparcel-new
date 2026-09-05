@@ -296,8 +296,23 @@ const partOne: Part = {
     {
       id: 's13', n: '13', title: 'Sharing and assignment',
       clauses: [
-        { n: '13.1', text: ['You may not assign this agreement, or sublet, share or transfer your space, without our written consent. Only the accepted maker sells in the space.'] },
-        { n: '13.2', text: ['A shared space is available as an add-on. Both makers apply together, are juried together as a pair, and both sign this agreement.'] },
+        /* ⟨COUNSEL⟩ Rewritten 5 Sep 2026. The last sentence used to read "Only
+           the accepted maker sells in the space", which banned the commonest
+           thing outdoor makers actually do: a cousin, a friend or an employee
+           works the booth for a day they cannot make. Elise raised it. A rule
+           that forbids what nearly everyone does is not enforced, it is just
+           quoted back at us when we want to enforce something else.
+
+           Three situations were being treated as one. Someone helping you sell
+           your own goods is fine and always was. Handing your space to a
+           different shop is subletting and is not. Selling someone else's work
+           as your own is section 5. They are separated here. */
+        { n: '13.1', text: ['You may not assign this agreement, or sublet, share or transfer your space, without our written consent.'] },
+        {
+          n: '13.2', lead: 'Someone working your space for you.',
+          text: ['A friend, a family member or someone who works for you may run your space on a day you cannot be there, selling your goods under your shop name at your prices. Tell us who to expect. You stay responsible for the space, for everything sold in it, and for everything in this agreement. What you may not do is hand the space to a different shop selling its own goods.'],
+        },
+        { n: '13.3', text: ['A shared space is available as an add-on. Both makers apply together, are juried together as a pair, and both sign this agreement. That is two shops in one space, which is a different thing from someone working your space for you.'] },
       ],
     },
     {

@@ -550,6 +550,14 @@ means in practice nothing happens.
 
 ## 13. Assignment and sharing
 
+> ⟨DECISION⟩ **5 Sep 2026, superseded in code.** Elise pointed out that outdoor
+> makers routinely have a cousin or a friend work the booth on a day they
+> cannot make, and 13.1's "only the accepted maker sells in the space" banned
+> it. src/lib/agreement.ts now splits three things that were one: assignment
+> and subletting stay barred (13.1), someone working your space for you is
+> allowed and your responsibility (13.2), and the shared-space add-on moves to
+> 13.3. The numbering below is the draft's, not the shipped one.
+
 **13.1** You may not assign this Agreement, or sublet, share or transfer your
 space, without our written consent. Only the accepted maker may sell in the
 space.
