@@ -134,9 +134,9 @@ function apiError(status: number, text: string): { ok: false; detail: string; re
   // Sheet was never shared with the service account. Say so, because the raw
   // message ("The caller does not have permission") sends people to IAM.
   const hint = status === 403
-    ? ' — share the Sheet with GOOGLE_SERVICE_ACCOUNT_EMAIL as an Editor'
+    ? '. Share the Sheet with GOOGLE_SERVICE_ACCOUNT_EMAIL as an Editor'
     : status === 404
-      ? ' — check SHEETS_SPREADSHEET_ID'
+      ? '. Check SHEETS_SPREADSHEET_ID'
       : ''
   return {
     ok: false,
@@ -302,7 +302,7 @@ export function appsScriptTransport(url: string): Transport {
             ok: false,
             retryable: !wrongAccess && !/bad secret/i.test(text),
             detail: redact(wrongAccess
-              ? 'the web app asked for a Google sign-in — redeploy it with access "Anyone"'
+              ? 'the web app asked for a Google sign-in. Redeploy it with access "Anyone"'
               : `unexpected response: ${text}`),
           }
         }

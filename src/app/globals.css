@@ -905,6 +905,12 @@
     border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
   .op-read{padding:20px 24px 22px;border-right:1px solid var(--line);min-width:0}
   .op-read:last-child{border-right:0}
+  /* Six readouts want two rows of three. Auto-fit would fit five and leave
+     the sixth alone in a row, which paints the rest of that row as an empty
+     panel (08-DESIGN-SYSTEM §4: a grid whose cells do not divide). */
+  .op-reads.op-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .op-reads.op-3 .op-read:nth-child(3n){border-right:0}
+  .op-reads.op-3 .op-read:nth-child(-n+3){border-bottom:1px solid var(--line)}
   .op-read .v{display:block;font-family:var(--font-g);font-weight:500;font-size:var(--t-d3);
     line-height:1;letter-spacing:-.008em;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:14px}
   .op-read .v small{font-family:var(--font-j);font-weight:400;font-size:var(--t-lbl);
@@ -1024,7 +1030,9 @@
     letter-spacing:.02em}
 
   /* ── read-only facts: label left, value right ── */
-  .op-facts{border-top:2px solid var(--ink);max-width:720px}
+  /* No top rule: a fact list always follows a section rule, and two heavy
+     lines 30px apart is one line too many. */
+  .op-facts{max-width:720px}
   .op-facts > div{display:flex;gap:24px;align-items:baseline;padding:13px 0;
     border-bottom:1px solid var(--line)}
   .op-facts > div:last-child{border-bottom:0}
@@ -1099,7 +1107,9 @@
   .op-mail details[open] .ex::after{content:'Close'}
   .op-mail summary:hover .ex{color:var(--ink)}
   .op-mail .bd{padding:6px 12px 30px}
-  .op-mail .bd .sub{font-family:var(--font-g);font-size:var(--t-lead);line-height:1.35;
+  /* not `.sub`: that class already belongs to the newsletter block on the
+     public side, and its dune ground and grid display leaked in here */
+  .op-mail .bd .op-subject{font-family:var(--font-g);font-size:var(--t-lead);line-height:1.35;
     color:var(--ink);margin-bottom:14px}
   .op-mail .bd pre{white-space:pre-wrap;font-family:var(--font-j);font-size:var(--t-s);
     line-height:1.72;color:var(--ink-2);margin:0;max-width:70ch;background:var(--shell);

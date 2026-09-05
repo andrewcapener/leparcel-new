@@ -77,7 +77,7 @@ const STEPS: Step[] = [
     n: 4,
     id: 'ap-paper',
     title: 'Paperwork',
-    blurb: 'Nothing here is required, and none of it reaches the jury.',
+    blurb: 'None of it reaches the jury. Skip it and nothing changes.',
     optional: true,
   },
   {
@@ -89,6 +89,14 @@ const STEPS: Step[] = [
 ]
 
 const LAST = STEPS.length
+
+/** "1st", "2nd", "3rd", "4th"… The rank badge on a checked space says which
+ *  one the acceptance books, so it has to read as an order and not a count. */
+function ordinal(n: number): string {
+  const suffix = n % 100 >= 11 && n % 100 <= 13 ? 'th'
+    : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'
+  return `${n}${suffix}`
+}
 
 /** Field names in the error summary, in the words the label uses. */
 const LABELS: Record<string, string> = {
@@ -294,7 +302,9 @@ export function ApplyForm({
     4: has('sellerPermit') || occasional || answered.hasCoi === 'on',
     5: answered.agree === 'on' && (answered.signedName ?? '').trim().length >= 2,
   }
-  const open = STEPS.filter((s) => !s.optional && !stepDone[s.n])
+  // What is still unanswered somewhere else. The step you are looking at is
+  // never on this list: its own fields are the thing in front of you.
+  const open = STEPS.filter((s) => !s.optional && !stepDone[s.n] && s.n !== step)
 
   const problems = Object.entries(e)
   const rejected = Boolean(state.attempt) && !state.ok
@@ -548,10 +558,11 @@ export function ApplyForm({
                       <span className="ap-option__body">
                         <span className="ap-option__name">
                           {s.label}
-                          {rank === 0 && <span className="ap-option__rank">1st choice</span>}
-                          {rank > 0 && (
-                            <span className="ap-option__rank ap-option__rank--alt">
-                              Alternate {rank}
+                          {rank >= 0 && (
+                            <span
+                              className={`ap-option__rank${rank > 0 ? ' ap-option__rank--alt' : ''}`}
+                            >
+                              {ordinal(rank + 1)} choice
                             </span>
                           )}
                         </span>
@@ -657,8 +668,9 @@ export function ApplyForm({
           <div className="flexible-layout flexible-layout--form">
             <div className="column column--full">
               <p className="ap-lede">
-                Skip all of this if you want. If you’re accepted we’ll need it
-                before load-in, and we’ll walk you through it then.
+                If you’re accepted we’ll need this before load-in, and we’ll
+                walk you through it then. Filling it in now just saves an
+                email later.
               </p>
             </div>
             <Field
@@ -668,8 +680,11 @@ export function ApplyForm({
             >
               {/* No inputMode: a permit number carries a hyphen, and a
                   numeric keypad on a phone has no key for it. */}
+              {/* `type` is stated because the theme's field styling keys off
+                  `input[type=text]`, and an input with no type attribute
+                  rendered at its default size next to full-width neighbours. */}
               <input
-                name="sellerPermit" disabled={occasional}
+                type="text" name="sellerPermit" disabled={occasional}
                 autoCapitalize="characters" autoCorrect="off" {...keep('sellerPermit')}
               />
             </Field>

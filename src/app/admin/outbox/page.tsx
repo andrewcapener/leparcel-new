@@ -144,7 +144,7 @@ export default async function Outbox() {
                       <span className="ex" aria-hidden="true" />
                     </summary>
                     <div className="bd">
-                      <div className="sub">{m.subject}</div>
+                      <div className="op-subject">{m.subject}</div>
                       {m.deliveryDetail && (
                         <p className="op-note" style={{ color: 'var(--warn)', marginBottom: 12 }}>
                           {m.deliveryDetail}

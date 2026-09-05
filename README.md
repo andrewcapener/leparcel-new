@@ -19,12 +19,96 @@ Environment variables:
 | `RESEND_API_KEY` | to send email | Without it, mail is only written to the outbox table. |
 | `EMAIL_FROM` | with Resend | e.g. `Mermade Market <hello@mermademarket.com>` (a domain verified in Resend). |
 | `CONTACT_TO` | no | Where the contact and collaborate forms deliver. Defaults to `hello@mermademarket.com`. |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | to sync the Sheet | Service account address, e.g. `sheets@mermade-apps.iam.gserviceaccount.com`. |
+| `GOOGLE_PRIVATE_KEY` | with the above | The `private_key` out of the service account's JSON key. Literal `\n` or real newlines both work. |
+| `SHEETS_SPREADSHEET_ID` | with the above | The long id in the Sheet's URL, between `/d/` and `/edit`. |
+| `SHEETS_TAB` | no | Which tab to write. Defaults to `Applications`, and is created if missing. |
+| `SHEETS_WEBHOOK_URL` | fallback | Apps Script web app `/exec` URL, used only when the service account is not set. |
+| `SHEETS_WEBHOOK_SECRET` | with the above | The shared secret the Apps Script checks. |
 
 Seeding: `SEED_MODE=show npm run db:seed` seeds only the show and prices (production);
 the default seeds 30 demo applicants too. A non-empty database is never wiped unless
 `SEED_FORCE=1` is set.
 
-`npm test` runs the commission property test (200,000 randomized cases).
+`npm test` runs the commission property test (200,000 randomized cases) and the
+Sheets sync tests (row mapping, retry policy, transport selection).
+
+---
+
+## Applications land in a Google Sheet
+
+Every submitted application is pushed to a Google Sheet so the team can read
+and sort applications outside the admin. One row per application: submitted
+time in Pacific, shop, contact, email, phone, Instagram, website, city, state,
+category, track, the spaces and add-ons they asked for, price range, the three
+curation flags, the description, and a link straight to the application in the
+admin. Compliance fields never go: no seller's permit, no signed name, no jury
+notes.
+
+**It never affects a submission.** The application is committed first, the
+maker gets their confirmation first, and the sync runs last. If Google is down
+the row is queued in `sheet_syncs` and retried; nothing is lost and the maker
+never sees a failure.
+
+There are two ways to connect it. Set up either one.
+
+### Option A, a Google service account (preferred)
+
+1. In [console.cloud.google.com](https://console.cloud.google.com), create a
+   project, or open one you already have.
+2. **APIs & Services ▸ Library ▸ Google Sheets API ▸ Enable.**
+3. **APIs & Services ▸ Credentials ▸ Create credentials ▸ Service account.**
+   Any name. No roles are needed; a service account reaches the Sheet through
+   sharing, not through IAM.
+4. Open the service account ▸ **Keys ▸ Add key ▸ Create new key ▸ JSON.** A
+   file downloads. It holds `client_email` and `private_key`.
+5. **Open the Sheet and Share it with that `client_email` address, as an
+   Editor.** This is the step everybody forgets, and skipping it makes every
+   write come back `403 The caller does not have permission`, which reads like
+   a credentials problem and is not.
+6. In Vercel ▸ Settings ▸ Environment Variables, set
+   `GOOGLE_SERVICE_ACCOUNT_EMAIL` to the `client_email`,
+   `GOOGLE_PRIVATE_KEY` to the `private_key` (paste it whole, including the
+   `-----BEGIN PRIVATE KEY-----` lines; Vercel's literal `\n` form is handled),
+   and `SHEETS_SPREADSHEET_ID` to the id in the Sheet's URL. Redeploy: env
+   vars are baked in at build time.
+
+The header row and the tab are created on first use.
+
+### Option B, an Apps Script web app
+
+No cloud project and no key material. `docs/sheets-webhook.gs` is the script
+and its header comment is the instructions: open the Sheet, **Extensions ▸
+Apps Script**, paste, set `SECRET`, **Deploy ▸ New deployment ▸ Web app** with
+access **Anyone**, then put the `/exec` URL in `SHEETS_WEBHOOK_URL` and the
+same secret in `SHEETS_WEBHOOK_SECRET`.
+
+Used only when the service account is not configured. With neither set the
+sync is a silent no-op, exactly the way mail is without `RESEND_API_KEY`.
+
+### When something goes wrong
+
+- **Nothing is lost.** `sheet_syncs` holds one row per application: `pending`
+  is queued and will be retried with a widening backoff, `sent` is in the
+  Sheet, `failed` gave up and wants a person.
+- **Where you see it.** `/api/health` reports which transport is configured,
+  what is missing from it, how many applications the Sheet is short, and the
+  last error. A failure also writes a line to the outbox, so it shows up under
+  **Failed** at `/admin/outbox` the way a bounced email does.
+- **How you fix it.** One command:
+
+  ```bash
+  npx tsx scripts/sync-sheets.ts            # push everything the Sheet is missing
+  npx tsx scripts/sync-sheets.ts --all-shows
+  npx tsx scripts/sync-sheets.ts --dry-run  # list, post nothing
+  ```
+
+  Safe to run repeatedly. The row is keyed on the application id, which is the
+  last column, so a re-send updates the row it already wrote instead of adding
+  a second one. That is also what makes a retry after a timeout safe.
+
+Migration `drizzle/0003_sheet-syncs.sql` creates `sheet_syncs`. Until it is
+run, the sync still posts and simply cannot remember, so run it.
 
 ---
 

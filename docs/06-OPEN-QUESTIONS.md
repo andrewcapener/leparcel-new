@@ -187,3 +187,37 @@ Each of 1 through 6 needs a forward-only migration and a matching field on
 `ApplyForm`. None of them were added in the pass that found them, because the
 form was being reworked at the same time and a silent field-name change breaks
 the server action that parses it.
+
+---
+
+## Applications → Google Sheet (built 5 Sept 2026, three things still open)
+
+The sync itself is built and needs no decisions: `src/server/modules/sheets/*`,
+either a service account or an Apps Script web app, queued and retried in
+`sheet_syncs`, one command to repair. What is genuinely undecided:
+
+### 28. Who can open that Sheet?
+The Sheet carries every applicant's email and phone number, because that is
+what makes it useful for chasing people. A Google Sheet gets shared with a
+link far more casually than an admin login does, and a link that reaches a
+volunteer reaches a hundred makers' contact details. **Decide who it is shared
+with, and set the link setting to Restricted before applications open.** No
+compliance data goes to the Sheet at all (no seller's permits, no signed
+agreement names, no jury notes), and that should stay true whatever is decided
+here.
+
+### 29. One tab, or one per show?
+Today it writes one tab, `SHEETS_TAB`, defaulting to `Applications`. Two shows
+a year means the tab is 200 rows deep by next November with no show column to
+sort on. Either add a Show column to the row, or set `SHEETS_TAB` per show and
+change it each cycle. Cheap now, annoying later. Flag rather than guess.
+
+### 30. Who runs the retry when nobody is at a terminal?
+A submission tries once and, if Google is down, stays `pending` until someone
+runs `npx tsx scripts/sync-sheets.ts`. `/api/health` reports the backlog, so
+nothing is silent, but nothing is automatic either. The proper answer is the
+scheduler the architecture already names (Inngest, or a Vercel cron hitting a
+route that calls the same module with `--due-only` semantics). That is a small
+piece of work and it is not built, because there is no job runner in this
+repo yet.
+

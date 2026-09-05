@@ -105,7 +105,7 @@ export default async function ShowSettings() {
         </p>
       </header>
 
-      <div className="op-reads" style={{ marginBottom: 12 }}>
+      <div className="op-reads op-3" style={{ marginBottom: 12 }}>
         {live.map((f) => (
           <div className="op-read" key={f.k}>
             <span className="k">{f.k}</span>
