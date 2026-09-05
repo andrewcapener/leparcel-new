@@ -796,7 +796,7 @@ export function FactTable({
 export function PriceTable({
   spaces, extras, caption,
 }: {
-  spaces: Array<{ id: string; label: string; description: string; priceCents: number }>
+  spaces: Array<{ id: string; label: string; dimensions?: string; description: string; priceCents: number }>
   extras?: Array<{ id: string; name: string; description: string; priceCents: number; isLimited: boolean }>
   caption?: string
 }) {
@@ -810,7 +810,15 @@ export function PriceTable({
         <tbody>
           {spaces.map((s) => (
             <tr key={s.id}>
-              <th scope="row">{s.label}</th>
+              {/* The size sits under the name as a subheading, which is how
+                  Elise asked for it: "3x6" is what people call it, and
+                  "6ft wide, 3ft deep" is what it actually measures. Keeping
+                  both means the shorthand stays and nobody has to work out
+                  which number is the depth. */}
+              <th scope="row">
+                {s.label}
+                {s.dimensions && <span className="price-table__dim">{s.dimensions}</span>}
+              </th>
               <td>{s.description}</td>
               <td className="num">{usd(s.priceCents)}</td>
             </tr>

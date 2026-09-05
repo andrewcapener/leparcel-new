@@ -602,8 +602,16 @@ export function ApplyForm({
                             </span>
                           )}
                         </span>
-                        {s.description && (
-                          <small className="ap-option__note">{s.description}</small>
+                        {/* The size, not the advice. Drew took suitability off
+                            the picker: a maker choosing between six spaces
+                            wants to know what fits, and "not suggested for
+                            apparel" reads as a warning at the moment they are
+                            trying to commit. Elise's advice is on
+                            /makers/indoor and in the reference table below,
+                            which is where somebody goes to read rather than
+                            to choose. */}
+                        {s.dimensions && (
+                          <small className="ap-option__note">{s.dimensions}</small>
                         )}
                       </span>
                       <span className="ap-option__price num">{usd(s.priceCents)}</span>

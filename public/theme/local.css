@@ -1584,3 +1584,17 @@ h3, .h3 { line-height: 1.15; }
   text-decoration: underline;
   text-underline-offset: 0.18em;
 }
+
+/* The measured size, under the space name in the price table. A subheading,
+   so it reads as a property of the name above it rather than as a second
+   thing in the cell: lighter, smaller, and on its own line. */
+.price-table__dim {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--body-font-family);
+  font-size: var(--smaller-text-size-1);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: rgb(var(--text-color) / 0.62);
+}

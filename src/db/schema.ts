@@ -60,7 +60,13 @@ export const spaceTypes = pgTable('space_types', {
   showId: text('show_id').notNull().references(() => shows.id),
   track: text('track', { enum: ['indoor', 'outdoor'] }).notNull(),
   code: text('code').notNull(),                  // "IN-3x6"
-  label: text('label').notNull(),                // "3' × 6' indoor space"
+  label: text('label').notNull(),                // "3x6", the name staff and returning makers use
+  // "6ft wide, 3ft deep". Its own field because it is a fact about the space
+  // and the description is advice about it, and the two are shown differently:
+  // the size sits under the name as a subheading, the advice in its own
+  // column. They were one string, which meant a page could show the size or
+  // the advice but never both.
+  dimensions: text('dimensions').notNull().default(''),
   description: text('description').notNull().default(''),
   priceCents: integer('price_cents').notNull(),
   capacity: integer('capacity').notNull(),

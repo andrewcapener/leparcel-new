@@ -165,15 +165,15 @@ async function main() {
     // left ("3x4", which is what staff and returning makers say) and spells the
     // dimensions out in the caption beside it, so nobody has to guess which
     // number is the depth.
-    { code: 'IN-JR',    track: 'indoor' as const,  label: 'JR Space',            priceCents:  6_000, capacity:  2, description: 'For makers 14 and under. 2ft wide, 3ft deep, shelf provided.' },
-    { code: 'IN-TREAT', track: 'indoor' as const,  label: 'Treats on a Shelf',   priceCents: 10_000, capacity:  4, description: 'Five shelves beside the register. Items $10 and under, one maker per treat.' },
-    { code: 'IN-3x4',   track: 'indoor' as const,  label: '3x4',   priceCents: 26_000, capacity: 10, description: '4ft wide, 3ft deep' },
-    { code: 'IN-3x6',   track: 'indoor' as const,  label: '3x6',   priceCents: 28_000, capacity: 13, description: '6ft wide, 3ft deep' },
-    { code: 'IN-3x8',   track: 'indoor' as const,  label: '3x8',   priceCents: 34_000, capacity:  8, description: '8ft wide, 3ft deep' },
-    { code: 'IN-3x12',  track: 'indoor' as const,  label: '3x12',  priceCents: 45_000, capacity:  2, description: '12ft wide, 3ft deep' },
-    { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 25, description: '10ft wide, 10ft deep. We provide the tent. You run your own payments and keep 100%.' },
-    { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 25, description: '10ft wide, 10ft deep. We provide the tent. You run your own payments and keep 100%.' },
-    { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 25, description: '10ft wide, 10ft deep. We provide the tent. You run your own payments and keep 100%.' },
+    { code: 'IN-JR',    track: 'indoor' as const,  label: 'JR Space',            priceCents:  6_000, capacity:  6, dimensions: '2ft wide, 3ft deep', description: 'For our makers 14 and under, to get them excited about being an entrepreneur. We provide the shelving. Only 6 chosen.' },
+    { code: 'IN-TREAT', track: 'indoor' as const,  label: 'Treats on a Shelf',   priceCents: 10_000, capacity:  4, dimensions: '', description: '5 shelves given to each maker, a sliver of one big shelf you share. Suggested $12 and under.' },
+    { code: 'IN-3x4',   track: 'indoor' as const,  label: '3x4',   priceCents: 26_000, capacity: 10, dimensions: '4ft wide, 3ft deep', description: 'Our smallest option. Not used for apparel or art.' },
+    { code: 'IN-3x6',   track: 'indoor' as const,  label: '3x6',   priceCents: 28_000, capacity: 13, dimensions: '6ft wide, 3ft deep', description: 'Our best seller. Not suggested for apparel unless you have great vertical space.' },
+    { code: 'IN-3x8',   track: 'indoor' as const,  label: '3x8',   priceCents: 34_000, capacity:  8, dimensions: '8ft wide, 3ft deep', description: 'Our other best seller, and only a few are chosen. Great for apparel and end caps.' },
+    { code: 'IN-3x12',  track: 'indoor' as const,  label: '3x12',  priceCents: 45_000, capacity:  2, dimensions: '12ft wide, 3ft deep', description: 'Limited, and best used for apparel.' },
+    { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 25, dimensions: '10ft wide, 10ft deep', description: 'We provide the tent. You run your own payments and keep 100%.' },
+    { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 25, dimensions: '10ft wide, 10ft deep', description: 'We provide the tent. You run your own payments and keep 100%.' },
+    { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 25, dimensions: '10ft wide, 10ft deep', description: 'We provide the tent. You run your own payments and keep 100%.' },
   ]
   const spaceIds: Record<string, string> = {}
   for (const [i, s] of spaces.entries()) {
