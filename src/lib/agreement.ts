@@ -118,7 +118,13 @@ const partOne: Part = {
     {
       id: 's1', n: '1', title: 'Who this is between, and which show it covers',
       clauses: [
-        { n: '1.1', text: ['This agreement is between Mermade Market ("Mermade", "we", "us") and the maker named in the signed application ("you").'] },
+        /* The contracting party is the company, not a person. Naming the LLC
+           is the whole point of having one: an agreement signed by "Mermade
+           Market" with no entity behind it invites the argument that the
+           owner contracted personally, which is exactly the exposure the LLC
+           exists to prevent. ⟨COUNSEL⟩ confirm the formation state and add it
+           here ("a California limited liability company"). */
+        { n: '1.1', text: ['This agreement is between Mermade Market LLC ("Mermade", "we", "us") and the maker named in the signed application ("you").'] },
         {
           n: '1.2',
           text: [
@@ -219,7 +225,7 @@ const partOne: Part = {
       id: 's7', n: '7', title: 'Insurance',
       clauses: [
         { n: '7.1', text: ['Mermade carries its own policy for the event. It covers Mermade. It does not cover you, your goods, or a claim brought against you.'] },
-        { n: '7.2', text: ['We recommend you carry commercial general liability insurance of your own. If the venue or your acceptance requires a certificate for your show, we will tell you, and you send it before load-in naming Mermade Market and the show venue as additional insureds.'] },
+        { n: '7.2', text: ['We recommend you carry commercial general liability insurance of your own. If the venue or your acceptance requires a certificate for your show, we will tell you, and you send it before load-in naming Mermade Market LLC and the show venue as additional insureds.'] },
         { n: '7.3', text: ['Insurance on your own goods, equipment and display is yours to arrange. Section A8 is how loss is handled on the floor inside.'] },
       ],
     },

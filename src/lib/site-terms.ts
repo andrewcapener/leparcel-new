@@ -55,7 +55,7 @@ export const TERMS: LegalSection[] = [
     id: 'who',
     title: 'Who runs this site',
     body: [
-      'Mermade Market runs mermademarket.com. We are a juried market for independent makers, held twice a year at the Dana Point {{venueName}}, {{venueAddress}}.',
+      'Mermade Market LLC runs mermademarket.com. We are a juried market for independent makers, held twice a year at the Dana Point {{venueName}}, {{venueAddress}}.',
       'Write to us at {{contactEmail}}. A person reads every message, usually within a day or two.',
     ],
   },
