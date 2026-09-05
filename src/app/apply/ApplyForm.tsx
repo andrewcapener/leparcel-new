@@ -67,7 +67,7 @@ const STEPS: Step[] = [
     n: 2,
     id: 'ap-work',
     title: 'What you make',
-    blurb: 'What the jury decides on. Photographs first, then be specific about materials and method.',
+    blurb: 'The part the jury reads. Be specific about materials and method.',
   },
   {
     n: 3,
@@ -112,7 +112,6 @@ const LABELS: Record<string, string> = {
   state: 'State',
   category: 'Primary category',
   madeByYou: 'Made by you',
-  photos: 'Photographs of your work',
   description: 'Describe your product',
   priceLow: 'Lowest price',
   priceHigh: 'Highest price',
@@ -135,7 +134,7 @@ const STEP_OF: Record<string, number> = {
   shopName: 1, contactName: 1, email: 1, phone: 1, instagram: 1, website: 1,
   city: 1, state: 1,
   category: 2, madeByYou: 2, description: 2, priceLow: 2, priceHigh: 2,
-  usesAiArtwork: 2, isMlm: 2, photos: 2,
+  usesAiArtwork: 2, isMlm: 2,
   track: 3, spaces: 3, addons: 3,
   sellerPermit: 4, occasionalSeller: 4, hasCoi: 4,
   agree: 5, signedName: 5,
@@ -306,8 +305,10 @@ export function ApplyForm({
   const has = (k: string) => Boolean(answered[k])
   const stepDone: Record<number, boolean> = {
     1: ['shopName', 'contactName', 'email', 'phone', 'instagram', 'city', 'state'].every(has),
-    2: has('category') && description.trim().length >= 40 && has('priceLow') && has('priceHigh')
-      && (!uploads || photos.some((p) => p.status === 'done')),
+    // The photograph is deliberately absent from this list. It is optional,
+    // and a progress marker that stays grey because you skipped an optional
+    // field is a form nagging you.
+    2: has('category') && description.trim().length >= 40 && has('priceLow') && has('priceHigh'),
     3: chosen.length > 0,
     4: has('sellerPermit') || occasional || answered.hasCoi === 'on',
     5: answered.agree === 'on' && (answered.signedName ?? '').trim().length >= 2,
@@ -342,23 +343,20 @@ export function ApplyForm({
           })}
           , and we answer either way.
         </p>
-        {/* Their old thank-you page asked makers to email photographs to one
-            of two addresses. The form collects them now, so that copy would
-            be false; it only stands in on a deployment with no storage
-            configured, which is the one case where it is still true. */}
-        {uploads ? (
+        {/* Their old thank-you page asked every maker to email photographs to
+            one of two addresses. The form takes one now, so that copy is only
+            true on a deployment with no storage configured, and that is the
+            only place it still runs. Where uploads work, this screen says
+            nothing about photographs: the application is in, and the last
+            word to a maker is not another task. */}
+        {!uploads && (
           <p>
-            Your photographs came in with the application. The jury reads with
-            them in front of them.
-          </p>
-        ) : (
-          <p>
-            <strong>One more thing.</strong> Email photographs of your work to{' '}
+            <strong>One more thing.</strong> If you want the jury to open on
+            an image, email one to{' '}
             <a href="mailto:hello@mermademarket.com">hello@mermademarket.com</a>{' '}
             (outside makers, to{' '}
             <a href="mailto:hillary@mermademarket.com">hillary@mermademarket.com</a>)
-            with your shop name in the subject line. The jury reads with the
-            photographs in front of them.
+            with your shop name in the subject line.
           </p>
         )}
       </div>
@@ -472,11 +470,6 @@ export function ApplyForm({
         >
           <StepHead step={STEPS[1]!} />
           <div className="flexible-layout flexible-layout--form">
-            {/* First, and largest. The jury queue is a contact sheet and this
-                is the only field that fills it. */}
-            <PhotoField
-              enabled={uploads} items={photos} setItems={setPhotos} error={e.photos}
-            />
             <Field name="category" label="Primary category" error={e.category} half>
               <select name="category" required defaultValue={v.category ?? ''}>
                 <option value="" disabled>Choose one</option>
@@ -521,6 +514,11 @@ export function ApplyForm({
                 <option value="yes">Yes</option>
               </select>
             </Field>
+            {/* Last on the step, and optional. It is the first thing the jury
+                sees, so it is worth offering; it is also the thing most
+                likely to stop a maker mid-form, so it asks once, in one
+                line, and never blocks a submit. */}
+            <PhotoField enabled={uploads} items={photos} setItems={setPhotos} />
           </div>
         </section>
 
@@ -547,7 +545,7 @@ export function ApplyForm({
                 <option value="indoor">
                   Inside: consignment, {bpsLabel(show.commissionBps)} commission
                 </option>
-                <option value="outdoor">Outside: your own tent, no commission</option>
+                <option value="outdoor">Outside: a tent we set up, no commission</option>
                 <option value="both">Both</option>
               </select>
             </Field>

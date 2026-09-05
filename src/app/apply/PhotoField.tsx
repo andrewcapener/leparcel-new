@@ -1,55 +1,56 @@
 'use client'
 
 import { useCallback, useEffect, useId, useRef, type Dispatch, type SetStateAction } from 'react'
-import {
-  ASK_PHOTOS, MAX_PHOTOS, MAX_PHOTO_BYTES, PHOTO_ACCEPT, mb,
-} from '@/server/modules/uploads/photos'
+import { MAX_PHOTOS, MAX_PHOTO_BYTES, PHOTO_ACCEPT, mb } from '@/server/modules/uploads/photos'
 import { fileProblem, uploadPhoto, type PhotoItem } from './photo-upload'
 
 /**
- * The photographs. The one input the jury actually decides on, and until now
- * the only one the form never asked for: /admin/jury is a contact sheet built
- * around `photos[0]`, and the application had no way to put anything there.
+ * A photograph of the work. Optional, one, and never in the way.
+ *
+ * Why optional: the application has to be as easy as it can be, and a maker
+ * who stalls at an upload is an application nobody reads. Instagram and
+ * Website are required fields three steps up, and they are how the jury has
+ * always looked at a maker's work, so a skipped photograph is not a missing
+ * signal. This is a shortcut for the jury, not a gate for the maker. One
+ * line says why, once, and then it stops asking.
  *
  * How it works, and why:
  *
- *  - The list lives in ApplyForm's state, not here. A rejected submit remounts
- *    the <form> and everything under it (see the `key` on the form), so a
- *    field that held its own uploads would lose them on the one attempt where
- *    losing them hurts most. Same reason the space and add-on checkboxes are
- *    held up there.
+ *  - The list lives in ApplyForm's state, not here. A rejected submit
+ *    remounts the <form> and everything under it (see the `key` on the form),
+ *    so a field that held its own upload would lose it on the one attempt
+ *    where losing it hurts most. Same reason the space and add-on checkboxes
+ *    are held up there.
  *  - The bytes go straight from the browser to Supabase, through a signed URL
  *    minted by /api/uploads/application-photos. What the form posts is a
- *    hidden field of storage keys, and the server checks every one of them
- *    against the bucket before it writes an application.
+ *    hidden field of storage keys, and the server checks each one against the
+ *    bucket, bytes and all, before it writes an application.
  *  - Two ways to add. The main control has no `capture`, which is what makes
  *    a phone offer the camera roll AND the camera; setting `capture` there
  *    would take the roll away, and most makers already have their shots. The
- *    second control is `capture="environment"` for the maker who wants to
+ *    second control is `capture="environment"` for the maker who would rather
  *    shoot the thing in front of them.
- *  - The first photograph is the lead image. It is labelled, and every other
- *    one has a button to become it, because "reorder by dragging" is not a
- *    thing that works with a thumb or a keyboard.
- *  - Nothing fails silently. Every file that is refused says why, next to
- *    itself, with a way to try again.
+ *  - Nothing fails silently. A file that is refused says why, next to itself,
+ *    with a way to try again.
+ *
+ * The cap is MAX_PHOTOS, currently one. The column is a JSON array and this
+ * field is written for a list, so raising it is a constant and no migration.
  */
 
 const uuid = () =>
   globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : null
 
 export function PhotoField({
-  enabled, items, setItems, error,
+  enabled, items, setItems,
 }: {
   /** False when this deployment has no Supabase Storage configured. */
   enabled: boolean
   items: PhotoItem[]
   setItems: Dispatch<SetStateAction<PhotoItem[]>>
-  error?: string
 }) {
   const uid = useId()
   const statusId = `${uid}-status`
   const hintId = `${uid}-hint`
-  const errorId = `${uid}-error`
 
   // One folder per form session. Seeded from whatever is already uploaded, so
   // a remount after a rejected submit keeps writing to the same prefix.
@@ -94,21 +95,19 @@ export function PhotoField({
 
   const add = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return
-    const room = MAX_PHOTOS - items.length
-    const taking = Array.from(files).slice(0, Math.max(0, room))
-    const overflow = files.length - taking.length
-
+    const taking = Array.from(files).slice(0, Math.max(0, MAX_PHOTOS - items.length))
     const fresh: PhotoItem[] = taking.map((file, n) => {
       const problem = fileProblem(file)
       return {
         id: `${Date.now()}-${n}-${Math.random().toString(36).slice(2, 8)}`,
         name: file.name,
         file,
+        // An object URL, so the thumbnail is there the instant they pick it
+        // rather than after a round trip.
         preview: URL.createObjectURL(file),
         status: problem ? 'error' : 'uploading',
         pct: 0,
         error: problem ?? undefined,
-        overflow: n === 0 && overflow > 0 ? overflow : undefined,
       }
     })
     setItems((list) => [...list, ...fresh])
@@ -130,31 +129,34 @@ export function PhotoField({
   const busy = items.filter((i) => i.status === 'uploading').length
   const failed = items.filter((i) => i.status === 'error').length
   const full = items.length >= MAX_PHOTOS
+  const one = MAX_PHOTOS === 1
 
   /* One sentence, announced politely. Counts only: a live region that read
-     every percentage would talk over the rest of the form. */
+     every percentage would talk over the rest of the form. Nothing here
+     scolds anybody for having none, because none is a fine answer. */
   const announcement = !enabled ? ''
-    : busy > 0 ? `Uploading ${busy} of ${items.length}. ${done} ready.`
-      : failed > 0 ? `${done} of ${MAX_PHOTOS} added. ${failed} did not go up.`
-        : done === 0 ? 'No photographs yet.'
-          : `${done} of ${MAX_PHOTOS} added. The first one is the lead image.`
+    : busy > 0 ? 'Uploading.'
+      : failed > 0 && done === 0 ? 'That one did not go up. You can try again or carry on without it.'
+        : done === 0 ? ''
+          : one ? 'Photograph added.'
+            : `${done} of ${MAX_PHOTOS} added. The first one is the lead image.`
 
   if (!enabled) {
     /* No Supabase on this deployment. Say so plainly and give the maker the
        path that does still work, rather than a control that cannot do
-       anything. The application itself is unaffected. */
+       anything. Nothing about the application changes. */
     return (
       <div className="column column--full">
         <fieldset className="ap-group ap-photos ap-photos--off" aria-describedby={hintId}>
-          <legend className="ap-group__legend">Photographs of your work</legend>
+          <legend className="ap-group__legend">A photograph (optional)</legend>
           <p className="note" id={hintId}>
-            Uploads are not switched on here yet. Email {ASK_PHOTOS} to {MAX_PHOTOS}{' '}
-            photographs to{' '}
+            Uploads are not switched on here yet. If you want the jury to open
+            on an image, email one to{' '}
             <a href="mailto:hello@mermademarket.com">hello@mermademarket.com</a>{' '}
             (outside makers, to{' '}
             <a href="mailto:hillary@mermademarket.com">hillary@mermademarket.com</a>)
-            with your shop name in the subject line. We will put them with your
-            application before it reaches the jury.
+            with your shop name in the subject line. Your Instagram and website
+            are on the application either way.
           </p>
         </fieldset>
       </div>
@@ -164,14 +166,15 @@ export function PhotoField({
   return (
     <div className="column column--full">
       <fieldset
-        className="ap-group ap-photos" id="photos" tabIndex={-1}
-        aria-describedby={`${hintId} ${statusId}${error ? ` ${errorId}` : ''}`}
+        className="ap-group ap-photos"
+        aria-describedby={`${hintId} ${statusId}`}
       >
-        <legend className="ap-group__legend">Photographs of your work</legend>
+        <legend className="ap-group__legend">
+          {one ? 'A photograph (optional)' : 'Photographs (optional)'}
+        </legend>
         <p className="note" id={hintId}>
-          {ASK_PHOTOS} to {MAX_PHOTOS} photographs. The jury looks at these
-          before they read a word, so lead with your best one.
-          JPEG, PNG, WEBP or HEIC, up to {mb(MAX_PHOTO_BYTES)} each.
+          It is the first thing the jury sees. Skip it if you would rather:
+          they will open your Instagram instead.
         </p>
 
         {items.length > 0 && (
@@ -181,13 +184,13 @@ export function PhotoField({
                 <div className="ap-photos__frame">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={item.preview} alt="" className="ap-photos__img" />
-                  {n === 0 && item.status !== 'error' && (
+                  {!one && n === 0 && item.status !== 'error' && (
                     <span className="ap-photos__lead">Lead</span>
                   )}
                   <button
                     type="button" className="ap-photos__x"
                     onClick={() => remove(item)}
-                    aria-label={`Remove photograph ${n + 1}, ${item.name}`}
+                    aria-label={`Remove ${item.name}`}
                   >
                     <span aria-hidden="true">×</span>
                   </button>
@@ -216,7 +219,7 @@ export function PhotoField({
                   </p>
                 )}
 
-                {item.status === 'done' && n > 0 && (
+                {!one && item.status === 'done' && n > 0 && (
                   <button
                     type="button" className="ap-photos__lead-btn"
                     onClick={() => lead(item)}
@@ -224,56 +227,46 @@ export function PhotoField({
                     Make this the lead
                   </button>
                 )}
-
-                {item.overflow !== undefined && (
-                  <p className="ap-photos__err">
-                    {MAX_PHOTOS} is the limit, so {item.overflow}{' '}
-                    {item.overflow === 1 ? 'file was' : 'files were'} left out.
-                  </p>
-                )}
               </li>
             ))}
           </ul>
         )}
 
-        <div className="ap-photos__actions">
-          {/* Visually hidden, not display:none: it stays in the tab order and
-              the label carries a visible focus ring for it. */}
-          <input
-            id={`${uid}-pick`} className="ap-photos__input" type="file"
-            accept={PHOTO_ACCEPT} multiple disabled={full}
-            onChange={(ev) => { add(ev.target.files); ev.target.value = '' }}
-          />
-          <label htmlFor={`${uid}-pick`} className="ap-photos__btn" data-disabled={full || undefined}>
-            {items.length === 0 ? 'Choose photographs' : 'Add more'}
-          </label>
+        {!full && (
+          <div className="ap-photos__actions">
+            {/* Visually hidden, not display:none: it stays in the tab order
+                and the label carries a visible focus ring for it. */}
+            <input
+              id={`${uid}-pick`} className="ap-photos__input" type="file"
+              accept={PHOTO_ACCEPT} multiple={!one}
+              onChange={(ev) => { add(ev.target.files); ev.target.value = '' }}
+            />
+            <label htmlFor={`${uid}-pick`} className="ap-photos__btn">
+              {one ? 'Choose a photo' : 'Choose photographs'}
+            </label>
 
-          <input
-            id={`${uid}-shoot`} className="ap-photos__input" type="file"
-            accept={PHOTO_ACCEPT} capture="environment" disabled={full}
-            onChange={(ev) => { add(ev.target.files); ev.target.value = '' }}
-          />
-          <label
-            htmlFor={`${uid}-shoot`}
-            className="ap-photos__btn ap-photos__btn--alt"
-            data-disabled={full || undefined}
-          >
-            Take a photo
-          </label>
+            <input
+              id={`${uid}-shoot`} className="ap-photos__input" type="file"
+              accept={PHOTO_ACCEPT} capture="environment"
+              onChange={(ev) => { add(ev.target.files); ev.target.value = '' }}
+            />
+            <label htmlFor={`${uid}-shoot`} className="ap-photos__btn ap-photos__btn--alt">
+              Take a photo
+            </label>
 
-          <span className="ap-photos__count" aria-hidden="true">
-            {done} of {MAX_PHOTOS}
-          </span>
-        </div>
+            <span className="ap-photos__count">
+              JPEG, PNG, WEBP or HEIC, up to {mb(MAX_PHOTO_BYTES)}
+            </span>
+          </div>
+        )}
 
         <p className="note ap-photos__status" id={statusId} role="status">
           {announcement}
         </p>
 
-        {error && <small className="form-error" id={errorId}>{error}</small>}
-
         {/* What the server actually reads: the keys of the objects that made
-            it into the bucket, in the order shown, first one leading. */}
+            it into the bucket, in the order shown. An empty array is a fine
+            answer and the action treats it as one. */}
         <input
           type="hidden" name="photos"
           value={JSON.stringify(

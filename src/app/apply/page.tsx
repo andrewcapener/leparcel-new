@@ -192,8 +192,9 @@ export default async function Apply({
             <h1 className="majortitle in-content h1 ap-head__title">Merchant Application</h1>
             <p className="ap-head__lede">
               One form covers both tracks. Inside is consignment at one
-              register. Outside is your own tent for the day. No fee to apply,
-              and we answer either way.
+              register. Outside is a tent we set up for you, for the day, and
+              you keep everything you sell. No fee to apply, and we answer
+              either way.
             </p>
 
             <dl className="ap-glance">
