@@ -33,6 +33,7 @@ const APP_COLUMNS = {
   isMlm: applications.isMlm,
   requestedSpaceIds: applications.requestedSpaceIds,
   requestedAddons: applications.requestedAddons,
+  loadInSlots: applications.loadInSlots,
   submittedAt: applications.submittedAt,
 } as const
 

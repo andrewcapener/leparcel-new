@@ -37,6 +37,10 @@ export const shows = pgTable('shows', {
   // Load-in and take-down are prose, not dates: they move with the venue and
   // the staff edit them at /admin/show. Never hardcode them in a page.
   loadInNote: text('load_in_note').notNull().default(''),
+  // The staggered arrival slots offered on the application, comma separated,
+  // e.g. "1-3pm, 3-5pm, 5-7pm". On the Show record because the load-in window
+  // moves with the venue (CLAUDE.md rule 6) and staff edit it at /admin/show.
+  loadInSlots: text('load_in_slots').notNull().default(''),
   takedownNote: text('takedown_note').notNull().default(''),
 
   applicationsOpenAt: text('applications_open_at').notNull(),
@@ -151,6 +155,12 @@ export const applications = pgTable('applications', {
   // sale: limited add-ons (endcaps) are granted at booking, and the money
   // only becomes real on the booking.
   requestedAddons: text('requested_addons').notNull().default('[]'),
+  // Which load-in slots an indoor maker can make, as a JSON array of the
+  // slot labels on the Show record. Load-in is staggered so a hundred shops
+  // do not arrive at once; the old form asked this and ours had stopped, so
+  // staff were assigning arrival times with nothing to assign them from.
+  // Outdoor makers set up their own tent on their own day and are not asked.
+  loadInSlots: text('load_in_slots').notNull().default('[]'),
 
   category: text('category').notNull(),
   secondaryCategories: text('secondary_categories').notNull().default('[]'), // JSON

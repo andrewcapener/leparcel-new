@@ -38,6 +38,7 @@ export const SHEET_COLUMNS = [
   { key: 'track', header: 'Track' },
   { key: 'spaces', header: 'Spaces requested' },
   { key: 'addons', header: 'Add-ons requested' },
+  { key: 'loadInSlots', header: 'Set-up times' },
   { key: 'priceLow', header: 'Price low' },
   { key: 'priceHigh', header: 'Price high' },
   { key: 'madeByYou', header: 'Made by them' },
@@ -76,6 +77,7 @@ export type RowApplication = {
   isMlm: boolean
   requestedSpaceIds: string
   requestedAddons: string
+  loadInSlots: string
   submittedAt: string
 }
 
@@ -174,6 +176,9 @@ export function applicationRow(input: RowInput): SheetRow {
     track: TRACK[a.track] ?? a.track,
     spaces: spaces.join(', '),
     addons: addons.join(', '),
+    // Already labels, not ids, so they go straight through. Empty for an
+    // outdoor maker, who is never asked.
+    loadInSlots: parseList(a.loadInSlots).join(', '),
     priceLow: usd(a.priceLowCents),
     priceHigh: usd(a.priceHighCents),
     madeByYou: MADE_BY[a.madeByYou] ?? a.madeByYou,

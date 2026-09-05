@@ -216,6 +216,9 @@ export function ApplyForm({
   // The photographs, for the same reason and one more: an upload that
   // survived a rejected submit must not have to happen twice on a phone.
   const [photos, setPhotos] = useState<PhotoItem[]>([])
+  // Load-in slots an indoor maker can make. Outdoor makers set up their own
+  // tent on their own day, so the question never shows for them.
+  const [pickedSlots, setPickedSlots] = useState<string[]>([])
   const keep = (k: string) => ({ defaultValue: v[k] ?? '' })
 
   // Which step is on screen. This lives outside the <form>, so it survives
@@ -286,6 +289,8 @@ export function ApplyForm({
     (checked: boolean) => set(checked ? [...list, key] : list.filter((k) => k !== key))
 
   const visible = spaces.filter((s) => track === 'both' || s.track === track)
+  const slots = (show.loadInSlots ?? '').split(',').map((x) => x.trim()).filter(Boolean)
+  const showSlots = slots.length > 0 && track !== 'outdoor'
   // A null-track add-on is offered to everyone; the rest follow the track.
   const visibleExtras = extras.filter(
     (a) => a.track === null || track === 'both' || a.track === track,
@@ -623,6 +628,32 @@ export function ApplyForm({
                 )}
               </fieldset>
             </div>
+
+            {showSlots && (
+              <div className="column column--full">
+                <fieldset className="ap-group" aria-describedby="slots-hint">
+                  <legend className="ap-group__legend">Set-up time</legend>
+                  <p className="note" id="slots-hint">
+                    Load-in is staggered so a hundred shops are not carrying
+                    tables through one door at once. Check every slot you could
+                    make. Checking more than one helps us fit everybody in, and
+                    we confirm your time with your acceptance.
+                  </p>
+                  {slots.map((slot) => (
+                    <label key={slot} className="ap-option ap-option--tight">
+                      <input
+                        type="checkbox" name="loadInSlots" value={slot}
+                        checked={pickedSlots.includes(slot)}
+                        onChange={(ev) => toggle(pickedSlots, setPickedSlots, slot)(ev.target.checked)}
+                      />
+                      <span className="ap-option__body">
+                        <span className="ap-option__name">{slot}</span>
+                      </span>
+                    </label>
+                  ))}
+                </fieldset>
+              </div>
+            )}
 
             {visibleExtras.length > 0 && (
               <div className="column column--full">

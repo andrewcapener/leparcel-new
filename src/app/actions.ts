@@ -258,6 +258,13 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   // invent an extra, but nothing is priced here: the money becomes real on
   // the booking, where the price is snapshotted (docs/03-DATA-MODEL.md §6).
   const offered = await activeAddOns(show.id)
+  // Set-up slots, indoor only. Checked against what the Show record actually
+  // offers, so a hand-made POST cannot store a slot that does not exist.
+  const offeredSlots = (show.loadInSlots ?? '').split(',').map((x) => x.trim()).filter(Boolean)
+  const loadInSlots = fd.getAll('loadInSlots')
+    .map(String)
+    .filter((v) => offeredSlots.includes(v))
+
   const requestedAddons = fd
     .getAll('addons')
     .map(String)
@@ -362,6 +369,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   try {
     await db.insert(applications).values({
       ...row, requestedAddons: JSON.stringify(requestedAddons),
+      loadInSlots: JSON.stringify(row.track === 'outdoor' ? [] : loadInSlots),
     })
   } catch (err) {
     if (pgCode(err) !== '42703') throw err
@@ -645,6 +653,7 @@ const ShowSettingsSchema = z.object({
   hoursNote: z.string().min(1, 'Required'),
   loadInNote: z.string().max(200, 'Keep it to a line').default(''),
   takedownNote: z.string().max(200, 'Keep it to a line').default(''),
+  loadInSlots: z.string().max(200, 'Keep it to a line').default(''),
   startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   applicationsOpenAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
@@ -692,6 +701,7 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
     hoursNote: plainDashes(d.hoursNote),
     loadInNote: plainDashes(d.loadInNote),
     takedownNote: plainDashes(d.takedownNote),
+    loadInSlots: plainDashes(d.loadInSlots),
     startsOn: laWallToIso(d.startsOn),
     endsOn: laWallToIso(d.endsOn),
     applicationsOpenAt: laWallToIso(d.applicationsOpenAt),

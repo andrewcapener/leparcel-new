@@ -37,7 +37,7 @@ const application = {
   usesAiArtwork: false,
   isMlm: false,
   requestedSpaceIds: JSON.stringify(['sp-3x6', 'sp-out-sat']),
-  requestedAddons: JSON.stringify(['ENDCAP-IN', 'SHARE']),
+  loadInSlots: '[]', requestedAddons: JSON.stringify(['ENDCAP-IN', 'SHARE']),
   // Postgres hands timestamptz back in this shape: a space, not a T.
   submittedAt: '2026-09-05 01:38:42.097708+00',
 }
@@ -108,7 +108,7 @@ check('admin link', row.adminLink === 'https://mermademarket.com/admin/applicati
     application: {
       ...application,
       requestedSpaceIds: JSON.stringify(['sp-3x6', 'sp-retired']),
-      requestedAddons: JSON.stringify(['GONE']),
+      loadInSlots: '[]', requestedAddons: JSON.stringify(['GONE']),
     },
     vendor, catalog, siteUrl: 'https://x.test',
   })
@@ -156,4 +156,24 @@ check('admin link', row.adminLink === 'https://mermademarket.com/admin/applicati
 }
 
 if (failures) { console.error(`\n${failures} failing assertions`); process.exit(1) }
+/* Set-up times. Indoor makers are asked which staggered load-in slots they can
+   make, and staff build the arrival schedule from the answers, so the column
+   has to carry them in the order they were checked. */
+{
+  const slotted = applicationRow({
+    application: { ...application, loadInSlots: JSON.stringify(['1-3pm', '5-7pm']) },
+    vendor, catalog, siteUrl: 'https://mermademarket.com',
+  })
+  check('set-up times', slotted.loadInSlots === '1-3pm, 5-7pm', slotted.loadInSlots)
+  check('set-up times is a column', SHEET_HEADERS.includes('Set-up times'))
+  check('application id stays last, which the Apps Script keys on',
+    SHEET_HEADERS[SHEET_HEADERS.length - 1] === 'Application ID')
+}
+
+const empty = applicationRow({
+  application: { ...application, loadInSlots: '[]' },
+  vendor, catalog, siteUrl: 'https://mermademarket.com',
+})
+check('no set-up times is empty, not "[]"', empty.loadInSlots === '', empty.loadInSlots)
+
 console.log('sheets: row mapping holds (labels, cents, Pacific, flags, PII)')

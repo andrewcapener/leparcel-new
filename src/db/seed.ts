@@ -134,6 +134,8 @@ async function main() {
     // Prose, not dates: staff edit these at /admin/show when the venue moves.
     // Shape carried over from the old site's indoor maker rules.
     loadInNote: 'Thursday 12 November, 1-7pm, in staggered arrival slots',
+    // The three the market has actually run (Spring 2026 responses).
+    loadInSlots: '1-3pm, 3-5pm, 5-7pm',
     takedownNote: 'Sunday 15 November at 5pm sharp',
     // CONFIRMED by Drew, 25 Aug 2026: applications open Monday 7 September.
     // The window is 14 full days, confirmed by Drew on 5 Sep 2026, which puts

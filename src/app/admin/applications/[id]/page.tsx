@@ -95,6 +95,8 @@ export default async function ApplicationDetail({
 
   let requestedAddonCodes: string[] = []
   try { requestedAddonCodes = JSON.parse(app.requestedAddons) } catch {}
+  let loadInSlots: string[] = []
+  try { loadInSlots = JSON.parse(app.loadInSlots) } catch {}
   const extras = requestedAddonCodes.length
     ? (await db.query.addOns.findMany({ where: eq(addOns.showId, app.showId) }))
         .filter((a) => requestedAddonCodes.includes(a.code))
@@ -249,6 +251,13 @@ export default async function ApplicationDetail({
                   )}
                 </Row>
               ))}
+              {/* What the arrival schedule is built from. Blank for an
+                  outdoor maker, who is never asked. */}
+              {loadInSlots.length > 0 && (
+                <Row k="Set-up times" n={`${loadInSlots.length} slot${loadInSlots.length > 1 ? 's' : ''}`}>
+                  {loadInSlots.join(' · ')}
+                </Row>
+              )}
               {extras.map((a) => (
                 <Row key={a.id} k="Add-on asked for" n={usd(a.priceCents)}>
                   {a.name}

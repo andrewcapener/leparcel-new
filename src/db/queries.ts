@@ -64,7 +64,10 @@ export async function activeShow(): Promise<Show | undefined> {
     .from(shows)
     .where(eq(shows.isActive, true))
     .limit(1)
-  return row ? { ...row, loadInNote: '', takedownNote: '' } : undefined
+  // Same reasoning as loadInNote: this path runs only when the deployed code
+  // is ahead of the database, and an empty slot list simply hides the
+  // set-up time question rather than taking the form down.
+  return row ? { ...row, loadInNote: '', takedownNote: '', loadInSlots: '' } : undefined
 }
 
 let addOnsMissingUntil = 0

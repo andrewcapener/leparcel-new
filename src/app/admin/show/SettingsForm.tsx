@@ -109,6 +109,12 @@ export function SettingsForm({ show }: { show: Show }) {
           >
             <input className="inp" id="takedownNote" name="takedownNote" {...keep('takedownNote', show.takedownNote)} />
           </Field>
+          <Field
+            name="loadInSlots" label="Set-up time slots" error={e.loadInSlots}
+            hint="Comma separated, e.g. “1-3pm, 3-5pm, 5-7pm”. Indoor makers pick from these on the application and staff build the arrival schedule from the answers. Left blank, the question is not asked."
+          >
+            <input className="inp" id="loadInSlots" name="loadInSlots" {...keep('loadInSlots', show.loadInSlots)} />
+          </Field>
         </div>
       </Block>
 
