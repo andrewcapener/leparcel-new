@@ -2,13 +2,12 @@ import { eq, and, desc, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import {
-  shows, applications, vendors, spaceTypes, bookings,
+  applications, vendors, spaceTypes, bookings,
   APPLICATION_STATUSES, type ApplicationStatus,
 } from '@/db/schema'
-import { decide } from '@/app/actions'
-import { usd } from '@/lib/money'
-import { fmtDate, fmtDateTime } from '@/lib/dates'
+import { fmtDate } from '@/lib/dates'
 import Link from 'next/link'
+import { ApplicationCard } from './ApplicationCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,6 +20,20 @@ const LABEL: Record<ApplicationStatus, string> = {
  *  string. Anything we subtract from a capacity has to go through this. */
 const num = (v: number | string | null | undefined) => Number(v ?? 0)
 
+/**
+ * The jury queue, as a contact sheet.
+ *
+ * A juror works through roughly a hundred applications in a sitting and is
+ * judging one thing: the work. So the work is what the page is made of. The
+ * counting questions are answered once at the top (tiles, spaces left,
+ * category balance) and then the screen is photographs.
+ *
+ * What used to be here was a seven-column table carrying five decision pills
+ * on every row: five hundred identical buttons down the page, with the work
+ * itself reduced to two 52px thumbnails in the first column. Nothing led,
+ * nothing receded. Deciding now happens on the review screen, where the work
+ * is full size and the sticky rail already holds the decision.
+ */
 export default async function Jury({
   searchParams,
 }: {
@@ -147,139 +160,18 @@ export default async function Jury({
         </span>
       </div>
 
+      <h2 className="jr-h2" id="jr-sheet-h">
+        {LABEL[active]} · {rows.length} {rows.length === 1 ? 'application' : 'applications'}, newest first
+      </h2>
+
       {rows.length === 0 ? (
-        <p style={{ color: 'var(--ink-3)', fontSize: 'var(--t-s)' }}>Nothing in {LABEL[active]}.</p>
+        <p className="jr-empty">Nothing in {LABEL[active]}.</p>
       ) : (
-        <table className="tbl jr-q">
-          <caption className="k" style={{ textAlign: 'left', paddingBottom: 10 }}>
-            {LABEL[active]} · {rows.length} {rows.length === 1 ? 'application' : 'applications'}, newest first
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Work</th>
-              <th scope="col">Shop</th>
-              <th scope="col">Category</th>
-              <th scope="col" className="r">Prices</th>
-              <th scope="col">Flags</th>
-              <th scope="col" className="r">Score</th>
-              <th scope="col" style={{ width: 210 }}>Decision</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ app, vendor, space }) => {
-              const total =
-                (app.scoreQuality ?? 0) + (app.scoreOriginality ?? 0)
-                + (app.scoreBrand ?? 0) + (app.scoreFit ?? 0)
-              /* Curation flags only. Missing paperwork is deliberately NOT
-                 shown here: it has no bearing on whether the work is good, and
-                 putting it in front of the jury invites it to weigh against an
-                 applicant it shouldn't. Compliance is enforced on the roster,
-                 after acceptance, where the CDTFA duty actually attaches. */
-              const flags: Array<[string, boolean]> = [
-                ['MLM', app.isMlm],
-                ['AI artwork', app.usesAiArtwork],
-                ['Resells', app.madeByYou === 'curate_resell'],
-                ['Flagged vendor', vendor.isFlagged],
-              ]
-              let photos: string[] = []
-              try { photos = JSON.parse(app.photos) } catch {}
-              let extraSpaces = 0
-              try { extraSpaces = Math.max(0, JSON.parse(app.requestedSpaceIds).length - 1) } catch {}
-              return (
-                <tr key={app.id}>
-                  <td>
-                    <div className="jr-th">
-                      {photos.length === 0
-                        ? <div className="none" aria-hidden="true" />
-                        : photos.slice(0, 3).map((src) => (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img key={src} src={src} alt="" width={52} height={52} />
-                          ))}
-                    </div>
-                    {photos.length > 3 && (
-                      <div className="jr-sub">+{photos.length - 3} more</div>
-                    )}
-                  </td>
-                  <td>
-                    <Link href={`/admin/applications/${app.id}`} className="nm">
-                      {vendor.shopName}
-                    </Link>
-                    {vendor.showsAttended > 0 && (
-                      <span className="chip" style={{ marginLeft: 8 }}>
-                        Repeat · {vendor.showsAttended}
-                      </span>
-                    )}
-                    <div className="jr-sub">
-                      {vendor.contactName} · {vendor.city}, {vendor.state} ·{' '}
-                      <a href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
-                        target="_blank" rel="noreferrer" style={{ color: 'var(--accent-tx-tint)' }}>
-                        {vendor.instagram}
-                      </a>
-                    </div>
-                    <p className="jr-desc">{app.description}</p>
-                  </td>
-                  <td>
-                    {app.category}
-                    <div className="jr-sub" style={{ textTransform: 'capitalize' }}>{app.track}</div>
-                    <div className="jr-sub">
-                      {space?.label ?? '—'}{extraSpaces > 0 ? ` +${extraSpaces} more` : ''}
-                    </div>
-                  </td>
-                  <td className="r num">
-                    {usd(app.priceLowCents)}-{usd(app.priceHighCents)}
-                    <div className="jr-sub">{space ? `${usd(space.priceCents)} fee` : 'no fee yet'}</div>
-                  </td>
-                  <td>
-                    <div className="jr-chips">
-                      {flags.filter(([, on]) => on).map(([l]) => (
-                        <span key={l} className="chip" data-warn="1">{l}</span>
-                      ))}
-                      {flags.every(([, on]) => !on) && (
-                        <span style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>clear</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="r">
-                    {total ? (
-                      <>
-                        <div className="jr-tot">{total}<small>/20</small></div>
-                        <div className="jr-sub">
-                          Q{app.scoreQuality} O{app.scoreOriginality} B{app.scoreBrand} F{app.scoreFit}
-                        </div>
-                      </>
-                    ) : (
-                      <span style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>unscored</span>
-                    )}
-                    {app.decidedAt && <div className="jr-sub">{fmtDateTime(app.decidedAt)}</div>}
-                  </td>
-                  <td>
-                    <div className="jr-acts">
-                      {(['shortlist', 'accepted', 'waitlist', 'declined', 'under_review', 'new'] as const)
-                        .filter((s) => s !== app.status)
-                        .filter((s) => s !== 'new' || app.status === 'declined')
-                        .map((s) => (
-                          <form action={decide} key={s}>
-                            <input type="hidden" name="applicationId" value={app.id} />
-                            <input type="hidden" name="status" value={s} />
-                            {s === 'declined' && (
-                              <input type="hidden" name="reason"
-                                value="Category was full this season. We take one to three makers per category." />
-                            )}
-                            <button className="btn-o" type="submit">{LABEL[s]}</button>
-                          </form>
-                        ))}
-                    </div>
-                    {app.declineReason && (
-                      <p className="jr-sub" style={{ maxWidth: 210 }}>
-                        Sent: “{app.declineReason}”
-                      </p>
-                    )}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <ul className="jr-sheet" aria-labelledby="jr-sheet-h">
+          {rows.map(({ app, vendor }) => (
+            <ApplicationCard key={app.id} app={app} vendor={vendor} from={active} />
+          ))}
+        </ul>
       )}
     </div>
   )

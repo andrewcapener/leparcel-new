@@ -1041,3 +1041,112 @@
    public site's gold. Unclassed admin links were rendering gold on white. */
 .adm a { color: inherit; }
 .adm a:hover { color: var(--deep); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   jr-* · the contact sheet — /admin/jury, and the queue navigation on
+   /admin/applications/[id]. Appended only. Nothing above this line is
+   edited, including the earlier jr-* block, which still dresses the
+   stat tiles, the balance strip and the review screen.
+
+   Why a grid of cards and not a table. The jury is judging visual work
+   against a deadline, roughly a hundred applications in a sitting, so
+   the photographs are the content and everything else is a caption.
+   08-DESIGN-SYSTEM.md §8 says not to use a card where a row will do,
+   "unless there is an image" — this is that exception, and the only
+   one in the admin.
+
+   What came off the row: five decision pills, repeated on every one of
+   a hundred rows. Deciding happens on the review screen with the work
+   at full size. What is left on the card is one shortlist toggle, which
+   is triage, not a decision.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Screen-reader text. Carries the shop name into button and link names
+   that would otherwise read as a hundred identical "Shortlist"s. */
+.jr-vh{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+
+/* ── the sheet ──
+   A real list, so the count is announced and the cards are navigable as
+   items. auto-fill at 288px gives four columns at 1440 and one at 390. */
+.adm .jr-sheet{list-style:none;margin:18px 0 0;padding:0;display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(288px,1fr));gap:18px}
+@media(max-width:640px){.adm .jr-sheet{grid-template-columns:1fr;gap:14px}}
+.jr-empty{margin-top:22px;font-size:var(--t-s);color:var(--ink-3)}
+
+/* ── the card ──
+   Ruled, not shadowed: 1px line all round with the admin's 2px ink rule
+   across the top, the same weight that sits under every table header. */
+.adm .jr-card{position:relative;display:flex;flex-direction:column;background:var(--bone);
+  border:1px solid var(--line);border-top:2px solid var(--ink)}
+.adm .jr-card:hover{border-color:var(--ink)}
+/* One ring for the whole card rather than two. Both rules carry :has, so a
+   browser without it drops both and the link keeps the default outline. */
+.jr-card:has(.jr-card-lk:focus-visible){outline:3px solid var(--deep);outline-offset:2px}
+.jr-card:has(.jr-card-lk:focus-visible) .jr-card-lk{outline:0}
+
+/* ── the work ── */
+.jr-card-w{background:var(--shell);border-bottom:1px solid var(--line)}
+.jr-card-lead{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:var(--dune)}
+/* The rest of the roll, evenly divided however many there are, separated by
+   borders rather than by a coloured gap (08-DESIGN-SYSTEM.md §4). */
+.jr-card-strip{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:1px;
+  background:var(--line);border-top:1px solid var(--line)}
+.jr-card-strip img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:var(--dune)}
+.jr-card-more{display:flex;align-items:center;justify-content:center;background:var(--shell);
+  font-family:var(--font-c);font-weight:600;font-size:var(--t-lbl);letter-spacing:.06em;
+  color:var(--ink-3)}
+/* No photographs is a state, not a fault. The plate keeps its square and the
+   maker's own words fill it, which is the only thing there is to read. */
+.jr-card-none{aspect-ratio:1;display:flex;flex-direction:column;justify-content:space-between;
+  gap:12px;padding:15px}
+.adm .jr-card-none p{font-family:var(--font-g);font-size:var(--t-b);line-height:1.5;
+  color:var(--ink-2);border-left:2px solid var(--accent);padding-left:12px;
+  display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ── the caption ── */
+.jr-card-b{padding:14px 15px 12px}
+.adm .jr-card-nm{margin:0;font-family:var(--font-g);font-weight:600;font-size:var(--t-xl);
+  line-height:1.22;letter-spacing:-.004em;text-transform:none;color:var(--ink)}
+.adm .jr-card-lk{color:inherit}
+/* The name is the link; its box covers the card, so a click anywhere opens
+   the review and the accessible name is still the shop. */
+.jr-card-lk::after{content:"";position:absolute;inset:0;z-index:1}
+.adm .jr-card:hover .jr-card-lk{text-decoration:underline;text-underline-offset:3px}
+.jr-card-meta{margin-top:7px;font-family:var(--font-c);font-weight:600;font-size:var(--t-lbl);
+  letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.jr-cap{text-transform:uppercase}
+.adm .jr-card-price{margin-top:7px;font-size:var(--t-s);color:var(--ink-2)}
+.jr-card-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+
+/* ── triage, and nothing else ── */
+.jr-card-f{margin-top:auto;display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:10px 15px 12px;border-top:1px solid var(--line)}
+.jr-card-sc{font-size:var(--t-lbl);color:var(--ink-3)}
+.jr-card-sc b{font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
+/* Above the card link, and a 28px target. */
+.adm .jr-tri{position:relative;z-index:2;min-height:28px;padding:6px 13px 5px}
+/* Gold fill for a shortlisted card. Ink on gold, not white on gold: the
+   white pair in .chip[data-s="shortlist"] is 2.8:1 and this has to be read. */
+.adm .jr-tri[data-on="1"]{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+.adm .jr-tri[data-on="1"]:hover{background:var(--ink);border-color:var(--ink);color:var(--bone)}
+
+/* ── queue navigation on the review screen ──
+   A juror decides and moves on. Previous and next walk the same filtered,
+   newest-first list the sheet was showing, so the grid is somewhere you
+   start rather than somewhere you return to between decisions. */
+.jr-nav{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;
+  padding-bottom:12px;border-bottom:1px solid var(--line)}
+.adm .jr-step{display:inline-flex;align-items:baseline;gap:8px;min-height:24px;padding:2px 0;
+  font-family:var(--font-c);font-weight:600;font-size:var(--t-lbl);letter-spacing:.07em;
+  text-transform:uppercase;color:var(--ink-2)}
+.adm .jr-step:hover{color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.jr-step .who{font-family:var(--font-g);font-weight:400;font-size:var(--t-lbl);
+  letter-spacing:0;text-transform:none;color:var(--ink-3);
+  max-width:22ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jr-pos{margin-left:auto;font-size:var(--t-lbl);color:var(--ink-3)}
+.jr-onward{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+@media(max-width:700px){
+  .jr-nav{gap:6px 14px}
+  .jr-pos{margin-left:0;flex:1 1 100%}
+}

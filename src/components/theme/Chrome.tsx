@@ -80,8 +80,10 @@ function Nav({ id }: { id?: string }) {
  * is open or within sight, the bar carries that instead, because the hero
  * repeats the show dates a few hundred pixels below it.
  */
-function announcement(show: Show) {
-  const win = applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt)
+function announcement(show: Show, previewOpen = false) {
+  const win = previewOpen
+    ? 'open'
+    : applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt)
   if (win === 'open') {
     return `Applications are open until ${fmtDate(show.applicationsCloseAt, { year: undefined })}`
   }
@@ -91,7 +93,7 @@ function announcement(show: Show) {
   return `Next Show! ${fmtRange(show.startsOn, show.endsOn)} Dana Point ${show.venueName}`
 }
 
-export function AnnouncementBar({ show }: { show: Show }) {
+export function AnnouncementBar({ show, previewOpen = false }: { show: Show; previewOpen?: boolean }) {
   return (
     <div className="shopify-section shopify-section-group-header-group section-announcement-bar">
       <div
@@ -105,7 +107,7 @@ export function AnnouncementBar({ show }: { show: Show }) {
           <div className="announcement-bar__middle">
             <div className="announcement-bar__announcements">
               <div className="announcement">
-                <div className="announcement__text">{announcement(show)}</div>
+                <div className="announcement__text">{announcement(show, previewOpen)}</div>
               </div>
             </div>
           </div>

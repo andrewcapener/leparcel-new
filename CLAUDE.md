@@ -98,3 +98,13 @@ locally). The SQLite era is over; see README for env vars and seeding modes.
 ## What not to build
 
 Explicitly out of scope for v1 — do not let these creep in: year-round online storefront, vendor-to-vendor messaging, native mobile apps, multi-market/white-label, attendee accounts or loyalty, ticketing, and **any form of automated or AI-assisted jurying**. The curation judgment is the product; the tool exists to make a human faster, not to replace them.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

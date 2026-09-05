@@ -32,8 +32,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             right public behaviour and means there is no way for staff to look
             at the form in the weeks before it opens. `?preview=1` renders it
             read-only. It was reachable only by knowing to type it. */}
+        {/* Two different previews, and they are not the same thing.
+            `?preview=1` renders just the form, read only, outside the window.
+            The launch preview shows the WHOLE site as it will read once
+            applications open: the announcement bar, the home page, the live
+            form. It is a cookie on this browser only, and the server action
+            still refuses a real submission until the real window opens. */}
         <Link href="/apply?preview=1" target="_blank" rel="noreferrer">
           Preview application ↗
+        </Link>
+        <Link href="/api/preview?on=1&to=%2F" target="_blank" rel="noreferrer">
+          Preview launch ↗
         </Link>
         <span className="who">
           {/* `.chip` already carries the small uppercase pill this wants, and

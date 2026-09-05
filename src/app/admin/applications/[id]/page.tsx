@@ -4,7 +4,7 @@ import { and, asc, desc, eq, inArray } from 'drizzle-orm'
 import { db } from '@/db'
 import {
   applications, vendors, spaceTypes, addOns, bookings, auditLog,
-  type ApplicationStatus,
+  APPLICATION_STATUSES, type ApplicationStatus,
 } from '@/db/schema'
 import { decide, saveScores } from '@/app/actions'
 import { usd } from '@/lib/money'
@@ -36,15 +36,48 @@ function Row({ k, children, n }: { k: string; children: React.ReactNode; n?: Rea
 }
 
 export default async function ApplicationDetail({
-  params,
+  params, searchParams,
 }: {
   params: Promise<{ id: string }>
+  /** Which queue the juror came from, so this screen can page through the
+   *  same list. Optional: the application's own status is the fallback, so
+   *  the URL still works pasted into a browser on its own. */
+  searchParams: Promise<{ from?: string }>
 }) {
   const { id } = await params
+  const { from: fromParam } = await searchParams
   const app = await db.query.applications.findFirst({ where: eq(applications.id, id) })
   if (!app) notFound()
   const vendor = await db.query.vendors.findFirst({ where: eq(vendors.id, app.vendorId) })
   if (!vendor) notFound()
+
+  /* ── the queue, so a juror never goes back to the grid between decisions ──
+     Same filter and same order as /admin/jury: this show, one status, newest
+     first. Deciding moves the application out of that queue, so the position
+     is found by id first and by submission time second. That way "next" still
+     points at the right maker on the render right after a decision. */
+  const from = (APPLICATION_STATUSES as readonly string[]).includes(fromParam ?? '')
+    ? (fromParam as ApplicationStatus)
+    : (app.status as ApplicationStatus)
+  const queue = await db
+    .select({
+      id: applications.id,
+      submittedAt: applications.submittedAt,
+      shopName: vendors.shopName,
+    })
+    .from(applications)
+    .innerJoin(vendors, eq(applications.vendorId, vendors.id))
+    .where(and(eq(applications.showId, app.showId), eq(applications.status, from)))
+    .orderBy(desc(applications.submittedAt))
+
+  const at = queue.findIndex((r) => r.id === app.id)
+  const ms = (iso: string) => new Date(iso).getTime()
+  const after = at >= 0 ? at + 1 : queue.findIndex((r) => ms(r.submittedAt) < ms(app.submittedAt))
+  const nextAt = after === -1 ? queue.length : after
+  const prev = queue[nextAt - 1]
+  const next = queue[nextAt]
+  const backHref = `/admin/jury?status=${from}`
+  const stepHref = (row: { id: string }) => `/admin/applications/${row.id}?from=${from}`
 
   let requestedIds: string[] = []
   try { requestedIds = JSON.parse(app.requestedSpaceIds) } catch {}
@@ -89,9 +122,28 @@ export default async function ApplicationDetail({
 
   return (
     <div style={{ padding: '26px 26px 80px', maxWidth: 1240 }}>
-      <Link href="/admin/jury" className="k" style={{ color: 'var(--deep)' }}>
-        ← Jury queue
-      </Link>
+      <nav className="jr-nav" aria-label="Queue">
+        <Link href={backHref} className="jr-step">
+          <span aria-hidden="true">←</span> {LABEL[from]} queue
+        </Link>
+        {prev && (
+          <Link href={stepHref(prev)} className="jr-step">
+            <span aria-hidden="true">←</span> Previous
+            <span className="who">{prev.shopName}</span>
+          </Link>
+        )}
+        {next && (
+          <Link href={stepHref(next)} className="jr-step">
+            Next <span aria-hidden="true">→</span>
+            <span className="who">{next.shopName}</span>
+          </Link>
+        )}
+        <span className="jr-pos">
+          {at >= 0
+            ? `${at + 1} of ${queue.length} in ${LABEL[from]}`
+            : `${queue.length} left in ${LABEL[from]}`}
+        </span>
+      </nav>
 
       <header className="jr-h" style={{ margin: '14px 0 4px' }}>
         <h1>{vendor.shopName}</h1>
@@ -291,6 +343,16 @@ export default async function ApplicationDetail({
             Accepting books the primary space and sends the invoice. Declining sends the reason
             above it.
           </p>
+
+          {/* The hand is here after a decision, so the way on is here too. */}
+          {next && (
+            <div className="jr-onward">
+              <Link href={stepHref(next)} className="jr-step">
+                Next in {LABEL[from]} <span aria-hidden="true">→</span>
+                <span className="who">{next.shopName}</span>
+              </Link>
+            </div>
+          )}
         </aside>
       </div>
     </div>

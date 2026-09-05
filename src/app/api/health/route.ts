@@ -28,6 +28,15 @@ export async function GET() {
       }
     })(),
     hasResendKey: Boolean(process.env.RESEND_API_KEY),
+    // The commonest reason a form "does not work" when the key IS set:
+    // without EMAIL_FROM the sender falls back to Resend's onboarding
+    // address, which Resend only delivers to the account owner. Every
+    // message to anyone else fails, the outbox records it, and nothing on
+    // the site says so. The domain in the address is not a secret.
+    emailFrom: process.env.EMAIL_FROM ?? null,
+    emailFromIsResendSandbox:
+      !process.env.EMAIL_FROM || /onboarding@resend\.dev/.test(process.env.EMAIL_FROM),
+    contactTo: process.env.CONTACT_TO ?? 'hello@mermademarket.com (default)',
   }
   try {
     const { db, schema } = await import('@/db')
@@ -36,6 +45,21 @@ export async function GET() {
     diag.shows = await count(schema.shows)
     diag.applications = await count(schema.applications)
     diag.bookings = await count(schema.bookings)
+    // Delivery, at a glance. Counts only, no addresses and no bodies.
+    const rows = await db
+      .select({ status: schema.emailOutbox.deliveryStatus, n: sql<number>`count(*)` })
+      .from(schema.emailOutbox)
+      .groupBy(schema.emailOutbox.deliveryStatus)
+    diag.email = Object.fromEntries(rows.map((r) => [r.status ?? 'logged_only', Number(r.n)]))
+    // The most recent failure's reason, which is what actually tells you what
+    // to fix. Resend's errors name the problem and carry no personal data.
+    const [lastFail] = await db
+      .select({ detail: schema.emailOutbox.deliveryDetail, at: schema.emailOutbox.sentAt })
+      .from(schema.emailOutbox)
+      .where(sql`${schema.emailOutbox.deliveryStatus} = 'failed'`)
+      .orderBy(sql`${schema.emailOutbox.sentAt} desc`)
+      .limit(1)
+    diag.lastEmailFailure = lastFail ? { at: lastFail.at, detail: lastFail.detail } : null
   } catch (e) {
     diag.ok = false
     diag.dbError = e instanceof Error ? `${e.name}: ${e.message}` : String(e)

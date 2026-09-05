@@ -1,5 +1,7 @@
+import Link from 'next/link'
 import type { Show } from '@/db/schema'
 import { AnnouncementBar, PageHeader, PageFooter } from './Chrome'
+import { previewingOpenWindow } from '@/lib/preview'
 
 /**
  * The page shell: announcement bar, header, <main>, footer — and, crucially,
@@ -22,7 +24,7 @@ import { AnnouncementBar, PageHeader, PageFooter } from './Chrome'
  * of #content. It lives here rather than on <body> because in the App Router
  * only the root layout renders <body>, and this varies per page.
  */
-export function SiteShell({
+export async function SiteShell({
   show, template, children, transparentHeader = false,
 }: {
   show: Show
@@ -31,12 +33,26 @@ export function SiteShell({
   children: React.ReactNode
   transparentHeader?: boolean
 }) {
+  const previewing = await previewingOpenWindow()
+
   return (
     <div className={`template-${template}`}>
       {/* Theirs, and the first focusable thing on the page: a keyboard user
           should not have to tab the whole header to reach the content. */}
       <a className="skip-link visually-hidden" href="#content">Skip to content</a>
-      <AnnouncementBar show={show} />
+      {/* Impossible to mistake the launch preview for the live site. It sits
+          above everything, it says whose browser it is on, and it carries its
+          own way out. */}
+      {previewing && (
+        <div className="preview-bar" role="status">
+          <strong>Launch preview.</strong> This browser is being shown the site
+          as it will read once applications open. Nobody else sees this, and
+          the form will not accept a submission until the real window opens.
+          {' '}
+          <Link href="/api/preview?on=0">Turn it off</Link>
+        </div>
+      )}
+      <AnnouncementBar show={show} previewOpen={previewing} />
       <PageHeader transparent={transparentHeader} />
       <main id="content" role="main">
         <div className="container cf">{children}</div>
