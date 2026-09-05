@@ -1,7 +1,15 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Script from 'next/script'
+
+/** The theme scripts, in the order they depend on each other. */
+const SCRIPTS = [
+  '/theme/theme-init.js',
+  '/theme/main.js',
+  '/theme/animate-on-scroll.js',
+  '/theme/scrolling-banner.js',
+] as const
 
 /**
  * Symmetry's scripts, started after React has hydrated.
@@ -22,8 +30,35 @@ import Script from 'next/script'
  *
  * Load order matters: theme-init defines window.theme, which main.js reads;
  * scrolling-banner.js needs main.js's initLazyScript.
+ *
+ * The catch, and the reason for the replay below: main.js and
+ * animate-on-scroll.js each put a large chunk of their setup inside a
+ * `DOMContentLoaded` listener. On their site the scripts are in the document,
+ * so that event is still ahead of them. Ours load after hydration, which is
+ * long after DOMContentLoaded has fired, so those listeners were registered
+ * for an event that was never coming again and the block simply never ran.
+ * What it wires: the mobile nav toggle and `theme.openMobileNav`, the
+ * page-shade click that closes the drawer, the `tab-used` keyboard check, and
+ * smooth scrolling for in-page anchors. The hamburger did nothing on every
+ * page because of it.
+ *
+ * So once all four have loaded we re-dispatch the event. Nothing else on the
+ * page listens for it — React hydrates on its own schedule and Next does not
+ * use it — so the only handlers that run are the theme's own, which is
+ * exactly the state their page reaches at the same point in its own load.
  */
 export function ThemeBoot() {
+  const loaded = useRef(0)
+  const replayed = useRef(false)
+
+  /** Fire once every script has had its chance to register a listener. */
+  const onLoad = () => {
+    loaded.current += 1
+    if (loaded.current < SCRIPTS.length || replayed.current) return
+    replayed.current = true
+    document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true, cancelable: false }))
+  }
+
   useEffect(() => {
     // The header measures itself: whether the inline nav fits beside the logo,
     // and how tall the bar is. Their page calls these right after the header
@@ -44,10 +79,9 @@ export function ThemeBoot() {
 
   return (
     <>
-      <Script src="/theme/theme-init.js" strategy="afterInteractive" />
-      <Script src="/theme/main.js" strategy="afterInteractive" />
-      <Script src="/theme/animate-on-scroll.js" strategy="afterInteractive" />
-      <Script src="/theme/scrolling-banner.js" strategy="afterInteractive" />
+      {SCRIPTS.map((src) => (
+        <Script key={src} src={src} strategy="afterInteractive" onLoad={onLoad} onError={onLoad} />
+      ))}
     </>
   )
 }

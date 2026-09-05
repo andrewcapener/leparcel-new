@@ -1,7 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import type { Show } from '@/db/schema'
-import { fmtRange } from '@/lib/dates'
+import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
 import { img } from '@/lib/theme-img'
 
 /**
@@ -75,6 +75,22 @@ function Nav({ id }: { id?: string }) {
   )
 }
 
+/**
+ * What the bar says. Their line is the fallback; while the application window
+ * is open or within sight, the bar carries that instead, because the hero
+ * repeats the show dates a few hundred pixels below it.
+ */
+function announcement(show: Show) {
+  const win = applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt)
+  if (win === 'open') {
+    return `Applications are open until ${fmtDate(show.applicationsCloseAt, { year: undefined })}`
+  }
+  if (win === 'before') {
+    return `Applications open ${fmtDate(show.applicationsOpenAt, { year: undefined })}`
+  }
+  return `Next Show! ${fmtRange(show.startsOn, show.endsOn)} Dana Point ${show.venueName}`
+}
+
 export function AnnouncementBar({ show }: { show: Show }) {
   return (
     <div className="shopify-section shopify-section-group-header-group section-announcement-bar">
@@ -89,9 +105,7 @@ export function AnnouncementBar({ show }: { show: Show }) {
           <div className="announcement-bar__middle">
             <div className="announcement-bar__announcements">
               <div className="announcement">
-                <div className="announcement__text">
-                  Next Show! {fmtRange(show.startsOn, show.endsOn)} Dana Point {show.venueName}
-                </div>
+                <div className="announcement__text">{announcement(show)}</div>
               </div>
             </div>
           </div>
@@ -191,9 +205,12 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
           dangerouslySetInnerHTML={{ __html: DRAWER_TEMPLATE }}
         />,
       )}
-      {/* The scrim behind the open drawer, and a second way to close it. */}
-      {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-      <a href="#" className="header-shade mobile-nav-toggle" aria-label="Close" />
+      {/* Theirs: the dim over the header itself, for the desktop nav hover.
+          It is not the drawer scrim — it lives inside the header, whose
+          transform makes it the containing block, so its `height: 100%` is
+          the height of the bar. The drawer scrim is `.page-shade`, rendered
+          at page level in SiteShell. */}
+      <div className="header-shade" />
       </PageHeaderElement>
     </div>
   )

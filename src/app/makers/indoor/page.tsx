@@ -3,9 +3,10 @@ import { db } from '@/db'
 import { activeShow, activeAddOns } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
-import { PageTitle, RichText, MultiColumn } from '@/components/theme/Sections'
+import { PageTitle, RichText, FactTable, PriceTable } from '@/components/theme/Sections'
 import { indoorMerchants, fill } from '@/lib/page-html'
 import { usd } from '@/lib/money'
+import { fmtDate } from '@/lib/dates'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,34 +47,44 @@ export default async function IndoorMerchants() {
     <SiteShell show={show} template="page template-suffix-indoor-merchants">
           <PageTitle title="Indoor Merchants" />
 
-          <MultiColumn
-            id="section-indoor-pricing"
-            columns={[
-              <>
-                <p><strong>Indoor Pricing</strong></p>
-                <p><em>Space Size</em></p>
-                {indoor.map((s) => (
-                  <p key={s.id}>
-                    {s.label} {usd(s.priceCents)}
-                    {s.description && ` (${s.description.replace(/\.$/, '')})`}
-                  </p>
-                ))}
-              </>,
-              <>
-                <p><strong>ADD ON:</strong></p>
-                {extras.filter((a) => a.track === null || a.track === 'indoor').map((a) => (
-                  <p key={a.id}>
-                    {a.name}: {usd(a.priceCents)}{a.isLimited ? ' (LMTD)' : ''}
-                  </p>
-                ))}
-                <p>*NO RENTAL TABLES*</p>
-                <p>*FOOD MAKERS RETRIEVE TFF*</p>
-              </>,
+          {/* The six facts a maker needs before two thousand words of rules.
+              An audit timed the top questions against this page and found the
+              commission rate — the single most consequential number on the
+              indoor track — appeared nowhere on it. */}
+          <FactTable
+            title="The deal, in short"
+            rows={[
+              { label: 'How it works', value: 'You build your space on load-in day and go home. Our staff run the floor and the registers.' },
+              { label: 'Our commission', value: <><strong>{show.commissionBps / 100}%</strong> of what sells. You keep the rest.</> },
+              { label: 'Booth fee', value: indoor.length > 0
+                ? `${usd(Math.min(...indoor.map((x) => x.priceCents)))} to ${usd(Math.max(...indoor.map((x) => x.priceCents)))}, by space size`
+                : 'See the table below' },
+              { label: 'Load-in', value: show.loadInNote || 'Announced with your acceptance' },
+              { label: 'Take-down', value: show.takedownNote || 'Announced with your acceptance' },
+              { label: 'Getting paid', value: 'Within a week of the last day, with a statement showing every sale under your code.' },
+              { label: 'Applications close', value: fmtDate(show.applicationsCloseAt) },
             ]}
+            cta={{ href: '/apply', label: 'Apply to sell' }}
           />
 
           <RichText large={false}>
-            <div dangerouslySetInnerHTML={{ __html: html }} />
+            <PriceTable
+              caption="Indoor spaces"
+              spaces={indoor}
+              extras={extras.filter((a) => a.track === null || a.track === 'indoor')}
+            />
+          </RichText>
+
+          <RichText large={false}>
+            <div className="rte--long" dangerouslySetInnerHTML={{ __html: html }} />
+          </RichText>
+
+          {/* The rules pages had no link to the application anywhere in two
+              thousand words. A maker who reads to the bottom now has one. */}
+          <RichText cta={{ href: '/apply', label: 'Apply to sell' }}>
+            <p>
+              One application covers both tracks, and there is no fee to apply.
+            </p>
           </RichText>
         </SiteShell>
   )

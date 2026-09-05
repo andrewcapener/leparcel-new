@@ -57,3 +57,261 @@
   padding: 0.7em 1.4em;
   font-size: var(--button-text-size);
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Corrections found by measurement. Each one is here because the theme has no
+   class for it or because the theme's own rule loses a specificity fight.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* The theme's `.account-form label { display: block }` is (0,1,1) and beats
+   `.check-option` at (0,1,0), so the flex row above never applied: the 20px
+   checkbox rendered on top of the first letter of every space label. Loading
+   later does not help — specificity is resolved before order. */
+.account-form .check-option { display: flex; }
+
+/* Symmetry suppresses focus rings with `.js body:not(.tab-used) *:focus`, and
+   restores them from its own JS on the first Tab. We render <html class="js">
+   so that rule is permanently armed and nothing ever adds `tab-used`, which
+   left the site with no visible focus anywhere — including every field of the
+   application form. :focus-visible is the better mechanism anyway: it leaves
+   the mouse experience untouched. WCAG 2.2 SC 2.4.7.
+
+   The selector has to match their specificity (0,3,1) to win, which is why it
+   is not simply `:focus-visible`. */
+.js body:not(.tab-used) *:focus-visible,
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Their gold is 2.75:1 on white, so every inline link on the site failed AA.
+   The brand colour is untouched where it is a field — the announcement bar,
+   button hovers on dark — and only text links take this darker gold, which is
+   4.9:1 and the same colour family. */
+:root { --link-color: 143 106 46; }
+
+/* The footer was #746767 on #C5B9B9 — 2.84:1, including its 12px nav. */
+:root { --foot-text-aa: #4E4444; }
+.section-footer,
+.section-footer .rte,
+.section-footer a { color: var(--foot-text-aa); }
+
+/* Tap targets under 24×24 (WCAG 2.2 SC 2.5.8). The padding is invisible: it
+   expands the hit box without moving anything. */
+.section-footer__lower-menu__list a { display: inline-block; padding: 6px 0; }
+.social__link { min-width: 24px; min-height: 24px; }
+.check-option input[type="checkbox"] { width: 24px; height: 24px; }
+.account-form select { min-height: 44px; }
+
+/* Long headings over a narrow measure orphan their last word. Two properties
+   fix most of it; both degrade to nothing where unsupported. */
+.majortitle, .text-overlay__title, .collapsible-tabs__heading { text-wrap: balance; }
+.rte p { text-wrap: pretty; }
+
+/* Their scrim behind hero type starts at 16% black, which is a tint. Measured
+   against the actual photographs it left white text at 1.6-1.9:1, worst of
+   all on the home page's date and venue line — the single most important
+   string on the site, at 15px, above the fold on a phone. This is the theme's
+   own radial-gradient mechanism, turned up until the type passes.
+   docs/08-DESIGN-SYSTEM.md §3 asks for exactly this. */
+:root { --image-overlay-shadow-start: rgb(0 0 0 / 0.62); }
+
+/* Their radial is sized to the text block, so a wide heading runs out past
+   its falloff and an 84px H1 on a bright photograph measured 1.8:1. This
+   scrims the image instead, centre-weighted so the photograph keeps its
+   brightness at the edges where no type sits. Applies to the hero too, which
+   on the live site has no scrim at all because they play dark footage behind
+   it — we show the poster on a phone, for reduced motion, and whenever the
+   embed is blocked, and that frame is bright. */
+.image-overlay--bg-full .image-overlay__image::after,
+.image-overlay--bg-shadow .image-overlay__image::after,
+.image-overlay--bg-full .height__image::after,
+.image-overlay--bg-shadow .height__image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 90% 80% at 50% 50%,
+    rgb(0 0 0 / 0.5) 0%,
+    rgb(0 0 0 / 0.42) 55%,
+    rgb(0 0 0 / 0.2) 100%
+  );
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Typography: give the heading scale somewhere to go.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Symmetry derives every heading from two tokens:
+     --font-scale = (larger-text-size − base-text-size) × 0.16
+     h1 = larger    h2 = 5×scale + base    h3 = 4×scale + base   … h6 = 1×
+   Their shop set larger to 34px, which makes the scale 3.04px and puts h1
+   through h3 inside a 6.8px band — all Oswald 600 uppercase, so the levels
+   were indistinguishable. At 390px the step was under 2px.
+
+   Raising the one token is how this theme is meant to be tuned, and it is
+   what the design system doc asks for: "the dynamic range is the point…
+   when the range flattens, the page reads underwhelming no matter how good
+   the palette is." 56/36 gives a 1.17 step and a 3.7× range.
+
+   The banner headings are unaffected: those carry their own per-section
+   font-size, so the hero stays at their 32/58.8/84. */
+:root { --larger-text-size: 56px; --larger-mobile-text-size: 36px; }
+
+/* Oswald at 56px needs less leading than at 34, and uppercase needs less
+   still. Their 1.2 is right for a small head and loose for a large one. */
+h1, .h1 { line-height: 1.06; }
+h2, .h2 { line-height: 1.1; }
+h3, .h3 { line-height: 1.15; }
+
+/* The third channel the theme already ships and barely uses: a small tracked
+   eyebrow. A kicker above a large head is a hierarchy level that costs no
+   size at all. */
+.subheading { color: rgb(var(--text-color) / 0.75); }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Long-form: the maker rules are 2,300 words each.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Their paragraphs sat 15px apart on a 24px leading — 0.63 of a line, so a
+   paragraph break read as weaker than a line wrap — and section heads got
+   only twice that. The ratio, not the absolute value, is what made the page
+   one slab. This takes it to roughly 4:1. */
+.rte p { margin-bottom: 1.15em; }
+.section-rich-text .rte h2,
+.section-rich-text .rte h1 { margin-top: 2.2em; }
+.section-rich-text .rte h3 { margin-top: 1.8em; }
+
+/* A reference page a maker reads twice wants a ruler on the left. `.rte--long`
+   is ours, applied by the pages that carry the rules. */
+.rte--long, .rte--long p, .rte--long li, .rte--long h1,
+.rte--long h2, .rte--long h3, .rte--long ul { text-align: start; }
+.rte--long ul { padding-left: 1.2em; }
+.rte--long li { margin-bottom: 0.6em; }
+
+/* 720px at 15px is 96 characters a line, about double a comfortable measure.
+   Narrowing the container beats enlarging the type, which would be the more
+   visible departure. */
+.section-rich-text .container--reading-width { --reading-container-width: 620px; }
+
+/* Money reads as a column, not as prose. */
+.num, td.num, .price-table td:last-child { font-variant-numeric: tabular-nums; }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Information display: the shapes the content actually is.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* The facts block above the maker rules. A definition list, ruled, with the
+   label quiet and small and the value carrying the weight. */
+.fact-table { margin: 0; }
+.fact-table__row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 13rem) 1fr;
+  gap: 0 1.5rem;
+  align-items: baseline;
+  padding: 0.85em 0;
+  border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+  text-align: start;
+}
+.fact-table__row:last-child {
+  border-bottom: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+}
+.fact-table dt {
+  margin: 0;
+  font-family: var(--nav-font-family);
+  font-weight: var(--nav-font-weight);
+  font-size: var(--smaller-text-size-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+}
+.fact-table dd {
+  margin: 0;
+  font-size: var(--base-text-size);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.fact-table dd strong { font-weight: 700; }
+@media (max-width: 600px) {
+  .fact-table__row { grid-template-columns: 1fr; gap: 0.3em; padding: 0.75em 0; }
+}
+
+/* The price table. The theme already styles th/td; this only sets the widths,
+   ranges the money right, and keeps the figures in a column. */
+.price-table table { width: 100%; margin: 0; }
+.price-table caption {
+  text-align: start;
+  padding-bottom: 0.6em;
+  font-family: var(--nav-font-family);
+  font-size: var(--smaller-text-size-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+}
+.price-table th, .price-table td { text-align: start; vertical-align: baseline; }
+.price-table th[scope="row"] { font-weight: 600; white-space: nowrap; }
+.price-table td.num, .price-table th.num {
+  text-align: end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.price-table td:nth-child(2) { color: rgb(var(--text-color) / 0.8); }
+.price-table__group {
+  padding-top: 1.4em !important;
+  font-family: var(--nav-font-family);
+  font-size: var(--smaller-text-size-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+  font-weight: 600;
+}
+@media (max-width: 600px) {
+  .price-table td:nth-child(2) { display: none; }   /* the blurb, not the price */
+}
+
+/* Stat tiles: the number carries, the label recedes. This is the cheapest
+   place on the site to show the range the heading scale now has. */
+.stat__value {
+  font-family: var(--heading-font-family);
+  font-weight: var(--heading-font-weight);
+  font-size: clamp(2.75rem, 6vw, 4.5rem);
+  line-height: 1;
+  color: rgb(var(--heading-color));
+  font-variant-numeric: tabular-nums;
+}
+.stat__label {
+  margin-top: 0.5em;
+  font-family: var(--nav-font-family);
+  font-weight: var(--nav-font-weight);
+  font-size: var(--smaller-text-size-1);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+}
+
+/* A group label belongs above its group with a rule under it, not floating
+   after the row it was meant to introduce. */
+.merchant-group__heading {
+  margin: 0 0 0.2em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+  text-align: start;
+}
+.merchant-group + .merchant-group { margin-top: 1.5rem; }
+
+/* The last two undersized targets that are not inline in a sentence. Links
+   inside prose are exempt under SC 2.5.8's Inline exception; these are not —
+   they sit on their own in a row. */
+.copyright a,
+.pagination-row a { display: inline-block; padding: 6px 0; }
+
+/* The apply page outside the application window. Their `signup-form` is
+   built for the footer's dark column and stretches to it; here it sits in a
+   reading-width block on white, so it is held to the width of the sentence
+   above it and centred under it. */
+.apply-signup { margin-top: 1.6em; }
+.apply-signup .signup-form { max-width: 420px; margin-inline: auto; }
+.apply-signup .signup-form__email { width: 100%; }

@@ -99,7 +99,10 @@ export async function subscribe(_prev: FormState, fd: FormData): Promise<FormSta
   } catch {
     // already subscribed — same success message, never leak list membership
   }
-  return { ok: true, message: 'You’re on the list. We’ll write when the roster is set.' }
+  // One form, two places. The footer's line is about the show; the apply
+  // page's is about the application window opening. The confirmation has to
+  // be true in both, so it promises neither specifically.
+  return { ok: true, message: 'You’re on the list. We’ll write when there’s news.' }
 }
 
 /* ═══════════════════════ contact ═══════════════════════ */

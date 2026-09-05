@@ -4,7 +4,7 @@ import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
-import { PageTitle, SubheadingSection, LogoGrid, RichText } from '@/components/theme/Sections'
+import { PageTitle, LogoGrid, RichText } from '@/components/theme/Sections'
 import { fmtDate } from '@/lib/dates'
 
 export const dynamic = 'force-dynamic'
@@ -80,19 +80,29 @@ export default async function Merchants() {
             </RichText>
           ) : (
             <>
-              <SubheadingSection>
-                Just below are the makers that are inside with us at Mermade.. all
-                3 days, they don&#39;t change, we restock for them! But keep
-                scrolling and you will find the makers that are showcasing
-                &quot;outside&quot; and a lot of them change each day. More reason
-                to shop all 3 days with us!
-              </SubheadingSection>
+              {/* Their page sets this as a tracked uppercase eyebrow: 267
+                  characters of body copy in a label setting, seven lines on a
+                  phone. Tracked uppercase is for labels. */}
+              <RichText large={false}>
+                <p>
+                  Just below are the makers that are inside with us at Mermade,
+                  all 3 days. They don&#39;t change, we restock for them. Keep
+                  scrolling and you will find the makers showcasing outside, and
+                  a lot of them change each day. More reason to shop all 3 days
+                  with us.
+                </p>
+              </RichText>
 
-              {groups.map((g, i) => (
-                <div key={g.heading}>
-                  {g.headed && <SubheadingSection>{g.heading}</SubheadingSection>}
+              {groups.map((g) => (
+                <div className="merchant-group" key={g.heading}>
+                  {/* Above its own group, not below the one before it. */}
+                  {g.headed && (
+                    <div className="container">
+                      <h2 className="merchant-group__heading subheading">{g.heading}</h2>
+                    </div>
+                  )}
                   <LogoGrid
-                    id={`section-merchants-${i}`}
+                    id={`section-merchants-${g.heading.replace(/\W+/g, '-').toLowerCase()}`}
                     cards={g.rows.map((m) => ({ name: m.shopName, href: linkFor(m) }))}
                   />
                 </div>

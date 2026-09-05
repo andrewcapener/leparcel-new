@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { img } from '@/lib/theme-img'
+import { usd } from '@/lib/money'
 
 /**
  * The Symmetry sections mermademarket.com is built from, as React.
@@ -124,8 +125,10 @@ export function VideoBanner({
         <div className="height--fixed image-overlay image-overlay--bg-full">
           <div className="image-overlay__image height__image">
             {video && <BackgroundVideo youtubeId={video} />}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img(poster)} alt="" sizes="100vw" className="theme-img" />
+            {poster && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={img(poster)} alt="" sizes="100vw" className="theme-img" />
+            )}
           </div>
           <div className="text-overlay text-overlay--for-banner text-overlay--v-center text-overlay--h-center image-overlay__over">
             <div className="text-overlay__inner">
@@ -161,7 +164,13 @@ import { BackgroundVideo } from './BackgroundVideo'
 export function VideoBand({
   id, poster, video, heightMobile = 480, heightDesktop = 580,
 }: {
-  id: string; poster: string; video?: string; heightMobile?: number; heightDesktop?: number
+  id: string
+  /** Optional, and their own band has none: it is video only. Pass one only
+      where the section is a still. */
+  poster?: string
+  video?: string
+  heightMobile?: number
+  heightDesktop?: number
 }) {
   return (
     <div className="shopify-section section-background-video">
@@ -173,8 +182,10 @@ export function VideoBand({
         <div className="height--fixed image-overlay image-overlay--bg-full image-overlay--bg-shadow">
           <div className="image-overlay__image height__image">
             {video && <BackgroundVideo youtubeId={video} />}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img(poster)} alt="" sizes="100vw" className="theme-img" />
+            {poster && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={img(poster)} alt="" sizes="100vw" className="theme-img" />
+            )}
           </div>
         </div>
       </div>
@@ -243,13 +254,16 @@ export function RichText({
 
 /** `section-map` — text on one side, a photograph on the other. */
 export function MapSection({
-  id, title, children, directionsTo, image,
+  id, title, children, directionsTo, image, map,
 }: {
   id: string
   title: React.ReactNode
   children: React.ReactNode
   directionsTo: string
   image: string
+  /** The third column. Their section is text · feature · map; without it the
+      grid still reserves the column and the band ends in a blank third. */
+  map: string
 }) {
   return (
     <div className="shopify-section section-map">
@@ -278,6 +292,18 @@ export function MapSection({
               <div className="map-section__feature-image img-fill">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={img(image)} alt="" loading="lazy" sizes="50vw" className="theme-img" />
+              </div>
+            </div>
+            <div className="map-section__content map-section__map">
+              <div className="map-section__map-image img-fill">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img(map)}
+                  alt=""
+                  loading="lazy"
+                  sizes="(min-width: 1600px) 800px, (min-width: 768px) 50vw, 100vw"
+                  className="theme-img"
+                />
               </div>
             </div>
           </div>
@@ -666,4 +692,124 @@ function Wrap({ href, children }: { href?: string | null; children: React.ReactN
   return external
     ? <a href={href} target="_blank" rel="noreferrer">{children}</a>
     : <Link href={href}>{children}</Link>
+}
+
+export type FactRow = { label: string; value: React.ReactNode }
+
+/**
+ * The facts a maker needs before reading two thousand words of rules.
+ *
+ * An audit timed the top six questions against /makers/indoor and found two
+ * answerable: the commission rate appeared nowhere on the page at all, and
+ * "we pay within 1 week" was a clause in the middle of the opening paragraph.
+ * This puts them in one block above the prose, as a definition list — the
+ * shape the content actually is — with the money in tabular numerals so the
+ * figures line up.
+ *
+ * The rules below it are unchanged. This is a summary, not a replacement.
+ */
+export function FactTable({
+  id, title, rows, cta,
+}: {
+  id?: string
+  title?: string
+  rows: FactRow[]
+  /** `external` renders a plain anchor, for routes that are a download. */
+  cta?: { href: string; label: string; external?: boolean }
+}) {
+  return (
+    <div className="shopify-section section-rich-text" id={id}>
+      <div className="fully-spaced-row--medium" data-cc-animate="">
+        <div className="container container--reading-width">
+          {title && <div className="subheading subheading--over lightish-spaced-row-above">{title}</div>}
+          <dl className="fact-table">
+            {rows.map((r) => (
+              <div className="fact-table__row" key={r.label}>
+                <dt>{r.label}</dt>
+                <dd>{r.value}</dd>
+              </div>
+            ))}
+          </dl>
+          {cta && (
+            <div className="lightly-spaced-row button-row">
+              {cta.external
+                ? <a className="btn btn--primary button-row__btn" href={cta.href}>{cta.label}</a>
+                : <Link className="btn btn--primary button-row__btn" href={cta.href}>{cta.label}</Link>}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * One price list, used by /apply and both maker rules pages, replacing three
+ * divergent renderings of the same eight spaces. A real table, because the
+ * theme already styles `th` and `td` properly and has never used it.
+ */
+export function PriceTable({
+  spaces, extras, caption,
+}: {
+  spaces: Array<{ id: string; label: string; description: string; priceCents: number }>
+  extras?: Array<{ id: string; name: string; description: string; priceCents: number; isLimited: boolean }>
+  caption?: string
+}) {
+  return (
+    <div className="rte price-table">
+      <table>
+        {caption && <caption>{caption}</caption>}
+        <thead>
+          <tr><th scope="col">Space</th><th scope="col">What it suits</th><th scope="col" className="num">Price</th></tr>
+        </thead>
+        <tbody>
+          {spaces.map((s) => (
+            <tr key={s.id}>
+              <th scope="row">{s.label}</th>
+              <td>{s.description}</td>
+              <td className="num">{usd(s.priceCents)}</td>
+            </tr>
+          ))}
+        </tbody>
+        {extras && extras.length > 0 && (
+          <tbody>
+            <tr><th scope="row" colSpan={3} className="price-table__group">Add-ons</th></tr>
+            {extras.map((a) => (
+              <tr key={a.id}>
+                <th scope="row">{a.name}</th>
+                <td>{a.description}{a.isLimited ? ' (limited)' : ''}</td>
+                <td className="num">{usd(a.priceCents)}</td>
+              </tr>
+            ))}
+          </tbody>
+        )}
+      </table>
+    </div>
+  )
+}
+
+/**
+ * `section-multi-column` as stat tiles. A stat has exactly two levels and the
+ * whole point is the contrast between them; their page ran "6K REPEAT SHOW
+ * ATTENDEES" as one uniform 27px string, which throws away the only
+ * typographic move the component has.
+ */
+export function StatRow({ id, stats }: { id: string; stats: Array<{ value: string; label: string }> }) {
+  return (
+    <div className="shopify-section section-multi-column">
+      <div id={id} className="fully-spaced-row--medium">
+        <div className="container">
+          <div className="flexible-layout flexible-layout--variable-columns align-ltr-center">
+            {stats.map((s, i) => (
+              <div className="column text-column fade-in-up stat" key={s.label}
+                data-cc-animate="" data-cc-animate-delay={`${0.15 * (i + 1)}s`}>
+                <div className="stat__value">{s.value}</div>
+                <div className="stat__label">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
-import { PageTitle, RichText, RichTextBlocks } from '@/components/theme/Sections'
+import { PageTitle, RichText, FactTable } from '@/components/theme/Sections'
 import { bookends, extrasFor, splitDay } from '@/lib/schedule'
 
 export const dynamic = 'force-dynamic'
@@ -36,44 +36,78 @@ export default async function Schedule() {
             </p>
           </RichText>
 
-          <RichTextBlocks
-            blocks={days.map((row) => {
-              const { day, hours } = splitDay(row)
-              const { opens, closes } = bookends(hours)
-              const x = extrasFor(day)
-              const nothingBooked = !x || (!x.foodTruck && x.allDay.length === 0 && x.music.length === 0)
-              return {
-                title: `${day} / ${hours}`,
-                body: (
-                  <>
-                    <p>
-                      <strong>{opens} </strong>Inside &amp; Outdoor Market Opens{' '}
-                      <Link href="/merchants">(see maker line up here)</Link>
-                    </p>
-                    {x?.foodTruck && <p><strong>Food Truck: </strong>{x.foodTruck}</p>}
-                    {x && x.allDay.length > 0 && (
-                      <p><strong>{opens}</strong> - <strong>ALL DAY</strong> {x.allDay.join(' + ')}</p>
-                    )}
-                    {x && x.music.length > 0 && (
-                      <>
-                        <h2><strong>Live music</strong>: </h2>
-                        {x.music.map((m) => (
-                          <p key={`${m.time}${m.what}`}><strong>{m.time} </strong>{m.what}</p>
-                        ))}
-                      </>
-                    )}
-                    {nothingBooked && (
-                      <p>
-                        The live music, the food trucks and the rest of the day go
-                        up about a week before the show. The list hears first.
-                      </p>
-                    )}
-                    <h1><strong>{closes}:</strong> Market Closes</h1>
-                  </>
-                ),
-              }
-            })}
+          {/* A timetable, not centred prose. Times range right in tabular
+              numerals so a shopper can scan the left edge for "when does it
+              open"; the closing time is a row, not a heading, because it is
+              data inside the day rather than a section of its own. */}
+          {days.map((row) => {
+            const { day, hours } = splitDay(row)
+            const { opens, closes } = bookends(hours)
+            const x = extrasFor(day)
+            const nothingBooked = !x || (!x.foodTruck && x.allDay.length === 0 && x.music.length === 0)
+            return (
+              <div className="shopify-section section-rich-text" key={row}>
+                <div className="fully-spaced-row--medium" data-cc-animate="">
+                  <div className="container container--reading-width">
+                    <h2 className="majortitle in-content">{day}</h2>
+                    <div className="rte price-table">
+                      <table>
+                        <caption>{hours}</caption>
+                        <tbody>
+                          <tr>
+                            <th scope="row" className="num">{opens}</th>
+                            <td>
+                              Inside &amp; outdoor market opens.{' '}
+                              <Link href="/merchants">See the maker line up</Link>.
+                            </td>
+                          </tr>
+                          {x?.foodTruck && (
+                            <tr><th scope="row">Food truck</th><td>{x.foodTruck}</td></tr>
+                          )}
+                          {x && x.allDay.length > 0 && (
+                            <tr><th scope="row" className="num">All day</th><td>{x.allDay.join(' · ')}</td></tr>
+                          )}
+                          {x?.music.map((m) => (
+                            <tr key={`${m.time}${m.what}`}>
+                              <th scope="row" className="num">{m.time}</th><td>{m.what}</td>
+                            </tr>
+                          ))}
+                          {nothingBooked && (
+                            <tr>
+                              <th scope="row">Music &amp; food</th>
+                              <td>
+                                The live music, the food trucks and the rest of the
+                                day go up about a week before the show. The list
+                                hears first.
+                              </td>
+                            </tr>
+                          )}
+                          <tr><th scope="row" className="num">{closes}</th><td>Market closes.</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* The most under-served content on a market site, per
+              docs/08-DESIGN-SYSTEM.md §6: the practical questions that decide
+              whether someone comes. None of it was anywhere on the site. */}
+          <FactTable
+            title="Before you come"
+            rows={[
+              { label: 'Admission', value: 'Free. No ticket, no line.' },
+              { label: 'Parking', value: 'Free lot on site, plus street parking on San Juan and Del Prado. It fills by late morning on Saturday.' },
+              { label: 'Strollers', value: 'Yes. A single stroller or a carrier is easiest in the morning crowd.' },
+              { label: 'Dogs', value: 'Well-mannered dogs on leash are welcome. Keep them close and pick up after them.' },
+              { label: 'How it works inside', value: 'Grab a basket, shop the whole room, pay once at the front.' },
+              { label: 'Coming twice', value: 'The outdoor tents change every day, so Saturday is a different market from Friday.' },
+            ]}
+            cta={{ href: `/api/calendar/${show.slug}`, label: 'Add to calendar', external: true }}
           />
+
         </SiteShell>
   )
 }

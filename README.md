@@ -18,6 +18,7 @@ Environment variables:
 | `ADMIN_PASSWORD` | in production | Gates every `/admin` page behind `/admin/login`. Unset in production, admin returns 503. |
 | `RESEND_API_KEY` | to send email | Without it, mail is only written to the outbox table. |
 | `EMAIL_FROM` | with Resend | e.g. `Mermade Market <hello@mermademarket.com>` (a domain verified in Resend). |
+| `CONTACT_TO` | no | Where the contact and collaborate forms deliver. Defaults to `hello@mermademarket.com`. |
 
 Seeding: `SEED_MODE=show npm run db:seed` seeds only the show and prices (production);
 the default seeds 30 demo applicants too. A non-empty database is never wiped unless
@@ -49,6 +50,13 @@ the default seeds 30 demo applicants too. A non-empty database is never wiped un
 checklists.** None of them are needed until the November show. Applications
 open in weeks, so this slice is the one that has a date on it.
 
+The vendor portal is the next piece of work and is designed but not built:
+magic-link login bound to the vendor row, booth-fee payment, and the
+compliance checklist. Two decisions block it — the payment window is 48h on
+the Show record and 36h in the vendor agreement, and payouts are manual
+(Venmo/Zelle/check) so Stripe Connect onboarding is probably spring work, not
+November's.
+
 Auth on `/admin` is a shared staff password (`ADMIN_PASSWORD`), interim until
 Supabase Auth (magic link for vendors, password + TOTP for staff) lands.
 
@@ -64,10 +72,11 @@ Supabase Auth (magic link for vendors, password + TOTP for staff) lands.
   callback.
 - **`src/lib/content.ts`** holds the editable copy that becomes the content
   admin. Nothing dated, priced, or counted lives there — that's the Show record.
-- Two things in this prototype are flagged in the UI as **unverified**: the
-  archive rows and the founder photograph. Both are placeholders. See
-  `09-CONTENT-AUDIT.md` §5 — one soft number inverts the whole institutional
-  effect.
+- **No unsourced numbers ship.** The archive band and the founder letter that
+  carried invented figures were removed with the theme port; the placeholders
+  they held are gone with them. `src/lib/content.ts` still gates the press
+  quote and the testimonials on the same rule — they render only when someone
+  supplies real ones. See `09-CONTENT-AUDIT.md` §5.
 
 ## Layout
 
@@ -80,18 +89,63 @@ src/
     api/calendar/       .ics generation
     actions.ts          every server action; all writes go through here
   components/
-    Photo.tsx           the film pipeline, shipped once
     Wordmark.tsx        the real mark, as inline SVG
-    site.tsx            masthead + footer, driven by the Show record
+    theme/              their Symmetry sections, as React (see below)
   db/
     schema.ts           the subset of 03-DATA-MODEL.md this slice needs
-    seed.ts             1 show, 5 space types, 30 applicants, 10 bookings
+    seed.ts             1 show, 10 space types, 4 add-ons, 30 applicants
   lib/
     money.ts            integer cents; the only place commission is computed
     money.test.ts       the property test CLAUDE.md rule 2 requires
     dates.ts            America/Los_Angeles, everywhere
     content.ts          editable copy
+    page-html.ts        their long editorial pages, as HTML with {{tokens}}
+    journal.ts          their twelve articles, bodies and all
+    lookbook.ts         their two lookbooks, photo paired to caption
+    theme-img.ts        the vendored image manifest
+public/
+  theme/                mermademarket.com's own front end, vendored
 ```
+
+## The public site is their theme, vendored
+
+`public/theme/` holds mermademarket.com's compiled Shopify **Symmetry**
+stylesheet, the per-shop settings block that carries their colours and type
+scale, their two faces (Figtree and Oswald) as woff2, their `main.js` /
+`animate-on-scroll.js` / `scrolling-banner.js`, and every photograph and logo
+from their CDN. The pages in `src/app` compose `src/components/theme/*`, which
+emit **their** markup and class names; their stylesheet does the styling.
+
+Four things there look arbitrary and are load-bearing:
+
+- **The template class.** `SiteShell` puts `template-index` /
+  `template-page` / `template-article` on a wrapper, because Symmetry's
+  full-bleed layout is keyed off the class Shopify normally puts on `<body>`.
+  Without it every section is inset and pushed down by 50px.
+- **`data-cc-animate`.** Any element carrying `fade-in-up` needs it, or their
+  own CSS holds it at `opacity: 0` for ever.
+- **Script timing.** The theme scripts load at `afterInteractive`
+  (`ThemeBoot`), not during parse. They mutate DOM React rendered on the
+  server; running them before hydration makes React throw and re-render,
+  which wipes everything they just set.
+- **The replayed `DOMContentLoaded`.** Because of that timing, the scripts
+  arrive after the real event has fired, and `main.js` keeps a large block of
+  its setup inside a `DOMContentLoaded` listener — the mobile nav toggle and
+  `theme.openMobileNav`, the scrim that closes the drawer, the `tab-used`
+  keyboard check, in-page smooth scrolling. Registered for an event that was
+  never coming again, none of it ran; the hamburger did nothing on every page.
+  `ThemeBoot` re-dispatches the event once all four scripts have loaded.
+  Nothing else on the page listens for it.
+
+Their prose — the maker rules, the application FAQ, the journal — is checked
+in as HTML rather than reworded. Everything dated, priced or counted in it is
+a `{{token}}` filled from the Show record at render time, so `/admin/show`
+stays the only place those change.
+
+`src/app/globals.css` is the **admin** stylesheet now, imported by
+`src/app/admin/layout.tsx` so it loads after the theme and wins inside
+`/admin`. `public/theme/local.css` holds the short list of things our markup
+needs that Symmetry has no class for.
 
 ## Deploying
 

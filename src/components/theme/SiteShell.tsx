@@ -42,6 +42,29 @@ export function SiteShell({
         <div className="container cf">{children}</div>
       </main>
       <PageFooter show={show} />
+      {/* Their drawer scrim. It has to sit here, at page level, rather than
+          inside the header: it is `position: fixed` with `height: 100%`, and
+          the header carries a transform, which would make the header its
+          containing block and clip it to the height of the bar. Two rules
+          depend on that placement —
+
+            .reveal-mobile-nav .page-shade { height:100%; opacity:1;
+                                             pointer-events:auto }
+
+          dims the page while the drawer is open, and main.js binds a click on
+          it to close the drawer. The header's own `.header-shade` cannot do
+          this job: a transparent header zeroes its opacity, which is why the
+          scrim appeared everywhere except the home page.
+
+          It carries `mobile-nav-toggle` as well, which theirs does not.
+          main.js binds the scrim's own close by reference, once, inside the
+          DOMContentLoaded block; a client-side navigation can remount this
+          node and leave the new one unbound. The toggle handler is delegated
+          on document, so it survives. The two are idempotent — both end with
+          the drawer closed. The scrim is `pointer-events: none` unless the
+          drawer is open, so it is inert the rest of the time. */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+      <div className="page-shade mobile-nav-toggle" aria-hidden="true" />
     </div>
   )
 }

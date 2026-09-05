@@ -110,6 +110,19 @@ export const newsletter = {
 export const heroVideoId = 'caKMa9MVyEo'
 
 /**
+ * The clip in the home page's second background-video band. This is the one
+ * their live page runs there ("Saturated Mermade Web"), so the band matches
+ * theirs frame for frame.
+ *
+ * On the hero we differ, and deliberately. Their hero is not a YouTube embed
+ * at all: it is a 53MB 1080p mp4 served from their Shopify CDN, which is the
+ * thing this build replaces. The id above is their own Fall 2025 reel, the
+ * closest stand-in, and it costs the page nothing. Swap it for a hosted clip
+ * whenever there is a compressed file to host.
+ */
+export const bandVideoId = 'W5iWhyOzjYI'
+
+/**
  * Shopper quotes for the testimonials row. EMPTY ON PURPOSE.
  *
  * The old site's testimonials section still carries the theme's demo text

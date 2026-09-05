@@ -1,6 +1,6 @@
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
-import { Banner, RichText, MultiColumn, ScrollingBanner } from '@/components/theme/Sections'
+import { Banner, RichText, MultiColumn, ScrollingBanner, StatRow } from '@/components/theme/Sections'
 import { ContactFormSection } from '@/components/theme/ContactFormSection'
 import * as C from '@/lib/content'
 
@@ -70,17 +70,21 @@ export default async function Collaborate() {
             </p>
           </RichText>
 
-          <MultiColumn
+          <StatRow
             id="section-merstats-1"
-            align="center"
-            titles={['6k Repeat Show Attendees', '17K (real) Followers on IG', '11+ Years Deep']}
-            columns={[null, null, null]}
+            stats={[
+              { value: '6k', label: 'Repeat show attendees' },
+              { value: '17K', label: 'Followers on Instagram' },
+              { value: '11+', label: 'Years deep' },
+            ]}
           />
-          <MultiColumn
+          <StatRow
             id="section-merstats-2"
-            align="center"
-            titles={['100+ Merchants Per SHOW', '22 Past Shows', '10,000 email subscribers']}
-            columns={[null, null, null]}
+            stats={[
+              { value: '100+', label: 'Merchants per show' },
+              { value: '22', label: 'Past shows' },
+              { value: '10,000', label: 'Email subscribers' },
+            ]}
           />
 
           <RichText title="Sponsorship Opportunities">

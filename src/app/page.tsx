@@ -39,8 +39,11 @@ export default async function Home() {
             title={<>SHOP SMALL <br /> MAKERS MARKET</>}
             cta={{ href: '/apply', label: 'APPLY NOW' }}
           >
+            {/* docs/08-DESIGN-SYSTEM.md §6 rule 1: dates, venue and "free"
+                above the fold. "Free" appeared nowhere on the home page — only
+                inside a collapsed accordion on /faq. */}
             <p>
-              {fmtRange(show.startsOn, show.endsOn)} | Dana Point {show.venueName}
+              {fmtRange(show.startsOn, show.endsOn)} · Dana Point {show.venueName} · Free to attend
             </p>
           </VideoBanner>
 
@@ -56,6 +59,7 @@ export default async function Home() {
             title={`Mermade Market ${show.name} showcase`}
             directionsTo={show.venueAddress}
             image="IMG_2793.jpg"
+            map="IMG_3335.jpg"
           >
             <p />
             <p>{show.venueAddress}</p>
@@ -68,10 +72,15 @@ export default async function Home() {
 
           <ScrollingBanner id="section-banner" text="SHOP SMALL · THINK BIG · MERMADE MARKET ·" />
 
+          {/* Their second background-video section, on their clip. Theirs
+              carries no poster at all; ours is the clip's own opening frame,
+              so the band is their photography rather than a grey rectangle
+              while the embed loads, and the hand-off is seamless. IMG_3335
+              would have duplicated the map's third column just above. */}
           <VideoBand
             id="section-film"
-            poster="IMG_3335.jpg"
-            video={C.films[1]?.youtubeId}
+            poster="band-video-poster.jpg"
+            video={C.bandVideoId}
           />
 
           <ArticleRow heading="Mermade Journal" headingHref="/journal" articles={posts} />

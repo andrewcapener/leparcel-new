@@ -1,14 +1,16 @@
+import Link from 'next/link'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow, activeAddOns } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import {
-  RichText, MultiColumn, CollapsibleTabs, Banner, type Tab,
+  RichText, CollapsibleTabs, Banner, FactTable, PriceTable, type Tab,
 } from '@/components/theme/Sections'
 import { ApplyForm } from './ApplyForm'
 import { applyFaq, fill } from '@/lib/page-html'
 import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
+import { SignupForm } from '@/components/theme/SignupForm'
 import { usd } from '@/lib/money'
 
 export const dynamic = 'force-dynamic'
@@ -78,64 +80,50 @@ export default async function Apply({
             <p>Market Dates: {fmtRange(show.startsOn, show.endsOn)}</p>
           </RichText>
 
-          <MultiColumn
-            id="section-apply-pricing"
-            columns={[
-              <>
-                <p><strong>Indoor Pricing </strong></p>
-                <p><em>Space Size</em></p>
-                {indoor.map((s) => (
-                  <p key={s.id}>
-                    {s.label} {usd(s.priceCents)}
-                    {s.description && ` (${s.description.replace(/\.$/, '')})`}
-                  </p>
-                ))}
-                <p><strong>ADD ON:</strong></p>
-                {forTrack('indoor').map((a) => (
-                  <p key={a.id}>{a.name}: {usd(a.priceCents)}{a.isLimited ? ' (LMTD)' : ''}</p>
-                ))}
-                <p>*NO RENTAL TABLES*</p>
-                <p>*FOOD MAKERS RETRIEVE TFF*</p>
-              </>,
-              <>
-                <p><strong>Outdoor Pricing </strong></p>
-                {outdoor.map((s) => (
-                  <p key={s.id}>
-                    {s.label} {usd(s.priceCents)}
-                    {s.description && ` (${s.description.replace(/\.$/, '')})`}
-                  </p>
-                ))}
-                <p><strong>ADD ON:</strong></p>
-                {forTrack('outdoor').map((a) => (
-                  <p key={a.id}>{a.name}: {usd(a.priceCents)}{a.isLimited ? ' (LMTD)' : ''}</p>
-                ))}
-                <p>*NO RENTAL TABLES*</p>
-                <p>
-                  If you choose only 1 day above, that tells us you will not be
-                  flexible. If you choose 2+ days to sell, you&rsquo;ll have a
-                  higher chance at getting in.
-                </p>
-                <p>Waitlist Options on application</p>
-                <p><strong>Show Guidelines</strong></p>
-                <p>No Application Fee!</p>
-                <p>No Entrance Fee!</p>
-                <p>Free hugs + taffy!</p>
-                <p>Must read all maker rules before applying. </p>
-                <p><a href="/makers/indoor">Inside Maker Rules</a> + Info</p>
-                <p><a href="/makers/outdoor">Outside Maker Rules</a> + Info</p>
-              </>,
-              <>
-                <p><strong>Upcoming Dates</strong></p>
-                <p>Applications Open: {fmtDate(show.applicationsOpenAt)}</p>
-                <p>Applications Close: {fmtDate(show.applicationsCloseAt)} / 11:59pm PT</p>
-                <p>Maker Line Up Announced: {fmtDate(show.rosterAnnouncedOn)}</p>
-                {show.loadInNote && <p>Inside Maker Set Up<em>:</em> {show.loadInNote}</p>}
-                {show.takedownNote && <p>Inside Maker Take Down: {show.takedownNote}</p>}
-                <p><strong>Hours Show is Open:</strong></p>
-                {days.map((d) => <p key={d}>{d}</p>)}
-              </>,
+          {/* Three columns of identical 15px paragraphs became the shapes the
+              content is: two price tables, and the dates as a ruled list with
+              the figures in a column. This is the block a maker screenshots. */}
+          <RichText wide large={false}>
+            <PriceTable
+              caption="Indoor spaces"
+              spaces={indoor}
+              extras={forTrack('indoor')}
+            />
+          </RichText>
+
+          <RichText wide large={false}>
+            <PriceTable
+              caption="Outdoor days"
+              spaces={outdoor}
+              extras={forTrack('outdoor')}
+            />
+            <p>
+              If you choose only 1 day above, that tells us you will not be
+              flexible. If you choose 2+ days to sell, you&rsquo;ll have a
+              higher chance at getting in. No rental tables, and there is a
+              waitlist option on the application.
+            </p>
+          </RichText>
+
+          <FactTable
+            title="Dates that matter"
+            rows={[
+              { label: 'Applications open', value: fmtDate(show.applicationsOpenAt) },
+              { label: 'Applications close', value: `${fmtDate(show.applicationsCloseAt)}, 11:59pm PT` },
+              { label: 'Line-up announced', value: fmtDate(show.rosterAnnouncedOn) },
+              { label: 'Booth fee due', value: `Within ${show.paymentWindowHours} hours of being accepted` },
+              ...(show.loadInNote ? [{ label: 'Inside set-up', value: show.loadInNote }] : []),
+              ...(show.takedownNote ? [{ label: 'Inside take-down', value: show.takedownNote }] : []),
+              { label: 'Show hours', value: days.map((d) => <div key={d}>{d}</div>) },
             ]}
           />
+
+          <RichText large={false}>
+            <p><strong>Show guidelines.</strong> No application fee. No entrance
+            fee for shoppers. Free hugs and taffy. Read the maker rules before
+            you apply: <Link href="/makers/indoor">inside</Link> ·{' '}
+            <Link href="/makers/outdoor">outside</Link>.</p>
+          </RichText>
 
           <CollapsibleTabs
             heading="Merchant Application FAQ"
@@ -143,9 +131,6 @@ export default async function Apply({
             tabs={tabs}
           />
 
-          <RichText title={<>Merchant Application</>}>
-            <p>{show.name}. {fmtRange(show.startsOn, show.endsOn)}</p>
-          </RichText>
 
           <div className="shopify-section section-custom-liquid">
             <div className="fully-spaced-row--medium">
@@ -163,7 +148,11 @@ export default async function Apply({
                       <ApplyForm show={show} spaces={spaces} extras={extras} />
                     </>
                   ) : (
-                    <div className="reading-width account-form rte">
+                    /* Outside the window this is the whole page's ask, so
+                       the invitation needs the field that answers it. It was
+                       the sentence on its own, which is the state most makers
+                       see in the run-up to opening day. */
+                    <div className="reading-width account-form rte align-center">
                       <h2>
                         {win === 'before'
                           ? `Applications open ${fmtDate(show.applicationsOpenAt)}.`
@@ -174,6 +163,9 @@ export default async function Apply({
                           ? 'Join the list and we’ll email you the morning they open.'
                           : 'Join the list and we’ll email you the morning the next window opens.'}
                       </p>
+                      <div className="apply-signup">
+                        <SignupForm />
+                      </div>
                     </div>
                   )}
                 </div>
