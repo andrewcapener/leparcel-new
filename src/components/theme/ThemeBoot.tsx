@@ -51,15 +51,25 @@ export function ThemeBoot() {
   const loaded = useRef(0)
   const replayed = useRef(false)
 
-  /** Fire once every script has had its chance to register a listener. */
+  /**
+   * Replay the event main.js is waiting for.
+   *
+   * Guarded three ways: once only, never on a page without the theme's
+   * markup (/admin renders none of it and main.js assumes it is there), and
+   * never before the scripts that listen for it have loaded.
+   */
+  const replay = () => {
+    if (replayed.current) return
+    if (!document.querySelector('page-header')) return
+    replayed.current = true
+    document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true, cancelable: false }))
+  }
+
+  /** Every script has had its chance to register a listener. */
   const onLoad = () => {
     loaded.current += 1
-    if (loaded.current < SCRIPTS.length || replayed.current) return
-    replayed.current = true
-    // Only where the theme's own markup is. /admin renders none of it, and
-    // main.js's setup assumes it is there.
-    if (!document.querySelector('page-header')) return
-    document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true, cancelable: false }))
+    if (loaded.current < SCRIPTS.length) return
+    replay()
   }
 
   useEffect(() => {
@@ -86,9 +96,29 @@ export function ThemeBoot() {
       }
       return true
     }
-    if (boot()) return
+    // Counting onLoad callbacks is the happy path, and it is not something to
+    // stake the site's only mobile navigation on: a cached script, a load
+    // event that fires before React attaches its handler, or one script
+    // failing outright all leave the count short and the hamburger dead with
+    // nothing on screen to say why.
+    //
+    // So watch for the symptom instead of trusting the mechanism. Once
+    // theme-init has defined window.theme, `openMobileNav` existing is the
+    // one observable proof that main.js's DOMContentLoaded block has run. If
+    // it is still missing, replay the event. Both paths funnel through the
+    // same once-only guard, so whichever gets there first wins and the other
+    // is a no-op.
+    const tick = () => {
+      const t = (window as unknown as { theme?: Record<string, unknown> }).theme
+      if (!t) return false
+      if (typeof t.openMobileNav !== 'function') replay()
+      return true
+    }
+
+    const ready = boot()
+    if (ready && tick()) return
     // theme-init.js may not have run yet; poll briefly rather than guess.
-    const id = setInterval(() => { if (boot()) clearInterval(id) }, 50)
+    const id = setInterval(() => { if (boot() && tick()) clearInterval(id) }, 50)
     const stop = setTimeout(() => clearInterval(id), 5000)
     return () => { clearInterval(id); clearTimeout(stop) }
   }, [])

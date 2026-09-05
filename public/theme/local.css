@@ -526,3 +526,97 @@ h3, .h3 { line-height: 1.15; }
   }
   .price-table th[scope="row"] { white-space: normal; }
 }
+
+/* ── The 404 ──────────────────────────────────────────────────────────────
+   Next's built-in not-found page renders near-black on black once the
+   theme's colours are in scope, which is unreadable and offers nothing to
+   do. This is the same type and palette as the rest of the site. It does
+   not use SiteShell, because that needs a Show and the database being
+   unreachable is one of the ways people end up here. */
+.nf { padding-block: clamp(3rem, 12vh, 7rem); }
+.nf__code {
+  font-family: var(--heading-font-family);
+  font-weight: var(--heading-font-weight);
+  font-size: clamp(3.5rem, 12vw, 7rem);
+  line-height: 1;
+  margin: 0 0 0.1em;
+  /* The brand gold, not grey. It is the one warm mark on an error page. */
+  color: rgb(var(--link-color));
+}
+.nf__title {
+  font-family: var(--heading-font-family);
+  font-weight: var(--heading-font-weight);
+  text-transform: var(--heading-text-transform);
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  line-height: 1.15;
+  margin: 0 0 0.6em;
+  color: rgb(var(--heading-color));
+}
+.nf__body { max-width: 46ch; margin: 0 0 1.8em; color: rgb(var(--text-color)); }
+.nf__links { display: flex; flex-wrap: wrap; gap: 0.4em 1.6em; margin: 0; padding: 0; list-style: none; }
+.nf__links a {
+  display: inline-block;
+  padding: 6px 0;
+  font-family: var(--nav-font-family);
+  font-size: var(--nav-text-size);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Table rules ──────────────────────────────────────────────────────────
+   Symmetry gives `th` a 3px bottom border and `td` a 1px one. In a table
+   with a column of row headers that draws a heavy rule under the left
+   column and a hairline under the rest of the same row: one row, two
+   weights, breaking at the column edge. Right for a header row, wrong for
+   a row header. */
+.price-table th[scope="row"],
+.timetable th[scope="row"] { border-bottom-width: 1px; }
+
+/* ── The Apply button, on a phone ─────────────────────────────────────────
+   The header's right column has no gutter of its own, so the button sat
+   flush against the edge of the screen. */
+@media (max-width: 767.98px) {
+  .logo-area__right { padding-right: 14px; }
+}
+
+/* ── The header, settling ─────────────────────────────────────────────────
+   The home page's header is transparent over the hero and solid once you
+   scroll, which moves the logo 42px. Symmetry swaps the class with nothing
+   to carry the change, so it lands as a jump. The transition makes it read
+   as the header settling rather than the logo bobbling. */
+.pageheader .logo-area,
+.pageheader .logo-area__middle,
+.pageheader .logo img {
+  transition: padding 220ms ease, margin 220ms ease, transform 220ms ease, width 220ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pageheader .logo-area,
+  .pageheader .logo-area__middle,
+  .pageheader .logo img { transition: none; }
+}
+
+/* The run-of-show table: a real header row, so `th` in the head keeps the
+   heavier rule that separates it from the body while the row headers in the
+   body stay hairline. */
+.timetable--run thead th {
+  font-family: var(--nav-font-family);
+  font-size: var(--smaller-text-size-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+  font-weight: 600;
+  border-bottom-width: 2px;
+  white-space: nowrap;
+}
+.timetable--run tbody th[scope="row"] { white-space: normal; width: auto; }
+.timetable--run td.num { text-align: start; white-space: nowrap; }
+@media (max-width: 600px) {
+  /* The head is dead weight once the rows stack, and each row becomes a
+     small block: day, hours, what is on. */
+  .timetable--run thead { display: none; }
+  .timetable--run tbody th[scope="row"] { font-size: var(--larger-mobile-text-size, 1.25rem); }
+  .timetable--run tbody tr { display: block; padding-block: 0.4em; }
+  .timetable--run tbody th[scope="row"],
+  .timetable--run tbody td { display: block; border-bottom: 0; padding-left: 0; }
+  .timetable--run tbody tr + tr { border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity)); }
+}

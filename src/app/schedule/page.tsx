@@ -42,53 +42,56 @@ export default async function Schedule() {
             </p>
           </RichText>
 
-          {/* A timetable, not centred prose. Times range right in tabular
-              numerals so a shopper can scan the left edge for "when does it
-              open"; the closing time is a row, not a heading, because it is
-              data inside the day rather than a section of its own.
-
-              `timetable`, not `price-table`. It used to borrow the pricing
-              tables' class, which carries a mobile rule that hides the second
-              cell — sound there, where that cell is a blurb beside a price,
-              and ruinous here, where it is the whole row. Every day on this
-              page read as a bare list of times on a phone. */}
-          {days.map((row) => {
-            const { day, hours } = splitDay(row)
-            const { opens, closes } = bookends(hours)
-            const x = extrasFor(day)
-            return (
-              <div className="shopify-section section-rich-text" key={row}>
-                <div className="fully-spaced-row--medium" data-cc-animate="">
-                  <div className="container container--reading-width">
-                    <h2 className="majortitle in-content">{day}</h2>
-                    <div className="rte timetable">
-                      <table>
-                        <caption>{hours}</caption>
-                        <tbody>
-                          <tr>
-                            <th scope="row" className="num">{opens}</th>
-                            <td>Inside &amp; outdoor market opens.</td>
+          {/* One table for the run of show, not one per day.
+              Until the trucks and the musicians are booked a day has exactly
+              two facts, its open and its close, and three separate tables of
+              two rows each put a page of white space between them and printed
+              the same hours twice: once as the caption, once as the rows. The
+              days belong in one column so they compare, which is the whole
+              reason a shopper is on this page. Booked extras become rows
+              under their own day as they land. */}
+          <div className="shopify-section section-rich-text">
+            <div className="fully-spaced-row--medium" data-cc-animate="">
+              <div className="container container--reading-width">
+                <div className="rte timetable timetable--run">
+                  <table>
+                    <caption>The run of show</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Day</th>
+                        <th scope="col">Open</th>
+                        <th scope="col">What is on</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {days.map((row) => {
+                        const { day, hours } = splitDay(row)
+                        const { opens, closes } = bookends(hours)
+                        const x = extrasFor(day)
+                        const on: string[] = []
+                        if (x?.foodTruck) on.push(x.foodTruck)
+                        if (x && x.allDay.length > 0) on.push(...x.allDay)
+                        if (x) on.push(...x.music.map((m) => `${m.time} ${m.what}`))
+                        return (
+                          <tr key={row}>
+                            <th scope="row">{day}</th>
+                            {/* The hours as written on the Show record, so a
+                                range that cannot be parsed still shows. */}
+                            <td className="num">{opens && closes ? `${opens} to ${closes}` : hours}</td>
+                            <td>
+                              {on.length > 0
+                                ? on.join(' · ')
+                                : 'Inside and outdoor market open.'}
+                            </td>
                           </tr>
-                          {x?.foodTruck && (
-                            <tr><th scope="row">Food truck</th><td>{x.foodTruck}</td></tr>
-                          )}
-                          {x && x.allDay.length > 0 && (
-                            <tr><th scope="row" className="num">All day</th><td>{x.allDay.join(' · ')}</td></tr>
-                          )}
-                          {x?.music.map((m) => (
-                            <tr key={`${m.time}${m.what}`}>
-                              <th scope="row" className="num">{m.time}</th><td>{m.what}</td>
-                            </tr>
-                          ))}
-                          <tr><th scope="row" className="num">{closes}</th><td>Market closes.</td></tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            )
-          })}
+            </div>
+          </div>
 
           {/* The lineup note and the link to the makers used to be a row
               inside every day, which printed the same two sentences three

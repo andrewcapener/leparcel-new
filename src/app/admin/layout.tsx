@@ -28,6 +28,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div className="adm-bar">
         <Link href="/" className="brand">Mermade</Link>
         <AdminNav />
+        {/* Applications only render the form inside the window, which is the
+            right public behaviour and means there is no way for staff to look
+            at the form in the weeks before it opens. `?preview=1` renders it
+            read-only. It was reachable only by knowing to type it. */}
+        <Link href="/apply?preview=1" target="_blank" rel="noreferrer">
+          Preview application ↗
+        </Link>
         <span className="who">
           {/* `.chip` already carries the small uppercase pill this wants, and
               its data-warn variant is the red one, so the missing-show case

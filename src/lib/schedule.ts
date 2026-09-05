@@ -51,7 +51,12 @@ export function splitDay(row: string): { day: string; hours: string } {
  * opening time borrows it: "5-9pm" opens at 5pm, not at 5.
  */
 export function bookends(hours: string): { opens: string; closes: string } {
-  const [rawOpen, rawClose] = hours.split('-')
+  // Any dash, and the word. This split on a plain hyphen only, and the Show
+  // record is typed by a person at /admin/show: the moment someone wrote
+  // "10am – 5pm" with an en dash, which is what a phone and most editors
+  // produce, the close time came back empty and the page printed a closing
+  // row with no time in it.
+  const [rawOpen, rawClose] = hours.split(/\s*(?:[-\u2010-\u2015\u2212]|\bto\b)\s*/i)
   const closes = (rawClose ?? '').trim()
   let opens = (rawOpen ?? '').trim()
   const meridiem = closes.match(/(am|pm)$/i)?.[1]
