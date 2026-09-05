@@ -280,6 +280,16 @@
     background:var(--deep);color:var(--on-deep);border:2px solid var(--deep);cursor:pointer}
   .sub .fine{font-size:13px;color:var(--ink-2);margin-top:11px}
 
+  /* journal */
+  .jgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(18px,2.5vw,34px)}
+  .jgrid .ph{aspect-ratio:4/5;margin-bottom:13px}
+  .jcard .nm{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
+    font-size:21px;line-height:1.05}
+  .jcard .dt{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.09em;font-size:12px;color:var(--ink-3);margin-top:6px}
+  .jcard:hover .nm{color:var(--deep)}
+  .jhero{aspect-ratio:16/10}
+
   /* merchant directory */
   .dir{columns:5;column-gap:34px;color:var(--ink-2)}
   .dir a{display:block;break-inside:avoid;font-family:var(--font-c);font-weight:600;
@@ -340,6 +350,7 @@
     .grid4{grid-template-columns:1fr 1fr}
     .sub{grid-template-columns:1fr;gap:30px}
     .dir{columns:2} .fgrid{grid-template-columns:1fr 1fr;gap:26px}
+    .jgrid{grid-template-columns:1fr 1fr}
     .mini .row{grid-template-columns:56px 1fr;gap:10px}
     .mini .row span:nth-child(3),.mini .row span:nth-child(4){display:none}
   }

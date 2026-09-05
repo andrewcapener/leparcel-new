@@ -1,0 +1,120 @@
+/**
+ * The journal, ported from mermademarket.com/blogs/journal (Sept 2026).
+ * The writing is the market's own; only titles were tidied. New posts get
+ * added here until the content admin exists (docs/01 §8).
+ */
+export type JournalPost = {
+  slug: string; title: string; date: string; image: string | null; paras: string[]
+}
+
+export const journal: JournalPost[] = [
+  { slug: "wildflowers", title: "Wildflowers, for rent and for sale", date: "2025-07-21", image: "/journal/wildflowers.jpg",
+    paras: [
+      "If they say \"2D\" they'd be best hung on a wall or on top of a table for a tablescape to break up the boring candles & dinnerware! The 3D ones can also be laid down or hung on a wall, but could also be seen from front & back!",
+      "*We have listed all of them for either rent or sale. If they sell, they'll be removed from here. If they rent out, great, we can probably use them in a future mermade. Just didnt want to toss em out or give them the right home! We spent HOURS on these and they really do take your breathe away when you see them in person.",
+      "*We will not be making duplicates. What you see here is what you get. Instagram has video footage of some if you want to take a peek!",
+      "5.5 Feet - Large / super full but smaller in length",
+      "Not totally 3D- but not totally 2D- also Patriotric vibes!",
+      "Rental Price: $110",
+      "Sale Price: $220",
+      "4.3 Feet / Small",
+      "2D Completely",
+      "Rental Price: $60",
+      "Sale Price: $180",
+      "6.3 Feet / Medium / Large",
+    ] },
+  { slug: "meet-the-maker-kingdom-state", title: "Meet the Maker: Kingdom & State", date: "2025-05-19", image: "/journal/meet-the-maker-kingdom-state.jpg",
+    paras: [
+      "Share",
+    ] },
+  { slug: "drawersco", title: "Meet the Maker: Lisa Andersen of Drawers Co.", date: "2024-11-08", image: "/journal/drawersco.jpg",
+    paras: [
+      "Share",
+    ] },
+  { slug: "meet-the-maker-alivia-rasmussen-of-teddy-hartford", title: "Meet the Maker: Alivia Rasmussen of Teddy Hartford", date: "2024-04-25", image: "/journal/meet-the-maker-alivia-rasmussen-of-teddy-hartford.jpg",
+    paras: [
+      "Everyone, meet the beautiful Alivia Rasmussen of Teddy Hartford! She is an inside maker (first time) during our May 3-5, 2024 show! We cannot wait to showcase her beautiful children's clothing line!! Spot her instagram here and website here!",
+      "What lead you to creating your company? And what gave you the final push to jump in and start a brand?",
+      "At the time I started Teddy Hartford, I was a stay-at-home-mom with two toddlers and had just moved to Southern California. Every day we were so inspired to explore new beaches, break out our sand toys, and spend time in the sun. At night, when the kids were asleep, I found myself (even before the move) obsessing over traditional east coast homes on Zillow while also reading novels about Nantucket. My stroke of inspiration was the catalyst for building a brand that embodied the life I was living and the life I was captivated by - blending the essence of childhood innocence, timeless East Coast style, and the charm of coastal living.",
+      "How do you stay inspired for each new collection?",
+      "Living in Southern California, it\u2019s not hard to be inspired by the coastal charm. I am also constantly inspired by Elin Hilderbrand, who describes Nantucket in the most idyllic language in her novels. The blend of these two words is at the heart of what Teddy Hartford represents aesthetically.",
+      "What's some of the best advice you've been given, something that inspired you or kept you motivated to keep going?",
+      "As a first-time entrepreneur, it can be really overwhelming to think about all that has to be done just to get started. The best advice I received was to start with one task. By tackling each task one at a time, the load felt more manageable and looking back, I am so proud of all that I accomplished.",
+      "Q: How often do you release new product?",
+      "A: Each season we release our favorite pieces from a handful of our favorite designers and brands. Everything is curated by me to ensure it meets the standard that our customers are looking for.",
+      "Share",
+    ] },
+  { slug: "meet-hemp-valley-farm", title: "Meet: Hemp Valley Farm", date: "2024-02-25", image: "/journal/meet-hemp-valley-farm.jpg",
+    paras: [
+      "What\u2019s your story? When and how was HVF started?",
+      "The story of Hemp Valley Farm begins with three surfers from San Clemente, CA, whose love for the ocean fostered a deep respect for Mother Nature. This philosophy is at the core of our approach to building the company culture. We have spent the last 15 years building a successful organic fertilizer company called \"Organics Alive\" that specializes in regenerative and earth-friendly approaches to cannabis and hemp farming. Through our work with Organics Alive, we developed a passion for hemp farming and a deep understanding of how to cultivate high-quality, organic hemp that is sustainable and environmentally responsible. This commitment to organic farming practices is reflected in the exceptional quality of our products and is a testament to our dedication to building a sustainable and ethical business.",
+      "What makes HVF stand out from the other brands? Hemp Valley Farm is a fully vertically integrated company that controls every aspect of our products' production. From seed to shelf, all Hemp Valley Farm products are made on our 130-acre farm in San Diego. We grow high-grade hemp flower organically and use careful hand-harvesting techniques to preserve the essential resin glands that contain CBD and other important medicinal molecules.Unlike many other companies that prioritize volume over quality, Hemp Valley Farm takes a different approach. Rather than quickly drying our hemp in large, open barns to increase production, Hemp Valley Farm carefully cures its hemp in temperature-controlled and pitch-black greenhouses. This method allows the sugars to fully convert into an array of cannabinoids that work together to bring about the plant's healing properties. Much like a fine wine, the curing process for Hemp Valley Farm's hemp is a critical step in creating a high-quality end product. What are the steps HVF takes to be a sustainable and environmentally friendly company?",
+      "The elephant in every room now- a - days\u2026 are you sustainable? Hemp Valley Farm's commitment to sustainability extends to every aspect of our farming process. No pesticides, herbicides, or chemicals of any kind are used anywhere on the farm. Instead, we use cover crops to keep the soil full of microbial life, increase its ability to hold water, capture runoff, and prevent topsoil erosion. The use of a diverse cover crop helps reduce or eliminate insects from harming the hemp crops, ensuring the purity of the final product. Hemp Valley Farm operates off-grid and uses solar power to power their operations. Additionally, the company draws fresh artesian well water directly from an aquifer over 700 feet below their farm, using it sparingly and with intention to minimize their water usage. This approach ensures that the land is treated with respect, the environment is protected, and the community benefits from their sustainable practices.",
+      "Where can we find you when you\u2019re not at Mermade??? We officially opened our San Clemente store in 2022. We are located at 915 Calle Amanacer Suite F, Just a few doors down from Artifex Brewery. We have an online store www.hempvalleyfarmcbd.com where everyone can get more information about the farm and our products. Also our instagram!",
+      "Share",
+    ] },
+  { slug: "meet-the-maker-colleen-from-ro-arrows", title: "Meet the Maker: Colleen from Ro & Arrows", date: "2023-10-25", image: "/journal/meet-the-maker-colleen-from-ro-arrows.jpg",
+    paras: [
+      "A first for us, we are showcasing a toe sock at Mermade Market! They will be inside our shopping area, near the middle and towards the back wall so make sure you keep an eye out for them! We interviewed Colleen, owner & creator of Ro & Arrows for today\u2019s meet the maker. She is local to Mission Viejo, Ca and has clients inside the studio working hard on their feet with their beautiful socks. They release & offer new products twice a year! As they continue to grow, they will be releasing more seasonal products as well.",
+      "I have a background in creating products for athletes. When I saw my pilates clients struggling to put on their toe socks, it was a no brainer that I wanted to provide them with a better option. Busy moms, bad ass career women, and studio athlete enthusiasts deserve to have a grip sock that is effortless to slip on, and still provides function and fashion.",
+      "Success doesn't come over night. As an entrepreneur it is important that sometimes you have to fail before you succeed. Don't let the little failures get in the way of your overall success. Use them as lessons along the way.",
+      "The relationships I have made with studio owners and our die hard clients. When someone geeks out on how rad our socks are....that makes this journey all worth it.",
+      "I love fashion. I have 16 years in the industry. Because I am connected and always staying in touch with textile, color and design trends.. it's easy for me apply my love of fashion to my line.",
+      "I can't say there is one specific step I love the most I love the end product and the entire product process. I created my socks for a purpose. Providing people with an elevated product that's also fun is what makes owning Ro & Arrows so awesome.",
+      "If you find yourself needing some socks, hit em up on Instagram & get social with them!!!!",
+      "Our current sock is a patented split toe exercise sock. There is no other sock on the market like it. We were intentional with every aspect of our socks yarn, patterning and silicone grip. Take that level of attention to performance and pair it with our passion for fun & fashion & you get a sock that stands out from the rest.",
+      "Current series: Reading anything by Colleen Hoover",
+      "Fueled by (drink): Coffee",
+      "Fave Restaurant: any Thai food",
+      "One bucket list item: Taking my mom to Africa",
+    ] },
+  { slug: "meet-taylor-from-trbo", title: "Meet: Taylor from TRBO", date: "2023-05-03", image: "/journal/meet-taylor-from-trbo.jpg",
+    paras: [
+      "We are thrilled to be showcasing Taylor from TRBO!!! She is an artist, born & raised! She gravitates towards sun and water\u2026 the two best things in life, no? She\u2019ll be with us at our next show, May 24 Wednesday, and May 25 Thursday, outside so make sure you give her a hello!!! She\u2019ll be selling her watercolor print originals, tees, totes & more!",
+      "SEE HER WEBSITE HERE + INSTAGRAM HERE",
+      "What is the most surprising/best part about being a business owner in the \"artist/shop small\" space ?",
+      "How do you stay inspired for each new piece?",
+      "What is your most-loved step creating your masterpieces??",
+      "Field research!!! Plus connecting with other \u201cwaterwomen\u201d and hearing their stories.",
+      "What's your favorite part of the process?",
+      "For this body of work, my favorite part of the creation process is using the element of salt as the watercolor is drying. I have painted the entire series of over 80 pieces on the island of O\u02bbahu, so depending on the day and the humidity, the salt has a completely different reaction to the saturation of the blue. Every time. Which used to bug me but I really leaned into letting the magic happen at its own pace and time. Trying to control that was like trying to control the tide!",
+      "More of YOUR STORY!",
+      "I used to hate watercolor, almost my whole life! My grandma was an incredible artist with a very delicate style. When she passed, I got all of her paints, markers and supplies. Honestly, I thought what a waste, Im never going to touch those. Even when I was planning out this body of work, I wanted to do illustrations in pencil or charcoal. I actually did the first original 4 pieces in charcoal but it just wasnt working the way I envisioned it to. I needed the fluidity and depth of actual water to do the ocean some justice! With lots of trial and error I leaned into using the medium, now were friends :)",
+      "Fueled by (drink): mushroom coffee!! with coconut milk!",
+      "Fave Restaurant: Anywhere with gluten free bread",
+    ] },
+  { slug: "meet-the-maker-laurel-grace-studios", title: "Meet the Maker: Laurel Grace Studios", date: "2022-10-19", image: "/journal/meet-the-maker-laurel-grace-studios.jpg",
+    paras: [
+      "Everyone, meet Laurel from Laurel Grace Studios!!! She is a freelance illustrator & graphic designer! We\u2019re lucky to get to know her better and she sounds hilarious. She will be outside on Friday near the side entrance of the inside shopping area! So make sure to go say hi and fist pump her if you have some things in common with her. She loves Mexican food\u2026 ok great we all have something in common with her! :) She truly enjoys the process of MAKING which I know a lot of us can relate to as well. Besides prints & graphics, she does MURALS! How rad!",
+      "*She is a published author and a mother of two but have always kept her toes in her creative life. She believes her kids will be the richer for it.",
+      "*She was a victim of the 2005 Bluebird Canyon Landslide in Laguna Beach. Perseverance shows up in her work quite often. She\u2019s been through some things....",
+      "*She firmly believes in her favorite hashtag.... Don't Quit Your Daydream!",
+      "*She is the Co-President on the board of an organization called the Sawdust Art Enrichment Fund. They bring art education to the underserved in our local OC communities. Their programs have touched military families, the elderly, at risk youth, and the disadvantaged.",
+      "*She is on the Dana Outrigger Canoe Club team. She took a break off of racing this past season due to an injury but she absolutely LOVES the invigorating excitement of outrigger paddling! Have you heard of a crazy race that goes from Newport Beach to Catalina? She\u2019s done that....TWICE! The team Ohana, the badass female connections, and the physical challenge keep her coming back every year!",
+      "My newest series is a collection of lino block prints. I'm new to the medium and I'm having a great time exploring it. The images currently include sweet otters, loving swallows, whales and thistles to name a few.",
+      "I've been drawing and painting my whole life. I attended Art Center College of Design and graduated with a BFA in Illustration. I've been self-employed ever since doing freelance illustration, editorial work, graphic design, murals, and my own personal projects. Creating is a core part of me and it's a joy to share myself with the public.",
+      "We get only one life. Live it authentically.",
+      "I jot down ideas for future projects as they come to mind and then I refer to my list when I need direction. My inspiration comes from many places but ultimately I wish to use my work to enlighten people, bring them joy, or connect with them one flawed human to another...I'm always hoping to inspire the public to live and love authentically. I also love trying new mediums, sometimes it lightens the stress load to try something you don't expect to be perfect at...so sometimes the process of making drives the inspiration. My new work in lino block prints and I'm enjoying learning and mastering printmaking",
+      "I love coming up with creative ideas but the most important step in creating a successful piece is perfecting a concept with a well thought out drawing. You can't have a good finished piece unless you begin with a good idea....and a good drawing to illustrate your idea.",
+      "I release pieces as fast as I can. Being a one-woman business it's sometimes hard to keep up with just the business of having a business. I also work in many mediums. I'm constantly juggling the act of reproducing work I've already created, creating new work, and getting everything in front of eyes at galleries and shows. I wish I could work faster and drop new pieces more frequently but I certainly give it my all.",
+    ] },
+  { slug: "emily-mcallister-photography", title: "Emily McAllister Photography", date: "2022-10-18", image: "/journal/emily-mcallister-photography.jpg",
+    paras: [
+      "All from Emily McAllister Photography! She's our go to Mermade photographer! Ride or die. She\u2019s right here in Capo Beach if you ever need her for Christmas cards or for anything else!",
+      "Share",
+    ] },
+  { slug: "meet-the-maker-taylor-from-carved-color", title: "Meet the Maker: Taylor from Carved Color", date: "2022-10-12", image: null,
+    paras: [
+      "We are thankful to Taylor from Carved Color Ceramics for letting us feature her. She is CREATIVE and we cannot wait to show her off to you in our 2022 show. She will be inside all 4 days, close to the registers! Make sure you take a look and grab some pieces for your own home! @carvedcolor",
+      "Share",
+    ] },
+  { slug: "inpiration-of-past-makers-shops", title: "Inspiration from past makers' shops", date: "2022-10-11", image: "/journal/inpiration-of-past-makers-shops.jpg",
+    paras: [
+      "Share",
+    ] },
+  { slug: "alohana-acai", title: "Alohana Acai", date: "2022-02-25", image: "/journal/alohana-acai.jpg",
+    paras: [
+      "Alohana Acai, a San Clemente local company will be BACK for Friday & Saturday! November 4th and 5th so come hungry!",
+      "Share",
+    ] },
+]

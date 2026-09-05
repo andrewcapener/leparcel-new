@@ -9,6 +9,7 @@ import { SubscribeForm } from '@/components/SubscribeForm'
 import { fmtRange, fmtDate, applicationWindow } from '@/lib/dates'
 import { usd } from '@/lib/money'
 import * as C from '@/lib/content'
+import { journal } from '@/lib/journal'
 
 export const dynamic = 'force-dynamic'
 
@@ -222,6 +223,24 @@ export default async function Home() {
       {/* ── 8 · FILM — real archive footage, played on click ────── */}
       <FilmBlock />
 
+      {/* ── 8b · THE JOURNAL — real shop names, real faces ──────── */}
+      <section className="sec">
+        <div className="shead">
+          <span className="k">03</span>
+          <h2>Meet the makers</h2>
+          <Link href="/journal" className="more">The journal →</Link>
+        </div>
+        <div className="jgrid">
+          {journal.slice(0, 3).map((jp) => (
+            <Link href={`/journal/${jp.slug}`} key={jp.slug} className="jcard">
+              {jp.image && <Photo src={jp.image} alt="" arch tone="soft" sizes="(max-width:900px) 50vw, 30vw" />}
+              <div className="nm">{jp.title}</div>
+              <div className="dt num">{new Date(jp.date).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'long', year: 'numeric' })}</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* ── 9 · ELEVEN YEARS — archive demoted to a teaser ──────── */}
       <section className="dark" id="archive">
         <div className="k" style={{ color: '#8A8377' }}>
@@ -264,7 +283,7 @@ export default async function Home() {
       {roster.length > 0 && (
         <section className="sec" id="directory">
           <div className="shead">
-            <span className="k">04</span>
+            <span className="k">05</span>
             <h2>{show.name} merchants</h2>
             <span className="more">{roster.length} confirmed</span>
           </div>

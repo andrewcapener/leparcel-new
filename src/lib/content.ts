@@ -69,7 +69,7 @@ export const categoryRanges = [
 ]
 
 export const archiveNote = {
-  eyebrow: '03 · The archive',
+  eyebrow: '04 · The archive',
   heading: 'Eleven years, three venues.',
   body: 'We’ve outgrown two buildings. The Ocean Institute first, then River Street, now the Community House on San Juan Avenue.',
 }

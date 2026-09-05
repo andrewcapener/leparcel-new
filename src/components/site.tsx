@@ -32,6 +32,7 @@ export function Masthead({ show }: { show: Show }) {
         <div className="r">
           <Link href="/#visiting">Visiting</Link>
           <Link href="/schedule">Schedule</Link>
+          <Link href="/journal">Journal</Link>
           <Link href="/faq">FAQ</Link>
           <Link href="/apply" className="btn">
             Apply to sell
@@ -51,7 +52,10 @@ export function Footer({ show }: { show: Show }) {
       <div className="fgrid">
         <div>
           <Wordmark className="wm" />
-          <div className="bl">
+          <div className="bl" style={{ fontStyle: 'italic', marginBottom: 6 }}>
+            Shop small. Think big.
+          </div>
+          <div className="bl" style={{ marginTop: 0 }}>
             A juried market of independent makers. Dana Point, California, since {FOUNDED_YEAR}.
           </div>
         </div>
@@ -59,6 +63,7 @@ export function Footer({ show }: { show: Show }) {
           <h4>The market</h4>
           <Link href="/#visiting">Visiting</Link>
           <Link href="/schedule">Schedule</Link>
+          <Link href="/journal">Journal</Link>
           <Link href="/faq">FAQ</Link>
           <Link href="/#archive">Archive</Link>
         </div>
@@ -79,6 +84,7 @@ export function Footer({ show }: { show: Show }) {
           <Link href="/contact">Say hi</Link>
           <Link href="/collaborate">Collaborate</Link>
           <a href="https://instagram.com/mermademarket">Instagram</a>
+          <a href="https://www.facebook.com/mermademarketoc">Facebook</a>
         </div>
       </div>
       <div className="colophon">
