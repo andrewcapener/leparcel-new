@@ -13,32 +13,47 @@
 
 ## 1. Typography
 
-Three families. All free, all self-hosted through `next/font` — nothing here depends
-on a licence renewal, which matters for a business that may be sold.
+**Revised September 2026.** The market's own two faces, not a fresh choice.
+
+The Shopify theme export settles a question this document previously got wrong.
+The old site's headings and nav are `type_heading_font: oswald_n6` and its body
+is `type_base_font: figtree_n4`. It was never Trade Gothic. So the previous
+entry here — Barlow Condensed chosen as "the closest free face to the Trade
+Gothic Drew likes on the current site" — was solving for a face the site does
+not use. Both real ones are free on Google Fonts, so we simply use them.
 
 | Role | Family | Why |
 |---|---|---|
-| **Display + labels** | **Barlow Condensed**, set uppercase | The closest free face to the Trade Gothic Bold Condensed Drew likes on the current site. Grippy, American, undecorated. Carries a 148px hero and a 12px table header from one family. |
-| **Prose** | **EB Garamond** | A humanist letter cut by hand, c. 1530. The oldest honest argument for a handmade market. Keeps the warmth that all-condensed would lose. |
-| **UI, forms, tables** | **Barlow** | The upright of the same superfamily, so forms and admin tables sit inside the display voice instead of beside it. |
+| **Display + labels** | **Oswald**, set uppercase | What mermademarket.com already sets. A classic American gothic: flat terminals, tight apertures, poster-scaled. Returning shoppers should not have to wonder whether they are in the right place. |
+| **Prose + UI** | **Figtree** | The old site's body face. Even colour at small sizes, a real italic, and it keeps forms and admin tables inside the same voice. |
 
-**The rule: Condensed uppercase for anything you scan, Garamond for anything you read,
-Barlow for anything you type into.**
+**The rule: Oswald uppercase for anything you scan, Figtree for anything you read
+or type into.**
 
-Barlow Condensed → hero, section heads, nav, buttons, chips, eyebrows, table headers,
+Oswald → hero, section heads, nav, buttons, chips, eyebrows, table headers,
 MM codes, ticker, admin page titles.
-EB Garamond → body copy, ledes, the founder letter, answers in the visiting grid.
-Barlow → form inputs, hints, table cells, prices, everything an operator reads at 14px.
+Figtree → body copy, ledes, the founder letter, grid answers, form inputs, hints,
+table cells, prices, everything an operator reads at 14px.
 
 ```css
---font-c: var(--f-cond),     'Arial Narrow', sans-serif;  /* display, uppercase */
---font-g: var(--f-garamond), Georgia, serif;              /* prose */
---font-j: var(--f-body),     system-ui, sans-serif;       /* UI, forms, tables */
+--font-c: var(--f-oswald),  'Arial Narrow', sans-serif;  /* display, uppercase */
+--font-g: var(--f-figtree), system-ui, sans-serif;       /* prose */
+--font-j: var(--f-figtree), system-ui, sans-serif;       /* UI, forms, tables */
+--font-r: var(--f-garamond), Georgia, serif;             /* reserve serif, unused */
 ```
 
-Oswald was the serious alternative and is still a defensible swap — squarer, more
-poster-like. It lost on small sizes: Barlow Condensed is the more legible of the two
-in a 12px tracked table header, and this system asks one family to do both ends.
+EB Garamond stays loaded as `--font-r` and nothing uses it. It was the previous
+prose face and it is the obvious move if long-form reading (the journal, the
+maker rules) ever wants a serif back. Deleting it is a one-line change; so is
+bringing it back.
+
+Real Trade Gothic Bold Condensed remains an option and would need a web licence
+bought from Monotype. Shopify's font licence covers Shopify storefronts and does
+not travel to a site we host. Nothing here depends on that renewal, which matters
+for a business that may be sold.
+
+The typography comparison lives at `/preview/type` — unlisted, so it is reachable
+by link but not in the nav, the sitemap, or search.
 
 ### Scale
 
@@ -49,9 +64,9 @@ in a 12px tracked table header, and this system asks one family to do both ends.
 | `display` | clamp(34, 5.8vw, 74) / .90 | Cond 700 upper | Apply block, section heads |
 | `heading` | clamp(30, 4.3vw, 52) / .94 | Cond 700 upper | Founder letter, subheads |
 | `title-adm` | 34 / 1 | Cond 700 upper | Admin page titles |
-| `prose` | 19.5 / 1.62 | Garamond 400 | Body copy |
-| `prose-s` | 18 / 1.55 | Garamond 400 | Grid answers, captions in prose |
-| `ui` | 14–17 / 1.5–1.6 | Barlow 400 | Interface text, table cells |
+| `prose` | 18.5 / 1.62 | Figtree 400 | Body copy |
+| `prose-s` | 17 / 1.55 | Figtree 400 | Grid answers, captions in prose |
+| `ui` | 14-17 / 1.5-1.6 | Figtree 400 | Interface text, table cells |
 | `label` | 12–13 / .11em tracked, upper | Cond 600 | Eyebrows, field labels, th |
 | `button` | 15–16 / .06em tracked, upper | Cond 700 | CTAs |
 | `button-adm` | 13 / .07em tracked, upper | Cond 600 | Dense row actions |
@@ -170,7 +185,7 @@ The same tokens serve both audiences — the shift is in density, not in palette
 | | **Shopper pages** (`/`, `/schedule`, `/journal`) | **Vendor + admin** (`/apply`, `/portal`, `/admin`, `/pos`) |
 |---|---|---|
 | Voice | Warm, plain, reassuring | Precise, complete, unambiguous |
-| Type | Huge condensed display, Garamond prose | Condensed labels, Barlow data, tabular numerals always |
+| Type | Huge Oswald display, Figtree prose | Oswald labels, Figtree data, tabular numerals always |
 | Imagery | Dominant | None |
 | Colour | Sage fields, straw highlights | Neutral ground; sage for status and links, straw for shortlist |
 | Radii | Pills and arches | Pills, but small — `.btn-o` is 13px, five fit in one table cell |

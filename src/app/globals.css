@@ -6,11 +6,14 @@
    Mermade design system — docs/08-DESIGN-SYSTEM.md
    Build against these tokens. Don't invent values.
 
-   Direction (locked Aug 2026): warm, hand-made, coastal. Two colours
-   carry everything — sage and pale straw — over bone/shell neutrals.
-   Display type is Barlow Condensed set uppercase; prose is EB Garamond;
-   UI text and forms are Barlow. The energy comes from scale and
-   confidence, not saturation.
+   Direction: warm, hand-made, coastal. Two colours carry everything —
+   sage and pale straw — over bone/shell neutrals. The energy comes from
+   scale and confidence, not saturation.
+
+   Typography, revised Sept 2026: the market's own faces, taken from the
+   Shopify theme rather than chosen fresh. Oswald set uppercase for display
+   and labels, Figtree for reading and UI. Returning shoppers should not
+   have to wonder whether they are in the right place.
    ═══════════════════════════════════════════════════════════════════ */
 @layer base {
 
@@ -29,10 +32,17 @@
     --on-deep:#F6F2E8; --on-accent:#211A0C;
     --warn:#8C3A2A;
 
-    /* ── type ── */
-    --font-c:var(--f-cond),'Arial Narrow',sans-serif;   /* display, uppercase */
-    --font-g:var(--f-garamond),Georgia,serif;           /* prose */
-    --font-j:var(--f-body),system-ui,sans-serif;        /* UI, forms, tables */
+    /* ── type ──
+       Mermade's own faces, taken from the Shopify theme settings rather than
+       chosen fresh: Oswald for anything display or label, Figtree for reading
+       and for UI. Every rule in this file goes through these three variables,
+       so the whole site follows from here.
+       --font-r keeps EB Garamond available for long-form reading if we ever
+       want a serif back; nothing uses it today. */
+    --font-c:var(--f-oswald),'Arial Narrow',sans-serif; /* display, uppercase */
+    --font-g:var(--f-figtree),system-ui,sans-serif;     /* prose */
+    --font-j:var(--f-figtree),system-ui,sans-serif;     /* UI, forms, tables */
+    --font-r:var(--f-garamond),Georgia,serif;           /* reserve serif */
 
     --pad:clamp(20px,4vw,58px);
     --arch:999px 999px 6px 6px;
@@ -115,23 +125,36 @@
   /* ─────────── 1 · hero ─────────── */
   /* height subtracts the sticky masthead so the date + CTA stay above the fold */
   .hero{position:relative;height:min(calc(100svh - 132px),850px);min-height:560px}
+  /* Centred, the way mermademarket.com has always done it: kicker, one large
+     line, the date under it, one button. */
   .hero .in{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;
-    justify-content:flex-end;padding:0 var(--pad) 32px;color:#FBF8F0}
+    align-items:center;justify-content:center;text-align:center;
+    padding:0 var(--pad) 24px;color:#FBF8F0}
+  .hero .in::before{content:"";position:absolute;inset:0;z-index:-1;
+    background:radial-gradient(58% 46% at 50% 50%,rgba(12,10,8,.52),rgba(12,10,8,.16) 72%,transparent)}
+  .hero .in > *{position:relative}
+  .hero h1{text-shadow:0 2px 26px rgba(10,8,6,.34)}
   .hero .eyebrow{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
-    letter-spacing:.22em;font-size:14px;color:var(--accent);margin-bottom:12px;
+    letter-spacing:.22em;font-size:14px;color:rgba(251,248,240,.92);margin-bottom:12px;
     text-shadow:0 1px 18px rgba(0,0,0,.4)}
   .hero h1{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(50px,11.4vw,148px);line-height:.86;letter-spacing:-.006em;
     text-shadow:0 2px 44px rgba(0,0,0,.34)}
-  .hero h1 em{font-style:normal;color:var(--accent)}
-  .hero .bar{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-top:24px}
+  .hero h1 em{font-style:normal;color:inherit}
+  .hero .where{font-family:var(--font-c);font-weight:500;text-transform:uppercase;
+    letter-spacing:.13em;font-size:14.5px;color:rgba(251,248,240,.86);margin-top:7px;
+    text-shadow:0 1px 16px rgba(0,0,0,.45)}
+  .hero .bar{display:flex;align-items:center;justify-content:center;gap:13px;
+    flex-wrap:wrap;margin-top:22px}
   .hero .when{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(19px,2.5vw,29px)}
   .hero .free{background:var(--accent);color:var(--on-accent);padding:6px 13px 5px;
     border-radius:999px;font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     letter-spacing:.07em;font-size:15px}
   /* the calendar link is a button in this system, wherever the markup calls it .cal */
-  .hero .cal{margin-left:auto;display:inline-block;padding:11px 21px 10px;border-radius:999px;
+  .hero .bar .btn{background:#FBF8F0;border-color:#FBF8F0;color:var(--ink)}
+  .hero .bar .btn:hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+  .hero .cal{display:inline-block;padding:11px 21px 10px;border-radius:999px;
     font-family:var(--font-c);font-weight:700;text-transform:uppercase;letter-spacing:.06em;
     font-size:16px;background:transparent;color:#FBF8F0;border:2px solid rgba(251,248,240,.85)}
   .hero .cal:hover{background:#FBF8F0;color:var(--ink);border-color:#FBF8F0}
@@ -431,11 +454,12 @@
     .mnav a:active{background:var(--deep);border-color:var(--deep);color:var(--bone)}
     .btn{padding:9px 16px 8px;font-size:14.5px}
     .hero{height:calc(100svh - 184px);min-height:470px}   /* util 53 + mast 75 + mnav 53 */
-    .hero .in{padding:0 var(--pad) 22px}
+    .hero .in{padding:0 var(--pad) 18px}
     .hero h1{font-size:clamp(45px,13.2vw,72px)}
     .hero .bar{gap:9px;margin-top:16px}
-    .hero .when{font-size:21px}
-    .hero .cal{margin-left:0;font-size:14px;padding:8px 15px 7px}
+    .hero .when{font-size:19px}
+    .hero .where{font-size:12.5px;letter-spacing:.1em}
+    .hero .cal{font-size:14px;padding:8px 15px 7px}
     .hero .stamp{width:84px;top:15px}
     .facts{padding:4px 0}
     /* Two up, so a four-tile bar lands 2x2 instead of 3 and a widow. */

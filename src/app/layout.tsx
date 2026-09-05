@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { EB_Garamond, Barlow, Barlow_Condensed, Oswald } from 'next/font/google'
+import { EB_Garamond, Barlow, Barlow_Condensed, Oswald, Figtree } from 'next/font/google'
 import './globals.css'
 
 /* Type system, locked Aug 2026 — see docs/08-DESIGN-SYSTEM.md.
@@ -20,13 +20,23 @@ const cond = Barlow_Condensed({
   display: 'swap',
 })
 
-/* Oswald 500/600/700 — what mermademarket.com actually sets for headings and
-   nav (type_heading_font: oswald_n6). Loaded for the typography comparison at
-   /preview/type; it costs nothing until something asks for the variable. */
+/* The market's own two faces, lifted from the Shopify theme settings:
+   type_heading_font oswald_n6 and type_base_font figtree_n4. Both are free on
+   Google Fonts, so this is the real typography rather than a stand-in.
+   (Its third setting, Avenir Next for the shop title, is a licensed Monotype
+   face we do not need: our wordmark is drawn, not set.) */
 const oswald = Oswald({
   subsets: ['latin'],
-  weight: ['500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
   variable: '--f-oswald',
+  display: 'swap',
+})
+
+const figtree = Figtree({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--f-figtree',
   display: 'swap',
 })
 
@@ -51,7 +61,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${garamond.variable} ${cond.variable} ${body.variable} ${oswald.variable}`}>
+    <html lang="en" className={`${garamond.variable} ${cond.variable} ${body.variable} ${oswald.variable} ${figtree.variable}`}>
       <body>{children}</body>
     </html>
   )

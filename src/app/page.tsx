@@ -59,21 +59,20 @@ export default async function Home() {
       <Photo src="/photos/hero.jpg" alt="" priority className="hero">
           <img className="stamp" src="/mermade-ribbon.png" alt="" />
           <div className="in">
-            <div className="eyebrow">Shop Small Festival · Hand curated</div>
+            <div className="eyebrow">Hand curated · Shop Small Festival</div>
             <h1>
-              A hundred makers,
+              Shop small
               <br />
-              chosen <em>one at a time.</em>
+              <em>makers market</em>
             </h1>
+            <div className="when num" style={{ marginTop: 20 }}>
+              {fmtRange(show.startsOn, show.endsOn)}
+            </div>
+            <div className="where">{show.venueName}, Dana Point</div>
             <div className="bar">
-              <span className="when num">{fmtRange(show.startsOn, show.endsOn)}</span>
-              <span className="free">Free admission</span>
-              <span className="when" style={{ fontSize: 16, opacity: 0.75 }}>
-                {show.venueName} · Dana Point
-              </span>
-              <a href={`/api/calendar/${show.slug}`} className="cal">
-                Add to calendar ↓
-              </a>
+              <Link href="/apply" className="btn">Apply to sell</Link>
+              <a href={`/api/calendar/${show.slug}`} className="cal">Add to calendar ↓</a>
+              <span className="free">Free to attend</span>
             </div>
           </div>
       </Photo>
