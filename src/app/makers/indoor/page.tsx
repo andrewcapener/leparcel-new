@@ -120,6 +120,7 @@ export default async function IndoorMerchants() {
           <CollapsibleTabs
             heading="Inside maker information"
             id="rules"
+            deepLink
             intro={
               <div className="mk-rules">
                 <h3 className="mk-rules__title">Rules that cost money</h3>

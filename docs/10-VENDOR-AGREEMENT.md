@@ -104,8 +104,22 @@ incorporated here by reference. Participating in one Show gives you no right to
 any future Show.
 
 **1.3** This Agreement is versioned. The version you signed is recorded against
-your vendor record with the date, time and IP address of signature, and governs
-your participation in that Show even if a later version is published.
+your vendor record with the date and time of signature, and governs your
+participation in that Show even if a later version is published.
+
+> ⟨COUNSEL — **the draft promised more than the code records**⟩ This clause used
+> to say "date, time and IP address". The platform records
+> `applications.signed_name`, `applications.terms_version` and
+> `applications.submitted_at`, and **no IP address**. A clause that describes a
+> record you do not keep is worse than a thinner clause, because the first thing
+> anyone asks for in a dispute is the record the contract says exists. The
+> published page states exactly what is captured.
+>
+> That leaves the question live rather than answered: lawyer question 9 below asks
+> whether name plus timestamp plus version is enough under UETA and ESIGN. If
+> counsel says an IP and a user agent should be captured, that is a schema change
+> and a line in `submitAcceptance`, not a redraft, and this clause goes back to
+> describing all four.
 
 ## 2. Application, jury and acceptance
 
@@ -506,13 +520,19 @@ abandoning your space; failing to appear after confirming; and conduct under
 **12.2** On material breach we may remove you from the Show without refund, and
 may decline your future applications. We will tell you the reason in writing.
 
-**12.3 ⟨DECISION⟩ No-show.** A confirmed vendor who neither appears nor cancels
+**12.3 ⟨DECISION — resolved from the schema⟩ No-show.** A confirmed vendor who neither appears nor cancels
 forfeits the booth fee and — the part worth writing down — **is recorded as a
 no-show on their vendor record and may be declined or required to prepay in
 future seasons.** You already carry at least one vendor flagged for exactly this.
 One of a Kind is the only market I found that names an unattended booth as a
 contract breach in terms; everyone else leaves it to general forfeiture, which
 means in practice nothing happens.
+
+> The platform already has the field this clause needs: `vendors.is_flagged` and
+> `vendors.flag_reason`, persistent across shows, which is what makes "recorded on
+> their vendor record" a true statement rather than an intention. Drafted and
+> published as written. What is not built is the prepay path, so "may be required
+> to prepay" is a promise about a future season.
 
 ## 13. Assignment and sharing
 
@@ -521,10 +541,21 @@ space, without our written consent. Only the accepted maker may sell in the
 space.
 
 **13.2** Shared spaces are permitted only where both makers applied together and
-were juried together, and both sign this Agreement. ⟨DECISION⟩ Crafty Wonderland
-juries shared booths *as a pair*; Urban Craft Uprising juries the two makers
-*separately*. Pick one — the difference matters when one of the pair is strong and
-the other isn't.
+were juried together, and both sign this Agreement. ⟨DECISION — **answered as a
+pair, and the platform cannot yet do it**⟩ Crafty Wonderland juries shared booths
+*as a pair*; Urban Craft Uprising juries the two makers *separately*. Drafted and
+published as a pair, because the $100 share is a single add-on on a single
+application and that is how it already works.
+
+> **The gap is operational, not contractual.** `applications` is unique on
+> `(show_id, vendor_id)` and a vendor is unique on email, so a shared pair submits
+> **one** application under **one** email today, and "both sign this Agreement" is
+> not something the form can currently record: there is one `signed_name` field.
+> `06-OPEN-QUESTIONS.md` §19 wants two vendor records, two statements and one
+> shared space, which is the right end state. Until then, either collect the second
+> maker's signature by email before load-in, or take the second name and email on
+> the application. This is the shortest path from "the clause is true" to "the
+> clause is true of the code".
 
 ## 14. General
 
@@ -533,10 +564,18 @@ joint venture or franchise. Except as §A1 provides for consignment, neither par
 is the other's agent.
 
 **14.2 Governing law and venue.** California law governs. The parties submit to
-the state and federal courts in Orange County, California. ⟨DECISION⟩ Consider
-whether you want a mandatory mediation step, or small-claims carve-out, before
-litigation. Most disputes here will be worth a few hundred dollars, where a
-litigation clause is theatre.
+the state and federal courts in Orange County, California. ⟨DECISION — **still
+open, and deliberately not drafted**⟩ A mandatory mediation step, or a
+small-claims carve-out, is worth considering: most disputes here are worth a few
+hundred dollars, which is exactly where a litigation clause is theatre. It is not
+in the published page, because adding a mandatory step is adding a hurdle in front
+of a maker's own remedy and that is a decision, not a tidy-up. What each costs: a
+mediation step costs a few hundred dollars in mediator fees and a month, and it is
+the clause that most reliably stops a $400 argument becoming a filing; a
+small-claims carve-out costs nothing and keeps the cheap forum open. ⟨COUNSEL⟩
+Ask whether an arbitration clause is worth having at all at these amounts. My
+read is no, and that a small-claims carve-out plus a talk-first sentence is the
+whole of what is useful here.
 
 **14.3 Notices** go to the email addresses on the vendor record.
 
@@ -731,9 +770,13 @@ in the buyer's possession."*
 ## A7. Returns and exchanges
 
 **A7.1** Mermade sets the customer returns policy for the Show. If a customer
-returns an item of yours after settlement, ⟨DECISION⟩ *[choose: Mermade absorbs it
-/ it is deducted from your next settlement / it is invoiced to you]*. Absorbing it
-is simplest and cheapest at your volume, and is what the draft assumes.
+returns an item of yours after settlement, ⟨DECISION — **answered, and now load
+bearing**⟩ Mermade absorbs it. Simplest and cheapest at your volume, and clawing
+money back from a maker after you have paid them is a bad look for a few dollars.
+It is also what makes the 7-day payout in §A6.3 safe, so the two answers move
+together. What is still open is the customer-facing policy itself
+(`06-OPEN-QUESTIONS.md` §15): is it all sales final, or is there a window? The
+agreement does not need to know, but the register does.
 
 ## A8. Risk of loss
 
@@ -758,7 +801,7 @@ despite reasonable care; damage by customers handling goods normally; damage in
 transit to or from the Show; inherent defects or fragility; or loss caused by
 fire, flood, earthquake or other event beyond our reasonable control.
 
-**A8.4 ⟨DECISION⟩ Shrinkage.** Where an item cannot be accounted for at
+**A8.4 ⟨DECISION — answered, overrule if you disagree⟩ Shrinkage.** Where an item cannot be accounted for at
 reconciliation and §A8.3 does not explain it, the draft proposes Mermade credits
 you **the item's retail price less commission** — the same net you would have
 received had it sold. The alternative is a stated per-vendor cap. Decide which,
@@ -777,7 +820,8 @@ insure them for you.
 **A9.1** Unsold goods are yours. Collect them at breakdown, at the time stated in
 your load-out instructions, or make arrangements with us in advance.
 
-**A9.2 ⟨DECISION⟩** Goods not collected within **14 days** of the Show, after we
+**A9.2 ⟨DECISION — answered, overrule if you disagree⟩** Goods not collected
+within **14 days** of the Show, after we
 have made at least two documented attempts to reach you, may be treated as
 abandoned and donated to a charity of our choosing. **We will not sell abandoned
 goods for our own account, and we will not carry them to a future Show without
@@ -789,12 +833,17 @@ you do not need.
 
 ## A10. Tax reporting
 
-**A10.1 ⟨COUNSEL⟩** Payments to you are payments for merchandise, not for
-services. The IRS instructions for Forms 1099-MISC and 1099-NEC exclude
+**A10.1 ⟨COUNSEL — unchanged, and deliberately not published⟩** Payments to you
+are payments for merchandise, not for services. The IRS instructions for Forms 1099-MISC and 1099-NEC exclude
 *"[p]ayments for merchandise, telegrams, telephone, freight, storage, and similar
 items,"* which is why consignment shops generally do not issue 1099s to
 consignors. That reasoning appears to fit Mermade's structure, and it follows
 naturally from Mermade being the retailer under §A4.
+
+The published page does **not** say "we do not issue 1099s", because that is a
+CPA's answer and not a drafter's. It says you are responsible for your own income
+tax and that we will ask for a W-9 first if we are required to report a payment,
+which is true whichever way the CPA answers.
 
 Confirm it with your CPA against the actual payout mechanics, and note that the
 thresholds moved for 2026 — 1099-NEC/MISC to **$2,000** (from $600) for payments
@@ -803,6 +852,23 @@ also resolves `00-BUSINESS-AUDIT.md` §1.5, which flagged the form type as an op
 fork.
 
 **A10.2** You are responsible for your own income tax on amounts we pay you.
+
+**A10.3 ⟨COUNSEL — new, and nothing in this document had noticed it⟩ Makers under
+18.** The JR Space is seeded at $60 and is described on the live page as
+*"Junior Makers, 14 + under"*. **A minor cannot be bound by this contract**, and
+under California law a minor can generally disaffirm one. Today the application
+takes a typed name and a checkbox with no guardian field, which means a
+twelve-year-old can sign an indemnity, a liability cap and a photography licence,
+and none of it holds. `06-OPEN-QUESTIONS.md` §18 spotted the payment half of this
+(a minor cannot hold a seller's permit or clear Stripe KYC and is presumably paid
+through a parent) without spotting the signature half.
+
+The published page therefore says the parent or guardian applies, signs, and is
+the person we pay, and extends it to 15-to-17-year-olds who apply for an ordinary
+space. That is the only lawful shape I can see, but the drafting of it, and
+whether a guardian signature also has to carry the indemnity, is a question for
+counsel. The application form needs a guardian name and email before this clause
+is true of the code.
 
 ---
 
@@ -839,9 +905,21 @@ and the one most visible to shoppers.
 
 ## B3. Tents, weights and safety
 
-**B3.1** Tents must be weighted at every leg. ⟨DECISION⟩ Set a number — 25 lb per
-leg is the common minimum and some venues require 40. Stakes are usually
-prohibited on pavement. Confirm with the venue and put the actual figure here.
+**B3.1** Tents must be weighted at every leg. ⟨DECISION — **still open, one
+email**⟩ Set a number. 25 lb per leg is the common minimum and some venues require
+40. Stakes are usually prohibited on pavement. Confirm with the Community House
+and put the actual figure in the load-in instructions, which is where the
+published clause points, so that a venue change moves one field rather than the
+contract.
+
+> **And a related error worth fixing here.** §B2.1 below says outdoor spaces are
+> 10' x 10'. **They are not.** The outdoor maker page says the Mermade tents are
+> *"6.5 feet x 6.5 feet + 7.5 tall"* and that *"a few 10x10's will be offered"*,
+> and the 10 x 10 is a priced add-on in the platform (`TENT_10X10`, $100). The
+> published clause says the space is the tent we put up, in the size on your
+> acceptance, and points at the outdoor page for dimensions, so there is one place
+> the number lives. A maker who plans a display for 100 square feet and arrives to
+> 42 has a real complaint, and this document was about to give them one.
 
 **B3.2** You must have a backdrop. Your space must look finished from every side a
 shopper can see.
@@ -857,9 +935,15 @@ lower or remove a tent that has become unsafe.
 **B4.1** Load-in and load-out happen at assigned times. Vehicles must be moved to
 vendor parking before doors open.
 
-**B4.2** Leave your space as you found it. Take your rubbish with you. ⟨DECISION⟩
-Consider a stated cleanup charge for spaces left with debris — it is the only
-lever that reliably works.
+**B4.2** Leave your space as you found it. Take your rubbish with you.
+⟨DECISION — **still open, small, and cheap to answer**⟩ A stated cleanup charge is
+the only lever that reliably works, and there is no evidence in the repo that you
+have ever charged one. Two options and what they cost: **name a figure** (a
+disposal run and an hour of staff time, so something like $75 to $150) and it
+belongs in §B4.2 and on the load-in instructions, or **say nothing** and keep
+absorbing it, which is what happens today. The published page carries the duty
+without a charge, because inventing a penalty pointed at your own makers is
+exactly what §A2.3 argues against.
 
 ## B5. Rentals
 
@@ -882,7 +966,9 @@ An hour or two of an attorney's time, focused here. In priority order.
 | 6 | **Postponement mechanics** — is a credit rather than a refund defensible, and does §4.2 hold up given you have already postponed once? | Weather is your uninsured single point of failure | §4 |
 | 7 | **Blanket vendor insurance vs. individual COIs** — and if blanket, what the policy must say | Changes ~100 COI chases per show into a line item, and is a real differentiator | §7 |
 | 8 | Does the indemnity survive an incident involving a **food vendor**, and does §9 need a food-specific rider? | Highest-severity plausible incident on the floor | §9 |
-| 9 | E-signature sufficiency: is capturing name + timestamp + IP + terms version enough under **UETA / ESIGN**? | Everything above is worthless if the signature doesn't hold | §1.3 |
+| 9 | E-signature sufficiency: is capturing **name + timestamp + terms version** enough under **UETA / ESIGN**? Note the platform does **not** capture an IP address, and the clause no longer claims one | Everything above is worthless if the signature doesn't hold | §1.3 |
+| 10 | **Minors.** A JR maker is 14 or under and cannot be bound. Is a guardian signature on the same form enough, and does the guardian carry the indemnity? | Today a child can tick the box and none of the agreement holds. There is no guardian field on the form | §A10.3 |
+| 11 | Does the **carry-forward** in §B6.4, published on the outdoor page for years, sit consistently with "all spaces are non-refundable" in §3.2? | Two published promises that a maker will read together | §3.2, §B6.4 |
 
 ## Business decisions — where each one now stands
 
@@ -933,9 +1019,22 @@ weekend tent is **$1,350** before rentals — which is why §4.4's weather claus
 matters more than it looks, and why "non-refundable" now carries more weight than
 it did when I first drafted it.
 
-⟨COUNSEL⟩ Add-ons — shares, endcaps, tent rentals — are not yet modelled in the
-platform or drafted in the agreement. That is the next schema change, not a legal
-problem.
+~~⟨COUNSEL⟩ Add-ons are not yet modelled in the platform or drafted in the
+agreement.~~ **Closed, September 2026.** Add-ons are modelled: `add_ons`,
+`applications.requested_addons`, `booking_addons` and `bookings.addons_cents`,
+seeded at share $100, endcap $40 inside and $60 outside, and a Mermade 10 x 10
+tent $100. The agreement covers them at §3.1, and the fee schedule on `/agreement`
+is rendered from `space_types` and `add_ons` rather than from the table above, so
+this table is now a historical record of what the prices were on 25 August 2026
+and the live page cannot go stale.
+
+Two mismatches between this table and the platform are worth knowing about. The
+table's outdoor hours (*Friday 9am-6pm, Saturday 9am-5pm, Sunday 9am-5pm*) are
+**not** the Show record's hours (*Friday 5-9pm, Saturday 10am-5pm, Sunday
+10am-4pm*), and the outdoor maker page still carries the 9am version in its
+schedule block. And the table's "Endcap request +$60" is the outdoor endcap; the
+indoor one is $40. The published agreement reads all of it off the database, so
+only the maker pages need the fix.
 
 ---
 

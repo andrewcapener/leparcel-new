@@ -721,7 +721,10 @@ h3, .h3 { line-height: 1.15; }
   padding: 12px 0 max(14px, env(safe-area-inset-bottom));
   border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity));
   background: rgb(var(--bg-color, 255 255 255));
-  box-shadow: 0 -10px 18px -14px rgb(0 0 0 / 0.5);
+  /* No drop shadow. A negative-spread shadow wraps the corners, so it drew a
+     faint vertical edge down each side of the bar and left a line running
+     down the page. The rule above it is the separation; the shadow was only
+     ever restating it. */
 }
 .ap-nav__meta {
   display: flex;

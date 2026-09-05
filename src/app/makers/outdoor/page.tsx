@@ -108,6 +108,7 @@ export default async function OutdoorMerchants() {
           <CollapsibleTabs
             heading="Outside maker information"
             id="rules"
+            deepLink
             intro={
               <div className="mk-rules">
                 <h3 className="mk-rules__title">Rules that cost money</h3>

@@ -470,13 +470,25 @@ export type Tab = {
  * and closes with no JavaScript; their `details-disclosure` element only adds
  * the slide animation.
  */
+/**
+ * Opens the section a link points at. Chrome and Firefox now expand a closed
+ * <details> when a fragment lands inside it and Safari does not, so a link to
+ * /makers/indoor#labels would scroll to a shut section on some browsers. Six
+ * lines of progressive enhancement: with no JavaScript the link still scrolls
+ * to the right heading, which is the behaviour without this.
+ */
+const OPEN_TARGET = `(function(){function o(){var h=location.hash.slice(1);if(!h)return;var e=document.getElementById(h);if(!e)return;var d=e.querySelector('details');if(d&&!d.open){d.open=true;e.scrollIntoView();}}o();addEventListener('hashchange',o);})();`
+
 export function CollapsibleTabs({
-  heading, id, tabs, intro,
+  heading, id, tabs, intro, deepLink = false,
 }: {
   heading?: string; id?: string; tabs: Tab[]
   /** A block between the heading and the first tab. The rules pages put the
    *  short list of rules that cost money there. */
   intro?: React.ReactNode
+  /** Open the section a `#fragment` names. Only the pages whose tabs carry
+   *  `id`s need it. */
+  deepLink?: boolean
 }) {
   return (
     <div className="shopify-section section-collapsible-tabs">
@@ -499,6 +511,7 @@ export function CollapsibleTabs({
             </div>
           ))}
         </div>
+        {deepLink && <script dangerouslySetInnerHTML={{ __html: OPEN_TARGET }} />}
       </div>
     </div>
   )
