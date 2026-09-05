@@ -80,7 +80,39 @@ export async function activeAddOns(showId: string): Promise<AddOn[]> {
     addOnsMissingUntil = 0
     return rows
   } catch (err) {
-    if (pgCode(err) !== MISSING_TABLE) throw err
+    const code = pgCode(err)
+
+    // A column this code knows about that the database has not got yet.
+    // Vercel deploys the moment a branch is pushed, so a schema change is
+    // always live before anyone has run the migration, and Drizzle's
+    // `findMany` selects every column it knows: one unmigrated column and
+    // every query touching this table throws. That is what took /apply down
+    // when `capacity` shipped ahead of drizzle/0004_addon-capacity.sql.
+    //
+    // Falling back to [] would be worse than the error, because the form
+    // would quietly render with no add-ons at all and makers would apply
+    // without them. So re-read the columns that certainly exist and treat the
+    // new one as unset. The page keeps working, and the add-on that needs the
+    // column is simply uncapped until the migration lands.
+    if (code === MISSING_COLUMN) {
+      addOnsMissingUntil = 0
+      console.warn('[db] add_ons is missing a column this build expects; '
+        + 'run drizzle/0004_addon-capacity.sql. Reading without it.')
+      const rows = await db
+        .select({
+          id: addOns.id, showId: addOns.showId, track: addOns.track,
+          code: addOns.code, name: addOns.name, description: addOns.description,
+          priceCents: addOns.priceCents, maxQty: addOns.maxQty,
+          isLimited: addOns.isLimited, sortOrder: addOns.sortOrder,
+          isActive: addOns.isActive,
+        })
+        .from(addOns)
+        .where(and(eq(addOns.showId, showId), eq(addOns.isActive, true)))
+        .orderBy(asc(addOns.sortOrder))
+      return rows.map((r) => ({ ...r, capacity: null }))
+    }
+
+    if (code !== MISSING_TABLE) throw err
     addOnsMissingUntil = Date.now() + RECHECK_AFTER_MS
     console.warn('[db] add_ons is missing; run drizzle/0002_addons-and-loadin.sql')
     return []
