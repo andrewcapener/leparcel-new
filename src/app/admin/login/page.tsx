@@ -44,10 +44,10 @@ export default async function AdminLogin({
   return (
     <div style={{ minHeight: '70vh', display: 'grid', placeItems: 'center', padding: 26 }}>
       <form action={signIn} style={{ width: 320 }}>
-        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 28, marginBottom: 6 }}>
+        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 'var(--t-d3)', marginBottom: 6 }}>
           Staff sign-in
         </h1>
-        <p style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 20 }}>
+        <p style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginBottom: 20 }}>
           Mermade Market admin
         </p>
         <input type="hidden" name="next" value={sp.next ?? '/admin/jury'} />

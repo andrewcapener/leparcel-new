@@ -27,10 +27,10 @@ export default async function TypePreview() {
     <main style={{ background: 'var(--bone)', minHeight: '100vh' }}>
       <div style={{ padding: 'clamp(24px,4vw,52px)', borderBottom: '2px solid var(--ink)' }}>
         <div className="k">Unlisted preview · not in the nav or the sitemap</div>
-        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase', fontSize: 'clamp(30px,4.4vw,52px)', lineHeight: 0.95, marginTop: 12 }}>
+        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase', fontSize: 'clamp(30px,4.4vw,52px)', lineHeight: 0.95, marginTop: 12 }}>
           Which condensed?
         </h1>
-        <p style={{ fontFamily: 'var(--font-g)', fontSize: 18, lineHeight: 1.6, color: 'var(--ink-2)', maxWidth: '60ch', marginTop: 14 }}>
+        <p style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-lead)', lineHeight: 1.6, color: 'var(--ink-2)', maxWidth: '60ch', marginTop: 14 }}>
           Trade Gothic is not in the theme export and is not what the live site
           uses. The headline you liked is Oswald Semibold, which is free. Real
           Trade Gothic Bold Condensed would need a web licence bought from
@@ -48,7 +48,7 @@ export default async function TypePreview() {
           <div style={{ fontFamily: f.css, fontWeight: f.weight, textTransform: 'uppercase', fontSize: 'clamp(30px,5.6vw,72px)', lineHeight: 0.94, marginTop: 26, color: 'var(--deep)' }}>
             A hundred makers,<br />chosen one at a time.
           </div>
-          <div style={{ fontFamily: f.css, fontWeight: f.weight, textTransform: 'uppercase', letterSpacing: '.09em', fontSize: 15, marginTop: 24, color: 'var(--ink-2)' }}>
+          <div style={{ fontFamily: f.css, fontWeight: f.weight, textTransform: 'uppercase', letterSpacing: '.09em', fontSize: 'var(--t-s)', marginTop: 24, color: 'var(--ink-2)' }}>
             Visiting · Schedule · Journal · FAQ · Apply to sell
           </div>
         </section>
@@ -58,7 +58,7 @@ export default async function TypePreview() {
       <section style={{ position: 'relative' }}>
         <Photo src="/photos/hero.jpg" alt="" className="hero" tone="deep">
           <div style={{ position: 'absolute', inset: 0, zIndex: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 var(--pad)', color: '#FBF8F0' }}>
-            <div style={{ fontFamily: 'var(--f-oswald)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.22em', fontSize: 13 }}>
+            <div style={{ fontFamily: 'var(--f-oswald)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.22em', fontSize: 'var(--t-lbl)' }}>
               Hand curated
             </div>
             <div style={{ fontFamily: 'var(--f-oswald)', fontWeight: 600, textTransform: 'uppercase', fontSize: 'clamp(40px,8.2vw,104px)', lineHeight: 0.94, marginTop: 22 }}>

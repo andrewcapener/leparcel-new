@@ -77,19 +77,19 @@ export default async function ApplicationDetail({
 
   return (
     <div style={{ padding: '26px 26px 80px', maxWidth: 880 }}>
-      <Link href="/admin/jury" style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.07em', fontSize: 13, color: 'var(--deep)' }}>
+      <Link href="/admin/jury" style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.07em', fontSize: 'var(--t-lbl)', color: 'var(--deep)' }}>
         ← Jury queue
       </Link>
 
       <header style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap', margin: '14px 0 4px' }}>
-        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34 }}>
+        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 'var(--t-d2)' }}>
           {vendor.shopName}
         </h1>
         <span className="chip" data-s={app.status}>{LABEL[app.status as ApplicationStatus]}</span>
         {booking?.vendorCode && <span className="chip">{booking.vendorCode}</span>}
         {flags.map((f) => <span key={f} className="chip" data-warn="1">{f}</span>)}
       </header>
-      <p style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 24 }}>
+      <p style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginBottom: 24 }}>
         Submitted {fmtDateTime(app.submittedAt)} · signed “{app.signedName}” · terms v{app.termsVersion}
       </p>
 
@@ -125,7 +125,7 @@ export default async function ApplicationDetail({
           <Row k="From">{vendor.city}, {vendor.state}</Row>
           <Row k="Category">{app.category}</Row>
           <Row k="The work">
-            <div style={{ fontFamily: 'var(--font-g)', fontSize: 16.5, lineHeight: 1.6, maxWidth: '58ch' }}>{app.description}</div>
+            <div style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-b)', lineHeight: 1.6, maxWidth: '58ch' }}>{app.description}</div>
           </Row>
           <Row k="Price range">
             <span className="num">{usd(app.priceLowCents)}-{usd(app.priceHighCents)}</span>
@@ -157,7 +157,7 @@ export default async function ApplicationDetail({
                     {a.isLimited && <span className="chip" style={{ marginLeft: 8 }}>limited</span>}
                   </div>
                 ))}
-                <div style={{ color: 'var(--ink-3)', fontSize: 13 }}>
+                <div style={{ color: 'var(--ink-3)', fontSize: 'var(--t-lbl)' }}>
                   Requests. Confirm what you can give them before the invoice goes out.
                 </div>
               </div>
@@ -182,7 +182,7 @@ export default async function ApplicationDetail({
       </table>
 
       {/* ── jury: scores, notes, decision ── */}
-      <h2 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, fontSize: 22, marginBottom: 14 }}>Jury</h2>
+      <h2 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, fontSize: 'var(--t-xl)', marginBottom: 14 }}>Jury</h2>
       <form action={saveScores} style={{ marginBottom: 20 }}>
         <input type="hidden" name="applicationId" value={app.id} />
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -221,14 +221,14 @@ export default async function ApplicationDetail({
       {/* ── audit trail ── */}
       {trail.length > 0 && (
         <>
-          <h2 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, fontSize: 22, margin: '36px 0 12px' }}>History</h2>
+          <h2 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, fontSize: 'var(--t-xl)', margin: '36px 0 12px' }}>History</h2>
           <table className="tbl">
             <tbody>
               {trail.map((t) => (
                 <tr key={t.id}>
-                  <td style={{ whiteSpace: 'nowrap', color: 'var(--ink-3)', fontSize: 12.5 }}>{fmtDateTime(t.at)}</td>
+                  <td style={{ whiteSpace: 'nowrap', color: 'var(--ink-3)', fontSize: 'var(--t-lbl)' }}>{fmtDateTime(t.at)}</td>
                   <td>{t.action.replace('_', ' ')}</td>
-                  <td style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>
+                  <td style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-2)' }}>
                     {t.after ? JSON.parse(t.after).status ?? '' : ''}
                     {t.reason && ` · ${t.reason}`}
                   </td>

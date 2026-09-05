@@ -31,7 +31,7 @@ export function SettingsForm({ show }: { show: Show }) {
   return (
     <form key={state.attempt ?? 0} action={action} style={{ maxWidth: 680 }} noValidate>
       {state.message && (
-        <p className={state.ok ? 'hint' : 'err'} style={{ marginBottom: 20, fontSize: 14 }}>
+        <p className={state.ok ? 'hint' : 'err'} style={{ marginBottom: 20, fontSize: 'var(--t-s)' }}>
           {state.ok ? `${state.message} The public site updates immediately.` : state.message}
         </p>
       )}

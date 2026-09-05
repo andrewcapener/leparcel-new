@@ -28,7 +28,7 @@ export default async function JournalPost({
       <article className="sec" style={{ maxWidth: 860, margin: '0 auto' }}>
         <Link href="/journal" className="more" style={{ marginLeft: 0 }}>← The journal</Link>
         <h1 style={{
-          fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const,
+          fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const,
           fontSize: 'clamp(34px,5vw,58px)', lineHeight: 0.94, margin: '22px 0 10px',
         }}>{post.title}</h1>
         <div className="k" style={{ marginBottom: 26 }}>{fmtDate(post.date)}</div>
@@ -39,7 +39,7 @@ export default async function JournalPost({
         )}
         {post.paras.map((p, i) => (
           <p key={i} style={{
-            fontFamily: 'var(--font-g)', fontSize: 19, lineHeight: 1.65,
+            fontFamily: 'var(--font-g)', fontSize: 'var(--t-lead)', lineHeight: 1.65,
             color: 'var(--ink-2)', maxWidth: '62ch', marginBottom: 16,
           }}>{p}</p>
         ))}

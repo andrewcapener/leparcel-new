@@ -102,7 +102,7 @@ export function PriceTable({
         </>
       )}
       <p style={{
-        fontFamily: 'var(--font-j)', fontSize: 13.5, color: 'var(--ink-3)',
+        fontFamily: 'var(--font-j)', fontSize: 'var(--t-lbl)', color: 'var(--ink-3)',
         marginTop: 14, maxWidth: '60ch', lineHeight: 1.55,
       }}>
         No fee to apply and no rental tables. You ask for add-ons on the application, and

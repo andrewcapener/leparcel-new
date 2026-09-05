@@ -72,7 +72,7 @@ export function ApplyForm({
 
       <form key={state.attempt ?? 0} action={action} noValidate>
         {state.message && !state.ok && (
-          <p className="err" style={{ marginBottom: 24, fontSize: 14 }}>{state.message}</p>
+          <p className="err" style={{ marginBottom: 24, fontSize: 'var(--t-s)' }}>{state.message}</p>
         )}
 
         {/* ── Step 1 · your shop ── */}
@@ -178,10 +178,10 @@ export function ApplyForm({
           {visible.map((s) => (
             <label key={s.id} className="field" style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10 }}>
               <input type="checkbox" name="spaces" value={s.id} style={{ marginTop: 3 }} />
-              <span style={{ fontSize: 14.5, lineHeight: 1.5 }}>
+              <span style={{ fontSize: 'var(--t-s)', lineHeight: 1.5 }}>
                 {s.label} · {usd(s.priceCents)}
                 {s.description && (
-                  <span style={{ display: 'block', fontSize: 12.5, color: 'var(--ink-3)' }}>{s.description}</span>
+                  <span style={{ display: 'block', fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>{s.description}</span>
                 )}
               </span>
             </label>
@@ -198,11 +198,11 @@ export function ApplyForm({
             {visibleExtras.map((a) => (
               <label key={a.id} className="field" style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10 }}>
                 <input type="checkbox" name="addons" value={a.code} style={{ marginTop: 3 }} />
-                <span style={{ fontSize: 14.5, lineHeight: 1.5 }}>
+                <span style={{ fontSize: 'var(--t-s)', lineHeight: 1.5 }}>
                   {a.name} · {usd(a.priceCents)}
                   {a.isLimited && <span className="chip" style={{ marginLeft: 8 }}>Limited</span>}
                   {a.description && (
-                    <span style={{ display: 'block', fontSize: 12.5, color: 'var(--ink-3)' }}>{a.description}</span>
+                    <span style={{ display: 'block', fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>{a.description}</span>
                   )}
                 </span>
               </label>
@@ -220,7 +220,7 @@ export function ApplyForm({
             (see /admin/roster). Asking here just gets us a head start on the
             vendors who already have their paperwork. */}
         <div className="k" style={{ margin: '38px 0 20px' }}>04 · Paperwork (optional)</div>
-        <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-2)', marginBottom: 24, maxWidth: '60ch' }}>
+        <p style={{ fontSize: 'var(--t-lbl)', lineHeight: 1.6, color: 'var(--ink-2)', marginBottom: 24, maxWidth: '60ch' }}>
           None of this is required to apply, and none of it affects the jury.
           If you’re accepted we’ll need it before load-in. Answering now just
           means one less email in October.
@@ -240,13 +240,13 @@ export function ApplyForm({
             checked={occasional} onChange={(ev) => setOccasional(ev.target.checked)}
             style={{ marginTop: 3 }}
           />
-          <span style={{ fontSize: 14, lineHeight: 1.5 }}>
+          <span style={{ fontSize: 'var(--t-s)', lineHeight: 1.5 }}>
             I don’t have a permit. I qualify as an occasional seller (CDTFA 410-D)
           </span>
         </label>
         <label className="field" style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <input type="checkbox" name="hasCoi" defaultChecked={v.hasCoi === 'on'} style={{ marginTop: 3 }} />
-          <span style={{ fontSize: 14, lineHeight: 1.5 }}>
+          <span style={{ fontSize: 'var(--t-s)', lineHeight: 1.5 }}>
             I carry my own liability insurance (recommended, not required)
           </span>
         </label>
@@ -255,7 +255,7 @@ export function ApplyForm({
         <div className="k" style={{ margin: '38px 0 20px' }}>05 · Agree &amp; submit</div>
         <label className="field" style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <input type="checkbox" name="agree" defaultChecked={v.agree === 'on'} style={{ marginTop: 3 }} required />
-          <span style={{ fontSize: 14, lineHeight: 1.5 }}>
+          <span style={{ fontSize: 'var(--t-s)', lineHeight: 1.5 }}>
             I’ve read and accept the Mermade Market vendor agreement (v2026.1).
             {e.agree && <span className="err">{e.agree}</span>}
           </span>

@@ -56,7 +56,7 @@ export default async function Roster() {
   return (
     <div style={{ padding: '26px 26px 80px' }}>
       <header style={{ display: 'flex', alignItems: 'baseline', gap: 18, marginBottom: 24 }}>
-        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34 }}>Roster · {show.name}</h1>
+        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 'var(--t-d2)' }}>Roster · {show.name}</h1>
       </header>
 
       <div style={{
@@ -76,15 +76,15 @@ export default async function Roster() {
             background: warn ? '#FBF1EE' : undefined,
           }}>
             <div style={{
-              fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase',
+              fontSize: 'var(--t-lbl-s)', letterSpacing: '.16em', textTransform: 'uppercase',
               fontWeight: 600, color: warn ? '#8C3A2A' : 'var(--ink-3)',
             }}>{k}</div>
             <div style={{
-              fontFamily: 'var(--font-g)', fontSize: 30, marginTop: 8,
+              fontFamily: 'var(--font-g)', fontSize: 'var(--t-d3)', marginTop: 8,
               color: warn ? '#8C3A2A' : undefined,
             }}>{v}</div>
             {Boolean(warn) && (
-              <div style={{ fontSize: 11, color: '#8C3A2A', marginTop: 6, lineHeight: 1.45 }}>
+              <div style={{ fontSize: 'var(--t-lbl-s)', color: '#8C3A2A', marginTop: 6, lineHeight: 1.45 }}>
                 No permit and no 410-D on file. Clear before load-in.
               </div>
             )}
@@ -93,7 +93,7 @@ export default async function Roster() {
       </div>
 
       {example && (
-        <p style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 26, maxWidth: 70 + 'ch' }}>
+        <p style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginBottom: 26, maxWidth: 70 + 'ch' }}>
           At the snapshotted rate, a $100 indoor sale splits{' '}
           <strong style={{ color: 'var(--ink)' }}>{usd(example.commissionCents)}</strong> to Mermade
           and <strong style={{ color: 'var(--ink)' }}>{usd(example.netCents)}</strong> to the vendor.
@@ -119,10 +119,10 @@ export default async function Roster() {
         <tbody>
           {rows.map(({ booking, vendor, app, space }) => (
             <tr key={booking.id}>
-              <td style={{ fontFamily: 'var(--font-g)', fontSize: 18 }}>{booking.vendorCode}</td>
+              <td style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-lead)' }}>{booking.vendorCode}</td>
               <td>
                 {vendor.shopName}
-                <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{vendor.email}</div>
+                <div style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>{vendor.email}</div>
               </td>
               <td>{app.category}</td>
               <td>{space.label}</td>
@@ -134,7 +134,7 @@ export default async function Roster() {
                 <span className="chip" data-s={booking.status === 'confirmed' ? 'accepted' : 'new'}>
                   {booking.status === 'confirmed' ? 'Paid' : 'Awaiting'}
                 </span>
-                <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 5 }}>
+                <div style={{ fontSize: 'var(--t-lbl-s)', color: 'var(--ink-3)', marginTop: 5 }}>
                   {booking.paidAt
                     ? fmtDateTime(booking.paidAt)
                     : `due ${fmtDateTime(booking.paymentDueAt)}`}
@@ -151,7 +151,7 @@ export default async function Roster() {
                     <span className="chip">410-D claimed</span>
                   )}
                   {app.sellerPermit.trim() && (
-                    <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+                    <span style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>
                       {app.sellerPermit}
                     </span>
                   )}
@@ -172,18 +172,18 @@ export default async function Roster() {
       </table>
 
       {rows.length === 0 && (
-        <p style={{ fontFamily: 'var(--font-g)', fontSize: 17, color: 'var(--ink-2)', margin: '26px 0 4px' }}>
+        <p style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-b)', color: 'var(--ink-2)', margin: '26px 0 4px' }}>
           Nothing here yet. When you accept an application in the jury queue, the booking
           lands on this roster with its fee and paperwork status.
         </p>
       )}
 
-      <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 22, maxWidth: 76 + 'ch' }}>
+      <p style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginTop: 22, maxWidth: 76 + 'ch' }}>
         “Mark paid” stands in for the vendor paying in the portal. In production this is a Stripe
         Checkout webhook; payment state is only ever set from a verified webhook, never a client
         callback (CLAUDE.md rule 5).
       </p>
-      <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 12, maxWidth: 76 + 'ch' }}>
+      <p style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginTop: 12, maxWidth: 76 + 'ch' }}>
         <strong style={{ color: 'var(--ink)' }}>Blocks load-in</strong> means no seller’s permit
         number and no CDTFA-410-D on file. Publication 111 puts the record-keeping duty on the
         market, not the maker: up to $1,000 per undocumented seller who should have held a permit,

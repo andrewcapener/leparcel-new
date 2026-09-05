@@ -67,8 +67,8 @@ export default async function Jury({
   return (
     <div style={{ padding: '26px 26px 80px' }}>
       <header style={{ display: 'flex', alignItems: 'baseline', gap: 18, marginBottom: 22 }}>
-        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 34 }}>Jury · {show.name}</h1>
-        <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+        <h1 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.012em', fontSize: 'var(--t-d2)' }}>Jury · {show.name}</h1>
+        <span style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>
           {sold} of {show.indoorCapacity + show.outdoorCapacity} spaces committed ·{' '}
           {show.commissionBps / 100}% commission · {show.paymentWindowHours}h payment window
         </span>
@@ -84,7 +84,7 @@ export default async function Jury({
             key={s}
             href={`/admin/jury?status=${s}`}
             style={{
-              padding: '10px 16px', fontSize: 11, letterSpacing: '.11em',
+              padding: '10px 16px', fontSize: 'var(--t-lbl-s)', letterSpacing: '.11em',
               textTransform: 'uppercase', fontWeight: 600,
               color: s === active ? 'var(--paper)' : 'var(--ink-3)',
               background: s === active ? 'var(--ink)' : 'transparent',
@@ -115,7 +115,7 @@ export default async function Jury({
       )}
 
       {rows.length === 0 ? (
-        <p style={{ color: 'var(--ink-3)', fontSize: 14 }}>Nothing in {LABEL[active]}.</p>
+        <p style={{ color: 'var(--ink-3)', fontSize: 'var(--t-s)' }}>Nothing in {LABEL[active]}.</p>
       ) : (
         <table className="tbl">
           <thead>
@@ -150,14 +150,14 @@ export default async function Jury({
                 <tr key={app.id}>
                   <td>
                     <Link href={`/admin/applications/${app.id}`}
-                      style={{ fontFamily: 'var(--font-g)', fontSize: 17, display: 'block' }}
+                      style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-b)', display: 'block' }}
                       className="jql">
-                      {vendor.shopName} <span style={{ color: 'var(--deep)', fontSize: 13 }}>→</span>
+                      {vendor.shopName} <span style={{ color: 'var(--deep)', fontSize: 'var(--t-lbl)' }}>→</span>
                     </Link>
-                    <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 3 }}>
+                    <div style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginTop: 3 }}>
                       {vendor.contactName} · {vendor.city}, {vendor.state}
                     </div>
-                    <div style={{ fontSize: 12, marginTop: 3 }}>
+                    <div style={{ fontSize: 'var(--t-lbl)', marginTop: 3 }}>
                       <a href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
                         target="_blank" rel="noreferrer" style={{ color: 'var(--clay)' }}>
                         {vendor.instagram}
@@ -169,7 +169,7 @@ export default async function Jury({
                       )}
                     </div>
                     <p style={{
-                      fontSize: 12.5, color: 'var(--ink-2)', marginTop: 8, maxWidth: 380,
+                      fontSize: 'var(--t-lbl)', color: 'var(--ink-2)', marginTop: 8, maxWidth: 380,
                       lineHeight: 1.5,
                     }}>
                       {app.description}
@@ -192,7 +192,7 @@ export default async function Jury({
                   <td>{app.category}</td>
                   <td>
                     <div style={{ textTransform: 'capitalize' }}>{app.track}</div>
-                    <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+                    <div style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>
                       {space?.label ?? '—'}
                       {(() => {
                         try {
@@ -212,23 +212,23 @@ export default async function Jury({
                         <span key={l} className="chip" data-warn="1">{l}</span>
                       ))}
                       {flags.every(([, on]) => !on) && (
-                        <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>clear</span>
+                        <span style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>clear</span>
                       )}
                     </div>
                   </td>
                   <td className="r">
                     {total ? (
                       <>
-                        <div style={{ fontFamily: 'var(--font-g)', fontSize: 19 }}>{total}<span style={{ color: 'var(--ink-3)', fontSize: 13 }}>/20</span></div>
-                        <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>
+                        <div style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-lead)' }}>{total}<span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-lbl)' }}>/20</span></div>
+                        <div style={{ fontSize: 'var(--t-lbl-s)', color: 'var(--ink-3)' }}>
                           Q{app.scoreQuality} O{app.scoreOriginality} B{app.scoreBrand} F{app.scoreFit}
                         </div>
                       </>
                     ) : (
-                      <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>unscored</span>
+                      <span style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>unscored</span>
                     )}
                     {app.decidedAt && (
-                      <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 6 }}>
+                      <div style={{ fontSize: 'var(--t-lbl-s)', color: 'var(--ink-3)', marginTop: 6 }}>
                         {fmtDateTime(app.decidedAt)}
                       </div>
                     )}
@@ -251,7 +251,7 @@ export default async function Jury({
                         ))}
                     </div>
                     {app.declineReason && (
-                      <p style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 8, maxWidth: 300 }}>
+                      <p style={{ fontSize: 'var(--t-lbl-s)', color: 'var(--ink-3)', marginTop: 8, maxWidth: 300 }}>
                         Sent: “{app.declineReason}”
                       </p>
                     )}

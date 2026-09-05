@@ -143,7 +143,7 @@ export default async function Collaborate() {
           ))}
         </div>
         <p style={{
-          fontFamily: 'var(--font-j)', fontSize: 13.5, color: 'var(--ink-3)',
+          fontFamily: 'var(--font-j)', fontSize: 'var(--t-lbl)', color: 'var(--ink-3)',
           marginTop: 22, maxWidth: '60ch', lineHeight: 1.55,
         }}>
           Rates depend on the show and how early you come to us. Write and we will send the

@@ -11,7 +11,7 @@ export function SubscribeForm({ fine, compact }: { fine?: string; compact?: bool
   if (state.ok) {
     return (
       <div>
-        <p style={{ fontFamily: 'var(--font-g)', fontSize: 21, lineHeight: 1.4 }}>
+        <p style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-xl)', lineHeight: 1.4 }}>
           {state.message}
         </p>
       </div>
