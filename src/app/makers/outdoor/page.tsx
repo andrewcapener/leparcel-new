@@ -51,7 +51,7 @@ export default async function OutdoorRules() {
     <>
       <Masthead show={show} />
 
-      <section className="claim" style={{ paddingBottom: 68 }}>
+      <section className="claim">
         <div className="k">For makers · Selling outside</div>
         <h1 className="lede">
           Your tent.<br /><em>Your register.</em>

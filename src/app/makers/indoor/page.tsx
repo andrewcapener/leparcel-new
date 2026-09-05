@@ -51,7 +51,7 @@ export default async function IndoorRules() {
     <>
       <Masthead show={show} />
 
-      <section className="claim" style={{ paddingBottom: 68 }}>
+      <section className="claim">
         <div className="k">For makers · Selling inside</div>
         <h1 className="lede">
           Drop it off.<br /><em>We sell it.</em>

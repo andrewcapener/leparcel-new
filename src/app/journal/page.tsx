@@ -19,9 +19,9 @@ export default async function Journal() {
   return (
     <>
       <Masthead show={show} />
-      <section className="claim" style={{ paddingBottom: 64 }}>
+      <section className="claim">
         <div className="k">The journal</div>
-        <h1 className="lede" style={{ maxWidth: '20ch' }}>Meet <em>the makers.</em></h1>
+        <h1 className="lede">Meet<br /><em>the makers.</em></h1>
         <p>
           Eleven years of shops, studios and kitchens, written up as we met them. The
           oldest ones read like a time capsule.

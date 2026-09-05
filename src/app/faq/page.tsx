@@ -44,9 +44,9 @@ export default async function FAQ() {
   return (
     <>
       <Masthead show={show} />
-      <section className="claim" style={{ paddingBottom: 64 }}>
+      <section className="claim">
         <div className="k">Good to know</div>
-        <h1 className="lede" style={{ maxWidth: '20ch' }}>Questions, <em>answered.</em></h1>
+        <h1 className="lede">Questions,<br /><em>answered.</em></h1>
       </section>
 
       <section className="sec">

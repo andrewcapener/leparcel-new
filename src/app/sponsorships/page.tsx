@@ -20,9 +20,9 @@ export default async function Sponsorships() {
     <>
       <Masthead show={show} />
 
-      <section className="claim" style={{ paddingBottom: 56 }}>
+      <section className="claim">
         <div className="k">Sponsorships</div>
-        <h1 className="lede" style={{ maxWidth: '20ch' }}>The <em>locals-only</em> advantage.</h1>
+        <h1 className="lede">The<br /><em>locals-only</em> advantage.</h1>
       </section>
 
       <section className="mission">

@@ -37,10 +37,10 @@ export default async function Apply({
     <>
       <Masthead show={show} />
 
-      <section className="claim" style={{ paddingBottom: 72 }}>
+      <section className="claim">
         <div className="k">Apply to sell · {show.name}</div>
-        <h1 className="lede" style={{ maxWidth: '22ch' }}>
-          Show us <em>what you make.</em>
+        <h1 className="lede">
+          Show us<br /><em>what you make.</em>
         </h1>
         <p>We look at everything, and we say no a lot. Here is how to be a yes.</p>
       </section>

@@ -49,9 +49,9 @@ export default async function Merchants() {
     <>
       <Masthead show={show} />
 
-      <section className="claim" style={{ paddingBottom: 56 }}>
+      <section className="claim">
         <div className="k">{show.name}</div>
-        <h1 className="lede" style={{ maxWidth: '18ch' }}>The <em>merchants.</em></h1>
+        <h1 className="lede">The<br /><em>merchants.</em></h1>
         <p>
           Indoor makers are in the room all three days. The outdoor tents change
           daily, which is why people come back.
