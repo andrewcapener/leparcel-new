@@ -315,60 +315,239 @@ h3, .h3 { line-height: 1.15; }
 .apply-signup .signup-form__email { width: 100%; }
 
 /* ───────────────────────────────────────────────────────────────────────────
-   The merchant application form (src/app/apply/ApplyForm.tsx). Everything
-   here is prefixed `ap-`. The theme dresses the fields themselves; what it
-   has no class for is the run of numbered steps, a priced option row, and
-   the tally that adds those options up.
+   /apply — the prospectus head and the merchant application form
+   (src/app/apply/page.tsx, src/app/apply/ApplyForm.tsx). Every class here is
+   prefixed `ap-`.
+
+   The theme dresses the fields themselves. What it has no class for is the
+   glance strip at the top of the page, the five progress segments, a step
+   that is on screen while four others are not, a priced option row, the
+   tally those options add up to, and the action bar that sticks to the
+   bottom of a phone.
    ─────────────────────────────────────────────────────────────────────────── */
 
-/* The plan: five ruled rows, each a link to its step, each 44px tall. */
-.ap-plan { margin-bottom: 2rem; }
-.ap-plan__intro { color: rgb(var(--text-color) / 0.8); }
-.ap-plan__list { margin: 0; padding: 0; list-style: none; }
-.ap-plan__item { border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity)); }
-.ap-plan__item:last-child {
-  border-bottom: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+/* ── The head ──────────────────────────────────────────────────────────────
+   Short on purpose: the page's job is to get a maker into the form, and the
+   reference material now lives under it. */
+.ap-head {
+  padding-block: clamp(1.75rem, 6vw, 3rem) 0;
+  scroll-margin-top: 96px;
 }
-.ap-plan__item a {
-  display: grid;
-  grid-template-columns: 2.2em 1fr auto;
-  gap: 0 0.8em;
-  align-items: center;
-  min-height: 44px;
-  padding: 0.6em 0;
-  color: inherit;
-  text-decoration: none;
-}
-.ap-plan__item a:hover .ap-plan__title { text-decoration: underline; }
-.ap-plan__n, .ap-plan__state, .ap-step__n {
+.ap-head__eyebrow,
+.ap-glance dt,
+.ap-steps__n,
+.ap-nav__step,
+.ap-open__h {
   font-family: var(--nav-font-family);
   font-size: var(--smaller-text-size-1);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgb(var(--text-color) / 0.7);
 }
+.ap-head__eyebrow { margin: 0 0 0.6em; }
+.ap-head__title { margin: 0; }
+.ap-head__lede {
+  max-width: 46ch;
+  margin: 0.9em 0 0;
+  line-height: 1.6;
+}
 
-/* A step head: eyebrow, rule above, and the optional flag where it can't be
-   missed. */
-.ap-step__head {
-  padding-top: 1.6rem;
+/* The four figures a maker arrives wanting, answerable without reading.
+   docs/08-DESIGN-SYSTEM.md §8. */
+.ap-glance {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.5rem;
+  margin: 1.6rem 0 0;
   border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity));
 }
-.ap-step__n { margin: 0 0 0.35em; }
-.ap-step__flag {
-  margin-inline-start: 0.75em;
-  padding: 0.15em 0.7em;
-  border: 1px solid rgb(var(--text-color) / 0.35);
-  border-radius: 999px;
+.ap-glance__item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+}
+.ap-glance dt { margin: 0; }
+.ap-glance dd {
+  margin: 0.25em 0 0;
+  font-weight: 600;
+  line-height: 1.35;
+  color: rgb(var(--heading-color));
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 768px) {
+  .ap-glance { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
-/* The rejection summary. `.errors` is the theme's box; this is the type in it. */
+.ap-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin-top: 1.6rem;
+}
+.ap-head__actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+}
+/* The prospectus link is reference, not the thing the page is for, so it is
+   a link. The padding is only there to make the target 24px tall. */
+.ap-head__alt {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 6px 0;
+  font-family: var(--nav-font-family);
+  font-size: var(--nav-text-size);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+@media (max-width: 560px) {
+  .ap-head__actions { flex-direction: column; align-items: stretch; }
+  .ap-head__actions .btn { width: 100%; }
+  .ap-head__alt { justify-content: center; }
+}
+
+/* ── The form card ───────────────────────────────────────────────────────── */
+.ap-anchor { display: block; scroll-margin-top: 96px; }
+.ap-card {
+  margin-top: clamp(1.5rem, 5vw, 2.5rem);
+  scroll-margin-top: 96px;
+}
+.ap-preview,
+.ap-closed,
+.ap-thanks { max-width: var(--reading-container-width); margin-inline: auto; }
+.ap-preview + .ap-card { margin-top: 0; }
+.ap-preview {
+  margin-top: clamp(1.5rem, 5vw, 2.5rem);
+  margin-bottom: 1.4rem;
+  padding: 10px 14px;
+  border: 1px solid rgb(var(--text-color) / 0.35);
+  border-radius: var(--btn-border-radius);
+  font-size: var(--smaller-text-size-2);
+  line-height: 1.5;
+}
+
+/* ── Progress ──────────────────────────────────────────────────────────────
+   Five segments across the top of the card: where you are, what is answered,
+   what is left. Each is a button, so no step is more than one tap away and
+   nothing traps you on the one you are looking at. */
+.ap-steps { margin: 0 0 1.75rem; }
+.ap-steps__list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ap-steps__item { margin: 0; }
+.ap-steps__btn {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 0 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.ap-steps__bar {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(var(--text-color) / 0.18);
+}
+.ap-steps__btn[data-state="done"] .ap-steps__bar { background: rgb(var(--heading-color)); }
+.ap-steps__btn[data-state="current"] .ap-steps__bar { background: rgb(var(--link-color)); }
+.ap-steps__btn[data-state="optional"] .ap-steps__bar {
+  background: repeating-linear-gradient(
+    90deg,
+    rgb(var(--text-color) / 0.32) 0 5px,
+    rgb(var(--text-color) / 0) 5px 10px
+  );
+}
+.ap-steps__n { display: block; margin-top: 7px; }
+.ap-steps__btn[data-state="current"] .ap-steps__n {
+  color: rgb(var(--heading-color));
+  font-weight: 600;
+}
+/* The titles are desktop only; on a phone the step name is in the heading
+   below and again in the action bar, and five of them across 390px is a
+   column of broken words. Every button carries its full name in aria-label
+   either way. */
+.ap-steps__title { display: none; }
+@media (min-width: 768px) {
+  .ap-steps__title {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--smaller-text-size-2);
+    line-height: 1.3;
+    color: rgb(var(--text-color) / 0.75);
+  }
+  .ap-steps__btn[data-state="current"] .ap-steps__title {
+    color: rgb(var(--heading-color));
+    font-weight: 600;
+  }
+}
+
+/* ── One step ──────────────────────────────────────────────────────────────
+   The four steps that are not on screen keep every field mounted and keep
+   submitting; `hidden` only takes them off the page and out of the
+   accessibility tree. The theme has no rule that would beat the user-agent's
+   `[hidden]`, but this is the one place where losing that fight would submit
+   a form the maker cannot see, so it is stated. */
+.ap-step[hidden] { display: none !important; }
+.ap-step__head { margin: 0 0 1.4rem; }
+.ap-step__title { margin: 0; }
+/* Inside the heading, so it is never read apart from the step it qualifies. */
+.ap-step__flag {
+  display: inline-block;
+  margin-inline-start: 0.6em;
+  padding: 0.2em 0.7em;
+  border: 1px solid rgb(var(--text-color) / 0.35);
+  border-radius: 999px;
+  vertical-align: 0.18em;
+  font-family: var(--nav-font-family);
+  font-size: var(--smaller-text-size-1);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: rgb(var(--text-color) / 0.75);
+}
+.ap-step__blurb {
+  max-width: 48ch;
+  margin: 0.55em 0 0;
+  line-height: 1.55;
+  color: rgb(var(--text-color) / 0.85);
+}
+
+/* ── The rejection summary ─────────────────────────────────────────────────
+   `.errors` is the theme's box; this is the type in it. Each line opens the
+   step its field is on and puts focus in the field, which a plain #hash
+   cannot do now that only one step is on screen. */
+.ap-errors { margin-top: 0; }
 .ap-errors__h { margin: 0; font-weight: 700; color: rgb(var(--heading-color)); }
 .ap-errors ul { margin: 0.5em 0 0; padding-inline-start: 1.2em; list-style: disc; }
 .ap-errors li { margin-bottom: 0.3em; }
+.ap-errors__link {
+  display: inline;
+  margin: 0;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
 
-/* A checkbox group. `fieldset`/`legend` is the grouping a screen reader wants;
-   the legend is set to match `.account-form label` so it reads as one. */
+/* ── A checkbox group ──────────────────────────────────────────────────────
+   `fieldset`/`legend` is the grouping a screen reader wants; the legend is
+   set to match `.account-form label` so it reads as one. */
 .ap-group { margin: 0; padding: 0; border: 0; }
 .ap-group__legend {
   display: block;
@@ -379,17 +558,18 @@ h3, .h3 { line-height: 1.15; }
   line-height: 1.4em;
 }
 
-/* A priced option. The price is its own column so it lines up down the run
-   and never gets lost at the end of a sentence. The whole row is the target.
+/* A priced option. This is where the money is and where makers get confused,
+   so the price is its own column at the size of a heading, the whole row is
+   the target, and a checked row says out loud what it will be treated as.
    `.account-form label` is (0,1,1), so these have to be (0,2,0) to land. */
 .account-form .ap-option {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 0 12px;
   align-items: start;
-  min-height: 44px;
+  min-height: 56px;
   margin: 0 0 8px;
-  padding: 11px 14px;
+  padding: 13px 14px;
   border: 1px solid var(--input-border-color);
   border-radius: var(--btn-border-radius);
   font-weight: 400;
@@ -405,20 +585,23 @@ h3, .h3 { line-height: 1.15; }
 .ap-option__name { display: block; font-weight: 600; color: rgb(var(--heading-color)); }
 .ap-option__note {
   display: block;
-  margin-top: 2px;
+  margin-top: 3px;
   color: rgb(var(--text-color) / 0.75);
   font-size: var(--smaller-text-size-2);
   line-height: 1.45;
 }
 .ap-option__price {
-  font-weight: 600;
+  font-size: 1.0625rem;
+  font-weight: 700;
   white-space: nowrap;
   color: rgb(var(--heading-color));
   font-variant-numeric: tabular-nums;
 }
-.ap-option__flag {
+.ap-option__flag,
+.ap-option__rank {
+  display: inline-block;
   margin-inline-start: 0.6em;
-  padding: 0.1em 0.55em;
+  padding: 0.1em 0.6em;
   border: 1px solid rgb(var(--text-color) / 0.35);
   border-radius: 999px;
   font-family: var(--nav-font-family);
@@ -426,30 +609,56 @@ h3, .h3 { line-height: 1.15; }
   font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
+  color: rgb(var(--text-color) / 0.75);
+}
+/* The first box checked down the list is the one the acceptance books, so it
+   is named rather than left to be inferred from the order. */
+.ap-option__rank {
+  border-color: rgb(var(--heading-color));
+  background: rgb(var(--heading-color));
+  color: rgb(var(--bg-color, 255 255 255));
+}
+.ap-option__rank--alt {
+  border-color: rgb(var(--text-color) / 0.35);
+  background: none;
   color: rgb(var(--text-color) / 0.75);
 }
 
-/* What the boxes above add up to. */
+/* ── The tally ─────────────────────────────────────────────────────────────
+   What the boxes above add up to, in the same breath as the choice. The
+   running figure is repeated in the action bar, so it is on screen from
+   every step once anything is picked. */
 .ap-tally {
   padding: 14px 16px;
   border-radius: var(--btn-border-radius);
   background: rgb(var(--text-color) / 0.05);
 }
-.ap-tally__line { display: flex; justify-content: space-between; gap: 1em; margin: 0 0 0.4em; }
+.ap-tally__line {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  margin: 0 0 0.4em;
+}
 .ap-tally__line .num { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ap-tally__total {
   margin-top: 0.6em;
-  padding-top: 0.5em;
+  padding-top: 0.55em;
   border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+  font-size: 1.0625rem;
   font-weight: 700;
   color: rgb(var(--heading-color));
 }
-.ap-tally__alt, .ap-tally__note {
+.ap-tally__empty,
+.ap-tally__alt,
+.ap-tally__note {
   margin: 0 0 0.4em;
   color: rgb(var(--text-color) / 0.75);
   font-size: var(--smaller-text-size-2);
+  line-height: 1.5;
 }
-.ap-tally__note { margin: 0.6em 0 0; }
+.ap-tally__empty, .ap-tally__note { margin: 0; }
+.ap-tally__note { margin-top: 0.7em; }
 
 /* The character count sits under its textarea, not a field away from it. */
 .account-form .ap-count-row { margin-top: -14px; margin-bottom: 6px; text-align: end; }
@@ -460,13 +669,78 @@ h3, .h3 { line-height: 1.15; }
 }
 
 .ap-lede { color: rgb(var(--text-color) / 0.85); }
-.ap-submit__note { margin: 0.9em 0 0; color: rgb(var(--text-color) / 0.8); }
+.ap-submit__note { margin: 0; color: rgb(var(--text-color) / 0.8); font-size: var(--smaller-text-size-2); }
 
-/* On a phone the theme puts 40px between form fields, which is a long scroll
-   for a form this size, and a full-width button is the easier thumb target. */
-@media (max-width: 767.98px) {
-  .ap-form .flexible-layout--form .column { margin-bottom: 20px; }
-  .ap-submit .btn { width: 100%; }
+/* What is still unanswered, on the last step. Nothing here blocks a submit:
+   the server is the authority, and this only saves a maker one rejection. */
+.ap-open {
+  padding: 12px 14px;
+  border: 1px dashed rgb(var(--text-color) / 0.35);
+  border-radius: var(--btn-border-radius);
+}
+.ap-open__h { margin: 0 0 0.4em; }
+.ap-open ul { margin: 0; padding-inline-start: 1.2em; list-style: disc; }
+.ap-open li { margin-bottom: 0.2em; }
+
+/* ── The action bar ────────────────────────────────────────────────────────
+   Where you are, what you have picked, and the next move. It sticks to the
+   bottom of the viewport while the step above it is longer than the screen,
+   which on a phone is most of them, and settles at the foot of the card when
+   it is not. */
+.ap-nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: 1.75rem;
+  padding: 12px 0 max(14px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+  background: rgb(var(--bg-color, 255 255 255));
+  box-shadow: 0 -10px 18px -14px rgb(0 0 0 / 0.5);
+}
+.ap-nav__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3em 1em;
+  margin: 0 0 10px;
+}
+.ap-nav__total {
+  font-family: var(--nav-font-family);
+  font-size: var(--smaller-text-size-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--heading-color));
+}
+.ap-nav__total .num {
+  margin-inline-start: 0.4em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ap-nav__btns { display: flex; gap: 10px; }
+.ap-nav .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding-inline: 20px;
+}
+.ap-nav__back { flex: 0 0 auto; }
+.ap-nav__next { flex: 1 1 auto; }
+/* "Next: Where you want to be" does not fit beside Back on a small phone,
+   and the step it goes to is named in the bar above anyway. */
+@media (max-width: 479.98px) {
+  .ap-nav__hint { display: none; }
+}
+
+/* ── The prospectus ────────────────────────────────────────────────────────
+   Prices, dates, rules and the FAQ, under the form rather than in front of
+   it, as one stack of disclosures. The rule is the seam between the two
+   jobs the page does. */
+.ap-details {
+  margin-top: clamp(2rem, 7vw, 3.5rem);
+  border-top: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+  scroll-margin-top: 80px;
 }
 
 /* ── The timetable ────────────────────────────────────────────────────────

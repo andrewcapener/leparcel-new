@@ -170,10 +170,10 @@ export default async function Apply({
     },
     { label: 'Line-up announced', value: fmtDate(show.rosterAnnouncedOn, { year: undefined }) },
     ...(indoorRange
-      ? [{ label: `Inside, plus ${bpsLabel(show.commissionBps)}`, value: indoorRange }]
+      ? [{ label: 'Inside spaces', value: `${indoorRange} plus ${bpsLabel(show.commissionBps)}` }]
       : []),
     ...(outdoorRange
-      ? [{ label: 'Outside, no commission', value: outdoorRange }]
+      ? [{ label: 'Outside days', value: `${outdoorRange}, no commission` }]
       : []),
   ]
 
@@ -204,11 +204,13 @@ export default async function Apply({
               ))}
             </dl>
 
+            {/* One button, and a link. The prospectus is reference, so it
+                does not get the weight of the thing the page is for. */}
             <div className="ap-head__actions">
               {(win === 'open' || preview) && (
                 <a className="btn ap-head__go" href="#apply">Start your application</a>
               )}
-              <a className="btn btn--secondary ap-head__alt" href="#details">
+              <a className="ap-head__alt" href="#details">
                 Prices, dates and rules
               </a>
             </div>
@@ -219,7 +221,7 @@ export default async function Apply({
       {/* ── The form ─────────────────────────────────────────────────────── */}
       <div className="shopify-section section-custom-liquid">
         <div className="custom-html">
-          <div id="apply" />
+          <div id="apply" className="ap-anchor" />
           <div className="container">
             {win === 'open' || preview ? (
               <>

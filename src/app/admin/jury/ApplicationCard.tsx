@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { decide } from '@/app/actions'
 import { usd } from '@/lib/money'
+import { fmtDateTime } from '@/lib/dates'
 import type { Application, ApplicationStatus, Vendor } from '@/db/schema'
 
 /** The JSON columns hold arrays of strings. A row written by hand, or by a
@@ -42,9 +43,11 @@ export function ApplicationCard({
   const overflow = photos.length - 1 - strip.length
 
   const shortlisted = app.status === 'shortlist'
-  const total =
-    (app.scoreQuality ?? 0) + (app.scoreOriginality ?? 0)
-    + (app.scoreBrand ?? 0) + (app.scoreFit ?? 0)
+  /* Triage belongs to the undecided states. An accepted maker has a booking,
+     a vendor code and an invoice in their inbox, and none of that should be
+     one stray click from being undone on a grid: changing a decision is done
+     on the review screen, with the reason in front of you. */
+  const triage = app.status === 'new' || app.status === 'under_review' || shortlisted
 
   /* Curation flags only. Missing paperwork is deliberately NOT shown to the
      jury: it has no bearing on whether the work is good. Compliance is
@@ -88,13 +91,14 @@ export function ApplicationCard({
           <Link className="jr-card-lk" href={`/admin/applications/${app.id}?from=${from}`}>
             {vendor.shopName}
             <span className="jr-vh">
-              , {photos.length === 1 ? '1 photo' : `${photos.length} photos`}, open the review
+              , {photos.length === 0 ? 'no photos'
+                : photos.length === 1 ? '1 photo'
+                : `${photos.length} photos`}, open the review
             </span>
           </Link>
         </h3>
         <p className="jr-card-meta">
-          {app.category} <span aria-hidden="true">·</span>{' '}
-          <span className="jr-cap">{app.track}</span>
+          {app.category} <span aria-hidden="true">·</span> {app.track}
         </p>
         <p className="jr-card-price num">{usd(app.priceLowCents)}-{usd(app.priceHighCents)}</p>
         {(flags.length > 0 || vendor.showsAttended > 0) && (
@@ -109,28 +113,27 @@ export function ApplicationCard({
         )}
       </div>
 
-      <div className="jr-card-f">
-        {total > 0 ? (
-          <span className="jr-card-sc">
-            Score <b className="num">{total}/20</b>
-          </span>
-        ) : (
-          <span className="jr-card-sc">Unscored</span>
-        )}
-        {/* The one triage move that belongs on a contact sheet: mark it to
-            come back to. Everything else is a decision, and decisions are
-            made on the review screen with the work at full size. */}
-        <form action={decide}>
-          <input type="hidden" name="applicationId" value={app.id} />
-          <input type="hidden" name="status" value={shortlisted ? 'under_review' : 'shortlist'} />
-          <button className="btn-o jr-tri" type="submit" data-on={shortlisted ? '1' : undefined}>
-            {shortlisted ? 'Shortlisted' : 'Shortlist'}
-            <span className="jr-vh">
-              {shortlisted ? `, take ${vendor.shopName} off the shortlist` : ` ${vendor.shopName}`}
-            </span>
-          </button>
-        </form>
-      </div>
+      {triage ? (
+        <div className="jr-card-f">
+          {/* The one triage move that belongs on a contact sheet: mark it to
+              come back to. Everything else is a decision, and decisions are
+              made on the review screen with the work at full size. */}
+          <form action={decide}>
+            <input type="hidden" name="applicationId" value={app.id} />
+            <input type="hidden" name="status" value={shortlisted ? 'under_review' : 'shortlist'} />
+            <button className="btn-o jr-tri" type="submit" data-on={shortlisted ? '1' : undefined}>
+              {shortlisted ? 'Shortlisted' : 'Shortlist'}
+              <span className="jr-vh">
+                {shortlisted ? `, take ${vendor.shopName} off the shortlist` : ` ${vendor.shopName}`}
+              </span>
+            </button>
+          </form>
+        </div>
+      ) : app.decidedAt ? (
+        <div className="jr-card-f">
+          <span className="jr-card-when">Decided {fmtDateTime(app.decidedAt)}</span>
+        </div>
+      ) : null}
     </li>
   )
 }

@@ -4,21 +4,29 @@ import { activeShow, activeAddOns } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SettingsForm } from './SettingsForm'
 import { updateSpace, updateAddOn } from '@/app/actions'
-import { fmtRange } from '@/lib/dates'
+import { fmtDate, fmtDateTime, fmtRange, applicationWindow } from '@/lib/dates'
+import { bpsLabel, usd } from '@/lib/money'
 
 export const dynamic = 'force-dynamic'
 
 /** Column tracks shared by a header row and every editable row beneath it. */
-const SPACE_COLS = { '--op-cols': '96px 78px 1.15fr 1.6fr 112px 92px auto' } as React.CSSProperties
-const ADDON_COLS = { '--op-cols': '112px 78px 1.15fr 1.6fr 112px 104px auto' } as React.CSSProperties
+const SPACE_COLS = { '--op-cols': '76px 66px 1fr 1.7fr 106px 84px 72px' } as React.CSSProperties
+const ADDON_COLS = { '--op-cols': '92px 66px 1fr 1.7fr 106px 96px 72px' } as React.CSSProperties
+
+const WINDOW_LABEL = {
+  before: 'Applications not open yet',
+  open: 'Applications open',
+  closed: 'Applications closed',
+} as const
 
 /**
  * The one record everything reads (CLAUDE.md rule 6): every date, price,
  * capacity, and rate the public site and the jury render comes from here.
  * Edits are audit-logged; commission changes never touch existing bookings.
  *
- * Laid out in four blocks, in the order someone setting up a season works:
- * what the show is, what it costs and when, then the priced inventory.
+ * It reads as an instrument panel: the live values first, in the shapes they
+ * take on the public site, then the controls that set them, grouped in the
+ * order someone setting up a season works.
  */
 export default async function ShowSettings() {
   const show = await activeShow()
@@ -33,33 +41,90 @@ export default async function ShowSettings() {
 
   const spaceCap = (track: 'indoor' | 'outdoor') =>
     spaces.filter((s) => s.track === track).reduce((n, s) => n + s.capacity, 0)
+  const windowState = applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt)
+
+  /* The readouts are the values as the public site renders them, not as the
+     database stores them, so a wrong date is visible before anyone has to
+     read a form field. */
+  const live: Array<{ k: string; v: React.ReactNode; unit?: string; n: string; txt?: boolean }> = [
+    {
+      k: 'Show dates', v: fmtRange(show.startsOn, show.endsOn), txt: true,
+      n: 'The hero, the masthead banner and the calendar file.',
+    },
+    {
+      k: 'Applications open', v: fmtDateTime(show.applicationsOpenAt), txt: true,
+      n: `Close ${fmtDateTime(show.applicationsCloseAt)}, Pacific.`,
+    },
+    {
+      k: 'Roster announced', v: fmtDate(show.rosterAnnouncedOn), txt: true,
+      n: 'The promise on /apply and in every waitlist email.',
+    },
+    {
+      k: 'Commission', v: bpsLabel(show.commissionBps),
+      n: 'Indoor consignment. Snapshotted onto each booking at acceptance.',
+    },
+    {
+      k: 'Payment window', v: show.paymentWindowHours, unit: 'hours',
+      n: 'From acceptance until the space returns to the pool.',
+    },
+    {
+      k: 'Capacity', v: show.indoorCapacity + show.outdoorCapacity, unit: 'spaces',
+      n: `${show.indoorCapacity} indoor, ${show.outdoorCapacity} outdoor.`,
+    },
+  ]
 
   /* Read-only because nothing edits them: the identity of a season is set
      when the show is created, and the slug is a live URL. */
   const identity: Array<{ k: string; v: React.ReactNode }> = [
     { k: 'Show', v: `${show.numeral} · ${show.name}` },
     { k: 'Season', v: `${show.season === 'fall' ? 'Fall' : 'Spring'} ${show.year}` },
-    { k: 'Dates', v: fmtRange(show.startsOn, show.endsOn) },
+    { k: 'Venue', v: `${show.venueName}, ${show.venueAddress}` },
     { k: 'Slug', v: <code>{show.slug}</code> },
-    { k: 'Status', v: show.isActive ? 'Active. This is the show the public site renders.' : 'Not active.' },
+    {
+      k: 'Status',
+      v: show.isActive ? 'Active. This is the show the public site renders.' : 'Not active.',
+    },
   ]
 
   return (
-    <div style={{ padding: '26px 26px 80px', maxWidth: 980 }}>
+    <div className="op-page op-narrow">
       <header className="op-head">
-        <h1>Show settings · {show.numeral} · {show.name}</h1>
+        <span className="eb">Source of truth</span>
+        <h1 className="t">Show settings</h1>
         <p className="lede">
-          The single source of truth. Every date, price, capacity and rate on the public site is
-          read from this record, so nothing here is typed into a page anywhere else. Changes
-          apply immediately and are audit-logged.
+          Every date, price, capacity and rate on the public site is read from this record, so
+          nothing here is typed into a page anywhere else. Changes apply immediately and are
+          audit-logged.
+        </p>
+        <p className="meta">
+          <span>{show.numeral} · {show.name}</span>
+          <span>{fmtRange(show.startsOn, show.endsOn)}</span>
+          <span className="chip" data-s={windowState === 'open' ? 'accepted' : undefined}>
+            {WINDOW_LABEL[windowState]}
+          </span>
         </p>
       </header>
 
-      <div className="op-sec" style={{ marginTop: 0 }}>
-        <h2>Identity</h2>
-        <span className="c">Set at creation</span>
+      <div className="op-reads" style={{ marginBottom: 12 }}>
+        {live.map((f) => (
+          <div className="op-read" key={f.k}>
+            <span className="k">{f.k}</span>
+            <span className={f.txt ? 'v txt' : 'v'}>
+              {f.v}{f.unit && <small>{f.unit}</small>}
+            </span>
+            <span className="n">{f.n}</span>
+          </div>
+        ))}
       </div>
-      <dl className="op-facts" style={{ marginBottom: 12 }}>
+      <p className="op-note">
+        The live values, as the public site renders them. Everything below sets them.
+      </p>
+
+      <div className="op-sec">
+        <h2>Identity</h2>
+        <span className="c">Set when the show is created</span>
+      </div>
+      <dl className="op-facts">
         {identity.map((f) => (
           <div key={f.k}>
             <dt>{f.k}</dt>
@@ -67,30 +132,32 @@ export default async function ShowSettings() {
           </div>
         ))}
       </dl>
-      <p className="op-note">
-        The dates come from the Dates block below. The rest is fixed for the life of the show.
-      </p>
 
       <div className="op-sec">
         <h2>Settings</h2>
-        <span className="c">Every field below drives a public page</span>
+        <span className="c">Every field drives a public page</span>
       </div>
       <SettingsForm show={show} />
 
       <div className="op-sec">
         <h2>Priced inventory</h2>
-        <span className="c">{spaces.length} spaces</span>
+        <span className="c">
+          {spaces.length} {spaces.length === 1 ? 'space' : 'spaces'}
+        </span>
       </div>
-      <p className="op-note" style={{ marginBottom: 16 }}>
-        The prices quoted on <strong>/apply</strong>, both maker rules pages and the home page.
-        A price edit changes what future applicants are quoted; an accepted booking keeps the
-        price it was promised. Codes and tracks are fixed. Save applies one row.
-        {spaces.length > 0 && (
-          <> Indoor spaces total <strong>{spaceCap('indoor')}</strong> against a show capacity of{' '}
-            {show.indoorCapacity}, outdoor <strong>{spaceCap('outdoor')}</strong> against{' '}
-            {show.outdoorCapacity}.</>
-        )}
+      <p className="op-note tight">
+        The prices quoted on <strong>/apply</strong>, both maker rules pages and the home page. A
+        price edit changes what future applicants are quoted; an accepted booking keeps the price
+        it was promised. Codes and tracks are fixed. Save applies one row.
       </p>
+      {spaces.length > 0 && (
+        <p className="op-note">
+          Indoor spaces total <strong>{spaceCap('indoor')}</strong> against a show capacity of{' '}
+          <strong>{show.indoorCapacity}</strong>, outdoor <strong>{spaceCap('outdoor')}</strong>
+          {' '}against <strong>{show.outdoorCapacity}</strong>. Full board at today&rsquo;s prices is{' '}
+          <strong>{usd(spaces.reduce((n, s) => n + s.priceCents * s.capacity, 0))}</strong>.
+        </p>
+      )}
       <div className="op-rows" style={SPACE_COLS}>
         <div className="hd" aria-hidden="true">
           <span className="k">Code</span>
@@ -115,7 +182,9 @@ export default async function ShowSettings() {
             </div>
             <input className="inp num" name="capacity" type="number" min={0}
               defaultValue={s.capacity} aria-label={`Capacity of ${s.code}`} />
-            <button className="btn-o" type="submit">Save</button>
+            <button className="btn-o" type="submit">
+              Save<span className="op-sr"> {s.code}</span>
+            </button>
           </form>
         ))}
       </div>
@@ -124,15 +193,15 @@ export default async function ShowSettings() {
         <h2>Add-ons</h2>
         <span className="c">{extras.length} offered</span>
       </div>
-      <p className="op-note" style={{ marginBottom: 16 }}>
+      <p className="op-note">
         What a maker can ask for on top of a space, priced on the application and on the rules
-        pages. Same rule as above: an edit changes what future applicants are quoted, never what
-        an accepted maker was promised. &ldquo;Limited&rdquo; shows as LMTD.
+        pages. Same rule as above: an edit changes what future applicants are quoted, never what an
+        accepted maker was promised. &ldquo;Limited&rdquo; shows as LMTD.
       </p>
       {extras.length === 0 ? (
-        <p style={{ fontSize: 'var(--t-s)', color: 'var(--ink-2)' }}>
-          No add-ons for this show yet. They are seeded with the show; if this is
-          unexpected, migration 0002 has not run against this database.
+        <p className="op-empty">
+          No add-ons for this show yet. They are seeded with the show; if this is unexpected,
+          migration 0002 has not run against this database.
         </p>
       ) : (
         <div className="op-rows" style={ADDON_COLS}>
@@ -157,15 +226,28 @@ export default async function ShowSettings() {
                 <input className="inp num" name="price" type="number" min={0} step={5}
                   defaultValue={a.priceCents / 100} aria-label={`Price of ${a.code} in dollars`} />
               </div>
-              <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 'var(--t-lbl)' }}>
+              <label className="lim">
                 <input type="checkbox" name="isLimited" defaultChecked={a.isLimited} />
                 Limited
               </label>
-              <button className="btn-o" type="submit">Save</button>
+              <button className="btn-o" type="submit">
+                Save<span className="op-sr"> {a.code}</span>
+              </button>
             </form>
           ))}
         </div>
       )}
+
+      <div className="op-foot">
+        <p className="op-note">
+          <strong>Every edit is audit-logged</strong> with the actor, the timestamp and the before
+          and after values.
+        </p>
+        <p className="op-note">
+          <strong>Commission changes apply to future acceptances only.</strong> A booking
+          snapshots its rate at acceptance and keeps it for the life of the show.
+        </p>
+      </div>
     </div>
   )
 }

@@ -70,12 +70,15 @@ export default async function ApplicationDetail({
     .where(and(eq(applications.showId, app.showId), eq(applications.status, from)))
     .orderBy(desc(applications.submittedAt))
 
-  const at = queue.findIndex((r) => r.id === app.id)
   const ms = (iso: string) => new Date(iso).getTime()
-  const after = at >= 0 ? at + 1 : queue.findIndex((r) => ms(r.submittedAt) < ms(app.submittedAt))
-  const nextAt = after === -1 ? queue.length : after
-  const prev = queue[nextAt - 1]
-  const next = queue[nextAt]
+  const at = queue.findIndex((r) => r.id === app.id)
+  /* Where this application sits in that list, whether or not it is still in
+     it. Once it has been decided it is gone from the queue, and the slot it
+     would have held is the first row submitted before it. */
+  const older = queue.findIndex((r) => ms(r.submittedAt) < ms(app.submittedAt))
+  const slot = at >= 0 ? at : older === -1 ? queue.length : older
+  const prev = queue[slot - 1]
+  const next = at >= 0 ? queue[slot + 1] : queue[slot]
   const backHref = `/admin/jury?status=${from}`
   const stepHref = (row: { id: string }) => `/admin/applications/${row.id}?from=${from}`
 
@@ -117,9 +120,6 @@ export default async function ApplicationDetail({
   let secondary: string[] = []
   try { secondary = JSON.parse(app.secondaryCategories) } catch {}
 
-  const scored = [app.scoreQuality, app.scoreOriginality, app.scoreBrand, app.scoreFit]
-  const total = scored.reduce((a: number, v) => a + (v ?? 0), 0)
-
   return (
     <div style={{ padding: '26px 26px 80px', maxWidth: 1240 }}>
       <nav className="jr-nav" aria-label="Queue">
@@ -160,7 +160,7 @@ export default async function ApplicationDetail({
       </p>
 
       {/* Two columns: what the maker sent on the left, the decision on the
-          right. The rail is sticky, so the scores and the six buttons stay
+          right. The rail is sticky, so the notes and the decision stay
           reachable however far down the photographs run. */}
       <div className="jr-grid">
         <div>
@@ -296,34 +296,26 @@ export default async function ApplicationDetail({
           )}
         </div>
 
-        {/* ── jury: scores, notes, decision ── */}
+        {/* ── jury: notes, then the decision ── */}
         <aside className="jr-rail" aria-label="Jury decision">
+          {/* Notes, then the decision. Scoring is gone: the team judges the
+              work and says so, and a rubric out of 20 was answering a
+              question nobody asked. The four score columns stay in the
+              schema, unread by this screen; saveScores is unchanged, so
+              saving notes clears whatever was in them. */}
           <h2 className="jr-h2" style={{ marginTop: 0 }}>Jury</h2>
           <form action={saveScores} style={{ marginTop: 16 }}>
             <input type="hidden" name="applicationId" value={app.id} />
-            <div className="jr-sc">
-              {([['scoreQuality', 'Quality', app.scoreQuality], ['scoreOriginality', 'Originality', app.scoreOriginality],
-                 ['scoreBrand', 'Brand', app.scoreBrand], ['scoreFit', 'Fit', app.scoreFit]] as const).map(([name, label, val]) => (
-                <label key={name} className="field">
-                  <span className="lb">{label} /5</span>
-                  <input className="inp" name={name} type="number" min={1} max={5} defaultValue={val ?? ''} />
-                </label>
-              ))}
-            </div>
-            <p style={{ marginTop: 12, fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>
-              {total > 0
-                ? <>Saved total <span className="num" style={{ color: 'var(--ink)' }}>{total}/20</span></>
-                : 'Unscored'}
-            </p>
-            <label className="field" style={{ marginTop: 12, marginBottom: 14 }}>
+            <label className="field" style={{ marginBottom: 14 }}>
               <span className="lb">Jury notes (never shown to the maker)</span>
-              <textarea className="inp" name="juryNotes" defaultValue={app.juryNotes} style={{ minHeight: 96 }} />
+              <textarea className="inp" name="juryNotes" defaultValue={app.juryNotes}
+                style={{ minHeight: 188 }} />
             </label>
-            <button className="btn-o" type="submit">Save scores &amp; notes</button>
+            <button className="btn-o" type="submit">Save notes</button>
           </form>
 
           <h2 className="jr-h2">Move to</h2>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 14 }}>
+          <div className="jr-moves">
             {(['shortlist', 'accepted', 'waitlist', 'declined', 'under_review', 'new'] as const)
               .filter((s) => s !== app.status)
               .filter((s) => s !== 'new' || app.status === 'declined')

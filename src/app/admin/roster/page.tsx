@@ -3,17 +3,25 @@ import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
 import { markPaid } from '@/app/actions'
-import { usd, splitCommission } from '@/lib/money'
-import { fmtDateTime } from '@/lib/dates'
+import { usd, splitCommission, bpsLabel } from '@/lib/money'
+import { fmtDateTime, fmtRange } from '@/lib/dates'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * The run-up screen. Between acceptance and load-in the only questions are
  * who has paid, whose paperwork is missing, and who cannot be let in the
- * door yet. So the page answers those in a stat row, then sorts every row
- * that needs a human above every row that does not.
+ * door yet. So the page leads with those two answers at a glance, then
+ * sorts every row that needs a human above every row that does not.
  */
+
+/* PII (CLAUDE.md rule 9). A seller's permit number is a taxpayer identifier
+   and this screen is read at a table on load-in day with makers standing at
+   it. Staff only ever need the last four to match a row against a document,
+   so that is all that renders until someone asks for the rest. The dot group
+   is a fixed four so the mask does not publish the length of the number. */
+const maskPermit = (permit: string) => `•••• ${permit.trim().slice(-4)}`
+
 export default async function Roster() {
   const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
@@ -46,12 +54,14 @@ export default async function Roster() {
   const documented = (a: typeof rows[number]['app']) =>
     Boolean(a.sellerPermit.trim()) || a.occasionalSeller
   const undocumented = rows.filter((r) => !documented(r.app))
+  const noCoi = rows.filter((r) => !r.app.hasCoi)
 
   // The show's booth-fee picture: expected counts every live booking
   // (confirmed and awaiting); collected counts only the paid ones.
   const expected = rows
     .filter((r) => ['confirmed', 'awaiting_payment'].includes(r.booking.status))
     .reduce((sum, r) => sum + r.booking.priceCents, 0)
+  const pctCollected = expected > 0 ? Math.round((collected / expected) * 100) : 0
 
   // What the register will do to a $100 indoor sale, at the rate each booking
   // snapshotted. Never recompute from the show — the snapshot is the promise.
@@ -74,126 +84,178 @@ export default async function Roster() {
   const needsAction = ordered.filter((r) => rank(r) < 3)
   const clear = ordered.filter((r) => rank(r) === 3)
 
-  const stats: Array<{ k: string; v: string; n?: string; warn?: boolean }> = [
-    { k: 'Confirmed', v: String(confirmed.length), n: 'Booth fee received.' },
-    { k: 'Awaiting payment', v: String(awaiting.length), n: `${show.paymentWindowHours}h window from acceptance.` },
-    {
-      k: 'Missing paperwork', v: String(undocumented.length),
-      n: 'No permit and no 410-D on file. Clear before load-in.',
-      warn: undocumented.length > 0,
-    },
-    { k: 'Booth fees expected', v: usd(expected), n: 'Confirmed plus awaiting.' },
-    { k: 'Booth fees collected', v: usd(collected), n: 'Paid and in the bank.' },
-    { k: 'Booth fees outstanding', v: usd(outstanding), n: 'Still to come in.' },
-  ]
+  const cols = 7
 
-  const cols = 9
+  const row = ({ booking, vendor, app, space }: typeof rows[number]) => {
+    const paid = booking.status === 'confirmed'
+    const permit = app.sellerPermit.trim()
+    return (
+      <tr key={booking.id}>
+        <td className="op-code">{booking.vendorCode}</td>
 
-  const row = ({ booking, vendor, app, space }: typeof rows[number]) => (
-    <tr key={booking.id}>
-      <td className="cd" style={{ fontSize: 'var(--t-lead)', letterSpacing: '.04em' }}>
-        {booking.vendorCode}
-      </td>
-      <td>
-        {vendor.shopName}
-        <div style={{ fontSize: 'var(--t-lbl-s)', color: 'var(--ink-3)', marginTop: 3 }}>
-          {app.category} · {vendor.email}
-        </div>
-      </td>
-      <td style={{ textTransform: 'capitalize', color: 'var(--ink-2)' }}>{app.track}</td>
-      <td>{space.label}</td>
-      <td className="r">{usd(booking.priceCents)}</td>
-      <td className="r">{app.track === 'outdoor' ? '—' : `${booking.commissionBps / 100}%`}</td>
-      <td>
-        <span className="chip" data-s={booking.status === 'confirmed' ? 'accepted' : 'new'}>
-          {booking.status === 'confirmed' ? 'Paid' : 'Awaiting'}
-        </span>
-        <div style={{ fontSize: 'var(--t-lbl-s)', color: 'var(--ink-3)', marginTop: 5 }}>
-          {booking.paidAt ? fmtDateTime(booking.paidAt) : `due ${fmtDateTime(booking.paymentDueAt)}`}
-        </div>
-      </td>
-      <td>
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', maxWidth: 168 }}>
-          {!documented(app) && (
-            <span className="chip" data-warn="1" title="CDTFA Publication 111: up to $1,000 per undocumented seller">
-              Blocks load-in
-            </span>
+        <td>
+          <div className="op-name">{vendor.shopName}</div>
+          <span className="op-sub wrap">{app.category} · {vendor.email}</span>
+        </td>
+
+        <td>
+          {space.label}
+          <span className="op-sub" style={{ textTransform: 'capitalize' }}>{app.track}</span>
+        </td>
+
+        <td className="r">
+          <span className="op-money">{usd(booking.priceCents)}</span>
+          <span className="op-sub">
+            {app.track === 'outdoor' ? 'no commission' : `${bpsLabel(booking.commissionBps)} commission`}
+          </span>
+        </td>
+
+        <td>
+          <span className="chip" data-s={paid ? 'accepted' : 'due'}>{paid ? 'Paid' : 'Awaiting'}</span>
+          <span className="op-sub">
+            {booking.paidAt ? fmtDateTime(booking.paidAt) : `due ${fmtDateTime(booking.paymentDueAt)}`}
+          </span>
+        </td>
+
+        <td>
+          <div className="op-flags">
+            {!documented(app) && (
+              <span className="chip" data-warn="1">Blocks load-in</span>
+            )}
+            {app.occasionalSeller && !permit && <span className="chip">410-D claimed</span>}
+            {permit && <span className="chip">Permit on file</span>}
+            {!app.hasCoi && <span className="chip" data-s="due">COI due</span>}
+          </div>
+          {permit && (
+            /* Revealed one row at a time, by an explicit click, and never
+               opened by default. See maskPermit above. */
+            <details className="op-mask" style={{ marginTop: 8 }}>
+              <summary>
+                <span className="mk">{maskPermit(permit)}</span>
+                <span className="op-sr">
+                  Reveal the seller&rsquo;s permit number for {vendor.shopName}
+                </span>
+              </summary>
+              <span className="fu">{permit}</span>
+            </details>
           )}
-          {app.occasionalSeller && !app.sellerPermit.trim() && (
-            <span className="chip">410-D claimed</span>
+        </td>
+
+        <td className="r">
+          {!paid && (
+            <form action={markPaid}>
+              <input type="hidden" name="bookingId" value={booking.id} />
+              <button className="btn-o" type="submit">
+                Mark paid
+                <span className="op-sr"> for {vendor.shopName}</span>
+              </button>
+            </form>
           )}
-          {app.sellerPermit.trim() && (
-            <span style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)' }}>
-              {app.sellerPermit}
-            </span>
-          )}
-          {!app.hasCoi && <span className="chip">COI due</span>}
-        </div>
-      </td>
-      <td>
-        {booking.status === 'awaiting_payment' && (
-          <form action={markPaid}>
-            <input type="hidden" name="bookingId" value={booking.id} />
-            <button className="btn-o" type="submit">Mark paid</button>
-          </form>
-        )}
-      </td>
-    </tr>
-  )
+        </td>
+      </tr>
+    )
+  }
 
   return (
-    <div style={{ padding: '26px 26px 80px' }}>
+    <div className="op-page">
       <header className="op-head">
-        <h1>Roster · {show.name}</h1>
+        <span className="eb">Run-up</span>
+        <h1 className="t">Roster</h1>
         <p className="lede">
-          Every accepted maker with a space held. Who has paid, whose paperwork is missing, who
+          Every accepted maker with a space held: who has paid, whose paperwork is missing, who
           cannot come through the door on load-in day. Rows that need a person sit at the top.
+        </p>
+        <p className="meta">
+          <span>{show.name}</span>
+          <span>{fmtRange(show.startsOn, show.endsOn)}</span>
+          <span>{rows.length} {rows.length === 1 ? 'space held' : 'spaces held'}</span>
         </p>
       </header>
 
-      <dl className="op-stats">
-        {stats.map((s) => (
-          <div key={s.k} data-warn={s.warn ? '1' : undefined}>
-            <dt className="k">{s.k}</dt>
-            <dd style={{ margin: 0 }}>
-              <span className="v">{s.v}</span>
-              {s.n && <span className="n">{s.n}</span>}
-            </dd>
+      <div className="op-lead">
+        <div>
+          <span className="k">Rows needing a person</span>
+          <span className="fig">
+            {needsAction.length}
+            <small>of {rows.length}</small>
+          </span>
+          <p className="say">
+            {needsAction.length === 0
+              ? 'Every space is paid for and documented. Nothing on this roster is waiting on you.'
+              : 'Listed first below, blocked before unpaid, unpaid before a missing certificate.'}
+          </p>
+          <div className="op-tally">
+            <div data-warn={undocumented.length > 0 ? '1' : undefined}>
+              <span className="lb">Missing paperwork, blocks load-in</span>
+              <span className="n">{undocumented.length}</span>
+            </div>
+            <div>
+              <span className="lb">Booth fee unpaid, {show.paymentWindowHours}h window</span>
+              <span className="n">{awaiting.length}</span>
+            </div>
+            <div>
+              <span className="lb">Certificate of insurance outstanding</span>
+              <span className="n">{noCoi.length}</span>
+            </div>
           </div>
-        ))}
-      </dl>
+        </div>
 
-      {example && (
-        <p className="op-note" style={{ marginBottom: 26 }}>
-          At the snapshotted rate, a $100 indoor sale splits{' '}
-          <strong>{usd(example.commissionCents)}</strong> to Mermade and{' '}
-          <strong>{usd(example.netCents)}</strong> to the vendor. Commission is snapshotted per
-          booking and immutable: changing the show rate later never changes what an accepted
-          vendor was promised.
-        </p>
-      )}
+        <div>
+          <span className="k">Booth fees collected</span>
+          <span className="fig">
+            {usd(collected)}
+            <small>of {usd(expected)} expected</small>
+          </span>
+          <div className="op-meter" aria-hidden="true">
+            <span style={{ width: `${pctCollected}%` }} />
+          </div>
+          <div className="op-tally">
+            <div>
+              <span className="lb">Paid and in the bank</span>
+              <span className="n">{usd(collected)}</span>
+            </div>
+            <div>
+              <span className="lb">Still to come in</span>
+              <span className="n">{usd(outstanding)}</span>
+            </div>
+            <div>
+              <span className="lb">Spaces confirmed</span>
+              <span className="n">{confirmed.length} of {rows.length}</span>
+            </div>
+          </div>
+          {example && (
+            <p className="say">
+              At the snapshotted rate, a $100 indoor sale splits {usd(example.commissionCents)} to
+              Mermade and {usd(example.netCents)} to the vendor.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="op-sec">
+        <h2>The roster</h2>
+        <span className="c">{needsAction.length} need a person</span>
+      </div>
 
       {rows.length === 0 ? (
-        <p style={{ fontFamily: 'var(--font-g)', fontSize: 'var(--t-b)', color: 'var(--ink-2)', margin: '26px 0 4px' }}>
-          Nothing here yet. When you accept an application in the jury queue, the booking
-          lands on this roster with its fee and paperwork status.
+        <p className="op-empty">
+          Nothing here yet. When you accept an application in the jury queue, the booking lands on
+          this roster with its fee and paperwork status.
         </p>
       ) : (
         <table className="tbl">
-          <caption className="op-note" style={{ textAlign: 'left', marginBottom: 10 }}>
-            {rows.length} {rows.length === 1 ? 'space' : 'spaces'} held for {show.name}.
+          <caption className="op-sr">
+            Accepted makers for {show.name}, rows needing action first.
           </caption>
           <thead>
             <tr>
               <th scope="col">Code</th>
-              <th scope="col">Shop</th>
-              <th scope="col">Track</th>
+              <th scope="col">Maker</th>
               <th scope="col">Space</th>
-              <th scope="col" className="r">Fee</th>
-              <th scope="col" className="r">Commission</th>
+              <th scope="col" className="r">Booth fee</th>
               <th scope="col">Fee status</th>
               <th scope="col">Paperwork</th>
-              <th scope="col"><span className="sr-only">Action</span></th>
+              <th scope="col" className="r"><span className="op-sr">Action</span></th>
             </tr>
           </thead>
 
@@ -201,7 +263,7 @@ export default async function Roster() {
             <tbody>
               <tr className="op-group">
                 <th scope="colgroup" colSpan={cols}>
-                  Needs action <span className="c">{needsAction.length}</span>
+                  Needs a person <span className="c">{needsAction.length}</span>
                 </th>
               </tr>
               {needsAction.map(row)}
@@ -221,18 +283,28 @@ export default async function Roster() {
         </table>
       )}
 
-      <p className="op-note" style={{ marginTop: 22 }}>
-        “Mark paid” stands in for the vendor paying in the portal. In production this is a Stripe
-        Checkout webhook; payment state is only ever set from a verified webhook, never a client
-        callback (CLAUDE.md rule 5).
-      </p>
-      <p className="op-note" style={{ marginTop: 12 }}>
-        <strong>Blocks load-in</strong> means no seller’s permit number and no CDTFA-410-D on
-        file. Publication 111 puts the record-keeping duty on the market, not the maker: up to
-        $1,000 per undocumented seller who should have held a permit, and the records have to be
-        kept four years. It is deliberately <em>not</em> a gate on the application: the duty
-        attaches to renting space, and a maker who isn’t accepted never rents any.
-      </p>
+      <div className="op-foot">
+        <p className="op-note">
+          <strong>Blocks load-in</strong> means no seller&rsquo;s permit number and no CDTFA-410-D
+          on file. Publication 111 puts the record-keeping duty on the market, not the maker: up to
+          $1,000 per undocumented seller who should have held a permit, and the records have to be
+          kept four years. It is deliberately <em>not</em> a gate on the application, because the
+          duty attaches to renting space, and a maker who isn&rsquo;t accepted never rents any.
+        </p>
+        <p className="op-note">
+          <strong>Permit numbers are masked.</strong> The last four are enough to match a row
+          against a document. Reveal one when you need the whole number.
+        </p>
+        <p className="op-note">
+          <strong>Mark paid</strong> stands in for the vendor paying in the portal. In production
+          this is a Stripe Checkout webhook; payment state is only ever set from a verified webhook,
+          never a client callback (CLAUDE.md rule 5).
+        </p>
+        <p className="op-note">
+          <strong>Commission is snapshotted per booking</strong> and immutable. Changing the show
+          rate later never changes what an accepted vendor was promised.
+        </p>
+      </div>
     </div>
   )
 }

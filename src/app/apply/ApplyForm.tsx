@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import {
-  cloneElement, isValidElement, useActionState, useEffect, useRef, useState,
-  type ReactElement,
+  cloneElement, isValidElement, useActionState, useCallback, useEffect, useRef,
+  useState, type ReactElement,
 } from 'react'
 import { submitApplication, type FormState } from '@/app/actions'
 import { CATEGORIES, type AddOn, type Show, type SpaceType } from '@/db/schema'
@@ -14,37 +14,81 @@ const initial: FormState = { ok: false }
 /**
  * The application form, in Symmetry's own form markup: `account-form`, a
  * `flexible-layout--form` of `column--half` / `column--full` fields, their
- * label-above-input pattern and their `.btn`. Their live page embeds a
- * third-party form builder here; this is the same shape, ours.
+ * label-above-input pattern and their `.btn`.
  *
- * What the form does beyond looking like the site:
+ * It is one <form> showing one step at a time.
  *
- *  - Five named steps, numbered, with a plan at the top that ticks off as
- *    they are answered. Step 4 is optional and says so in the heading, the
- *    plan, and its own first line. Nothing about paperwork blocks an
- *    application (see the note above that step).
+ *  - Every field stays mounted for the whole session. The steps that are not
+ *    on screen carry `hidden`, which removes them from the page and from the
+ *    accessibility tree but not from the form, so the submission is the same
+ *    23 names in the same shape whatever step you were looking at. Nothing is
+ *    lost by moving between steps, and the browser's back button is not part
+ *    of the mechanism.
+ *  - Progress is a row of five segments across the top: where you are, what
+ *    is answered, what is left. Each one is a button, so any step is one tap
+ *    away and nothing traps you.
+ *  - The next action lives in a bar at the foot of the card that sticks to
+ *    the bottom of a phone screen, along with the running total of what has
+ *    been picked. Both are visible from every step.
  *  - Server-side Zod validation with the values echoed back, so a rejected
  *    submit costs one field and not the whole form. The checkbox groups are
  *    held in React state instead, because FormData collapses repeated keys
- *    and the echo can only carry the last one.
- *  - Errors are summarised at the top, focus moves there on rejection, and
- *    each message is also tied to its own field with aria-describedby.
- *  - The choosers price every option on its own row and total the choice
- *    underneath, because that total is the number a maker is deciding on.
+ *    and the echo can only carry the last one. A rejection also moves you to
+ *    the first step that has a problem in it.
+ *  - Errors are summarised above the form, focus moves there on rejection,
+ *    each message is a button that opens its step and focuses its field, and
+ *    each is also tied to its own field with aria-describedby.
+ *  - The choosers price every option in its own column, rank the spaces in
+ *    the order the jury will read them, and total the choice underneath.
  *
  * Every input name here is parsed by submitApplication in src/app/actions.ts.
  * Renaming one breaks the application silently. Don't.
  */
 
-type Step = { n: number; id: string; title: string; optional?: boolean }
+type Step = {
+  n: number
+  id: string
+  title: string
+  /** One line on what the step is for, under its heading. */
+  blurb: string
+  optional?: boolean
+}
 
 const STEPS: Step[] = [
-  { n: 1, id: 'ap-shop', title: 'Your shop' },
-  { n: 2, id: 'ap-work', title: 'What you make' },
-  { n: 3, id: 'ap-space', title: 'Where you want to be' },
-  { n: 4, id: 'ap-paper', title: 'Paperwork', optional: true },
-  { n: 5, id: 'ap-sign', title: 'Agree and submit' },
+  {
+    n: 1,
+    id: 'ap-shop',
+    title: 'Your shop',
+    blurb: 'Who you are, and where we can look at your work.',
+  },
+  {
+    n: 2,
+    id: 'ap-work',
+    title: 'What you make',
+    blurb: 'The part the jury reads. Be specific about materials and method.',
+  },
+  {
+    n: 3,
+    id: 'ap-space',
+    title: 'Where you want to be',
+    blurb: 'Check every space you would say yes to. Prices are per show.',
+  },
+  {
+    n: 4,
+    id: 'ap-paper',
+    title: 'Paperwork',
+    blurb: 'Nothing here is required, and none of it reaches the jury.',
+    optional: true,
+  },
+  {
+    n: 5,
+    id: 'ap-sign',
+    title: 'Agree and submit',
+    blurb: 'Read the rules for your track, sign, and send it.',
+  },
 ]
+
+const LAST = STEPS.length
 
 /** Field names in the error summary, in the words the label uses. */
 const LABELS: Record<string, string> = {
@@ -68,6 +112,22 @@ const LABELS: Record<string, string> = {
   sellerPermit: 'Seller’s permit number',
   signedName: 'Type your name to sign',
   agree: 'Vendor agreement',
+}
+
+/**
+ * Which step a field lives on. A rejected submit opens the earliest step
+ * that has a problem in it, and every line of the error summary opens the
+ * step its field is on. Anything unmapped falls back to the last step, which
+ * is where the submit button is.
+ */
+const STEP_OF: Record<string, number> = {
+  shopName: 1, contactName: 1, email: 1, phone: 1, instagram: 1, website: 1,
+  city: 1, state: 1,
+  category: 2, madeByYou: 2, description: 2, priceLow: 2, priceHigh: 2,
+  usesAiArtwork: 2, isMlm: 2,
+  track: 3, spaces: 3, addons: 3,
+  sellerPermit: 4, occasionalSeller: 4, hasCoi: 4,
+  agree: 5, signedName: 5,
 }
 
 /**
@@ -102,15 +162,21 @@ function Field({
   )
 }
 
-/** A step heading: the number, the name, and whether it is optional. */
+/** A step heading: the number, the name, whether it is optional, and what
+ *  the step is for. It takes focus when you arrive at the step. */
 function StepHead({ step }: { step: Step }) {
   return (
-    <div className="lightish-spaced-row ap-step__head">
-      <p className="ap-step__n">
-        Step {step.n} of {STEPS.length}
+    <div className="ap-step__head">
+      {/* The number lives in the progress segments above and in the action
+          bar below, so the heading is only the idea of the step. The optional
+          flag is inside the heading on purpose: it belongs to the step's
+          name, and a screen reader announcing "Paperwork, optional" is
+          exactly the point. */}
+      <h2 id={`${step.id}-h`} className="ap-step__title" tabIndex={-1}>
+        {step.title}
         {step.optional && <span className="ap-step__flag">Optional</span>}
-      </p>
-      <h2 id={`${step.id}-h`}>{step.title}</h2>
+      </h2>
+      <p className="ap-step__blurb">{step.blurb}</p>
     </div>
   )
 }
@@ -135,15 +201,21 @@ export function ApplyForm({
   const [pickedAddons, setPickedAddons] = useState<string[]>([])
   const keep = (k: string) => ({ defaultValue: v[k] ?? '' })
 
+  // Which step is on screen. This lives outside the <form>, so it survives
+  // the remount that a rejected submit forces.
+  const [step, setStep] = useState(1)
+
   // A snapshot of the text answers, read off the form on every change. It
-  // drives the plan's ticks and the character count, nothing else: the inputs
-  // stay uncontrolled, so typing never re-renders a value out from under you.
+  // drives the progress segments and the character count, nothing else: the
+  // inputs stay uncontrolled, so typing never re-renders a value out from
+  // under you.
   const formRef = useRef<HTMLFormElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
   const summaryRef = useRef<HTMLDivElement>(null)
   const doneRef = useRef<HTMLDivElement>(null)
   const [answered, setAnswered] = useState<Record<string, string>>({})
 
-  function scan() {
+  const scan = useCallback(() => {
     const form = formRef.current
     if (!form) return
     const next: Record<string, string> = {}
@@ -151,15 +223,46 @@ export function ApplyForm({
       if (typeof val === 'string' && val.trim() !== '') next[k] = val
     }
     setAnswered(next)
-  }
+  }, [])
 
-  useEffect(scan, [state.attempt, state.ok])
+  useEffect(() => { scan() }, [scan, state.attempt, state.ok])
+
+  /** Move to a step and put focus on its heading, so a keyboard or screen
+   *  reader lands at the top of the new step rather than wherever the button
+   *  that moved them happened to be. */
+  const go = useCallback((n: number, focus = true) => {
+    const next = Math.min(LAST, Math.max(1, n))
+    setStep(next)
+    if (!focus) return
+    requestAnimationFrame(() => {
+      const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      cardRef.current?.scrollIntoView({
+        block: 'start', behavior: smooth ? 'smooth' : 'auto',
+      })
+      document.getElementById(`${STEPS[next - 1]!.id}-h`)?.focus({ preventScroll: true })
+    })
+  }, [])
+
+  /** An error summary line: open the step the field is on, then focus it. */
+  const goToField = useCallback((name: string) => {
+    setStep(STEP_OF[name] ?? LAST)
+    requestAnimationFrame(() => {
+      const el = document.getElementById(name)
+      el?.scrollIntoView({ block: 'center' })
+      ;(el as HTMLElement | null)?.focus({ preventScroll: true })
+    })
+  }, [])
 
   // A rejected submit has to land somewhere a screen reader and a thumb both
-  // find. The summary is outside the keyed form so it survives the remount.
+  // find. The summary is outside the keyed form so it survives the remount,
+  // and the step underneath it is changed to the first one with a problem.
   useEffect(() => {
+    if (!state.attempt) return
     if (state.ok) { doneRef.current?.focus(); return }
-    if (state.attempt) summaryRef.current?.focus()
+    const keys = Object.keys(state.errors ?? {})
+    const first = keys.reduce((lo, k) => Math.min(lo, STEP_OF[k] ?? LAST), LAST + 1)
+    if (first <= LAST) setStep(first)
+    summaryRef.current?.focus()
   }, [state])
 
   const toggle = (list: string[], set: (n: string[]) => void, key: string) =>
@@ -171,6 +274,8 @@ export function ApplyForm({
     (a) => a.track === null || track === 'both' || a.track === track,
   )
   // Only what is on screen is submitted, so only what is on screen counts.
+  // The order here is the order the boxes are rendered in, which is the order
+  // FormData reports them in, which is the order the action reads them in.
   const chosen = visible.filter((s) => pickedSpaces.includes(s.id))
   const chosenExtras = visibleExtras.filter((a) => pickedAddons.includes(a.code))
   // The action books the first requested space and treats the rest as
@@ -186,10 +291,10 @@ export function ApplyForm({
     1: ['shopName', 'contactName', 'email', 'phone', 'instagram', 'city', 'state'].every(has),
     2: has('category') && description.trim().length >= 40 && has('priceLow') && has('priceHigh'),
     3: chosen.length > 0,
-    4: true,
+    4: has('sellerPermit') || occasional || answered.hasCoi === 'on',
     5: answered.agree === 'on' && (answered.signedName ?? '').trim().length >= 2,
   }
-  const left = STEPS.filter((s) => !s.optional && !stepDone[s.n]).length
+  const open = STEPS.filter((s) => !s.optional && !stepDone[s.n])
 
   const problems = Object.entries(e)
   const rejected = Boolean(state.attempt) && !state.ok
@@ -198,7 +303,7 @@ export function ApplyForm({
   if (state.ok) {
     // Their /pages/thank-you, in their words.
     return (
-      <div className="reading-width account-form rte" ref={doneRef} tabIndex={-1}>
+      <div className="reading-width account-form rte ap-thanks" ref={doneRef} tabIndex={-1}>
         <h2>Thank You For Applying!</h2>
         <p>
           Yeeew! You took the time and we appreciate it! We know it wasn&rsquo;t
@@ -238,26 +343,38 @@ export function ApplyForm({
     )
   }
 
+  const nextStep = STEPS[step]
+
   return (
-    <div className="reading-width account-form">
-      {/* The plan. Five steps, what each one is, and what is still open. */}
-      <nav className="ap-plan" aria-label="The five steps">
-        <p className="ap-plan__intro">
-          Five steps. Everything is required unless it says optional, and
-          nothing is saved until you submit.
-        </p>
-        <ol className="ap-plan__list">
-          {STEPS.map((s) => (
-            <li key={s.id} className="ap-plan__item">
-              <a href={`#${s.id}`}>
-                <span className="ap-plan__n">{String(s.n).padStart(2, '0')}</span>
-                <span className="ap-plan__title">{s.title}</span>
-                <span className="ap-plan__state">
-                  {s.optional ? 'Optional' : stepDone[s.n] ? 'Done' : ''}
-                </span>
-              </a>
-            </li>
-          ))}
+    <div className="reading-width account-form ap-card" ref={cardRef}>
+      {/* Progress. Five segments, each a button to its step: state at a
+          glance, and nothing between you and any part of the form. */}
+      <nav className="ap-steps" aria-label="Application steps">
+        <ol className="ap-steps__list">
+          {STEPS.map((s) => {
+            const st = s.n === step ? 'current'
+              : s.optional ? 'optional'
+                : stepDone[s.n] ? 'done' : 'todo'
+            return (
+              <li className="ap-steps__item" key={s.id}>
+                <button
+                  type="button"
+                  className="ap-steps__btn"
+                  data-state={st}
+                  aria-current={s.n === step ? 'step' : undefined}
+                  aria-label={
+                    `Step ${s.n} of ${LAST}: ${s.title}`
+                    + (s.optional ? ', optional' : stepDone[s.n] ? ', answered' : '')
+                  }
+                  onClick={() => go(s.n)}
+                >
+                  <span className="ap-steps__bar" aria-hidden="true" />
+                  <span className="ap-steps__n" aria-hidden="true">{s.n}</span>
+                  <span className="ap-steps__title" aria-hidden="true">{s.title}</span>
+                </button>
+              </li>
+            )
+          })}
         </ol>
       </nav>
 
@@ -273,7 +390,13 @@ export function ApplyForm({
             <ul>
               {problems.map(([k, msg]) => (
                 <li key={k}>
-                  <a href={`#${k}`}>{LABELS[k] ?? k}</a>: {msg}
+                  <button
+                    type="button" className="ap-errors__link"
+                    onClick={() => goToField(k)}
+                  >
+                    {LABELS[k] ?? k}
+                  </button>
+                  : {msg}
                 </li>
               ))}
             </ul>
@@ -285,7 +408,10 @@ export function ApplyForm({
         key={state.attempt ?? 0} action={action} onChange={scan}
         ref={formRef} className="contact-form ap-form" noValidate
       >
-        <section id={STEPS[0]!.id} aria-labelledby={`${STEPS[0]!.id}-h`}>
+        <section
+          className="ap-step" id={STEPS[0]!.id} hidden={step !== 1}
+          aria-labelledby={`${STEPS[0]!.id}-h`}
+        >
           <StepHead step={STEPS[0]!} />
           <div className="flexible-layout flexible-layout--form">
             <Field name="shopName" label="Shop or brand name" error={e.shopName}>
@@ -318,7 +444,10 @@ export function ApplyForm({
           </div>
         </section>
 
-        <section id={STEPS[1]!.id} aria-labelledby={`${STEPS[1]!.id}-h`}>
+        <section
+          className="ap-step" id={STEPS[1]!.id} hidden={step !== 2}
+          aria-labelledby={`${STEPS[1]!.id}-h`}
+        >
           <StepHead step={STEPS[1]!} />
           <div className="flexible-layout flexible-layout--form">
             <Field name="category" label="Primary category" error={e.category} half>
@@ -338,7 +467,7 @@ export function ApplyForm({
               name="description" label="Describe your product" error={e.description}
               hint="What it is, how it’s made, who makes it. 40 characters minimum."
             >
-              <textarea name="description" maxLength={600} required {...keep('description')} />
+              <textarea name="description" rows={5} maxLength={600} required {...keep('description')} />
             </Field>
             <div className="column column--full ap-count-row">
               <span className="ap-count" aria-hidden="true">
@@ -368,7 +497,10 @@ export function ApplyForm({
           </div>
         </section>
 
-        <section id={STEPS[2]!.id} aria-labelledby={`${STEPS[2]!.id}-h`}>
+        <section
+          className="ap-step" id={STEPS[2]!.id} hidden={step !== 3}
+          aria-labelledby={`${STEPS[2]!.id}-h`}
+        >
           <StepHead step={STEPS[2]!} />
           <div className="flexible-layout flexible-layout--form">
             <Field
@@ -400,26 +532,37 @@ export function ApplyForm({
               >
                 <legend className="ap-group__legend">Spaces</legend>
                 <p className="note" id="spaces-hint">
-                  Check everything you’d say yes to. The first one on the list
+                  Check everything you’d say yes to. The highest one you check
                   becomes your first choice, and the rest tell the jury what
                   else works. Outside makers can check more than one day.
                 </p>
-                {visible.map((s) => (
-                  <label key={s.id} className="ap-option">
-                    <input
-                      type="checkbox" name="spaces" value={s.id}
-                      checked={pickedSpaces.includes(s.id)}
-                      onChange={(ev) => toggle(pickedSpaces, setPickedSpaces, s.id)(ev.target.checked)}
-                    />
-                    <span className="ap-option__body">
-                      <span className="ap-option__name">{s.label}</span>
-                      {s.description && (
-                        <small className="ap-option__note">{s.description}</small>
-                      )}
-                    </span>
-                    <span className="ap-option__price num">{usd(s.priceCents)}</span>
-                  </label>
-                ))}
+                {visible.map((s) => {
+                  const rank = chosen.indexOf(s)
+                  return (
+                    <label key={s.id} className="ap-option">
+                      <input
+                        type="checkbox" name="spaces" value={s.id}
+                        checked={pickedSpaces.includes(s.id)}
+                        onChange={(ev) => toggle(pickedSpaces, setPickedSpaces, s.id)(ev.target.checked)}
+                      />
+                      <span className="ap-option__body">
+                        <span className="ap-option__name">
+                          {s.label}
+                          {rank === 0 && <span className="ap-option__rank">1st choice</span>}
+                          {rank > 0 && (
+                            <span className="ap-option__rank ap-option__rank--alt">
+                              Alternate {rank}
+                            </span>
+                          )}
+                        </span>
+                        {s.description && (
+                          <small className="ap-option__note">{s.description}</small>
+                        )}
+                      </span>
+                      <span className="ap-option__price num">{usd(s.priceCents)}</span>
+                    </label>
+                  )
+                })}
                 {e.spaces && (
                   <small className="form-error" id="spaces-error">{e.spaces}</small>
                 )}
@@ -462,7 +605,7 @@ export function ApplyForm({
             <div className="column column--full">
               <div className="ap-tally" role="status">
                 {!first ? (
-                  <p className="ap-tally__line">
+                  <p className="ap-tally__empty">
                     Nothing checked yet. Pick at least one space.
                   </p>
                 ) : (
@@ -483,13 +626,14 @@ export function ApplyForm({
                         <span className="num">{usd(a.priceCents)}</span>
                       </p>
                     ))}
-                    {/* One space and no extras is already its own total. */}
-                    {chosenExtras.length > 0 && (
-                      <p className="ap-tally__line ap-tally__total">
-                        <span>If we can confirm all of it</span>
-                        <span className="num">{usd(totalCents)}</span>
-                      </p>
-                    )}
+                    <p className="ap-tally__line ap-tally__total">
+                      <span>
+                        {chosenExtras.length > 0
+                          ? 'If we can confirm all of it'
+                          : 'Your first choice'}
+                      </span>
+                      <span className="num">{usd(totalCents)}</span>
+                    </p>
                     <p className="ap-tally__note">
                       Nothing is due now. The booth fee is due within{' '}
                       {show.paymentWindowHours} hours of being accepted.
@@ -505,14 +649,16 @@ export function ApplyForm({
             attaches to renting space, not to reading an application, so the
             hard gate is at load-in (see /admin/roster). Asking here just gets
             us a head start on the vendors who already have their papers. */}
-        <section id={STEPS[3]!.id} aria-labelledby={`${STEPS[3]!.id}-h`}>
+        <section
+          className="ap-step" id={STEPS[3]!.id} hidden={step !== 4}
+          aria-labelledby={`${STEPS[3]!.id}-h`}
+        >
           <StepHead step={STEPS[3]!} />
           <div className="flexible-layout flexible-layout--form">
             <div className="column column--full">
               <p className="ap-lede">
-                Skip all of this if you want. None of it is required to apply,
-                and none of it reaches the jury. If you’re accepted we’ll need
-                it before load-in.
+                Skip all of this if you want. If you’re accepted we’ll need it
+                before load-in, and we’ll walk you through it then.
               </p>
             </div>
             <Field
@@ -543,7 +689,10 @@ export function ApplyForm({
           </div>
         </section>
 
-        <section id={STEPS[4]!.id} aria-labelledby={`${STEPS[4]!.id}-h`}>
+        <section
+          className="ap-step" id={STEPS[4]!.id} hidden={step !== 5}
+          aria-labelledby={`${STEPS[4]!.id}-h`}
+        >
           <StepHead step={STEPS[4]!} />
           <div className="flexible-layout flexible-layout--form">
             <div className="column column--full">
@@ -573,20 +722,70 @@ export function ApplyForm({
             >
               <input type="text" name="signedName" autoComplete="name" required {...keep('signedName')} />
             </Field>
+
+            {/* Non-blocking. Nothing here stops a submit; the server is the
+                authority. It just saves a maker a rejected attempt. */}
+            {open.length > 0 && (
+              <div className="column column--full">
+                <div className="ap-open">
+                  <p className="ap-open__h">Still open</p>
+                  <ul>
+                    {open.map((s) => (
+                      <li key={s.id}>
+                        <button
+                          type="button" className="ap-errors__link"
+                          onClick={() => go(s.n)}
+                        >
+                          Step {s.n}: {s.title}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            <div className="column column--full">
+              <p className="ap-submit__note">
+                No fee to apply. We read every one and answer either way.
+              </p>
+            </div>
           </div>
         </section>
 
-        <div className="lightly-spaced-row ap-submit">
-          <button className="btn btn--large" type="submit" disabled={pending}>
-            {pending ? 'Sending…' : 'Submit application'}
-          </button>
-          <p className="ap-submit__note">
-            <small>
-              No fee to apply. We read every one and answer either way.
-              {left > 0
-                && ` ${left} required step${left === 1 ? '' : 's'} still open.`}
-            </small>
+        {/* The next action, and the money, from every step. Sticks to the
+            bottom of the screen on a phone. */}
+        <div className="ap-nav">
+          <p className="ap-nav__meta">
+            <span className="ap-nav__step">Step {step} of {LAST}</span>
+            {first && (
+              <span className="ap-nav__total">
+                Your choice <span className="num">{usd(totalCents)}</span>
+              </span>
+            )}
           </p>
+          <div className="ap-nav__btns">
+            {step > 1 && (
+              <button
+                type="button" className="btn btn--secondary ap-nav__back"
+                onClick={() => go(step - 1)}
+              >
+                Back
+              </button>
+            )}
+            {nextStep ? (
+              <button
+                type="button" className="btn ap-nav__next"
+                onClick={() => go(step + 1)}
+              >
+                Next<span className="ap-nav__hint">: {nextStep.title}</span>
+              </button>
+            ) : (
+              <button className="btn ap-nav__next" type="submit" disabled={pending}>
+                {pending ? 'Sending…' : 'Submit application'}
+              </button>
+            )}
+          </div>
         </div>
       </form>
     </div>

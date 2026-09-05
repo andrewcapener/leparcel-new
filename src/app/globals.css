@@ -852,104 +852,277 @@
    op-* — operations surfaces: /admin/roster, /admin/show, /admin/outbox.
    Appended only. Nothing above this line is edited.
 
-   Same discipline as the maker fact tables on the public side, in the
-   admin's denser register: a labelled header, the figure in its own
-   column, the rows that need action first. All values come from the
-   tokens already declared at the top of this file.
+   The institutional register, given some craft. The three screens share
+   one grammar so an operator learns it once:
+
+     .op-page    the shell — one measure, generous gutters
+     .op-head    eyebrow, title, one line saying what the screen is for
+     .op-lead    the one thing that leads the screen
+     .op-read    a number — label above, figure loud, unit and note quiet
+     .op-sec     a section rule that separates rather than labels
+     .chip       the only status device on these screens
+
+   Two habits carry most of the difference from the first pass. Rules are
+   scarce: white space separates, and a line is drawn only where it is
+   load-bearing. And every figure is Figtree 500 with tabular numerals in
+   a column of its own, so numbers stack and compare down the page.
+
+   All values are tokens declared at the top of this file.
    ═══════════════════════════════════════════════════════════════════ */
 @layer base {
 
-  /* page header: title, then one line of what this screen is for */
-  .op-head{margin-bottom:24px;max-width:80ch}
-  .op-head h1{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
-    letter-spacing:.012em;font-size:var(--t-d2);line-height:1.04}
-  .op-head .lede{font-size:var(--t-lbl);color:var(--ink-3);line-height:1.6;margin-top:10px}
+  /* ── the shell ── */
+  .op-page{max-width:1360px;padding:40px clamp(22px,3vw,46px) 120px}
+  .op-page.op-narrow{max-width:1060px}
 
-  /* the shape of the screen at a glance */
-  .op-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(166px,1fr));
-    border:1px solid var(--line);border-top:2px solid var(--ink);margin-bottom:30px}
-  .op-stats > div{padding:16px 18px 18px;border-right:1px solid var(--line)}
-  .op-stats > div:last-child{border-right:0}
-  .op-stats .v{font-family:var(--font-c);font-weight:600;font-size:var(--t-d3);
-    line-height:1;margin-top:10px;font-variant-numeric:tabular-nums}
-  .op-stats .n{display:block;font-size:var(--t-lbl-s);color:var(--ink-3);
-    margin-top:8px;line-height:1.45}
-  .op-stats > div[data-warn="1"]{background:#FBF1EE}
-  .op-stats > div[data-warn="1"] .k,
-  .op-stats > div[data-warn="1"] .v,
-  .op-stats > div[data-warn="1"] .n{color:var(--warn)}
+  /* Tailwind's utilities are not emitted into this build, so `.sr-only`
+     rendered as ordinary visible text in the roster's last column header.
+     This is the same declaration, under a name this file owns. */
+  .op-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-  /* section rule: a heading, an optional count pushed right */
-  .op-sec{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
-    margin:40px 0 12px;padding-bottom:9px;border-bottom:2px solid var(--ink)}
-  .op-sec h2{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
-    letter-spacing:.06em;font-size:var(--t-d4);line-height:1}
-  .op-sec .c{margin-left:auto;font-size:var(--t-lbl);color:var(--ink-3);
-    font-variant-numeric:tabular-nums}
+  /* Inputs opt out of the global focus ring (`.inp{outline:0}`) and were left
+     with a 14%-alpha shadow, which is not a visible focus indicator. */
+  .op-page :focus-visible{outline:3px solid var(--deep);outline-offset:2px}
+  .op-page .inp:focus-visible,
+  .op-page summary:focus-visible{outline:3px solid var(--deep);outline-offset:2px}
 
-  .op-note{font-size:var(--t-lbl);color:var(--ink-3);line-height:1.6;max-width:76ch}
-  .op-note strong{color:var(--ink);font-weight:600}
+  /* ── masthead ── */
+  .op-head{margin:0 0 40px;padding-bottom:24px;border-bottom:2px solid var(--ink)}
+  .op-head .eb{display:block;font-family:var(--font-c);font-weight:600;font-size:var(--t-lbl);
+    letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+  .op-head .t{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.012em;font-size:var(--t-d1);line-height:1.02;color:var(--ink);margin:11px 0 0}
+  .op-head .lede{font-size:var(--t-s);line-height:1.65;color:var(--ink-2);margin:14px 0 0;max-width:74ch}
+  .op-head .meta{display:flex;flex-wrap:wrap;gap:5px 18px;margin:14px 0 0;
+    font-size:var(--t-lbl);color:var(--ink-3);font-variant-numeric:tabular-nums}
+  /* a chip in the meta line keeps its own colour */
+  .op-head .meta > span:not(.chip){color:var(--ink-2)}
 
-  /* a labelled band inside a .tbl, so one column set serves both groups */
-  .tbl tr.op-group th{background:var(--shell);border-bottom:1px solid var(--ink);
-    border-top:1px solid var(--ink);color:var(--ink);padding:8px 14px;white-space:normal}
-  .tbl tr.op-group th .c{color:var(--ink-3);letter-spacing:.09em}
+  /* ── readouts: the one device for a number on these screens ──
+     Label above, figure below, the unit and the note kept quiet. */
+  .op-reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(186px,1fr));
+    border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
+  .op-read{padding:20px 24px 22px;border-right:1px solid var(--line);min-width:0}
+  .op-read:last-child{border-right:0}
+  .op-read .v{display:block;font-family:var(--font-g);font-weight:500;font-size:var(--t-d3);
+    line-height:1;letter-spacing:-.008em;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:14px}
+  .op-read .v small{font-family:var(--font-j);font-weight:400;font-size:var(--t-lbl);
+    letter-spacing:0;color:var(--ink-3);margin-left:7px}
+  /* a readout whose value is a date or a phrase rather than a figure: same
+     device, set at reading size so it does not wrap to three lines */
+  .op-read .v.txt{font-family:var(--font-g);font-weight:500;font-size:var(--t-lead);
+    line-height:1.3;letter-spacing:0;margin-top:12px}
+  .op-read .n{display:block;font-size:var(--t-lbl-s);line-height:1.5;color:var(--ink-3);
+    margin-top:10px;max-width:30ch}
+  .op-read[data-warn="1"] .k,
+  .op-read[data-warn="1"] .v,
+  .op-read[data-warn="1"] .v small{color:var(--warn)}
 
-  /* read-only identity facts: label left, value right, figures aligned */
-  .op-facts{border-top:2px solid var(--ink);max-width:660px}
-  .op-facts > div{display:flex;gap:20px;align-items:baseline;padding:10px 0;
-    border-bottom:1px solid var(--line)}
-  .op-facts dt{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
-    letter-spacing:.11em;font-size:var(--t-lbl);color:var(--ink-3);flex:none;width:190px}
-  .op-facts dd{margin:0;font-size:var(--t-s);color:var(--ink);min-width:0}
-
-  /* one grouped block of a long form */
-  .op-fs{border:0;padding:0;margin:0 0 34px;min-width:0}
-  .op-fs > legend{padding:0;margin-bottom:5px}
-  .op-fs .why{font-size:var(--t-lbl);color:var(--ink-3);line-height:1.55;
-    max-width:70ch;margin:0 0 18px}
-
-  /* editable rows that must line up under one header (each row is a form) */
-  .op-rows{border-top:2px solid var(--ink)}
-  .op-rows .hd,.op-rows form{display:grid;grid-template-columns:var(--op-cols);
-    gap:12px;align-items:center}
-  .op-rows .hd{padding:9px 0;border-bottom:1px solid var(--line)}
-  .op-rows form{padding:11px 0;border-bottom:1px solid var(--line)}
-  .op-rows .inp{padding:7px 10px;font-size:var(--t-s)}
-  .op-rows .cd{font-size:var(--t-lbl);letter-spacing:.05em;line-height:1.2}
-  .op-rows .tk{text-transform:capitalize;font-size:var(--t-lbl);color:var(--ink-2)}
-  .op-rows .mny{display:flex;align-items:center;gap:5px}
-  .op-rows .mny > span{color:var(--ink-3);font-size:var(--t-lbl)}
-  @media(max-width:1000px){
-    .op-rows .hd{display:none}
-    .op-rows form{grid-template-columns:1fr 1fr;gap:9px;padding:15px 0}
+  /* ── the lead: what the screen is about, before any table ── */
+  .op-lead{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+    border-top:2px solid var(--ink);border-bottom:1px solid var(--line);margin-bottom:46px}
+  .op-lead > div{padding:24px 28px 28px;min-width:0}
+  .op-lead > div + div{border-left:1px solid var(--line)}
+  .op-lead .fig{display:block;font-family:var(--font-g);font-weight:500;font-size:var(--t-d2);
+    line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:14px}
+  .op-lead .fig small{font-family:var(--font-j);font-weight:400;font-size:var(--t-lbl);
+    letter-spacing:0;color:var(--ink-3);margin-left:8px}
+  .op-lead .fig[data-warn="1"]{color:var(--warn)}
+  .op-lead .say{font-size:var(--t-s);line-height:1.6;color:var(--ink-2);margin:12px 0 0;max-width:46ch}
+  @media(max-width:900px){
+    .op-lead{grid-template-columns:1fr}
+    .op-lead > div + div{border-left:0;border-top:1px solid var(--line)}
   }
 
-  /* the outbox: one line per message, body opens in place */
+  /* a short label/figure ledger inside a lead panel */
+  .op-tally{margin-top:20px}
+  .op-tally > div{display:flex;align-items:baseline;gap:14px;padding:9px 0;
+    border-bottom:1px solid var(--line)}
+  .op-tally > div:last-child{border-bottom:0;padding-bottom:0}
+  .op-tally .lb{font-size:var(--t-lbl);color:var(--ink-2);min-width:0}
+  .op-tally .n{margin-left:auto;font-family:var(--font-g);font-weight:500;font-size:var(--t-s);
+    font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+  .op-tally > div[data-warn="1"] .lb,
+  .op-tally > div[data-warn="1"] .n{color:var(--warn)}
+
+  /* collected against expected. The figures are printed next to it, so the
+     bar is decoration for the eye and hidden from assistive tech. */
+  .op-meter{height:7px;background:var(--dune);border-radius:999px;overflow:hidden;margin-top:20px}
+  .op-meter > span{display:block;height:100%;background:var(--deep);border-radius:999px}
+
+  /* ── section rule: separates, then labels ── */
+  .op-sec{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
+    margin:56px 0 16px;padding-bottom:11px;border-bottom:2px solid var(--ink)}
+  .op-sec h2{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.06em;font-size:var(--t-d4);line-height:1;color:var(--ink)}
+  .op-sec .c{margin-left:auto;font-family:var(--font-c);font-weight:600;font-size:var(--t-lbl);
+    letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+  .op-note{font-size:var(--t-lbl);color:var(--ink-3);line-height:1.65;max-width:76ch}
+  .op-page .op-note{margin:0 0 26px}
+  .op-note strong{color:var(--ink-2);font-weight:500}
+  .op-page .op-note.tight{margin-bottom:16px}
+
+  /* closing notes, off the bottom of the working area */
+  .op-foot{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px 48px}
+  .op-page .op-foot .op-note{margin:0}
+
+  /* Empty states always follow a section rule, so they do not draw one of
+     their own. */
+  .op-empty{padding:6px 0 0;font-size:var(--t-s);line-height:1.65;color:var(--ink-2);max-width:62ch}
+
+  /* ── tables, in the operations register ──
+     Scoped to .op-page so the jury's tables keep their own spacing. Rules
+     only under a row; the first and last columns run to the margin. */
+  .op-page .tbl th{padding:0 18px 12px;border-bottom:2px solid var(--ink);
+    letter-spacing:.12em;color:var(--ink-3);vertical-align:bottom}
+  .op-page .tbl td{padding:18px;border-bottom:1px solid var(--line);vertical-align:top}
+  .op-page .tbl th:first-child,.op-page .tbl td:first-child{padding-left:0}
+  .op-page .tbl th:last-child,.op-page .tbl td:last-child{padding-right:0}
+  .op-page .tbl tbody tr:hover{background:var(--shell)}
+  .op-page .tbl tbody tr:last-child td{border-bottom:0}
+
+  /* a band inside the table: air above it, one hairline under it */
+  .op-page .tbl tr.op-group th{background:none;color:var(--ink);white-space:nowrap;
+    padding:38px 0 10px;border-bottom:1px solid var(--ink);letter-spacing:.14em}
+  .op-page .tbl tbody:first-of-type tr.op-group th{padding-top:26px}
+  .op-page .tbl tr.op-group th .c{margin-left:10px;color:var(--ink-3);letter-spacing:.1em}
+  .op-page .tbl tr.op-group:hover{background:none}
+
+  /* cell furniture */
+  .op-code{font-family:var(--font-c);font-weight:600;font-size:var(--t-s);letter-spacing:.1em;
+    color:var(--ink);white-space:nowrap;line-height:1.2}
+  .op-name{font-family:var(--font-g);font-size:var(--t-lead);line-height:1.25;color:var(--ink)}
+  .op-money{font-family:var(--font-g);font-weight:500;font-size:var(--t-lead);line-height:1.15;
+    letter-spacing:-.006em;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
+  .op-sub{display:block;font-size:var(--t-lbl-s);line-height:1.5;color:var(--ink-3);margin-top:6px}
+  .op-sub.wrap{white-space:normal;overflow-wrap:anywhere}
+  .op-flags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .op-page .btn-o{min-height:26px;display:inline-flex;align-items:center}
+
+  /* one status device. `due` is the amber the jury already uses for
+     under_review, named for what it means on the roster. */
+  .op-page .chip[data-s="due"]{border-color:#A8863C;color:#7A6224}
+
+  /* ── seller's permit: masked, revealed on an explicit action ──
+     CLAUDE.md rule 9. The screen is password-gated, not private: it is read
+     over shoulders at a table on load-in day. */
+  .op-mask{display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .op-mask > summary{display:inline-flex;align-items:center;gap:9px;min-height:24px;padding:1px 0;
+    cursor:pointer;list-style:none;font-size:var(--t-lbl);color:var(--ink-2);
+    font-variant-numeric:tabular-nums}
+  .op-mask > summary::-webkit-details-marker{display:none}
+  .op-mask > summary::after{content:'Show';font-family:var(--font-c);font-weight:600;
+    font-size:var(--t-lbl-s);letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);
+    border-bottom:1px solid var(--line);padding-bottom:1px}
+  .op-mask[open] > summary::after{content:'Hide'}
+  .op-mask > summary:hover::after{color:var(--ink);border-bottom-color:var(--ink)}
+  .op-mask[open] .mk{display:none}
+  .op-mask .fu{font-size:var(--t-lbl);color:var(--ink);font-variant-numeric:tabular-nums;
+    letter-spacing:.02em}
+
+  /* ── read-only facts: label left, value right ── */
+  .op-facts{border-top:2px solid var(--ink);max-width:720px}
+  .op-facts > div{display:flex;gap:24px;align-items:baseline;padding:13px 0;
+    border-bottom:1px solid var(--line)}
+  .op-facts > div:last-child{border-bottom:0}
+  .op-facts dt{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.11em;font-size:var(--t-lbl);color:var(--ink-3);flex:none;width:184px}
+  .op-facts dd{margin:0;font-size:var(--t-s);color:var(--ink);min-width:0;line-height:1.5}
+
+  /* ── one grouped block of a long form ──
+     A legend, a line naming what the block drives, a hairline, the fields.
+     The hairline is what makes a fieldset read as a group of controls
+     rather than as a run of inputs. */
+  .op-fs{border:0;padding:0;margin:0 0 44px;min-width:0}
+  .op-fs > legend{padding:0;margin:0;float:left;width:100%;color:var(--ink);letter-spacing:.13em}
+  .op-fs .why{clear:both;font-size:var(--t-lbl);color:var(--ink-3);line-height:1.6;max-width:72ch;
+    margin:9px 0 24px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .op-fs .field{margin-bottom:24px}
+  .op-fs .row2{gap:20px 28px}
+
+  /* the save bar rides the bottom of the window while a long form is open */
+  .op-save{position:sticky;bottom:0;z-index:2;display:flex;align-items:center;gap:18px;
+    flex-wrap:wrap;padding:18px 0 20px;background:var(--bone);border-top:2px solid var(--ink)}
+  .op-save .msg{font-size:var(--t-lbl);line-height:1.5;color:var(--ink-2);max-width:52ch}
+  .op-save .msg[data-ok="0"]{color:var(--warn)}
+  .op-save .drive{margin-left:auto;font-size:var(--t-lbl-s);color:var(--ink-3);text-align:right}
+
+  /* ── editable rows under one header (each row is its own form) ── */
+  .op-rows{border-top:2px solid var(--ink)}
+  .op-rows .hd,.op-rows form{display:grid;grid-template-columns:var(--op-cols);
+    gap:16px;align-items:center}
+  .op-rows .hd{padding:11px 0;border-bottom:1px solid var(--line)}
+  .op-rows form{padding:14px 0;border-bottom:1px solid var(--line)}
+  .op-rows form:last-child{border-bottom:0}
+  .op-rows form:hover{background:var(--shell)}
+  /* `.adm .inp` (the theme-beating block at the foot of this file) sets 16px
+     and 11px/13px padding, and it is later in the file, so a plain
+     `.op-rows .inp` at the same specificity never applied and these rows have
+     been rendering with full-size inputs. Three classes take it back. Only
+     above the breakpoint: below it the rows stack and 16px is what keeps iOS
+     from zooming the page on focus. */
+  @media(min-width:1061px){
+    .adm .op-rows .inp{padding:8px 11px;font-size:var(--t-s)}
+  }
+  .op-rows .cd{font-size:var(--t-lbl);letter-spacing:.06em;line-height:1.2}
+  .op-rows .tk{text-transform:capitalize;font-size:var(--t-lbl);color:var(--ink-3)}
+  .op-rows .mny{display:flex;align-items:center;gap:6px}
+  .op-rows .mny > span{color:var(--ink-3);font-size:var(--t-lbl)}
+  .op-rows .lim{display:flex;gap:9px;align-items:center;font-size:var(--t-lbl);color:var(--ink-2)}
+  @media(max-width:1060px){
+    .op-rows .hd{display:none}
+    .op-rows form{grid-template-columns:1fr 1fr;gap:10px;padding:18px 0}
+  }
+
+  /* ── the outbox: one line per message, the body opens in place ── */
   .op-mail{border-top:2px solid var(--ink)}
-  .op-mail .hd,.op-mail summary{display:grid;
-    grid-template-columns:150px minmax(140px,1fr) minmax(0,1.8fr) 84px 120px;
-    gap:14px;align-items:center}
-  .op-mail .hd{padding:9px 14px;border-bottom:1px solid var(--line)}
+  .op-mail .hd,.op-mail summary{display:grid;grid-template-columns:var(--op-cols);
+    gap:18px;align-items:baseline}
+  .op-mail .hd{padding:11px 12px;border-bottom:1px solid var(--line)}
   .op-mail details{border-bottom:1px solid var(--line)}
-  .op-mail summary{padding:11px 14px;cursor:pointer;list-style:none}
+  .op-mail details:last-child{border-bottom:0}
+  .op-mail summary{padding:14px 12px;cursor:pointer;list-style:none}
   .op-mail summary::-webkit-details-marker{display:none}
   .op-mail summary:hover{background:var(--shell)}
   .op-mail details[open] > summary{background:var(--shell)}
+  .op-mail .at{font-size:var(--t-lbl);color:var(--ink-2);font-variant-numeric:tabular-nums;
+    white-space:nowrap}
   .op-mail .to,.op-mail .sj{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .op-mail .to{font-size:var(--t-lbl);color:var(--ink-2)}
-  .op-mail .sj{font-family:var(--font-g);font-size:var(--t-s);color:var(--ink)}
-  .op-mail .at{font-size:var(--t-lbl-s);color:var(--ink-3);text-align:right;
-    font-variant-numeric:tabular-nums}
-  .op-mail .bd{padding:6px 14px 24px 14px}
-  .op-mail .bd pre{white-space:pre-wrap;font-family:var(--font-j);font-size:var(--t-lbl);
-    line-height:1.62;color:var(--ink-2);margin:0;max-width:74ch}
-  @media(max-width:1000px){
+  .op-mail .sj{font-family:var(--font-g);font-size:var(--t-s);color:var(--ink);line-height:1.35}
+  .op-mail .ex{font-family:var(--font-c);font-weight:600;font-size:var(--t-lbl-s);
+    letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);text-align:right}
+  .op-mail .ex::after{content:'Read'}
+  .op-mail details[open] .ex::after{content:'Close'}
+  .op-mail summary:hover .ex{color:var(--ink)}
+  .op-mail .bd{padding:6px 12px 30px}
+  .op-mail .bd .sub{font-family:var(--font-g);font-size:var(--t-lead);line-height:1.35;
+    color:var(--ink);margin-bottom:14px}
+  .op-mail .bd pre{white-space:pre-wrap;font-family:var(--font-j);font-size:var(--t-s);
+    line-height:1.72;color:var(--ink-2);margin:0;max-width:70ch;background:var(--shell);
+    border-left:2px solid var(--line);padding:20px 24px}
+
+  /* what has gone out, by template */
+  .op-kinds{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-top:22px}
+  .op-kinds .k{color:var(--ink-3);margin-right:4px}
+  .op-kinds .chip{font-variant-numeric:tabular-nums}
+
+  /* the day a run of messages went out */
+  .op-day{display:flex;align-items:baseline;gap:14px;padding:34px 12px 10px;
+    border-bottom:1px solid var(--ink);font-family:var(--font-c);font-weight:600;
+    font-size:var(--t-lbl);letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+  .op-mail .hd + .op-day{padding-top:22px}
+  .op-day .c{margin-left:auto;font-size:var(--t-lbl-s);letter-spacing:.1em;color:var(--ink-3)}
+
+  @media(max-width:1060px){
     .op-mail .hd{display:none}
-    .op-mail summary{grid-template-columns:1fr auto;gap:7px 10px;padding:13px 14px}
+    .op-mail summary{grid-template-columns:1fr auto;gap:8px 12px;padding:15px 12px}
     .op-mail .sj{grid-column:1 / -1;white-space:normal}
     .op-mail .to{grid-column:1 / -1}
-    .op-mail .at{text-align:left}
+    .op-mail .ex{grid-column:2}
   }
 }
 
@@ -1099,8 +1272,8 @@
 /* No photographs is a state, not a fault. The plate keeps its square and the
    maker's own words fill it, which is the only thing there is to read. */
 .jr-card-none{aspect-ratio:1;display:flex;flex-direction:column;justify-content:space-between;
-  gap:12px;padding:15px}
-.adm .jr-card-none p{font-family:var(--font-g);font-size:var(--t-b);line-height:1.5;
+  gap:12px;padding:15px;overflow:hidden}
+.adm .jr-card-none p{min-height:0;font-family:var(--font-g);font-size:var(--t-b);line-height:1.5;
   color:var(--ink-2);border-left:2px solid var(--accent);padding-left:12px;
   display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden}
 
@@ -1115,21 +1288,29 @@
 .adm .jr-card:hover .jr-card-lk{text-decoration:underline;text-underline-offset:3px}
 .jr-card-meta{margin-top:7px;font-family:var(--font-c);font-weight:600;font-size:var(--t-lbl);
   letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
-.jr-cap{text-transform:uppercase}
 .adm .jr-card-price{margin-top:7px;font-size:var(--t-s);color:var(--ink-2)}
 .jr-card-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
 
-/* ── triage, and nothing else ── */
-.jr-card-f{margin-top:auto;display:flex;align-items:center;justify-content:space-between;
-  gap:10px;padding:10px 15px 12px;border-top:1px solid var(--line)}
-.jr-card-sc{font-size:var(--t-lbl);color:var(--ink-3)}
-.jr-card-sc b{font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
+/* ── triage, and nothing else ──
+   One control per card, and only on the undecided states. No scores: the
+   team judges the work and says so. A decided card says when instead. */
+.jr-card-f{margin-top:auto;display:flex;align-items:center;gap:10px;
+  padding:10px 15px 12px;border-top:1px solid var(--line)}
+.jr-card-when{font-size:var(--t-lbl);color:var(--ink-3)}
 /* Above the card link, and a 28px target. */
 .adm .jr-tri{position:relative;z-index:2;min-height:28px;padding:6px 13px 5px}
 /* Gold fill for a shortlisted card. Ink on gold, not white on gold: the
    white pair in .chip[data-s="shortlist"] is 2.8:1 and this has to be read. */
 .adm .jr-tri[data-on="1"]{background:var(--accent);border-color:var(--accent);color:var(--ink)}
 .adm .jr-tri[data-on="1"]:hover{background:var(--ink);border-color:var(--ink);color:var(--bone)}
+
+/* ── the decision group in the review rail ──
+   With scoring gone the rail is short, so the decision takes the width it
+   was never given: full-width targets, stacked, in the order a juror works.
+   Same forms, same labels, same server action. */
+.jr-moves{display:flex;flex-direction:column;gap:7px;margin-top:14px}
+.adm .jr-moves .btn-o{display:block;width:100%;min-height:34px;padding:8px 14px 7px;
+  font-size:var(--t-s);letter-spacing:.08em}
 
 /* ── queue navigation on the review screen ──
    A juror decides and moves on. Previous and next walk the same filtered,

@@ -24,10 +24,10 @@ function Field({
 
 /**
  * One block of the form: a legend, a line saying which public surfaces the
- * block drives, then the fields. Grouped rather than flat because someone
- * changing a date should not have to read past the commission rate to find
- * it, and because a real fieldset is what a screen reader needs to announce
- * "Dates and hours, Show starts" instead of just "Show starts".
+ * block drives, a hairline, then the fields. Grouped rather than flat because
+ * someone changing a date should not have to read past the commission rate to
+ * find it, and because a real fieldset is what a screen reader needs to
+ * announce "Dates and hours, Show starts" instead of just "Show starts".
  */
 function Block({
   legend, why, children,
@@ -48,15 +48,10 @@ export function SettingsForm({ show }: { show: Show }) {
   const e = state.errors ?? {}
   const v = state.values ?? {}
   const keep = (k: string, fallback: string) => ({ defaultValue: v[k] ?? fallback })
+  const problems = Object.keys(e).length
 
   return (
-    <form key={state.attempt ?? 0} action={action} style={{ maxWidth: 680 }} noValidate>
-      {state.message && (
-        <p className={state.ok ? 'hint' : 'err'} style={{ marginBottom: 20, fontSize: 'var(--t-s)' }}>
-          {state.ok ? `${state.message} The public site updates immediately.` : state.message}
-        </p>
-      )}
-
+    <form key={state.attempt ?? 0} action={action} style={{ maxWidth: 720 }} noValidate>
       <Block
         legend="Venue"
         why="The home page venue block, the site footer, /schedule, /apply, and the address written into the add to calendar file."
@@ -152,13 +147,13 @@ export function SettingsForm({ show }: { show: Show }) {
             name="commissionPct" label="Commission (%)" error={e.commissionPct}
             hint="Applies to future acceptances only. Existing bookings keep the rate they were promised."
           >
-            <input className="inp" id="commissionPct" name="commissionPct" type="number" step="0.25" min="0" max="50" required {...keep('commissionPct', String(show.commissionBps / 100))} />
+            <input className="inp num" id="commissionPct" name="commissionPct" type="number" step="0.25" min="0" max="50" required {...keep('commissionPct', String(show.commissionBps / 100))} />
           </Field>
           <Field
             name="paymentWindowHours" label="Payment window (hours)" error={e.paymentWindowHours}
             hint="How long an accepted maker has to pay before the space returns to the pool."
           >
-            <input className="inp" id="paymentWindowHours" name="paymentWindowHours" type="number" min="1" max="240" required {...keep('paymentWindowHours', String(show.paymentWindowHours))} />
+            <input className="inp num" id="paymentWindowHours" name="paymentWindowHours" type="number" min="1" max="240" required {...keep('paymentWindowHours', String(show.paymentWindowHours))} />
           </Field>
         </div>
         <div className="row2">
@@ -166,20 +161,32 @@ export function SettingsForm({ show }: { show: Show }) {
             name="indoorCapacity" label="Indoor capacity" error={e.indoorCapacity}
             hint="Spaces on the floor. The jury header counts committed bookings against this."
           >
-            <input className="inp" id="indoorCapacity" name="indoorCapacity" type="number" min="0" required {...keep('indoorCapacity', String(show.indoorCapacity))} />
+            <input className="inp num" id="indoorCapacity" name="indoorCapacity" type="number" min="0" required {...keep('indoorCapacity', String(show.indoorCapacity))} />
           </Field>
           <Field
             name="outdoorCapacity" label="Outdoor capacity" error={e.outdoorCapacity}
             hint="Tents in the lot, counted the same way."
           >
-            <input className="inp" id="outdoorCapacity" name="outdoorCapacity" type="number" min="0" required {...keep('outdoorCapacity', String(show.outdoorCapacity))} />
+            <input className="inp num" id="outdoorCapacity" name="outdoorCapacity" type="number" min="0" required {...keep('outdoorCapacity', String(show.outdoorCapacity))} />
           </Field>
         </div>
       </Block>
 
-      <button className="btn" type="submit" disabled={pending}>
-        {pending ? 'Saving…' : 'Save settings'}
-      </button>
+      {/* The bar rides the bottom of the window, so Save is reachable from any
+          block and the result of the last save is where the eye already is. */}
+      <div className="op-save">
+        <button className="btn" type="submit" disabled={pending}>
+          {pending ? 'Saving…' : 'Save settings'}
+        </button>
+        <p className="msg" data-ok={state.ok ? '1' : '0'} role="status" aria-live="polite">
+          {state.message
+            ? (state.ok ? `${state.message} The public site updates immediately.` : state.message)
+            : problems > 0
+              ? `${problems} ${problems === 1 ? 'field needs' : 'fields need'} a look.`
+              : ''}
+        </p>
+        <span className="drive">Saved changes are audit-logged</span>
+      </div>
     </form>
   )
 }
