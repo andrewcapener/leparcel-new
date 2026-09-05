@@ -531,7 +531,15 @@ h3, .h3 { line-height: 1.15; }
    `.errors` is the theme's box; this is the type in it. Each line opens the
    step its field is on and puts focus in the field, which a plain #hash
    cannot do now that only one step is on screen. */
-.ap-errors { margin-top: 0; }
+/* The theme's `.errors` box is a neutral grey, which reads as a note. A
+   rejection is not a note, so it takes the same red as `.form-error`, at the
+   weight a background can carry without hurting the contrast of the text. */
+.ap-errors {
+  margin-top: 0;
+  border-color: rgb(179 38 30 / 0.35);
+  border-inline-start: 3px solid #b3261e;
+  background: rgb(179 38 30 / 0.06);
+}
 .ap-errors__h { margin: 0; font-weight: 700; color: rgb(var(--heading-color)); }
 .ap-errors ul { margin: 0.5em 0 0; padding-inline-start: 1.2em; list-style: disc; }
 .ap-errors li { margin-bottom: 0.3em; }
@@ -584,6 +592,10 @@ h3, .h3 { line-height: 1.15; }
 }
 .ap-option input[type="checkbox"] { flex: none; width: 24px; height: 24px; margin: 0; }
 .ap-form input[type="checkbox"] { accent-color: rgb(var(--heading-color)); }
+/* The theme sizes text inputs and textareas to the column and leaves selects
+   at their content width, which in a column of full-width fields reads as a
+   field that failed to load. */
+.ap-form select { box-sizing: border-box; width: 100%; }
 .ap-option__body { min-width: 0; }
 .ap-option__name { display: block; font-weight: 600; color: rgb(var(--heading-color)); }
 .ap-option__note {
