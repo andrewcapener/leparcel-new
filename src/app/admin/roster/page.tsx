@@ -40,6 +40,12 @@ export default async function Roster() {
     Boolean(a.sellerPermit.trim()) || a.occasionalSeller
   const undocumented = rows.filter((r) => !documented(r.app))
 
+  // The show's booth-fee picture: expected counts every live booking
+  // (confirmed and awaiting); collected counts only the paid ones.
+  const expected = rows
+    .filter((r) => ['confirmed', 'awaiting_payment'].includes(r.booking.status))
+    .reduce((sum, r) => sum + r.booking.priceCents, 0)
+
   // What the register will do to a $100 indoor sale, at the rate each booking
   // snapshotted. Never recompute from the show — the snapshot is the promise.
   const example = confirmed[0]
@@ -53,18 +59,19 @@ export default async function Roster() {
       </header>
 
       <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0,
+        display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 0,
         border: '1px solid var(--line)', marginBottom: 30,
       }}>
         {[
           ['Confirmed', String(confirmed.length), false],
           ['Awaiting payment', String(awaiting.length), false],
+          ['Booth fees expected', usd(expected), false],
           ['Booth fees collected', usd(collected), false],
           ['Missing paperwork', String(undocumented.length), undocumented.length > 0],
         ].map(([k, v, warn], i) => (
           <div key={String(k)} style={{
             padding: '18px 20px',
-            borderRight: i < 3 ? '1px solid var(--line)' : undefined,
+            borderRight: i < 4 ? '1px solid var(--line)' : undefined,
             background: warn ? '#FBF1EE' : undefined,
           }}>
             <div style={{
