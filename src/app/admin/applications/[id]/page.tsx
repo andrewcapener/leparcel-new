@@ -199,7 +199,7 @@ export default async function ApplicationDetail({
                 )}
               </Row>
               <Row k="Made by them">{MADE_BY[app.madeByYou] ?? app.madeByYou}</Row>
-              <Row k="Price range" n={`${usd(app.priceLowCents)}–${usd(app.priceHighCents)}`}>
+              <Row k="Price range" n={`${usd(app.priceLowCents)} to ${usd(app.priceHighCents)}`}>
                 <span className="adm-sr">What the work sells for.</span>
               </Row>
               <Row k="Track"><span style={{ textTransform: 'capitalize' }}>{app.track}</span></Row>
@@ -236,7 +236,7 @@ export default async function ApplicationDetail({
           <table className="adm-fx">
             <tbody>
               {requested.length === 0 ? (
-                <Row k="Spaces" n="—">No space chosen yet.</Row>
+                <Row k="Spaces" n="None">No space chosen yet.</Row>
               ) : requested.map((s) => (
                 <Row
                   key={s.id}

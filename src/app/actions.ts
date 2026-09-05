@@ -12,6 +12,7 @@ import {
 } from '@/db/schema'
 import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
 import { usd } from '@/lib/money'
+import { plainDashes } from '@/lib/dashes'
 import { syncApplication } from '@/server/modules/sheets/sync'
 import { gatherRow } from '@/server/modules/sheets/gather'
 import { SHEET_HEADERS, sheetValues } from '@/server/modules/sheets/row'
@@ -402,7 +403,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
       + `Shop: ${d.shopName}\nCategory: ${d.category}\n`
       + `Space${requested.length > 1 ? 's' : ''}: ${requested.map((s) => `${s.label} ${usd(s.priceCents)}`).join(' · ')}\n\n`
       + `We read every application and answer either way. The roster is announced `
-      + `${fmtDate(show.rosterAnnouncedOn)}.\n\n— Mermade Market`,
+      + `${fmtDate(show.rosterAnnouncedOn)}.\n\nMermade Market`,
     'application_received',
   )
 
@@ -561,7 +562,7 @@ export async function decide(fd: FormData): Promise<void> {
             + granted.map((a) => `${a.name}: ${usd(a.priceCents)}\n`).join('')
             + (granted.length > 0 ? `Total: ${usd(space.priceCents + addonsCents)}\n` : '')
             + `${app.track === 'indoor' ? `Commission: ${show.commissionBps / 100}% on indoor sales\n` : ''}`
-            + `\nPay to confirm within ${show.paymentWindowHours} hours. After that the space returns to the pool.\n\n— Mermade Market`,
+            + `\nPay to confirm within ${show.paymentWindowHours} hours. After that the space returns to the pool.\n\nMermade Market`,
           'accepted',
         )
       }
@@ -576,7 +577,7 @@ export async function decide(fd: FormData): Promise<void> {
         + `We're not able to offer you a space this season.\n\n`
         + (reason ? `${reason}\n\n` : '')
         + `We only take one to three makers per category and had far more strong applications than spaces. `
-        + `Please apply again next season.\n\n— Mermade Market`,
+        + `Please apply again next season.\n\nMermade Market`,
       'declined',
     )
   }
@@ -587,7 +588,7 @@ export async function decide(fd: FormData): Promise<void> {
       `Waitlisted for ${show.name}`,
       `${vendor.contactName}, you're on the waitlist for ${show.name}.\n\n`
         + `Spaces open up when accepted vendors don't pay in time, and we offer them in order. `
-        + `We'll email either way by ${fmtDate(show.rosterAnnouncedOn)}.\n\n— Mermade Market`,
+        + `We'll email either way by ${fmtDate(show.rosterAnnouncedOn)}.\n\nMermade Market`,
       'waitlisted',
     )
   }
@@ -682,11 +683,15 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
   const d = parsed.data
 
   const next = {
-    venueName: d.venueName,
-    venueAddress: d.venueAddress,
-    hoursNote: d.hoursNote,
-    loadInNote: d.loadInNote,
-    takedownNote: d.takedownNote,
+    // Typed by a person at /admin/show, usually on a phone, and a phone turns
+    // a typed hyphen into an en dash without being asked. docs/12-VOICE.md
+    // wants none of those on the site, so they are cleaned on the way in
+    // rather than left to somebody noticing.
+    venueName: plainDashes(d.venueName),
+    venueAddress: plainDashes(d.venueAddress),
+    hoursNote: plainDashes(d.hoursNote),
+    loadInNote: plainDashes(d.loadInNote),
+    takedownNote: plainDashes(d.takedownNote),
     startsOn: laWallToIso(d.startsOn),
     endsOn: laWallToIso(d.endsOn),
     applicationsOpenAt: laWallToIso(d.applicationsOpenAt),

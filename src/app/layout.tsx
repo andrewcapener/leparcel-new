@@ -17,7 +17,7 @@ import { NewsletterPopup } from '@/components/theme/NewsletterPopup'
 export const metadata: Metadata = {
   title: {
     default: 'Mermade Market - Shop Small Festival',
-    template: '%s – Mermade Market',
+    template: '%s - Mermade Market',
   },
   description:
     'A hand-curated shop small makers market in Dana Point, California. Around a hundred independent makers, free to attend, twice a year.',
