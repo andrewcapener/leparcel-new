@@ -67,11 +67,9 @@ export default async function Home() {
           <img className="stamp" src="/mermade-ribbon.png" alt="" />
           <div className="in">
             <h1>
-              One hundred makers,
+              A hundred makers,
               <br />
-              <em>chosen by hand,</em>
-              <br />
-              twice a year.
+              chosen <em>one at a time.</em>
             </h1>
             <div className="bar">
               <span className="when num">{fmtRange(show.startsOn, show.endsOn)}</span>
@@ -296,9 +294,9 @@ export default async function Home() {
               : `Applications for ${show.name} are closed.`}
         </h2>
         <p>
-          Indoor is consignment: we merchandise your work, staff the floor, and sell it at the
-          register for {show.commissionBps / 100}% of sales. Outdoor tents are a flat day rate and
-          you keep everything. One form, both tracks, no fee to apply.
+          Indoor makers drop off their work and we sell it for them, for{' '}
+          {show.commissionBps / 100}%. Outdoor makers run a tent and keep every dollar.
+          The application is one form and it costs nothing.
         </p>
         <div className="cta">
           <Link href="/apply" className="btn">

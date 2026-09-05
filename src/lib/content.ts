@@ -22,7 +22,7 @@ export const founderLetter = {
   heading: 'I started this because I wanted somewhere to buy things made by people I could meet.',
   body: [
     'In 2015 that meant sixteen makers in a room by the harbor and a folding table for a register. We had no idea whether anyone would come. Four hundred people did.',
-    'Eleven years later the rule hasn’t changed: everything on the floor is made by the person who applied. No resellers, no drop-shipping, no wholesale dressed up as small batch. A hundred makers is what fits in the room.',
+    'Eleven years on, the rule is the same: everything on the floor was made by the person who applied. No resellers, no drop-shipping. A hundred makers is what fits in the room.',
     'Come early, bring a bag, and talk to people. That’s the whole thing.',
   ],
   signature: 'Elise',
@@ -35,9 +35,9 @@ export const founderLetter = {
 
 export const claim = {
   eyebrow: 'The market',
-  lead: 'Every maker here was chosen by a person who ',
-  emphasis: 'looked at the work',
-  tail: ', and said no to four out of five.',
+  lead: 'We look at everything, and we say ',
+  emphasis: 'no',
+  tail: ' a lot.',
 }
 
 /** ⚠️ UNVERIFIED — docs/09-CONTENT-AUDIT.md §5: publish only what you can source. */
@@ -89,6 +89,6 @@ export const ARCHIVE_IS_PLACEHOLDER = true
 
 export const newsletter = {
   heading: 'Stay hooked.',
-  body: 'The roster goes out to the list first: the lineup, the floor plan, and Friday-evening early access. That’s it. We’re not going to email you in July.',
+  body: 'The roster goes out to the list before anyone else sees it, and the list gets in Friday evening early. That’s it. We’re not going to email you in July.',
   fine: 'About six emails a year. Unsubscribe any time.',
 }

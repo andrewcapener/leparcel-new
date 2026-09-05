@@ -33,8 +33,8 @@ export default async function Apply({
 
       <section className="claim" style={{ paddingBottom: 72 }}>
         <div className="k">Apply to sell · {show.name}</div>
-        <p className="lede" style={{ maxWidth: '24ch' }}>
-          One form, <em>both tracks</em>, no fee to apply.
+        <p className="lede" style={{ maxWidth: '22ch' }}>
+          Show us <em>what you make.</em>
         </p>
       </section>
 
