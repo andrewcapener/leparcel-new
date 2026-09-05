@@ -29,10 +29,11 @@ export function Masthead({ show }: { show: Show }) {
         <Link href="/" aria-label="Mermade Market, home">
           <Wordmark className="wm" />
         </Link>
+        <div className="tag">Shop Small Festival</div>
         <div className="r">
-          <Link href="/#visiting">The Market</Link>
-          <Link href="/#merchants">Merchants</Link>
-          <Link href="/#archive">Archive</Link>
+          <Link href="/#visiting">Visiting</Link>
+          <Link href="/schedule">Schedule</Link>
+          <Link href="/faq">FAQ</Link>
           <Link href="/apply" className="btn">
             Apply to sell
           </Link>
@@ -58,7 +59,8 @@ export function Footer({ show }: { show: Show }) {
         <div>
           <h4>The market</h4>
           <Link href="/#visiting">Visiting</Link>
-          <Link href="/#merchants">Merchants</Link>
+          <Link href="/schedule">Schedule</Link>
+          <Link href="/faq">FAQ</Link>
           <Link href="/#archive">Archive</Link>
         </div>
         <div>
@@ -75,7 +77,8 @@ export function Footer({ show }: { show: Show }) {
         </div>
         <div>
           <h4>Contact</h4>
-          <a href="mailto:hello@mermademarket.com">hello@mermademarket.com</a>
+          <Link href="/contact">Say hi</Link>
+          <Link href="/collaborate">Collaborate</Link>
           <a href="https://instagram.com/mermademarket">Instagram</a>
         </div>
       </div>
