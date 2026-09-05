@@ -51,7 +51,7 @@ export default async function Merchants() {
 
       <section className="claim" style={{ paddingBottom: 56 }}>
         <div className="k">{show.name}</div>
-        <p className="lede" style={{ maxWidth: '18ch' }}>The <em>merchants.</em></p>
+        <h1 className="lede" style={{ maxWidth: '18ch' }}>The <em>merchants.</em></h1>
         <p>
           Indoor makers are in the room all three days. The outdoor tents change
           daily, which is why people come back.

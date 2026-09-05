@@ -50,7 +50,7 @@ export default async function Lookbook() {
 
       <section className="claim" style={{ paddingBottom: 56 }}>
         <div className="k">For makers · Indoor</div>
-        <p className="lede" style={{ maxWidth: '20ch' }}>The <em>lookbook.</em></p>
+        <h1 className="lede" style={{ maxWidth: '20ch' }}>The <em>lookbook.</em></h1>
         <p>
           When a space looks its best it sells more. These are real spaces from past
           shows, at the sizes you are choosing between.

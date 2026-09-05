@@ -22,7 +22,7 @@ export default async function Sponsorships() {
 
       <section className="claim" style={{ paddingBottom: 56 }}>
         <div className="k">Sponsorships</div>
-        <p className="lede" style={{ maxWidth: '20ch' }}>The <em>locals-only</em> advantage.</p>
+        <h1 className="lede" style={{ maxWidth: '20ch' }}>The <em>locals-only</em> advantage.</h1>
       </section>
 
       <section className="mission">

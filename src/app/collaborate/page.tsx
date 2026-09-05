@@ -87,7 +87,7 @@ export default async function Collaborate() {
       <Masthead show={show} />
       <section className="claim" style={{ paddingBottom: 64 }}>
         <div className="k">Sponsorships &amp; collaborations</div>
-        <p className="lede" style={{ maxWidth: '22ch' }}>Partner with <em>the market.</em></p>
+        <h1 className="lede" style={{ maxWidth: '22ch' }}>Partner with <em>the market.</em></h1>
         <p>
           Twice a year we fill a room in Dana Point with people who came on purpose.
           A partnership here borrows the trust we spent eleven years building, which is

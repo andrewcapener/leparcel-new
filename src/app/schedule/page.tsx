@@ -26,7 +26,7 @@ export default async function Schedule() {
       <Masthead show={show} />
       <section className="claim" style={{ paddingBottom: 64 }}>
         <div className="k">{show.name} · {fmtRange(show.startsOn, show.endsOn)}</div>
-        <p className="lede" style={{ maxWidth: '22ch' }}>Three days at the <em>Community House.</em></p>
+        <h1 className="lede" style={{ maxWidth: '22ch' }}>Three days at the <em>Community House.</em></h1>
         <p>Free to walk in, as it has been every show. No ticket and no line.</p>
       </section>
 

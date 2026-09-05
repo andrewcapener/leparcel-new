@@ -53,9 +53,9 @@ export default async function IndoorRules() {
 
       <section className="claim" style={{ paddingBottom: 68 }}>
         <div className="k">For makers · Selling inside</div>
-        <p className="lede">
+        <h1 className="lede">
           Drop it off.<br /><em>We sell it.</em>
-        </p>
+        </h1>
         <p>
           {shops} shops fill the {show.venueName} for the whole weekend and the makers are
           not in the room. Our staff merchandises the floor, runs the register, and restocks

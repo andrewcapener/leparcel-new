@@ -53,9 +53,9 @@ export default async function OutdoorRules() {
 
       <section className="claim" style={{ paddingBottom: 68 }}>
         <div className="k">For makers · Selling outside</div>
-        <p className="lede">
+        <h1 className="lede">
           Your tent.<br /><em>Your register.</em>
-        </p>
+        </h1>
         <p>
           {tents} tents go up outside each morning and a different set of makers is under
           them each day. We build them, you sell, and we take no commission on any of it.

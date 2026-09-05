@@ -16,7 +16,7 @@ export default async function Contact() {
       <Masthead show={show} />
       <section className="claim" style={{ paddingBottom: 64 }}>
         <div className="k">Contact</div>
-        <p className="lede" style={{ maxWidth: '14ch' }}>Say <em>hi.</em></p>
+        <h1 className="lede" style={{ maxWidth: '14ch' }}>Say <em>hi.</em></h1>
       </section>
 
       <section className="sec">

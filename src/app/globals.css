@@ -29,19 +29,25 @@
     --dune:#EBEFED;      /* colour scheme 1 */
     --ink:#171717;       /* headings */
     --ink-2:#5C5C5C;     /* body */
-    --ink-3:#8C8C8C;     /* muted */
+    --ink-3:#6C6C6C;     /* muted — passes AA on white AND on the tint band */
     --line:#DFE3E8;
 
     --deep:#232323;      /* buttons and strong ink */
     --deep-2:#000000;    /* button hover on scheme blocks */
-    --accent:#BC9658;    /* the gold: links, hovers, emphasis */
+    --accent:#BC9658;    /* the gold, unchanged — fills, borders, big display */
+    /* The gold reads at 2.75:1 on white, so it cannot carry text at any size
+       (AA needs 4.5 for body and 3.0 for large). These are the same hue taken
+       down until they pass, and they are what text uses. The brand colour
+       itself is untouched wherever it is a fill or a rule. */
+    --accent-tx:#8F7243;      /* gold as text on white        4.5:1 */
+    --accent-tx-tint:#82683D; /* gold as text on the tint band 4.6:1 */
     --third:#8F7B7B;
     --on-deep:#FFFFFF; --on-accent:#FFFFFF;
     --on-deep-soft:rgba(255,255,255,.72);
     --warn:#C20000;
 
-    --foot-bg:#C5B9B9; --foot-text:#746767;
-    --foot-head:#777070; --foot-line:#8F7B7B;
+    --foot-bg:#C5B9B9; --foot-text:#524949;   /* their ground, text darkened to 4.6:1 */
+    --foot-head:#5A482A; --foot-line:#9C8B8B;
 
     /* ── type: the theme's own two faces ── */
     --font-c:var(--f-oswald),'Arial Narrow',sans-serif; /* display, uppercase */
@@ -110,9 +116,10 @@
   .mast .tag{font-family:var(--font-c);font-weight:600;font-size:12px;letter-spacing:.11em;
     text-transform:uppercase;color:var(--ink-3);line-height:1.5;max-width:23ch}
   .mast .r{margin-left:auto;display:flex;align-items:center;gap:24px}
-  .mast .r a{font-family:var(--font-c);font-weight:500;text-transform:uppercase;
-    letter-spacing:.08em;font-size:14px;color:var(--ink-2)}
-  .mast .r a:hover{color:var(--accent)}
+  .mast .r a:not(.btn){font-family:var(--font-c);font-weight:500;text-transform:uppercase;
+    letter-spacing:.08em;font-size:14px;color:var(--ink-2);
+    padding:9px 2px;display:inline-block;min-height:24px}
+  .mast .r a:not(.btn):hover{color:var(--accent-tx)}
 
   /* Mobile-only nav row. Hidden on desktop, where the masthead carries it. */
   .mnav{display:none}
@@ -120,8 +127,8 @@
   .btn{display:inline-block;padding:12px 24px 11px;border-radius:var(--arch);font-family:var(--font-c);
     font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:15px;
     background:var(--deep);color:var(--on-deep);border:1px solid var(--deep);cursor:pointer}
-  .btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
-  .btn.warm{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn:hover{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+  .btn.warm{background:var(--accent);border-color:var(--accent);color:var(--ink)}
   .btn.warm:hover{background:var(--ink);border-color:var(--ink);color:var(--bone)}
   .btn.line{background:transparent;border-color:currentColor;color:inherit}
   button.btn{font-family:var(--font-c)}
@@ -172,7 +179,7 @@
   .claim .lede{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(42px,9vw,114px);line-height:.88;letter-spacing:-.008em;max-width:none;
     margin:0 auto}   /* auto so a max-width lede centers with the paragraph under it */
-  .claim .lede em{font-style:normal;color:var(--accent)}
+  .claim .lede em{font-style:normal;color:var(--accent-tx-tint)}
   .claim p{font-family:var(--font-g);font-size:clamp(18px,2vw,23px);line-height:1.5;
     max-width:44ch;margin:20px auto 0;opacity:.9}
 
@@ -391,7 +398,7 @@
   .tier .nm{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:23px;line-height:1;color:var(--ink)}
   .tier .nt{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
-    letter-spacing:.09em;font-size:11px;color:var(--accent);margin-top:7px}
+    letter-spacing:.09em;font-size:11px;color:var(--accent-tx);margin-top:7px}
   .tier ul{list-style:none;margin:18px 0 0;padding:0}
   .tier li{font-family:var(--font-g);font-size:16.5px;line-height:1.4;color:var(--ink-2);
     padding:8px 0 8px 17px;position:relative;border-top:1px solid var(--line)}
@@ -433,7 +440,7 @@
   .quotes blockquote{margin:0;font-family:var(--font-g);font-size:clamp(17px,1.9vw,21px);
     line-height:1.6;color:var(--ink-2)}
   .quotes cite{display:block;font-family:var(--font-c);font-weight:500;font-style:normal;
-    text-transform:uppercase;letter-spacing:.11em;font-size:12.5px;color:var(--accent);margin-top:14px}
+    text-transform:uppercase;letter-spacing:.11em;font-size:12.5px;color:var(--accent-tx-tint);margin-top:14px}
 
   /* ── Sections carried over from the theme's home page arrangement ── */
 
@@ -441,7 +448,7 @@
   .mission{padding:clamp(52px,8vw,104px) var(--pad);text-align:center;background:#fff}
   .mission h2{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     font-size:clamp(30px,4.6vw,62px);line-height:1;color:var(--ink)}
-  .mission h2 em{font-style:normal;color:var(--accent)}
+  .mission h2 em{font-style:normal;color:var(--accent-tx)}
   .mission p{font-family:var(--font-g);font-size:clamp(16px,1.7vw,19px);line-height:1.62;
     color:var(--ink-2);max-width:60ch;margin:20px auto 0}
 
@@ -480,7 +487,7 @@
   .days .n{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     font-size:clamp(24px,3.2vw,40px);line-height:1;color:var(--ink)}
   .days .t{font-family:var(--font-c);font-weight:500;text-transform:uppercase;
-    letter-spacing:.09em;font-size:14px;color:var(--accent);margin-top:9px}
+    letter-spacing:.09em;font-size:14px;color:var(--accent-tx);margin-top:9px}
 
   .lbgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
     gap:clamp(10px,1.6vw,20px)}
@@ -494,7 +501,7 @@
     background:rgba(255,255,255,.65);color:var(--ink)}
   .subf.compact input::placeholder{color:var(--foot-text)}
   .subf.compact .go{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
-    letter-spacing:.08em;font-size:13px;color:var(--ink);padding:0 4px}
+    letter-spacing:.08em;font-size:13px;color:var(--ink);padding:8px 10px;min-height:24px}
 
   /* merchant directory */
   .dir{columns:5;column-gap:34px;color:var(--ink-2)}
@@ -507,12 +514,12 @@
     background:var(--dune);color:var(--ink);}
   .apply h2{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
     font-size:clamp(34px,5.8vw,74px);line-height:.9;max-width:17ch;margin:0 auto}
-  .apply h2 em{font-style:normal;color:var(--accent)}
+  .apply h2 em{font-style:normal;color:var(--accent-tx-tint)}
   .apply p{font-family:var(--font-g);font-size:19.5px;line-height:1.6;max-width:52ch;
     margin:20px auto 0;color:var(--ink-2)}
   .apply .cta{margin-top:28px;display:flex;gap:11px;justify-content:center;flex-wrap:wrap}
   .apply .btn{background:var(--deep);border-color:var(--deep)}
-  .apply .btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+  .apply .btn:hover{background:var(--accent);border-color:var(--accent);color:var(--ink)}
   .apply .fine{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     letter-spacing:.1em;font-size:13px;color:var(--ink-3);margin-top:20px}
 
@@ -520,7 +527,7 @@
   .foot{background:var(--foot-bg);color:var(--foot-text);
     padding:clamp(38px,5vw,62px) var(--pad) 28px}
   .fgrid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:34px}
-  .fgrid h4{font-family:var(--font-c);font-weight:600;text-transform:uppercase;color:var(--foot-head);
+  .fgrid .fh{font-family:var(--font-c);font-weight:600;text-transform:uppercase;color:var(--foot-head);
     letter-spacing:.1em;font-size:12px;color:var(--accent);margin:0 0 11px}
   .fgrid a{display:block;font-size:15px;line-height:1.9;color:var(--foot-text)}
   .fgrid a:hover{color:var(--ink)}
@@ -546,7 +553,7 @@
       text-transform:uppercase;font-size:12.5px;letter-spacing:.09em;
       color:var(--ink-2);border:1.5px solid var(--line);border-radius:999px;
       padding:6px 13px 5px;white-space:nowrap}
-    .mnav a:active{background:var(--deep);border-color:var(--deep);color:var(--bone)}
+    .mnav a:active{background:var(--deep);border-color:var(--deep);color:#fff}
     .btn{padding:9px 16px 8px;font-size:14.5px}
     .hero{height:calc(100svh - 184px);min-height:470px}   /* util 53 + mast 75 + mnav 53 */
     .hero .in{padding:0 var(--pad) 18px}
@@ -632,6 +639,10 @@
   .inp[aria-invalid="true"]{border-color:var(--warn);background:#FDF6F4}
   textarea.inp{min-height:120px;line-height:1.55;resize:vertical}
   .err{display:block;font-size:13px;color:var(--warn);margin-top:6px}
+  input[type="checkbox"]{width:24px;height:24px;flex:none;accent-color:var(--deep);
+    margin:2px 0;cursor:pointer}
+  label:has(> input[type="checkbox"]){cursor:pointer;padding:2px 0;min-height:24px}
+
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   @media(max-width:700px){.row2{grid-template-columns:1fr}}
 

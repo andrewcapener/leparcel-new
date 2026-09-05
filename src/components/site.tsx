@@ -72,20 +72,20 @@ export function Footer({ show }: { show: Show }) {
           </div>
         </div>
         <div>
-          <h4>{show.venueName}</h4>
+          <h2 className="fh">{show.venueName}</h2>
           <div className="bl" style={{ marginTop: 0 }}>{show.venueAddress}</div>
           <a href="https://www.facebook.com/mermademarketoc">Facebook</a>
           <a href="https://instagram.com/mermademarket">Instagram</a>
         </div>
         <div>
-          <h4>Stay hooked</h4>
+          <h2 className="fh">Stay hooked</h2>
           <div className="bl" style={{ marginTop: 0, marginBottom: 10 }}>
             We send show dates and important VIP info to our subscribers.
           </div>
           <SubscribeForm compact />
         </div>
         <div>
-          <h4>Pages</h4>
+          <h2 className="fh">Pages</h2>
           <Link href="/contact">Contact</Link>
           <Link href="/faq">FAQ</Link>
           <Link href="/journal">Journal</Link>
