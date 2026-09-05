@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto'
 import { eq } from 'drizzle-orm'
 import { db, sqlClient } from './index'
 import {
-  shows, spaceTypes, vendors, applications, bookings,
+  shows, spaceTypes, addOns, vendors, applications, bookings, bookingAddons,
   auditLog, emailOutbox, subscribers, type Category,
 } from './schema'
 
@@ -96,9 +96,11 @@ async function main() {
   await db.delete(auditLog)
   await db.delete(emailOutbox)
   await db.delete(subscribers)
+  await db.delete(bookingAddons)
   await db.delete(bookings)
   await db.delete(applications)
   await db.delete(vendors)
+  await db.delete(addOns)
   await db.delete(spaceTypes)
   await db.delete(shows)
 
@@ -116,6 +118,10 @@ async function main() {
     startsOn: '2026-11-13T12:00:00-08:00',
     endsOn: '2026-11-15T12:00:00-08:00',
     hoursNote: 'Friday 13 November, 5-9pm · Saturday 14th, 10am-5pm · Sunday 15th, 10am-4pm',
+    // Prose, not dates: staff edit these at /admin/show when the venue moves.
+    // Shape carried over from the old site's indoor maker rules.
+    loadInNote: 'Thursday 12 November, 1-7pm, in staggered arrival slots',
+    takedownNote: 'Sunday 15 November at 4pm sharp',
     // CONFIRMED by Drew, 25 Aug 2026: applications open Monday 7 September.
     // Close date mirrors the Spring window's shape (Mon 2 – Fri 13 March, 11 days)
     // — confirm before launch. Editable in /admin/show, never in code.
@@ -124,8 +130,11 @@ async function main() {
     rosterAnnouncedOn: '2026-10-05T12:00:00-07:00',
     commissionBps: 2000,
     paymentWindowHours: 48,   // moved from 36 to 48 per Drew, Sept 2026 (audit §2.3)
-    indoorCapacity: 82,
-    outdoorCapacity: 36,
+    // The old maker rules pages say 45 shops inside and 25 tents a day
+    // outside. The old shopper FAQ says 35-40 of each. Seeded to the
+    // operational number; staff adjust per space type at /admin/show.
+    indoorCapacity: 45,
+    outdoorCapacity: 25,
     isActive: true,
   })
 
@@ -133,16 +142,16 @@ async function main() {
   // Real prices from mermademarket.com/pages/merchant-application (Aug 2026).
   // Indoor is granular by footprint; outdoor is priced per DAY, not per weekend.
   const spaces = [
-    { code: 'IN-JR',    track: 'indoor' as const,  label: 'JR Space',            priceCents:  6_000, capacity:  6, description: 'For makers 14 and under.' },
-    { code: 'IN-TREAT', track: 'indoor' as const,  label: 'Treats on a Shelf',   priceCents: 10_000, capacity:  8, description: 'Shelf space for cottage-food makers. Items $10 and under.' },
-    { code: 'IN-BTQ',   track: 'indoor' as const,  label: 'BTQ Space',           priceCents: 15_000, capacity: 10, description: 'Small boutique footprint.' },
-    { code: 'IN-3x4',   track: 'indoor' as const,  label: "3' × 4' space",       priceCents: 26_000, capacity: 16, description: 'Compact. Suits jewelry and paper.' },
-    { code: 'IN-3x6',   track: 'indoor' as const,  label: "3' × 6' space",       priceCents: 28_000, capacity: 24, description: 'The standard indoor space.' },
-    { code: 'IN-3x8',   track: 'indoor' as const,  label: "3' × 8' space",       priceCents: 34_000, capacity: 12, description: 'Room for a rack alongside a table.' },
-    { code: 'IN-3x12',  track: 'indoor' as const,  label: "3' × 12' space",      priceCents: 45_000, capacity:  6, description: 'The largest indoor footprint.' },
-    { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 12, description: '9am-6pm. You run your own payments and keep 100%.' },
-    { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 12, description: '9am-5pm. You run your own payments and keep 100%.' },
-    { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 12, description: '9am-5pm. You run your own payments and keep 100%.' },
+    { code: 'IN-JR',    track: 'indoor' as const,  label: 'JR Space',            priceCents:  6_000, capacity:  2, description: "For makers 14 and under. 2' wide, 3' deep, shelf provided." },
+    { code: 'IN-TREAT', track: 'indoor' as const,  label: 'Treats on a Shelf',   priceCents: 10_000, capacity:  4, description: 'Five shelves beside the register. Items $10 and under, one maker per treat.' },
+    { code: 'IN-BTQ',   track: 'indoor' as const,  label: 'BTQ Space',           priceCents: 15_000, capacity:  6, description: 'Small boutique footprint.' },
+    { code: 'IN-3x4',   track: 'indoor' as const,  label: "3' × 4' space",       priceCents: 26_000, capacity: 10, description: 'Compact. Suits jewelry and paper.' },
+    { code: 'IN-3x6',   track: 'indoor' as const,  label: "3' × 6' space",       priceCents: 28_000, capacity: 13, description: 'The standard indoor space.' },
+    { code: 'IN-3x8',   track: 'indoor' as const,  label: "3' × 8' space",       priceCents: 34_000, capacity:  8, description: 'Room for a rack alongside a table.' },
+    { code: 'IN-3x12',  track: 'indoor' as const,  label: "3' × 12' space",      priceCents: 45_000, capacity:  2, description: 'The largest indoor footprint. Apparel does well in it.' },
+    { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 25, description: 'A tent for the day. You run your own payments and keep 100%.' },
+    { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 25, description: 'A tent for the day. You run your own payments and keep 100%.' },
+    { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 25, description: 'A tent for the day. You run your own payments and keep 100%.' },
   ]
   const spaceIds: Record<string, string> = {}
   for (const [i, s] of spaces.entries()) {
@@ -151,8 +160,22 @@ async function main() {
     await db.insert(spaceTypes).values({ id, showId, sortOrder: i, ...s })
   }
 
+  /* ── priced extras ──
+   * Prices confirmed against the old merchant application page. A null
+   * track means both tracks are offered it.
+   */
+  const extras = [
+    { code: 'SHARE',      track: null,               name: 'Share your space', priceCents: 10_000, isLimited: false, description: 'Split one space with another maker. Both of you apply.' },
+    { code: 'ENDCAP-IN',  track: 'indoor' as const,  name: 'Corner or endcap', priceCents:  4_000, isLimited: true,  description: 'An end-of-run space with two shopping sides.' },
+    { code: 'ENDCAP-OUT', track: 'outdoor' as const, name: 'Corner or endcap', priceCents:  6_000, isLimited: true,  description: 'A corner tent on the outdoor run.' },
+    { code: 'TENT_10X10', track: 'outdoor' as const, name: 'Use one of our 10 × 10 tents', priceCents: 10_000, isLimited: true, description: 'Larger than the standard tent, and we set it up.' },
+  ]
+  for (const [i, a] of extras.entries()) {
+    await db.insert(addOns).values({ id: randomUUID(), showId, sortOrder: i, ...a })
+  }
+
   if (mode === 'show') {
-    console.log(`Seeded (show only): 1 show, ${spaces.length} space types.`)
+    console.log(`Seeded (show only): 1 show, ${spaces.length} space types, ${extras.length} add-ons.`)
     return
   }
 

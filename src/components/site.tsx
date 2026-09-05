@@ -70,14 +70,9 @@ export function Footer({ show }: { show: Show }) {
         <div>
           <h4>Makers</h4>
           <Link href="/apply">Apply to sell</Link>
-          <Link href="/apply#indoor">Indoor consignment</Link>
-          <Link href="/apply#outdoor">Outdoor tents</Link>
-        </div>
-        <div>
-          <h4>Staff</h4>
-          <Link href="/admin/jury">Jury queue</Link>
-          <Link href="/admin/roster">Roster</Link>
-          <Link href="/admin/outbox">Outbox</Link>
+          <Link href="/makers/indoor">Selling inside</Link>
+          <Link href="/makers/outdoor">Selling outside</Link>
+          <Link href="/faq#makers">Maker questions</Link>
         </div>
         <div>
           <h4>Contact</h4>

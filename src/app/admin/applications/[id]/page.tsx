@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { and, asc, desc, eq, inArray } from 'drizzle-orm'
 import { db } from '@/db'
 import {
-  applications, vendors, spaceTypes, bookings, auditLog,
+  applications, vendors, spaceTypes, addOns, bookings, auditLog,
   type ApplicationStatus,
 } from '@/db/schema'
 import { decide, saveScores } from '@/app/actions'
@@ -51,6 +51,13 @@ export default async function ApplicationDetail({
         where: inArray(spaceTypes.id, requestedIds),
         orderBy: [asc(spaceTypes.sortOrder)],
       })
+    : []
+
+  let requestedAddonCodes: string[] = []
+  try { requestedAddonCodes = JSON.parse(app.requestedAddons) } catch {}
+  const extras = requestedAddonCodes.length
+    ? (await db.query.addOns.findMany({ where: eq(addOns.showId, app.showId) }))
+        .filter((a) => requestedAddonCodes.includes(a.code))
     : []
 
   const booking = await db.query.bookings.findFirst({
@@ -138,6 +145,21 @@ export default async function ApplicationDetail({
                     )}
                   </div>
                 ))}
+              </div>
+            )}
+          </Row>
+          <Row k="Add-ons asked for">
+            {extras.length === 0 ? '—' : (
+              <div style={{ display: 'grid', gap: 4 }}>
+                {extras.map((a) => (
+                  <div key={a.id}>
+                    {a.name} · <span className="num">{usd(a.priceCents)}</span>
+                    {a.isLimited && <span className="chip" style={{ marginLeft: 8 }}>limited</span>}
+                  </div>
+                ))}
+                <div style={{ color: 'var(--ink-3)', fontSize: 13 }}>
+                  Requests. Confirm what you can give them before the invoice goes out.
+                </div>
               </div>
             )}
           </Row>

@@ -34,6 +34,11 @@ export const shows = pgTable('shows', {
   endsOn: text('ends_on').notNull(),
   hoursNote: text('hours_note').notNull().default(''),
 
+  // Load-in and take-down are prose, not dates: they move with the venue and
+  // the staff edit them at /admin/show. Never hardcode them in a page.
+  loadInNote: text('load_in_note').notNull().default(''),
+  takedownNote: text('takedown_note').notNull().default(''),
+
   applicationsOpenAt: text('applications_open_at').notNull(),
   applicationsCloseAt: text('applications_close_at').notNull(),
   rosterAnnouncedOn: text('roster_announced_on').notNull(),
@@ -61,6 +66,26 @@ export const spaceTypes = pgTable('space_types', {
   capacity: integer('capacity').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
 }, (t) => [uniqueIndex('space_types_show_code').on(t.showId, t.code)])
+
+/* ───────────────────── add-ons (priced extras) ─────────────────────
+ * docs/03-DATA-MODEL.md §6 — "kills the 'prices live in prose' problem".
+ * A null track means the add-on is offered to both. Prices are the ones
+ * the market has actually charged (share a space $100, endcap $40 indoor
+ * and $60 outdoor, a Mermade tent $100).
+ */
+export const addOns = pgTable('add_ons', {
+  id: text('id').primaryKey(),
+  showId: text('show_id').notNull().references(() => shows.id),
+  track: text('track', { enum: ['indoor', 'outdoor'] }),   // null = both
+  code: text('code').notNull(),                  // 'SHARE' | 'ENDCAP' | 'TENT_10X10'
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  priceCents: integer('price_cents').notNull(),
+  maxQty: integer('max_qty').notNull().default(1),
+  isLimited: boolean('is_limited').notNull().default(false),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+}, (t) => [uniqueIndex('add_ons_show_code').on(t.showId, t.code)])
 
 /* ───────────────────────── vendors ─────────────────────────
  * Persistent across shows. An application belongs to a vendor.
@@ -107,6 +132,10 @@ export const applications = pgTable('applications', {
   // outdoor makers often check several days, and roughly one in a hundred
   // wants both tracks.
   requestedSpaceIds: text('requested_space_ids').notNull().default('[]'),
+  // Add-on codes the maker asked for, as a JSON array. A request, not a
+  // sale: limited add-ons (endcaps) are granted at booking, and the money
+  // only becomes real on the booking.
+  requestedAddons: text('requested_addons').notNull().default('[]'),
 
   category: text('category').notNull(),
   secondaryCategories: text('secondary_categories').notNull().default('[]'), // JSON
@@ -161,7 +190,8 @@ export const bookings = pgTable('bookings', {
   spaceTypeId: text('space_type_id').notNull().references(() => spaceTypes.id),
 
   vendorCode: text('vendor_code').notNull(),      // "MM07"
-  priceCents: integer('price_cents').notNull(),
+  priceCents: integer('price_cents').notNull(),          // the space, before extras
+  addonsCents: integer('addons_cents').notNull().default(0),
   commissionBps: integer('commission_bps').notNull(),   // immutable snapshot
 
   status: text('status', {
@@ -175,6 +205,16 @@ export const bookings = pgTable('bookings', {
   uniqueIndex('bookings_show_vendor_code').on(t.showId, t.vendorCode),
   index('bookings_show_status').on(t.showId, t.status),
 ])
+
+/* Extras actually bought, with the price snapshotted at booking time —
+ * same reasoning as commission_bps. docs/03-DATA-MODEL.md §6. */
+export const bookingAddons = pgTable('booking_addons', {
+  id: text('id').primaryKey(),
+  bookingId: text('booking_id').notNull().references(() => bookings.id),
+  addOnId: text('add_on_id').notNull().references(() => addOns.id),
+  qty: integer('qty').notNull().default(1),
+  priceCents: integer('price_cents').notNull(),   // snapshot
+}, (t) => [index('booking_addons_booking').on(t.bookingId)])
 
 /* ─────────────────────── audit log ───────────────────────
  * CLAUDE.md rule 3 — every state change that touches money or a
@@ -219,6 +259,7 @@ export const subscribers = pgTable('subscribers', {
 
 export type Show = typeof shows.$inferSelect
 export type SpaceType = typeof spaceTypes.$inferSelect
+export type AddOn = typeof addOns.$inferSelect
 export type Vendor = typeof vendors.$inferSelect
 export type Application = typeof applications.$inferSelect
 export type Booking = typeof bookings.$inferSelect

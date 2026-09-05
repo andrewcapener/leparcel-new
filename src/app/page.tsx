@@ -233,7 +233,9 @@ export default async function Home() {
         <div className="jgrid">
           {journal.slice(0, 3).map((jp) => (
             <Link href={`/journal/${jp.slug}`} key={jp.slug} className="jcard">
-              {jp.image && <Photo src={jp.image} alt="" arch tone="soft" sizes="(max-width:900px) 50vw, 30vw" />}
+              {jp.image
+                ? <Photo src={jp.image} alt="" arch tone="soft" sizes="(max-width:900px) 50vw, 30vw" />
+                : <div className="jnone" aria-hidden="true" />}
               <div className="nm">{jp.title}</div>
               <div className="dt num">{new Date(jp.date).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'long', year: 'numeric' })}</div>
             </Link>

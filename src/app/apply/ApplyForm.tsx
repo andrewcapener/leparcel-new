@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react'
 import { submitApplication, type FormState } from '@/app/actions'
-import { CATEGORIES, type Show, type SpaceType } from '@/db/schema'
+import { CATEGORIES, type AddOn, type Show, type SpaceType } from '@/db/schema'
 import { usd } from '@/lib/money'
 
 const initial: FormState = { ok: false }
@@ -22,7 +22,11 @@ function Field({
   )
 }
 
-export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] }) {
+export function ApplyForm({
+  show, spaces, extras,
+}: {
+  show: Show; spaces: SpaceType[]; extras: AddOn[]
+}) {
   const [state, action, pending] = useActionState(submitApplication, initial)
   const e = state.errors ?? {}
   // Echoed values from a rejected submit — see FormState.values, so a rejected
@@ -35,6 +39,10 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
   const keep = (k: string) => ({ defaultValue: v[k] ?? '' })
 
   const visible = spaces.filter((s) => track === 'both' || s.track === track)
+  // A null-track add-on is offered to everyone; the rest follow the track.
+  const visibleExtras = extras.filter(
+    (a) => a.track === null || track === 'both' || a.track === track,
+  )
 
   if (state.ok) {
     return (
@@ -54,12 +62,15 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
 
   return (
     <section className="sec" style={{ background: 'var(--paper-2)' }}>
+      {/* The form is one narrow column, so the heading is centered on the same
+          column rather than pinned to the page gutter with empty space beside it. */}
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
       <div className="shead">
         <span className="k">Application</span>
         <h2>Tell us about your work</h2>
       </div>
 
-      <form key={state.attempt ?? 0} action={action} style={{ maxWidth: 720 }} noValidate>
+      <form key={state.attempt ?? 0} action={action} noValidate>
         {state.message && !state.ok && (
           <p className="err" style={{ marginBottom: 24, fontSize: 14 }}>{state.message}</p>
         )}
@@ -181,6 +192,28 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
           {e.spaces && <span className="err">{e.spaces}</span>}
         </div>
 
+        {visibleExtras.length > 0 && (
+          <div className="field">
+            <span className="lb">Anything else</span>
+            {visibleExtras.map((a) => (
+              <label key={a.id} className="field" style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10 }}>
+                <input type="checkbox" name="addons" value={a.code} style={{ marginTop: 3 }} />
+                <span style={{ fontSize: 14.5, lineHeight: 1.5 }}>
+                  {a.name} · {usd(a.priceCents)}
+                  {a.isLimited && <span className="chip" style={{ marginLeft: 8 }}>Limited</span>}
+                  {a.description && (
+                    <span style={{ display: 'block', fontSize: 12.5, color: 'var(--ink-3)' }}>{a.description}</span>
+                  )}
+                </span>
+              </label>
+            ))}
+            <span className="hint">
+              A request, not a charge. We confirm what we can give you when you&rsquo;re
+              accepted, and it goes on that invoice.
+            </span>
+          </div>
+        )}
+
         {/* ── Step 4 · compliance ──
             OPTIONAL here on purpose. The CDTFA obligation attaches to renting
             space, not to reading an application, so the hard gate is at load-in
@@ -241,6 +274,7 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
           No fee to apply.
         </p>
       </form>
+      </div>
     </section>
   )
 }

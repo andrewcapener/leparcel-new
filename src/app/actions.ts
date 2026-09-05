@@ -6,7 +6,7 @@ import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
 import {
-  shows, vendors, applications, bookings, spaceTypes, auditLog,
+  shows, vendors, applications, bookings, spaceTypes, addOns, auditLog,
   emailOutbox, subscribers, CATEGORIES, type ApplicationStatus,
 } from '@/db/schema'
 import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
@@ -185,6 +185,17 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   }
   const space = requested[0]!
 
+  // Add-on requests. Validated against the catalog so a hand-built POST can't
+  // invent an extra, but nothing is priced here: the money becomes real on
+  // the booking, where the price is snapshotted (docs/03-DATA-MODEL.md §6).
+  const offered = await db.query.addOns.findMany({
+    where: and(eq(addOns.showId, show.id), eq(addOns.isActive, true)),
+  })
+  const requestedAddons = fd
+    .getAll('addons')
+    .map(String)
+    .filter((code) => offered.some((a) => a.code === code))
+
   // Vendors persist across shows — find or create, never duplicate on email.
   const email = d.email.trim().toLowerCase()
   let vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
@@ -213,6 +224,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     id: appId, showId: show.id, vendorId: vendor!.id,
     track: d.track, spaceTypeId: space.id,
     requestedSpaceIds: JSON.stringify(requestedIds),
+    requestedAddons: JSON.stringify(requestedAddons),
     category: d.category, description: d.description,
     priceLowCents: d.priceLow * 100, priceHighCents: d.priceHigh * 100,
     madeByYou: d.madeByYou,
@@ -392,6 +404,8 @@ const ShowSettingsSchema = z.object({
   venueName: z.string().min(2, 'Required'),
   venueAddress: z.string().min(5, 'Required'),
   hoursNote: z.string().min(1, 'Required'),
+  loadInNote: z.string().max(200, 'Keep it to a line').default(''),
+  takedownNote: z.string().max(200, 'Keep it to a line').default(''),
   startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   applicationsOpenAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
@@ -433,6 +447,8 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
     venueName: d.venueName,
     venueAddress: d.venueAddress,
     hoursNote: d.hoursNote,
+    loadInNote: d.loadInNote,
+    takedownNote: d.takedownNote,
     startsOn: laWallToIso(d.startsOn),
     endsOn: laWallToIso(d.endsOn),
     applicationsOpenAt: laWallToIso(d.applicationsOpenAt),
@@ -459,6 +475,9 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
   revalidatePath('/')
   revalidatePath('/apply')
   revalidatePath('/admin/show')
+  revalidatePath('/makers/indoor')
+  revalidatePath('/makers/outdoor')
+  revalidatePath('/schedule')
   return { ok: true, attempt, message: 'Saved.' }
 }
 
@@ -497,4 +516,6 @@ export async function updateSpace(fd: FormData): Promise<void> {
   revalidatePath('/admin/show')
   revalidatePath('/apply')
   revalidatePath('/')
+  revalidatePath('/makers/indoor')
+  revalidatePath('/makers/outdoor')
 }

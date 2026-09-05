@@ -30,9 +30,11 @@ export default async function FAQ() {
     ['How merchants are chosen', 'We read applications as they come in and we look hard at your Instagram. Fresh work and clear branding get in. A crowded category is the most common reason good work does not.'],
     ['Does everything need to be handmade', 'Mostly. A thoughtfully curated shop can work, especially outside. MLM and direct-sales brands are a no, always.'],
     ['I make original art', <>The indoor room is not a gallery: work under $100 sells there, and originals do better outside where you can talk about them. Apply for the track that fits your prices.</>],
-    ['How indoor consignment works', `You set up your space on load-in day, then leave the selling to us. Our staff runs the registers, every item carries your tag, and we pay you within a week of the show's last day. We ask for your inventory list two weeks before the show.`],
-    ['How outdoor works', 'We set up the tents for you, roughly six and a half feet square. You pick the day or days that fit your life, sell in person, and keep everything. Checking more days tells us you are flexible, which helps your odds.'],
-    ['Can I do indoor and outdoor', 'A few makers do each show. Check both on the application and we will place you where it works.'],
+    ['How indoor consignment works', <>You set up your space on load-in day, then leave the selling to us. Our staff runs the registers, every item carries your tag, and we pay you within a week of the show&rsquo;s last day. We ask for your inventory list two weeks before the show. <Link href="/makers/indoor" style={{ color: 'var(--deep)', textDecoration: 'underline' }}>The full indoor rules</Link> cover load-in, display and labeling.</>],
+    ['How outdoor works', <>We set up the tents for you, roughly six and a half feet square. You pick the day or days that fit your life, sell in person, and keep everything. Checking more days tells us you are flexible, which helps your odds. <Link href="/makers/outdoor" style={{ color: 'var(--deep)', textDecoration: 'underline' }}>The full outdoor rules</Link> cover what to bring and what happens if it rains.</>],
+    ['Can I do indoor and outdoor', 'A few makers do each show. Check both on the application and we will place you where it works, though not both at once.'],
+    ['Can I share a space', 'Yes, inside or out. Both makers apply, you tell us who you want to share with, and there is a fee for the second name. The space is still one space.'],
+    ['Do I need a seller’s permit', 'If you are accepted, yes, or a written statement that you qualify as an occasional seller. We collect it before load-in, not before the jury. Cottage food makers also need a permit for treats, and you should wait until you are in to apply for it.'],
     ['If I am not accepted, can I apply again', 'Yes, and people get in on the second try often. We tell you why either way, so you know what to change or that it was just a crowded season.'],
   ]
 

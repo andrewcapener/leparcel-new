@@ -59,6 +59,17 @@ export function SettingsForm({ show }: { show: Show }) {
         <input className="inp" id="hoursNote" name="hoursNote" required {...keep('hoursNote', show.hoursNote)} />
       </Field>
       <div className="row2">
+        <Field
+          name="loadInNote" label="Load-in, as shown to makers" error={e.loadInNote}
+          hint="Appears on the indoor rules page. Prose, e.g. “Thursday 12 November, 1-7pm”."
+        >
+          <input className="inp" id="loadInNote" name="loadInNote" {...keep('loadInNote', show.loadInNote)} />
+        </Field>
+        <Field name="takedownNote" label="Take-down, as shown to makers" error={e.takedownNote}>
+          <input className="inp" id="takedownNote" name="takedownNote" {...keep('takedownNote', show.takedownNote)} />
+        </Field>
+      </div>
+      <div className="row2">
         <Field name="applicationsOpenAt" label="Applications open" error={e.applicationsOpenAt}>
           <input className="inp" id="applicationsOpenAt" name="applicationsOpenAt" type="datetime-local" required {...keep('applicationsOpenAt', isoToLaWall(show.applicationsOpenAt))} />
         </Field>

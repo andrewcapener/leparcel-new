@@ -140,7 +140,8 @@
     padding:clamp(46px,7vw,84px) var(--pad);text-align:center}
   .claim .k,.apply .k{color:var(--on-deep-soft)}
   .claim .lede{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
-    font-size:clamp(42px,9vw,114px);line-height:.88;letter-spacing:-.008em;max-width:none;margin:0}
+    font-size:clamp(42px,9vw,114px);line-height:.88;letter-spacing:-.008em;max-width:none;
+    margin:0 auto}   /* auto so a max-width lede centers with the paragraph under it */
   .claim .lede em{font-style:normal;color:var(--accent)}
   .claim p{font-family:var(--font-g);font-size:clamp(18px,2vw,23px);line-height:1.5;
     max-width:44ch;margin:20px auto 0;opacity:.9}
@@ -289,6 +290,75 @@
     letter-spacing:.09em;font-size:12px;color:var(--ink-3);margin-top:6px}
   .jcard:hover .nm{color:var(--deep)}
   .jhero{aspect-ratio:16/10}
+  /* A post with no hero image still holds its place in the grid, so one
+     missing photo doesn't knock the rest of the rows out of line. */
+  .jnone{aspect-ratio:4/5;border-radius:var(--arch);background:var(--deep);
+    background-image:var(--grain-light);margin-bottom:13px}
+  .jlead{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:clamp(24px,4vw,54px);align-items:center}
+  .jlead .ph{aspect-ratio:4/5}
+  .jlead .jnone{margin-bottom:0}
+  .jlead h2{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
+    font-size:clamp(28px,3.6vw,48px);line-height:.98;margin-top:14px}
+  .jlead .dt{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    letter-spacing:.09em;font-size:12.5px;color:var(--ink-3);margin-top:11px}
+  .jlead p{font-family:var(--font-g);font-size:18.5px;line-height:1.62;color:var(--ink-2);
+    margin-top:17px;max-width:46ch;
+    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .jlead .more{display:inline-block;margin-top:20px;font-family:var(--font-c);font-weight:600;
+    text-transform:uppercase;font-size:13.5px;letter-spacing:.09em;color:var(--deep);
+    border-bottom:1.5px solid var(--deep);padding-bottom:2px}
+  .jlead:hover h2{color:var(--deep)}
+
+  /* ── long-form maker rules: /makers/indoor, /makers/outdoor ──
+     Dense reference reading, not a shopper page. Held to one measure,
+     numbered, and scannable by someone standing in a driveway. */
+  .toc{position:sticky;top:0;z-index:30;display:flex;gap:8px;overflow-x:auto;
+    padding:13px var(--pad);background:color-mix(in srgb,var(--bone) 92%,transparent);
+    backdrop-filter:blur(9px);border-bottom:1px solid var(--line);scrollbar-width:none}
+  .toc::-webkit-scrollbar{display:none}
+  .toc a{flex:none;font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    font-size:12.5px;letter-spacing:.09em;color:var(--ink-2);border:1.5px solid var(--line);
+    border-radius:999px;padding:7px 15px 6px;white-space:nowrap}
+  .toc a:hover{color:var(--bone);background:var(--deep);border-color:var(--deep)}
+
+  .rules{max-width:63ch}
+  .rules p{font-family:var(--font-g);font-size:18.5px;line-height:1.66;
+    color:var(--ink-2);margin-bottom:17px}
+  .rules p:last-child{margin-bottom:0}
+  .rules strong{color:var(--ink);font-weight:600}
+  .rules a{color:var(--deep);text-decoration:underline;text-underline-offset:2px}
+
+  .pull{border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);
+    padding:34px 0;margin:52px 0}
+  .pull p{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
+    font-size:clamp(25px,3.6vw,42px);line-height:1.01;color:var(--ink);max-width:19ch;margin:0}
+  .pull em{font-style:normal;color:var(--deep)}
+
+  .ptab{border-top:2px solid var(--ink);max-width:660px;margin-top:8px}
+  .ptab .r{display:flex;gap:18px;align-items:baseline;padding:15px 0;
+    border-bottom:1px solid var(--line)}
+  .ptab .n{font-family:var(--font-c);font-weight:700;text-transform:uppercase;
+    font-size:18.5px;color:var(--ink);flex:none}
+  .ptab .d{font-size:13.5px;line-height:1.45;color:var(--ink-3);flex:1;min-width:0}
+  .ptab .p{font-family:var(--font-c);font-weight:700;font-size:19px;color:var(--deep);
+    font-variant-numeric:tabular-nums;flex:none}
+  .ptab .lmt{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
+    font-size:11px;letter-spacing:.1em;color:var(--ink-3);flex:none}
+
+  .check{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:34px;border-top:2px solid var(--ink);margin-top:8px}
+  .check div{display:flex;gap:13px;align-items:flex-start;padding:15px 0;
+    border-bottom:1px solid var(--line);font-family:var(--font-g);font-size:17.5px;
+    line-height:1.5;color:var(--ink-2)}
+  .check .bx{flex:none;width:14px;height:14px;border:2px solid var(--deep);
+    border-radius:3px;margin-top:5px}
+
+  .callout{background:var(--shell);border-left:3px solid var(--warn);
+    padding:23px 26px;margin:32px 0;max-width:62ch}
+  .callout .k{color:var(--warn);margin-bottom:9px}
+  .callout p{font-family:var(--font-g);font-size:17.5px;line-height:1.55;
+    color:var(--ink-2);margin:0}
 
   /* merchant directory */
   .dir{columns:5;column-gap:34px;color:var(--ink-2)}
@@ -313,7 +383,7 @@
   /* footer */
   .foot{background:var(--ink);color:var(--shell);background-image:var(--grain-light);
     padding:clamp(38px,5vw,62px) var(--pad) 28px}
-  .fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.1fr;gap:28px}
+  .fgrid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:34px}
   .fgrid h4{font-family:var(--font-c);font-weight:600;text-transform:uppercase;
     letter-spacing:.1em;font-size:12px;color:var(--accent);margin:0 0 11px}
   .fgrid a{display:block;font-size:15px;line-height:1.9;color:#C7C0B2}
@@ -353,6 +423,13 @@
     .jgrid{grid-template-columns:1fr 1fr}
     .mini .row{grid-template-columns:56px 1fr;gap:10px}
     .mini .row span:nth-child(3),.mini .row span:nth-child(4){display:none}
+    .check{grid-template-columns:1fr}
+    .jlead{grid-template-columns:1fr;gap:22px}
+    .toc{margin-right:0;padding:11px var(--pad)}
+    .ptab .r{flex-wrap:wrap;gap:6px 14px}
+    .ptab .d{flex:1 1 100%;order:3}
+    .ptab .p{margin-left:auto}
+    .pull{margin:38px 0;padding:26px 0}
   }
 }
 

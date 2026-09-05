@@ -1,6 +1,7 @@
-import { eq, asc } from 'drizzle-orm'
+import { eq, asc, and } from 'drizzle-orm'
+import Link from 'next/link'
 import { db } from '@/db'
-import { shows, spaceTypes } from '@/db/schema'
+import { shows, spaceTypes, addOns } from '@/db/schema'
 import { Masthead, Footer } from '@/components/site'
 import { ApplyForm } from './ApplyForm'
 import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
@@ -25,6 +26,13 @@ export default async function Apply({
     orderBy: [asc(spaceTypes.sortOrder)],
   })
 
+  const extras = await db.query.addOns.findMany({
+    where: and(eq(addOns.showId, show.id), eq(addOns.isActive, true)),
+    orderBy: [asc(addOns.sortOrder)],
+  })
+
+  const indoor = spaces.filter((s) => s.track === 'indoor')
+  const outdoor = spaces.filter((s) => s.track === 'outdoor')
   const win = applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt)
 
   return (
@@ -54,19 +62,30 @@ export default async function Apply({
             <span className="a">
               You drop off your work and we do the rest: the display, the floor, the
               register. We keep {show.commissionBps / 100}% of what sells and pay you
-              after the show. You don’t need to be there.
+              within a week of the last day. You don’t need to be there.{' '}
+              <Link href="/makers/indoor" style={{ color: 'var(--deep)', textDecoration: 'underline' }}>
+                Read the indoor rules
+              </Link>
+              .
             </span>
           </div>
           <div className="row" id="outdoor">
             <span className="q">Outdoor</span>
             <span className="a">
-              You rent a 10 × 10 tent, run your own payments, and keep everything. No commission.
+              You take a tent for the day, run your own payments, and keep all of it. No
+              commission.{' '}
+              <Link href="/makers/outdoor" style={{ color: 'var(--deep)', textDecoration: 'underline' }}>
+                Read the outdoor rules
+              </Link>
+              .
             </span>
           </div>
           <div className="row">
             <span className="q">Booth fees</span>
-            <span className="a">
-              {spaces.map((s) => `${s.label} ${usd(s.priceCents)}`).join(' · ')}
+            <span className="a num">
+              {indoor.length > 0 && `Indoor ${usd(Math.min(...indoor.map((s) => s.priceCents)))} to ${usd(Math.max(...indoor.map((s) => s.priceCents)))}`}
+              {indoor.length > 0 && outdoor.length > 0 && ' · '}
+              {outdoor.length > 0 && `Outdoor ${usd(Math.min(...outdoor.map((s) => s.priceCents)))} to ${usd(Math.max(...outdoor.map((s) => s.priceCents)))} a day`}
             </span>
           </div>
           <div className="row">
@@ -98,7 +117,7 @@ export default async function Apply({
               </div>
             </section>
           )}
-          <ApplyForm show={show} spaces={spaces} />
+          <ApplyForm show={show} spaces={spaces} extras={extras} />
         </>
       ) : (
         <section className="apply">
