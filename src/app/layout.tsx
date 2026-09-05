@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { EB_Garamond, Barlow, Barlow_Condensed } from 'next/font/google'
+import { EB_Garamond, Barlow, Barlow_Condensed, Oswald } from 'next/font/google'
 import './globals.css'
 
 /* Type system, locked Aug 2026 — see docs/08-DESIGN-SYSTEM.md.
@@ -17,6 +17,16 @@ const cond = Barlow_Condensed({
   subsets: ['latin'],
   weight: ['500', '600', '700'],
   variable: '--f-cond',
+  display: 'swap',
+})
+
+/* Oswald 500/600/700 — what mermademarket.com actually sets for headings and
+   nav (type_heading_font: oswald_n6). Loaded for the typography comparison at
+   /preview/type; it costs nothing until something asks for the variable. */
+const oswald = Oswald({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--f-oswald',
   display: 'swap',
 })
 
@@ -41,7 +51,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${garamond.variable} ${cond.variable} ${body.variable}`}>
+    <html lang="en" className={`${garamond.variable} ${cond.variable} ${body.variable} ${oswald.variable}`}>
       <body>{children}</body>
     </html>
   )
