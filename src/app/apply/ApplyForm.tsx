@@ -208,7 +208,7 @@ export function ApplyForm({ show, spaces }: { show: Show; spaces: SpaceType[] })
             style={{ marginTop: 3 }}
           />
           <span style={{ fontSize: 14, lineHeight: 1.5 }}>
-            I don’t have one. I think I qualify as an occasional seller (CDTFA 410-D)
+            I don’t have a permit. I qualify as an occasional seller (CDTFA 410-D)
           </span>
         </label>
         <label className="field" style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
