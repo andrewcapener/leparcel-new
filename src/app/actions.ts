@@ -13,6 +13,8 @@ import {
 import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
 import { usd } from '@/lib/money'
 import { syncApplication } from '@/server/modules/sheets/sync'
+import { gatherRow } from '@/server/modules/sheets/gather'
+import { SHEET_HEADERS, sheetValues } from '@/server/modules/sheets/row'
 import { parsePhotoKeys } from '@/server/modules/uploads/photos'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
@@ -404,6 +406,9 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     'application_received',
   )
 
+  // Mermade's own copy, and the third place this application now exists.
+  await notifyStaff(appId, show.name)
+
   // The Google Sheet the team reads applications in. Last, after the row is
   // committed and after the maker has their confirmation, because it must
   // never delay either: it queues the application in sheet_syncs, tries once,
@@ -414,6 +419,49 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
 
   revalidatePath('/admin/jury')
   return { ok: true, attempt, message: 'submitted' }
+}
+
+/**
+ * Tell Mermade a maker applied, and carry the whole application in the body.
+ *
+ * Two jobs in one message. The first is that somebody knows: until now a
+ * submission landed in the database, sent the maker a receipt, and told nobody
+ * at Mermade at all.
+ *
+ * The second is durability. Drew asked for the application to exist in several
+ * places so it can never be lost, and an email in an inbox is a genuinely
+ * independent copy: different company, different storage, outside anything a
+ * bad migration or a dropped table here can reach. So this sends every field
+ * rather than a "you have a new application" ping, which means a row can be
+ * reconstructed by hand from the message alone. It is the same field list the
+ * Sheet uses, so there is one definition of what an application is.
+ *
+ * Reply-to is the maker, so answering the notification answers them.
+ *
+ * Never throws. The application is already committed by the time this runs,
+ * and a mail failure must not turn a saved application into an error on screen.
+ */
+async function notifyStaff(applicationId: string, showName: string): Promise<void> {
+  const to = process.env.STAFF_NOTIFY_TO?.trim()
+    || process.env.CONTACT_TO?.trim()
+    || 'hello@mermademarket.com'
+  try {
+    const row = await gatherRow(db, applicationId)
+    if (!row) return
+    const values = sheetValues(row)
+    const body = SHEET_HEADERS.map((h, i) => `${h}: ${values[i] ?? ''}`).join('\n')
+    await mail(
+      to,
+      `New application: ${row.shopName || 'a maker'} (${row.category || 'uncategorised'})`,
+      `${row.shopName} applied for ${showName}.\n\n${body}\n\n`
+        + `This message is also the backup copy. Every field is above.`,
+      'application_staff_notice',
+      row.email || undefined,
+    )
+  } catch {
+    // Deliberately silent. The row is saved; this is the third copy, not the
+    // first, and /admin/outbox shows what did and did not go out.
+  }
 }
 
 /* ═══════════════════════ jury ═══════════════════════ */
