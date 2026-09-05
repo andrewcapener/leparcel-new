@@ -1271,7 +1271,12 @@
   color:var(--ink-3)}
 /* No photographs is a state, not a fault. The plate keeps its square and the
    maker's own words fill it, which is the only thing there is to read. */
-.jr-card-none{aspect-ratio:1;display:flex;flex-direction:column;justify-content:space-between;
+/* No aspect-ratio. Forcing the plate square when there is no photograph to
+   put on it reserves a screen of empty grey per card, and on a queue where
+   most applications carry no images that is the whole page. The card sizes to
+   the maker's own words instead, which is the only thing there is to look at,
+   and the words get the room the picture would have had. */
+.jr-card-none{display:flex;flex-direction:column;justify-content:space-between;
   gap:12px;padding:15px;overflow:hidden}
 .adm .jr-card-none p{min-height:0;font-family:var(--font-g);font-size:var(--t-b);line-height:1.5;
   color:var(--ink-2);border-left:2px solid var(--accent);padding-left:12px;

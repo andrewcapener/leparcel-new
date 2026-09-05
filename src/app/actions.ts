@@ -12,6 +12,7 @@ import {
 } from '@/db/schema'
 import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
 import { usd } from '@/lib/money'
+import { syncApplication } from '@/server/modules/sheets/sync'
 
 /* ═══════════════════════ helpers ═══════════════════════ */
 
@@ -333,6 +334,14 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
       + `${fmtDate(show.rosterAnnouncedOn)}.\n\n— Mermade Market`,
     'application_received',
   )
+
+  // The Google Sheet the team reads applications in. Last, after the row is
+  // committed and after the maker has their confirmation, because it must
+  // never delay either: it queues the application in sheet_syncs, tries once,
+  // and returns. It cannot throw, a failure leaves the row pending for
+  // `npx tsx scripts/sync-sheets.ts`, and with no Sheet configured it is a
+  // silent no-op. src/server/modules/sheets/.
+  await syncApplication(db, appId)
 
   revalidatePath('/admin/jury')
   return { ok: true, attempt, message: 'submitted' }

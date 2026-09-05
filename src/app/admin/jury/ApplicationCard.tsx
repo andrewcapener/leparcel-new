@@ -66,7 +66,6 @@ export function ApplicationCard({
           /* No photographs is a real state, not a broken one. The maker's own
              words take the plate and the card keeps its shape in the grid. */
           <div className="jr-card-none">
-            <span className="k">No photos</span>
             <p>{app.description}</p>
           </div>
         ) : (

@@ -249,6 +249,28 @@ export const emailOutbox = pgTable('email_outbox', {
   sentAt: dbNow('sent_at'),
 })
 
+/* ─────────────────────── Google Sheets sync ───────────────────────
+ * One row per application, so a submission that could not reach the
+ * owner's Sheet is queued rather than lost. The application is the unit
+ * and its id is the primary key, which makes the record itself the
+ * idempotency guard: an application has exactly one sync, retried in
+ * place. Written by src/server/modules/sheets/*.
+ *
+ * last_error is redacted before it is stored — never an address, a phone
+ * number, a URL that carries a secret, or key material (CLAUDE.md rule 9).
+ */
+export const sheetSyncs = pgTable('sheet_syncs', {
+  applicationId: text('application_id').primaryKey().references(() => applications.id),
+  status: text('status', { enum: ['pending', 'sent', 'failed'] }).notNull().default('pending'),
+  transport: text('transport').notNull().default(''),   // 'sheets_api' | 'apps_script'
+  attempts: integer('attempts').notNull().default(0),
+  lastError: text('last_error').notNull().default(''),
+  lastAttemptAt: text('last_attempt_at'),
+  nextAttemptAt: text('next_attempt_at'),
+  sentAt: text('sent_at'),
+  createdAt: dbNow('created_at'),
+}, (t) => [index('sheet_syncs_status').on(t.status)])
+
 /* ─────────────────────── newsletter ─────────────────────── */
 export const subscribers = pgTable('subscribers', {
   id: text('id').primaryKey(),
@@ -263,3 +285,4 @@ export type AddOn = typeof addOns.$inferSelect
 export type Vendor = typeof vendors.$inferSelect
 export type Application = typeof applications.$inferSelect
 export type Booking = typeof bookings.$inferSelect
+export type SheetSync = typeof sheetSyncs.$inferSelect

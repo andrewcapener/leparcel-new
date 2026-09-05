@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
+import { transportDiagnostics } from '@/server/modules/sheets/transport'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +38,12 @@ export async function GET() {
     emailFromIsResendSandbox:
       !process.env.EMAIL_FROM || /onboarding@resend\.dev/.test(process.env.EMAIL_FROM),
     contactTo: process.env.CONTACT_TO ?? 'hello@mermademarket.com (default)',
+    // Which Google Sheets transport this deployment would use, and which
+    // piece is missing if it is none. Names and shapes only, never the key,
+    // the secret, the webhook URL or the spreadsheet id. A 403 on append is
+    // nearly always the forgotten step: the Sheet was never shared with
+    // serviceAccountEmail as an Editor.
+    sheets: transportDiagnostics(),
   }
   try {
     const { db, schema } = await import('@/db')
@@ -60,6 +67,15 @@ export async function GET() {
       .orderBy(sql`${schema.emailOutbox.sentAt} desc`)
       .limit(1)
     diag.lastEmailFailure = lastFail ? { at: lastFail.at, detail: lastFail.detail } : null
+    // The same two facts for the Sheet: how many applications it is still
+    // missing, and why the last one did not land. `pending` is queued and
+    // will be retried; `failed` has given up and needs a person. Either is
+    // fixed with `npx tsx scripts/sync-sheets.ts`. Counts and reasons only.
+    const { syncDiagnostics } = await import('@/server/modules/sheets/state')
+    const sheetSync = await syncDiagnostics(db)
+    diag.sheetSync = sheetSync.counts
+    diag.sheetSyncUnsent = sheetSync.pending + sheetSync.failed
+    diag.lastSheetSyncFailure = sheetSync.lastFailure
   } catch (e) {
     diag.ok = false
     diag.dbError = e instanceof Error ? `${e.name}: ${e.message}` : String(e)

@@ -1,10 +1,23 @@
 import { randomUUID } from 'crypto'
 import { eq } from 'drizzle-orm'
 import { db, sqlClient } from './index'
+import { indoorShots, outdoorShots } from '@/lib/lookbook'
+import { img } from '@/lib/theme-img'
 import {
   shows, spaceTypes, addOns, vendors, applications, bookings, bookingAddons,
   auditLog, emailOutbox, subscribers, type Category,
 } from './schema'
+
+/** A few lookbook shots per applicant, deterministic so a reseed is stable. */
+const SEED_PHOTOS = (i: number): string[] => {
+  // Through the manifest, not by hand. The lookbook records their CDN
+  // filenames, which are .png; the vendored copies were re-encoded to .jpg,
+  // and img() is the map between the two. Building the path from the raw
+  // name gives 404s.
+  const all = [...indoorShots, ...outdoorShots].map((l) => img(l.file))
+  const n = 3 + (i % 2)
+  return Array.from({ length: n }, (_, k) => all[(i * 5 + k * 3) % all.length]!)
+}
 
 /**
  * Realistic-shaped seed data. (CLAUDE.md working style: "seed realistic data
@@ -238,6 +251,12 @@ async function main() {
         isMlm: i === 26,
         sellerPermit: i % 8 === 0 ? '' : `1${String(100_000_00 + i * 7).slice(0, 8)}`,
         occasionalSeller: i % 8 === 0,
+        // Three or four shots each, from the lookbooks. The jury queue is a
+        // contact sheet, so seeding without photographs left every card
+        // rendering its no-image fallback and the layout untested against the
+        // thing it exists to show. A couple of applicants keep an empty roll
+        // on purpose, because that state has to look deliberate too.
+        photos: JSON.stringify(i % 11 === 0 ? [] : SEED_PHOTOS(i)),
         hasCoi: i % 3 !== 0,
         status,
         scoreQuality: scored ? 3 + (i % 3) : null,
