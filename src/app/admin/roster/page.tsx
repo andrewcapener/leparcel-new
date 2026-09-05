@@ -59,7 +59,7 @@ export default async function Roster() {
       </header>
 
       <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 0,
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 0,
         border: '1px solid var(--line)', marginBottom: 30,
       }}>
         {[
@@ -169,6 +169,13 @@ export default async function Roster() {
           ))}
         </tbody>
       </table>
+
+      {rows.length === 0 && (
+        <p style={{ fontFamily: 'var(--font-g)', fontSize: 17, color: 'var(--ink-2)', margin: '26px 0 4px' }}>
+          Nothing here yet. When you accept an application in the jury queue, the booking
+          lands on this roster with its fee and paperwork status.
+        </p>
+      )}
 
       <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 22, maxWidth: 76 + 'ch' }}>
         “Mark paid” stands in for the vendor paying in the portal. In production this is a Stripe
