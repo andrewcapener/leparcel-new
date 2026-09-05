@@ -1,68 +1,63 @@
 import type { Metadata } from 'next'
-import { EB_Garamond, Barlow, Barlow_Condensed, Oswald, Figtree } from 'next/font/google'
-import './globals.css'
 
-/* Type system, locked Aug 2026 — see docs/08-DESIGN-SYSTEM.md.
-   Barlow Condensed carries all display and label work, set uppercase;
-   EB Garamond carries prose; Barlow carries UI, forms and tables. */
-const garamond = EB_Garamond({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  style: ['normal', 'italic'],
-  variable: '--f-garamond',
-  display: 'swap',
-})
-
-const cond = Barlow_Condensed({
-  subsets: ['latin'],
-  weight: ['500', '600', '700'],
-  variable: '--f-cond',
-  display: 'swap',
-})
-
-/* The market's own two faces, lifted from the Shopify theme settings:
-   type_heading_font oswald_n6 and type_base_font figtree_n4. Both are free on
-   Google Fonts, so this is the real typography rather than a stand-in.
-   (Its third setting, Avenir Next for the shop title, is a licensed Monotype
-   face we do not need: our wordmark is drawn, not set.) */
-const oswald = Oswald({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--f-oswald',
-  display: 'swap',
-})
-
-const figtree = Figtree({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  style: ['normal', 'italic'],
-  variable: '--f-figtree',
-  display: 'swap',
-})
-
-const body = Barlow({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--f-body',
-  display: 'swap',
-})
-
+/**
+ * The public site is mermademarket.com's own theme, vendored.
+ *
+ * public/theme/ holds their compiled Symmetry stylesheet, the per-shop
+ * settings block that carries the colours and the type scale, and their two
+ * faces (Figtree and Oswald) as woff2 served from our origin instead of
+ * Shopify's CDN. Nothing here is a reimplementation: it is their CSS, so the
+ * public pages render as their pages render.
+ *
+ * The admin keeps its own stylesheet, imported in src/app/admin/layout.tsx so
+ * it loads after this one and wins where the two disagree.
+ */
 export const metadata: Metadata = {
-  // The words people actually type. The headline on the page is the
-  // differentiator; the title tag is where the category has to be spelled
-  // out, or a search for "makers market dana point" never finds us.
   title: {
-    default: 'Mermade Market · A hand-curated makers market in Dana Point, California',
-    template: '%s · Mermade Market',
+    default: 'Mermade Market - Shop Small Festival',
+    template: '%s – Mermade Market',
   },
   description:
-    'A hand-curated shop small makers market in Dana Point, California. Around a hundred independent makers, free to attend, twice a year since 2015.',
+    'A hand-curated shop small makers market in Dana Point, California. Around a hundred independent makers, free to attend, twice a year.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${garamond.variable} ${cond.variable} ${body.variable} ${oswald.variable} ${figtree.variable}`}>
-      <body>{children}</body>
+    /* `no-js` is theirs: theme-init.js swaps it for `js`, and a good deal of
+       the theme's CSS — the transparent header among it — is gated on `.js`. */
+    <html className="no-js" lang="en" dir="ltr">
+      <head>
+        <link rel="stylesheet" href="/theme/theme-settings.css" />
+        <link rel="stylesheet" href="/theme/main.css" />
+        <link rel="stylesheet" href="/theme/animate-on-scroll.css" />
+        <link rel="stylesheet" href="/theme/video.css" />
+        <link rel="stylesheet" href="/theme/collapsible-tabs.css" />
+        {/* Ours, loaded last. See the file for what is in it and why. */}
+        <link rel="stylesheet" href="/theme/local.css" />
+        <link
+          rel="preload"
+          as="font"
+          href="/theme/fonts/figtree_n4.woff2"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          as="font"
+          href="/theme/fonts/oswald_n6.woff2"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        {/* Symmetry's own scripts. main.js runs the header, the drawers and
+            the lazy images; the other two are the scroll animations and the
+            marquee. theme-init.js is the configuration object main.js reads,
+            so it has to run first and cannot be deferred. */}
+        <script src="/theme/theme-init.js" />
+        <script src="/theme/main.js" defer />
+        <script src="/theme/animate-on-scroll.js" defer />
+        <script src="/theme/scrolling-banner.js" defer />
+      </head>
+      <body className="cc-animate-enabled">{children}</body>
     </html>
   )
 }

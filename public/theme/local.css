@@ -1,0 +1,59 @@
+/*
+ * The short list of things our markup needs that Symmetry has no class for.
+ *
+ * Everything else on the public site is styled by their own stylesheet. Keep
+ * this file small: if a rule here starts redesigning one of their components,
+ * the component is wrong, not the theme.
+ */
+
+/* Form errors. Their theme styles Shopify's own error markup, which we don't
+   emit, so this is the equivalent for ours. */
+.form-error {
+  display: block;
+  margin-top: 6px;
+  color: #b3261e;
+  font-size: var(--smaller-text-size-2);
+  line-height: 1.4;
+}
+
+/* A checkbox and its label on one row, aligned at the top so a wrapping
+   label doesn't drag the box down with it. The box is sized to the 24px
+   minimum target (WCAG 2.2 SC 2.5.8). */
+.check-option {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  font-weight: 400 !important;
+}
+.check-option input[type="checkbox"] {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+}
+.check-option small {
+  display: block;
+  color: rgb(var(--text-color) / 0.75);
+}
+
+/* The background video reveals itself only once the YouTube player answers;
+   see src/components/theme/BackgroundVideo.tsx for why. Until then the
+   poster underneath is the section. */
+.video-section__bg-iframe-video iframe {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.video-section__bg-iframe-video[data-playing="1"] iframe { opacity: 1; }
+.video-section__bg-iframe-video[data-playing="1"] + img {
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+/* Their header's right-hand slot held an account link and a cart. Ours holds
+   the one button that matters, at the size their nav links are. */
+.logo-area__right .header-apply-link {
+  padding: 0.7em 1.4em;
+  font-size: var(--button-text-size);
+}

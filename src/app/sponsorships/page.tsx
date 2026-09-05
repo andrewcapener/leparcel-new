@@ -1,43 +1,60 @@
-import Link from 'next/link'
 import { activeShow } from '@/db/queries'
-import { Masthead, Footer } from '@/components/site'
-import { FOUNDED_YEAR } from '@/lib/content'
+import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { PageTitle, RichText, ScrollingBanner } from '@/components/theme/Sections'
+import * as C from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
-  title: 'Sponsorships',
-  description: 'Partner with a hand-curated market in Dana Point. The locals-only advantage.',
-}
+export const metadata = { title: 'Sponsorships' }
 
-/** Ported from mermademarket.com/pages/sponsorships. The detail — the four
- *  tiers and what each includes — lives on /collaborate, as it does there. */
+/**
+ * /pages/sponsorships — a short page on the live site: the title, the intro,
+ * and the sponsor logo marquee. The detail is on /collaborate, so this links
+ * there rather than repeating it.
+ */
 export default async function Sponsorships() {
   const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
+  const sponsors = [
+    { file: 'Screen_Shot_2024-02-26_at_3.47.39_PM.png', width: 100 },
+    { file: 'download_3.png', width: 100 },
+    { file: 'download_5c129451-6301-469e-8448-aa035e240fe8.png', width: 140 },
+    { file: 'los_molino_beer_logo.svg', width: 100 },
+    { file: 'download.jpg', width: 155 },
+    { file: 'download_4.png', width: 100 },
+    { file: 'download_1.jpg', width: 100 },
+    { file: 'download_1.png', width: 100 },
+  ]
+
   return (
     <>
-      <Masthead show={show} />
+      <AnnouncementBar show={show} />
+      <PageHeader />
+      <main id="content" role="main">
+        <div className="container cf">
+          <PageTitle title="Sponsorships" />
 
-      <section className="claim">
-        <div className="k">Sponsorships</div>
-        <h1 className="lede">The<br /><em>locals-only</em> advantage.</h1>
-      </section>
+          <RichText cta={{ href: '/collaborate', label: 'See what a partner gets' }}>
+            <p>{C.mission}</p>
+            <p />
+            <p>Collaborating with us gives you the locals only advantage. </p>
+            <p />
+            <p>Previous / Current Sponsors Include:</p>
+          </RichText>
 
-      <section className="mission">
-        <p style={{ marginTop: 0 }}>
-          Mermade is a hand-curated market that unites creators with community. Two
-          shows a year in Dana Point, a following that has been with us since{' '}
-          {FOUNDED_YEAR}, and a room full of people who came on purpose.
-        </p>
-        <div style={{ marginTop: 30, display: 'flex', gap: 11, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/collaborate" className="btn">What a partner gets</Link>
-          <a href="mailto:hello@mermademarket.com?subject=Sponsorship" className="btn line">Write to us</a>
+          <ScrollingBanner
+            id="section-sponsor-logos"
+            images={sponsors}
+            duration="30s"
+            space="90px"
+            textSize="50px"
+            padding={20}
+            headingFont={false}
+          />
         </div>
-      </section>
-
-      <Footer show={show} />
+      </main>
+      <PageFooter show={show} />
     </>
   )
 }

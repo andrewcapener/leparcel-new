@@ -1,16 +1,20 @@
-import { eq } from 'drizzle-orm'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { shows } from '@/db/schema'
-import { Masthead, Footer } from '@/components/site'
-import { Photo } from '@/components/Photo'
+import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
 import { journal } from '@/lib/journal'
-import { fmtDate } from '@/lib/dates'
 
 export const dynamic = 'force-dynamic'
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const post = journal.find((p) => p.slug === slug)
+  return { title: post?.title ?? 'Journal' }
+}
+
+/**
+ * /blogs/journal/:handle — their article template: a full-bleed hero, the
+ * title in a `page-header`, and the body in a reading-width rich text.
+ */
 export default async function JournalPost({
   params,
 }: {
@@ -24,27 +28,42 @@ export default async function JournalPost({
 
   return (
     <>
-      <Masthead show={show} />
-      <article className="sec" style={{ maxWidth: 860, margin: '0 auto' }}>
-        <Link href="/journal" className="more" style={{ marginLeft: 0 }}>← The journal</Link>
-        <h1 style={{
-          fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const,
-          fontSize: 'clamp(34px,5vw,58px)', lineHeight: 0.94, margin: '22px 0 10px',
-        }}>{post.title}</h1>
-        <div className="k" style={{ marginBottom: 26 }}>{fmtDate(post.date)}</div>
-        {post.image && (
-          <div style={{ marginBottom: 30 }}>
-            <Photo src={post.image} alt="" tone="soft" className="jhero" sizes="(max-width:900px) 100vw, 860px" />
+      <AnnouncementBar show={show} />
+      <PageHeader />
+      <main id="content" role="main">
+        <div className="container cf">
+          <div className="shopify-section page-section-spacing">
+            {post.image && (
+              <div className="article-image article-image--large align-center">
+                <div className="page-header page-header--with-background img-fill page-header--padded-huge">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    loading="eager"
+                    sizes="100vw"
+                    className="theme-img"
+                  />
+                  <div className="text-overlay text-overlay--inline" />
+                </div>
+              </div>
+            )}
+            <div className="container">
+              <div className="page-header cf">
+                <h1 className="majortitle">{post.title}</h1>
+              </div>
+            </div>
+            <div className="article article--main">
+              <div className="container container--reading-width">
+                <div className="rte cf spaced-row">
+                  {post.paras.map((p, i) => <p key={i}>{p}</p>)}
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-        {post.paras.map((p, i) => (
-          <p key={i} style={{
-            fontFamily: 'var(--font-g)', fontSize: 'var(--t-lead)', lineHeight: 1.65,
-            color: 'var(--ink-2)', maxWidth: '62ch', marginBottom: 16,
-          }}>{p}</p>
-        ))}
-      </article>
-      <Footer show={show} />
+        </div>
+      </main>
+      <PageFooter show={show} />
     </>
   )
 }

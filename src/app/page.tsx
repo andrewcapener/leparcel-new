@@ -1,120 +1,89 @@
-import Link from 'next/link'
 import { activeShow } from '@/db/queries'
-import { Photo } from '@/components/Photo'
-import { HeroVideo } from '@/components/HeroVideo'
-import { Masthead, Footer } from '@/components/site'
+import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { VideoBanner, VideoBand, RichText, MapSection, ScrollingBanner, ArticleRow } from '@/components/theme/Sections'
 import { fmtRange } from '@/lib/dates'
-import * as C from '@/lib/content'
 import { journal, excerpt } from '@/lib/journal'
+import * as C from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * The home page, matching mermademarket.com section for section.
+ * The home page, in mermademarket.com's own sections and in their order:
+ * the background-video hero, the rich-text line, the map, the scrolling
+ * banner, a second full-bleed video band, and the featured blog.
  *
- * The live page renders six things and no more: the background-video hero,
- * the rich-text tagline, the map, the scrolling banner, an empty second
- * video block, and the featured blog. Everything dated reads from the Show
- * record instead of being typed in, which is the one deliberate difference
- * — the live site still says May 15-17.
+ * Their store-messages strip ("Free shipping on orders over $100") is on the
+ * live page but their own header CSS hides it, so it is not here either.
  *
- * Sections this page used to carry (the fact bar, the founder letter, the
- * category shelf, visiting, the film block, the archive teaser, the
- * merchant directory, the apply band) are not on the live site and were
- * removed. They are in git history if any of them are wanted back.
+ * The only edits are the ones CLAUDE.md rule 6 forces: the dates and the
+ * venue read off the Show record instead of being typed into the section.
  */
 export default async function Home() {
   const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
+  const posts = journal.slice(0, 3).map((p) => ({
+    href: `/journal/${p.slug}`,
+    title: p.title,
+    excerpt: excerpt(p),
+    image: p.image,
+  }))
+
   return (
     <>
-      <Masthead show={show} />
+      <AnnouncementBar show={show} />
+      <PageHeader transparent />
 
-      {/* ── background-video ─────────────────────────────────────── */}
-      <Photo src="/photos/hero.jpg" alt="" priority className="hero">
-        <HeroVideo youtubeId={C.heroVideoId} />
-        <div className="in">
-          <div className="eyebrow">Hand curated</div>
-          <h1>
-            Shop small
-            <br />
-            <em>makers market</em>
-          </h1>
-          {/* One line, as the live site runs it: "May 15-17, 2026 | Dana Point
-              Community House". */}
-          <div className="when num" style={{ marginTop: 20 }}>
-            {fmtRange(show.startsOn, show.endsOn)} <span aria-hidden="true">|</span>{' '}
-            Dana Point {show.venueName}
-          </div>
-          <div className="bar">
-            <Link href="/apply" className="btn">Apply now</Link>
-          </div>
+      <main id="content" role="main">
+        <div className="container cf">
+          <VideoBanner
+            id="section-hero"
+            poster="41df92641ed44b9c95d14621276977b2.thumbnail.0000000000.jpg"
+            video={C.heroVideoId}
+            subheading="HAND CURATED"
+            title={<>SHOP SMALL <br /> MAKERS MARKET</>}
+            cta={{ href: '/apply', label: 'APPLY NOW' }}
+          >
+            <p>
+              {fmtRange(show.startsOn, show.endsOn)} | Dana Point {show.venueName}
+            </p>
+          </VideoBanner>
+
+          <RichText
+            title={<>SHOP SMALL. Think BIG.</>}
+            mark="Screen_Shot_2024-01-24_at_4.04.24_PM.png"
+          >
+            <p>{C.mission}</p>
+          </RichText>
+
+          <MapSection
+            id="section-map"
+            title={`Mermade Market ${show.name} showcase`}
+            directionsTo={show.venueAddress}
+            image="IMG_2793.jpg"
+          >
+            <p />
+            <p>{show.venueAddress}</p>
+            <p>
+              {show.hoursNote.split(' · ').map((d, i, all) => (
+                <span key={d}>{d}{i < all.length - 1 && <br />}</span>
+              ))}
+            </p>
+          </MapSection>
+
+          <ScrollingBanner id="section-banner" text="SHOP SMALL · THINK BIG · MERMADE MARKET ·" />
+
+          <VideoBand
+            id="section-film"
+            poster="IMG_3335.jpg"
+            video={C.films[1]?.youtubeId}
+          />
+
+          <ArticleRow heading="Mermade Journal" headingHref="/journal" articles={posts} />
         </div>
-      </Photo>
+      </main>
 
-      {/* ── rich-text ────────────────────────────────────────────── */}
-      <section className="mission">
-        <h2>Shop small. <em>Think big.</em></h2>
-        <p>{C.mission}</p>
-      </section>
-
-      {/* ── map ──────────────────────────────────────────────────── */}
-      <section className="venue">
-        <Photo src="/photos/venue.jpg" alt={`${show.venueName}, Dana Point`} sizes="(max-width:900px) 100vw, 52vw" />
-        <div className="tx">
-          <h2>Mermade Market {show.name} showcase</h2>
-          <div className="ad">{show.venueAddress}</div>
-          {/* One line a day, unsplit, the way the live map section writes it:
-              "May 15, 9am - 6pm (Fri)". */}
-          <div className="hrs">
-            {show.hoursNote.split(' · ').map((d) => (
-              <div key={d}><span className="num">{d}</span></div>
-            ))}
-          </div>
-          <div>
-            <a
-              className="btn"
-              target="_blank"
-              rel="noreferrer"
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(show.venueAddress)}`}
-            >
-              Directions
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── scrolling-banner ─────────────────────────────────────── */}
-      <div className="marquee" aria-hidden="true">
-        <div className="track">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <span key={i}>Shop small · Think big · Mermade Market · </span>
-          ))}
-        </div>
-      </div>
-
-      {/* ── featured-blog ────────────────────────────────────────── */}
-      <section className="sec">
-        {/* The live featured-blog section is a centred linked heading and three
-            cards carrying an excerpt. No eyebrow, no "all posts" link. */}
-        <div className="shead center">
-          <h2><Link href="/journal">Mermade Journal</Link></h2>
-        </div>
-        <div className="jgrid">
-          {journal.slice(0, 3).map((jp) => (
-            <Link href={`/journal/${jp.slug}`} key={jp.slug} className="jcard">
-              {jp.image
-                ? <Photo src={jp.image} alt="" tone="soft" sizes="(max-width:900px) 50vw, 30vw" />
-                : <div className="jnone" aria-hidden="true" />}
-              <div className="nm">{jp.title}</div>
-              <p className="ex">{excerpt(jp)}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <Footer show={show} />
+      <PageFooter show={show} />
     </>
   )
 }

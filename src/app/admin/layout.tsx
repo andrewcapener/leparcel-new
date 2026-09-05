@@ -1,4 +1,8 @@
 import Link from 'next/link'
+// The admin's own stylesheet. Imported here rather than in the root layout so
+// the public site gets the vendored Symmetry theme and nothing else, and so
+// this one loads after it and wins inside /admin.
+import '../globals.css'
 
 /**
  * The admin register: dense and precise, not warm and photographic.

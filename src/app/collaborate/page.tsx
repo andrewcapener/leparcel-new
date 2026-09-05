@@ -1,189 +1,147 @@
 import { activeShow } from '@/db/queries'
-import { Masthead, Footer } from '@/components/site'
-import { Photo } from '@/components/Photo'
-import { MessageForm } from '@/components/MessageForm'
-import { FOUNDED_YEAR, mission } from '@/lib/content'
+import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { RichText, MultiColumn, ScrollingBanner } from '@/components/theme/Sections'
+import { ContactFormSection } from '@/components/theme/ContactFormSection'
+import * as C from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 
+export const metadata = { title: 'Collaborate' }
+
 /**
- * /pages/collaborate on the live site, section for section: the intro, the
- * MERSTATS block, the four sponsorship tiers, the other collaborations, and
- * the "Let's Collab" form. The audience numbers and the tier contents are the
- * business's own published figures (retrieved Sept 2026) and the prose is
- * theirs. No rate card is published anywhere, so none is invented here: the
- * tiers say what is included and the price comes from a conversation.
+ * /pages/collaborate, section for section: the intro, the sponsor logo
+ * marquee, MERSTATS, the two stat rows, the four tiers, the other
+ * collaborations, the mark, and the Let's Collab form.
+ *
+ * The audience numbers and the tier contents are the business's own published
+ * figures and the prose is theirs, unedited. No rate card is published
+ * anywhere, so none is invented here.
  */
 export default async function Collaborate() {
   const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
-  const stats: Array<[string, string]> = [
-    ['Repeat attendees', '6,000'],
-    ['Instagram followers', '17K'],
-    ['On the email list', '10,000'],
-    ['Merchants a show', '100+'],
-    ['Shows held', '22'],
-    ['Since', String(FOUNDED_YEAR)],
+  const sponsors = [
+    { file: 'Screen_Shot_2024-02-26_at_3.47.39_PM.png', width: 100 },
+    { file: 'download_3.png', width: 100 },
+    { file: 'download_5c129451-6301-469e-8448-aa035e240fe8.png', width: 140 },
+    { file: 'Screenshot_2024-09-23_at_9.36.22_AM.png', width: 165 },
+    { file: 'los_molino_beer_logo.svg', width: 100 },
+    { file: 'download.jpg', width: 155 },
+    { file: 'download_4.png', width: 100 },
+    { file: 'download_1.jpg', width: 100 },
+    { file: 'download_1.png', width: 100 },
   ]
 
-  const tiers: Array<{ name: string; note: string; gets: string[] }> = [
-    {
-      name: 'Title',
-      note: 'One a show',
-      gets: [
-        'The show carries your name',
-        'Logo on every event asset',
-        'Premium outdoor booth',
-        'Flyer in every bag',
-        'Dedicated journal post',
-        'Social post and email',
-      ],
-    },
-    {
-      name: 'Official',
-      note: 'A few a show',
-      gets: [
-        'Logo on every event asset',
-        'Premium outdoor booth',
-        'Flyer in every bag',
-        'Dedicated journal post',
-        'Social post and email',
-      ],
-    },
-    {
-      name: 'Supporting',
-      note: '',
-      gets: [
-        'Outdoor booth',
-        'Flyer in every bag',
-        'Dedicated journal post',
-        'Social post and email',
-      ],
-    },
-    {
-      name: 'Sponsor',
-      note: '',
-      gets: [
-        'Flyer in every bag',
-        'Dedicated journal post',
-        'Social post and email',
-      ],
-    },
-  ]
-
-  const creative = [
-    'Put your name on the stage',
-    'Take the beer garden',
-    'Sponsor the e-bike parking',
-    'Feed the makers on load-in night',
-    'Feed the makers during the show',
-    'Keep the hydration stations running',
-  ]
+  const tierLines = (lines: string[]) => <>{lines.map((l) => <p key={l}>{l} </p>)}</>
 
   return (
     <>
-      <Masthead show={show} />
-      <section className="claim">
-        <div className="k">Collaborate</div>
-        <h1 className="lede">The locals only<br /><em>advantage.</em></h1>
-        <p>{mission}</p>
-        <p>Collaborating with us gives you the locals only advantage.</p>
-      </section>
+      <AnnouncementBar show={show} />
+      <PageHeader />
+      <main id="content" role="main">
+        <div className="container cf">
+          <RichText title="Collaborate">
+            <p>{C.mission}</p>
+            <p />
+            <p>Collaborating with us gives you the locals only advantage. </p>
+            <p />
+            <p>Previous / Current Sponsors Include:</p>
+          </RichText>
 
-      <div className="shead" style={{ padding: '0 var(--pad)', marginBottom: 20 }}>
-        <span className="k">Merstats</span>
-      </div>
-      <div className="facts">
-        {stats.map(([k, v]) => (
-          <div key={k}>
-            <div className="k">{k}</div>
-            <div className="v num">{v}</div>
-          </div>
-        ))}
-      </div>
+          <ScrollingBanner
+            id="section-sponsors"
+            images={sponsors}
+            duration="30s"
+            space="90px"
+            textSize="50px"
+            padding={20}
+            headingFont={false}
+          />
 
-      <section className="sec">
-        <div className="shead"><span className="k">01</span><h2>Who is in the room</h2></div>
-        <div className="rules">
-          <p>
-            Our customer base is loyal, sensible and affluent. They are decision
-            makers who wear the pants and hold the wallet. They&rsquo;re keen on
-            intention and balance. They&rsquo;re not easily sold, but faithful to
-            a fault. They are lifers.
-          </p>
-          <p>
-            Through the years we&rsquo;ve been meticulous about who and what we
-            put in front of our people. This has given us a unique advantage in
-            our local community, and gives you the opportunity to build trust.
-          </p>
-        </div>
-      </section>
+          <RichText title="MERSTATS">
+            <p>
+              Our customer base is loyal, sensible and affluent. They are decision
+              makers who wear the pants and hold the wallet. They&rsquo;re keen on
+              intention and balance. They&rsquo;re not easily sold, but faithful to
+              a fault. They are lifers.
+            </p>
+            <p />
+            <p>
+              Through the years we&rsquo;ve been meticulous about who and what we
+              put in front of our people. This has given us a unique advantage in
+              our local community, and gives you the opportunity to build trust.
+            </p>
+          </RichText>
 
-      <div className="plate">
-        <Photo src="/photos/before.jpg" alt="The market on a show morning." />
-        <div className="cp">
-          <span>{show.name}</span>
-          <span>Dana Point {show.venueName}</span>
-        </div>
-      </div>
+          <MultiColumn
+            id="section-merstats-1"
+            align="center"
+            titles={['6k Repeat Show Attendees', '17K (real) Followers on IG', '11+ Years Deep']}
+            columns={[null, null, null]}
+          />
+          <MultiColumn
+            id="section-merstats-2"
+            align="center"
+            titles={['100+ Merchants Per SHOW', '22 Past Shows', '10,000 email subscribers']}
+            columns={[null, null, null]}
+          />
 
-      <section className="sec">
-        <div className="shead"><span className="k">02</span><h2>What a partner gets</h2></div>
-        <div className="tiers">
-          {tiers.map((t) => (
-            <div className="tier" key={t.name}>
-              <div className="nm">{t.name}</div>
-              {t.note && <div className="nt">{t.note}</div>}
-              <ul>
-                {t.gets.map((g) => <li key={g}>{g}</li>)}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <p style={{
-          fontFamily: 'var(--font-j)', fontSize: 'var(--t-lbl)', color: 'var(--ink-3)',
-          marginTop: 22, maxWidth: '60ch', lineHeight: 1.55,
-        }}>
-          Rates depend on the show and how early you come to us. Write and we will send the
-          current one.
-        </p>
-      </section>
+          <RichText title="Sponsorship Opportunities">
+            <p />
+          </RichText>
 
-      <section className="sec" style={{ background: 'var(--paper-2)', paddingTop: 0 }}>
-        <div className="shead" style={{ paddingTop: 'clamp(56px,8.5vw,112px)' }}>
-          <span className="k">03</span><h2>Or something odder</h2>
-        </div>
-        <div className="rules">
-          <p style={{ marginBottom: 24 }}>
-            Some of the best ones were not on a list. These are open every show:
-          </p>
-        </div>
-        <div className="check">
-          {creative.map((c) => (
-            <div key={c}><span className="bx" aria-hidden="true" />{c}</div>
-          ))}
-        </div>
-      </section>
+          <MultiColumn
+            id="section-tiers"
+            scheme
+            titles={['Title Sponsor', 'Official Sponsor', 'Supporting Sponsor', 'Sponsor']}
+            columns={[
+              tierLines([
+                'Flyers in every bag', 'Dedicated Blog Post', 'Social Post', 'Email Blast',
+                'Premium Outdoor Booth', 'Logo on all event assets', 'Mermade Market sponsored by You',
+              ]),
+              tierLines([
+                'Flyers in every bag', 'Dedicated Blog Post', 'Social Post', 'Email Blast',
+                'Premium Outdoor Booth', 'Logo on all event assets',
+              ]),
+              tierLines([
+                'Flyers in every bag', 'Dedicated Blog Post', 'Social Post', 'Email Blast',
+                'Outdoor Booth',
+              ]),
+              tierLines([
+                'Flyers in every bag', 'Dedicated Blog Post', 'Social Post', 'Email Blast',
+              ]),
+            ]}
+          />
 
-      <section className="sec">
-        <div style={{ maxWidth: 620, margin: '0 auto' }}>
-          <div className="shead"><span className="k">04</span><h2>Let&rsquo;s collab</h2></div>
-          <p className="rules" style={{ marginBottom: 26 }}>
-            In support of shopping small and thinking big, we&rsquo;re also open
-            to hear your ideas on how we can collaborate.
-          </p>
-          <MessageForm topic="collaborate" />
-        </div>
-      </section>
+          <RichText scheme>
+            <p><strong>Other Creative Collaborations </strong></p>
+            <p>Sponsor Merstage </p>
+            <p>Sponsor Beer Garden </p>
+            <p>Sponsor E-Bike Parking</p>
+            <p>Feed our merchants (setup night) </p>
+            <p>Feed our merchants (during event) </p>
+            <p>Fuel our hydration stations</p>
+            <p />
+            <p>
+              In support of shopping small and thinking big - we&rsquo;re also
+              open to hear your ideas on how we can collaborate.
+            </p>
+          </RichText>
 
-      <section className="apply">
-        <h2>
-          Let&rsquo;s collaborate and change the world.{' '}
-          <em>And by world we mean our community.</em>
-        </h2>
-      </section>
-      <Footer show={show} />
+          <RichText mark="Screen_Shot_2024-01-24_at_4.04.24_PM.png" markWidth={260}>
+            <></>
+          </RichText>
+
+          <ContactFormSection heading="Let's Collab" topic="collaborate" />
+
+          <ScrollingBanner
+            id="section-collab-banner"
+            text="LETS COLLABORATE AND CHANGE THE WORLD. AND BY WORLD WE MEAN OUR COMMUNITY."
+          />
+        </div>
+      </main>
+      <PageFooter show={show} />
     </>
   )
 }

@@ -1,69 +1,35 @@
-import { eq } from 'drizzle-orm'
-import Link from 'next/link'
-import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { shows } from '@/db/schema'
-import { Masthead, Footer } from '@/components/site'
-import { Photo } from '@/components/Photo'
+import { AnnouncementBar, PageHeader, PageFooter } from '@/components/theme/Chrome'
+import { PageTitle, ArticleRow } from '@/components/theme/Sections'
 import { journal, excerpt } from '@/lib/journal'
-import { fmtDate } from '@/lib/dates'
 
 export const dynamic = 'force-dynamic'
 
+export const metadata = { title: 'Mermade Journal' }
+
+/** /blogs/journal — their page title and their article list. */
 export default async function Journal() {
   const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
-  const [lead, ...rest] = journal
+  const articles = journal.map((p) => ({
+    href: `/journal/${p.slug}`,
+    title: p.title,
+    excerpt: excerpt(p),
+    image: p.image,
+  }))
 
   return (
     <>
-      <Masthead show={show} />
-      <section className="claim">
-        <div className="k">The journal</div>
-        <h1 className="lede">Meet<br /><em>the makers.</em></h1>
-        <p>
-          Eleven years of shops, studios and kitchens, written up as we met them. The
-          oldest ones read like a time capsule.
-        </p>
-      </section>
-
-      {lead && (
-        <section className="sec" style={{ paddingBottom: 0 }}>
-          <Link href={`/journal/${lead.slug}`} className="jlead">
-            {lead.image
-              ? <Photo src={lead.image} alt="" arch tone="soft" sizes="(max-width:900px) 100vw, 46vw" />
-              : <div className="jnone" aria-hidden="true" />}
-            <div className="tx">
-              <div className="k">Latest</div>
-              <h2>{lead.title}</h2>
-              <div className="dt num">{fmtDate(lead.date)}</div>
-              <p>{excerpt(lead)}</p>
-              <span className="more">Read it →</span>
-            </div>
-          </Link>
-        </section>
-      )}
-
-      <section className="sec">
-        <div className="shead">
-          <span className="k">More</span>
-          <h2>From the archive</h2>
+      <AnnouncementBar show={show} />
+      <PageHeader />
+      <main id="content" role="main">
+        <div className="container cf">
+          <PageTitle title="Mermade Journal" />
+          <ArticleRow heading="" articles={articles} />
         </div>
-        <div className="jgrid">
-          {rest.map((p) => (
-            <Link href={`/journal/${p.slug}`} key={p.slug} className="jcard">
-              {p.image
-                ? <Photo src={p.image} alt="" arch tone="soft" sizes="(max-width:900px) 50vw, 30vw" />
-                : <div className="jnone" aria-hidden="true" />}
-              <div className="nm">{p.title}</div>
-              <div className="dt num">{fmtDate(p.date)}</div>
-              <p className="ex">{excerpt(p)}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-      <Footer show={show} />
+      </main>
+      <PageFooter show={show} />
     </>
   )
 }

@@ -1,0 +1,273 @@
+@font-face {
+  font-family: Figtree;
+  font-weight: 400;
+  font-style: normal;
+  font-display: fallback;
+  src: url("/theme/fonts/figtree_n4.woff2") format("woff2"),
+       url("/theme/fonts/figtree_n4.woff") format("woff");
+}
+@font-face {
+  font-family: Figtree;
+  font-weight: 700;
+  font-style: normal;
+  font-display: fallback;
+  src: url("/theme/fonts/figtree_n7.woff2") format("woff2"),
+       url("/theme/fonts/figtree_n7.woff") format("woff");
+}
+@font-face {
+  font-family: Figtree;
+  font-weight: 500;
+  font-style: normal;
+  font-display: fallback;
+  src: url("/theme/fonts/figtree_n5.woff2") format("woff2"),
+       url("/theme/fonts/figtree_n5.woff") format("woff");
+}
+@font-face {
+  font-family: Figtree;
+  font-weight: 400;
+  font-style: italic;
+  font-display: fallback;
+  src: url("/theme/fonts/figtree_i4.woff2") format("woff2"),
+       url("/theme/fonts/figtree_i4.woff") format("woff");
+}
+@font-face {
+  font-family: Figtree;
+  font-weight: 700;
+  font-style: italic;
+  font-display: fallback;
+  src: url("/theme/fonts/figtree_i7.woff2") format("woff2"),
+       url("/theme/fonts/figtree_i7.woff") format("woff");
+}
+@font-face {
+  font-family: Oswald;
+  font-weight: 600;
+  font-style: normal;
+  font-display: fallback;
+  src: url("/theme/fonts/oswald_n6.woff2") format("woff2"),
+       url("/theme/fonts/oswald_n6.woff") format("woff");
+}
+@font-face {
+  font-family: Figtree;
+  font-weight: 400;
+  font-style: normal;
+  font-display: fallback;
+  src: url("/theme/fonts/figtree_n4.woff2") format("woff2"),
+       url("/theme/fonts/figtree_n4.woff") format("woff");
+}
+@font-face {
+  font-family: Oswald;
+  font-weight: 600;
+  font-style: normal;
+  font-display: fallback;
+  src: url("/theme/fonts/oswald_n6.woff2") format("woff2"),
+       url("/theme/fonts/oswald_n6.woff") format("woff");
+}
+@font-face {
+  font-family: Oswald;
+  font-weight: 600;
+  font-style: normal;
+  font-display: fallback;
+  src: url("/theme/fonts/oswald_n6.woff2") format("woff2"),
+       url("/theme/fonts/oswald_n6.woff") format("woff");
+}
+:root {
+  --page-container-width:          1600px;
+  --reading-container-width:       720px;
+  --divider-opacity:               0.14;
+  --gutter-large:                  30px;
+  --gutter-desktop:                20px;
+  --gutter-mobile:                 16px;
+  --section-padding:               50px;
+  --larger-section-padding:        80px;
+  --larger-section-padding-mobile: 60px;
+  --largest-section-padding:       110px;
+  --aos-animate-duration:          0.6s;
+
+  --base-font-family:              Figtree, sans-serif;
+  --base-font-weight:              400;
+  --base-font-style:               normal;
+  --heading-font-family:           Oswald, sans-serif;
+  --heading-font-weight:           600;
+  --heading-font-style:            normal;
+  --logo-font-family:              Figtree, sans-serif;
+  --logo-font-weight:              400;
+  --logo-font-style:               normal;
+  --nav-font-family:               Oswald, sans-serif;
+  --nav-font-weight:               600;
+  --nav-font-style:                normal;
+
+  --base-text-size:15px;
+  --base-line-height:              1.6;
+  --input-text-size:16px;
+  --smaller-text-size-1:12px;
+  --smaller-text-size-2:14px;
+  --smaller-text-size-3:12px;
+  --smaller-text-size-4:11px;
+  --larger-text-size:34px;
+  --super-large-text-size:60px;
+  --super-large-mobile-text-size:27px;
+  --larger-mobile-text-size:27px;
+  --logo-text-size:26px;--btn-letter-spacing: 0.08em;
+    --btn-text-transform: uppercase;
+    --button-text-size: 13px;
+    --quickbuy-button-text-size: 13;
+    --small-feature-link-font-size: 0.75em;
+    --input-btn-padding-top:             1.2em;
+    --input-btn-padding-bottom:          1.2em;--heading-text-transform:uppercase;
+  --nav-text-size:                      14px;
+  --mobile-menu-font-weight:            600;
+
+  --body-bg-color:                      255 255 255;
+  --bg-color:                           255 255 255;
+  --body-text-color:                    92 92 92;
+  --text-color:                         92 92 92;
+
+  --header-text-col:                    #171717;--header-text-hover-col:             var(--main-nav-link-hover-col);--header-bg-col:                     #ffffff;
+  --heading-color:                     23 23 23;
+  --body-heading-color:                23 23 23;
+  --heading-divider-col:               #dfe3e8;
+
+  --logo-col:                          #171717;
+  --main-nav-bg:                       #ffffff;
+  --main-nav-link-col:                 #5c5c5c;
+  --main-nav-link-hover-col:           #bc9658;
+  --main-nav-link-featured-col:        #bc9658;
+
+  --link-color:                        188 150 88;
+  --body-link-color:                   188 150 88;
+
+  --btn-bg-color:                        35 35 35;
+  --btn-bg-hover-color:                  188 150 88;
+  --btn-border-color:                    35 35 35;
+  --btn-border-hover-color:              188 150 88;
+  --btn-text-color:                      255 255 255;
+  --btn-text-hover-color:                255 255 255;--btn-alt-bg-color:                    255 255 255;
+  --btn-alt-text-color:                  35 35 35;
+  --btn-alt-border-color:                35 35 35;
+  --btn-alt-border-hover-color:          35 35 35;--btn-ter-bg-color:                    235 235 235;
+  --btn-ter-text-color:                  41 41 41;
+  --btn-ter-bg-hover-color:              35 35 35;
+  --btn-ter-text-hover-color:            255 255 255;--btn-border-radius: 3px;--color-scheme-default:                             #ffffff;
+  --color-scheme-default-color:                       255 255 255;
+  --color-scheme-default-text-color:                  92 92 92;
+  --color-scheme-default-head-color:                  23 23 23;
+  --color-scheme-default-link-color:                  188 150 88;
+  --color-scheme-default-btn-text-color:              255 255 255;
+  --color-scheme-default-btn-text-hover-color:        255 255 255;
+  --color-scheme-default-btn-bg-color:                35 35 35;
+  --color-scheme-default-btn-bg-hover-color:          188 150 88;
+  --color-scheme-default-btn-border-color:            35 35 35;
+  --color-scheme-default-btn-border-hover-color:      188 150 88;
+  --color-scheme-default-btn-alt-text-color:          35 35 35;
+  --color-scheme-default-btn-alt-bg-color:            255 255 255;
+  --color-scheme-default-btn-alt-border-color:        35 35 35;
+  --color-scheme-default-btn-alt-border-hover-color:  35 35 35;
+
+  --color-scheme-1:                             #ebefed;
+  --color-scheme-1-color:                       235 239 237;
+  --color-scheme-1-text-color:                  92 92 92;
+  --color-scheme-1-head-color:                  23 23 23;
+  --color-scheme-1-link-color:                  188 150 88;
+  --color-scheme-1-btn-text-color:              255 255 255;
+  --color-scheme-1-btn-text-hover-color:        255 255 255;
+  --color-scheme-1-btn-bg-color:                35 35 35;
+  --color-scheme-1-btn-bg-hover-color:          0 0 0;
+  --color-scheme-1-btn-border-color:            35 35 35;
+  --color-scheme-1-btn-border-hover-color:      0 0 0;
+  --color-scheme-1-btn-alt-text-color:          35 35 35;
+  --color-scheme-1-btn-alt-bg-color:            255 255 255;
+  --color-scheme-1-btn-alt-border-color:        35 35 35;
+  --color-scheme-1-btn-alt-border-hover-color:  35 35 35;
+
+  --color-scheme-2:                             #c2c1bf;
+  --color-scheme-2-color:                       194 193 191;
+  --color-scheme-2-text-color:                  92 92 92;
+  --color-scheme-2-head-color:                  23 23 23;
+  --color-scheme-2-link-color:                  188 150 88;
+  --color-scheme-2-btn-text-color:              255 255 255;
+  --color-scheme-2-btn-text-hover-color:        255 255 255;
+  --color-scheme-2-btn-bg-color:                35 35 35;
+  --color-scheme-2-btn-bg-hover-color:          0 0 0;
+  --color-scheme-2-btn-border-color:            35 35 35;
+  --color-scheme-2-btn-border-hover-color:      0 0 0;
+  --color-scheme-2-btn-alt-text-color:          35 35 35;
+  --color-scheme-2-btn-alt-bg-color:            255 255 255;
+  --color-scheme-2-btn-alt-border-color:        35 35 35;
+  --color-scheme-2-btn-alt-border-hover-color:  35 35 35;
+
+  /* Shop Pay payment terms */
+  --payment-terms-background-color:    #ffffff;--quickbuy-bg: 255 255 255;--body-input-background-color:       rgb(var(--body-bg-color));
+  --input-background-color:            rgb(var(--body-bg-color));
+  --body-input-text-color:             var(--body-text-color);
+  --input-text-color:                  var(--body-text-color);
+  --body-input-border-color:           rgb(214, 214, 214);
+  --input-border-color:                rgb(214, 214, 214);
+  --input-border-color-hover:          rgb(165, 165, 165);
+  --input-border-color-active:         rgb(92, 92, 92);
+
+  --swatch-cross-svg:                  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 24 24' fill='none' stroke='rgb(214, 214, 214)' stroke-width='0.09' preserveAspectRatio='none' %3E%3Cline x1='24' y1='0' x2='0' y2='24'%3E%3C/line%3E%3C/svg%3E");
+  --swatch-cross-hover:                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 24 24' fill='none' stroke='rgb(165, 165, 165)' stroke-width='0.09' preserveAspectRatio='none' %3E%3Cline x1='24' y1='0' x2='0' y2='24'%3E%3C/line%3E%3C/svg%3E");
+  --swatch-cross-active:               url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 24 24' fill='none' stroke='rgb(92, 92, 92)' stroke-width='0.09' preserveAspectRatio='none' %3E%3Cline x1='24' y1='0' x2='0' y2='24'%3E%3C/line%3E%3C/svg%3E");
+
+  --footer-divider-col:                #8f7b7b;
+  --footer-text-col:                   116 103 103;
+  --footer-heading-col:                119 112 112;
+  --footer-bg:                         #c5b9b9;--product-label-overlay-justify: flex-start;--product-label-overlay-align: flex-start;--product-label-overlay-reduction-text:   #ffffff;
+  --product-label-overlay-reduction-bg:     #c20000;
+  --product-label-overlay-stock-text:       #ffffff;
+  --product-label-overlay-stock-bg:         #09728c;
+  --product-label-overlay-new-text:         #ffffff;
+  --product-label-overlay-new-bg:           #bc9658;
+  --product-label-overlay-meta-text:        #ffffff;
+  --product-label-overlay-meta-bg:          #bd2585;
+  --product-label-sale-text:                #bc9658;
+  --product-label-sold-text:                #171717;
+  --product-label-preorder-text:            #3ea36a;
+
+  --product-block-crop-align:               center;
+
+  
+  --product-block-price-align:              flex-start;
+  --product-block-price-item-margin-start:  initial;
+  --product-block-price-item-margin-end:    .5rem;
+  
+
+  --collection-block-image-position:   center center;
+
+  --swatch-picker-image-size:          40px;
+  --swatch-crop-align:                 center center;
+
+  --image-overlay-text-color:          255 255 255;--image-overlay-bg:                  rgba(0, 0, 0, 0.12);
+  --image-overlay-shadow-start:        rgb(0 0 0 / 0.16);
+  --image-overlay-box-opacity:         0.88;.image-overlay--bg-box .text-overlay .text-overlay__text {
+      --image-overlay-box-bg: 255 255 255;
+      --heading-color: var(--body-heading-color);
+      --text-color: var(--body-text-color);
+      --link-color: var(--body-link-color);
+    }--product-inventory-ok-box-color:            #f2faf0;
+  --product-inventory-ok-text-color:           #108043;
+  --product-inventory-ok-icon-box-fill-color:  #fff;
+  --product-inventory-low-box-color:           #fcf1cd;
+  --product-inventory-low-text-color:          #dd9a1a;
+  --product-inventory-low-icon-box-fill-color: #fff;
+  --product-inventory-low-text-color-channels: 16, 128, 67;
+  --product-inventory-ok-text-color-channels:  221, 154, 26;
+
+  --rating-star-color: 188 150 88;
+}::selection {
+    background: rgb(var(--body-heading-color));
+    color: rgb(var(--body-bg-color));
+  }
+  ::-moz-selection {
+    background: rgb(var(--body-heading-color));
+    color: rgb(var(--body-bg-color));
+  }.use-color-scheme--default {
+  --product-label-sale-text:           #bc9658;
+  --product-label-sold-text:           #171717;
+  --product-label-preorder-text:       #3ea36a;
+  --input-background-color:            rgb(var(--body-bg-color));
+  --input-text-color:                  var(--body-input-text-color);
+  --input-border-color:                rgb(214, 214, 214);
+  --input-border-color-hover:          rgb(165, 165, 165);
+  --input-border-color-active:         rgb(92, 92, 92);
+}
