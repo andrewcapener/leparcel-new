@@ -224,8 +224,29 @@ const partOne: Part = {
       id: 's6', n: '6', title: 'Permits, tax and licences',
       clauses: [
         {
+        /* ⟨COUNSEL⟩ Rewritten 5 Sep 2026 on Drew's research, which is right and
+           worth keeping: section 6073's verb is "obtain". Verify, confirm and
+           accuracy appear nowhere in it. 6073.1 deems an operator compliant on
+           obtaining the permit or a non-taxable certificate, B&P 21663(c) puts
+           accuracy outside the operator's responsibility, and Publication 111
+           has CDTFA doing the checking and attaches the penalty to "each seller
+           for which you did not keep records", not to a record that turned out
+           wrong. Collect it, keep it, do not investigate it.
+
+           That is now said out loud rather than left implied, because it is the
+           difference between a job we can do and one we cannot: nobody here can
+           tell a real permit number from an invented one, and this says we are
+           not expected to.
+
+           One dependency for counsel: 21663 sits in the swap meet article, so
+           it applies if Mermade is a swap meet operator within B&P 21661. The
+           R&T hook is safer, since 6073 covers special events by its terms. */
           n: '6.1', lead: 'Outside makers: seller’s permit.',
-          text: ['You sell for your own account, so you must hold a valid California seller’s permit, or qualify as an occasional seller and give us a completed CDTFA-410-D. We ask for the permit number, or the declaration, after you are accepted and we need it before load-in. Applying does not require either. CDTFA Publication 111 requires us to keep that record and penalises us up to ${{pub111Penalty}} for each seller we cannot show it for. We keep these records for four years.'],
+          text: [
+            'You sell for your own account, so you must hold a valid California seller’s permit, or qualify as an occasional seller and give us a completed CDTFA-410-D. We ask for the number, or the declaration, on your application or once you are accepted, and we need it before load-in. Applying requires neither.',
+            'Our part is to obtain that record and keep it. Revenue and Taxation Code section 6073 asks us to obtain it, not to check it, and section 6073.1 treats an operator who obtains it as having complied. We do not verify your permit and, under Business and Professions Code section 21663(c), we are not responsible for the accuracy of what you give us. CDTFA checks the numbers itself and tells us if one of them is wrong. What you give us has to be true and yours to give.',
+            'The penalty falls on a record we did not keep, up to ${{pub111Penalty}} for each seller we cannot produce one for, which is why this is the one piece of paperwork we will chase you for. We keep these records for four years.',
+          ],
         },
         {
           n: '6.2', lead: 'Inside makers: seller’s permit.',
