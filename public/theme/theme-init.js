@@ -14,7 +14,17 @@
  */
 document.documentElement.className = document.documentElement.className.replace('no-js', 'js');
 
-    window.theme = {
+    
+/*
+ * main.js's PageHeader element reads window.Shopify.designMode in its
+ * constructor. There is no Shopify here, so give it the object to read: an
+ * undefined designMode is exactly the "not in the theme editor" answer it
+ * wants, and a missing window.Shopify would throw and leave the header
+ * unwired.
+ */
+window.Shopify = window.Shopify || {};
+
+window.theme = {
       info: {
         name: 'Symmetry',
         version: '7.1.2'

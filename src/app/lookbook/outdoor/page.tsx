@@ -20,7 +20,7 @@ export default async function OutdoorLookbook() {
         <div className="container cf">
           <RichText title="Outdoor Merchant Lookbook">
             <p>
-              Our merchant tents are the bomb! They&rsquo;re 6.5 x 6.5 feet so
+              Our merchant tents are the bomb! They&#39;re 6.5 x 6.5 feet so
               that we can still fit inside with ease. We also find that people
               with 10x10 tents have a hard time making every single inch
               intentional because it is quite large. Most makers that get the
@@ -35,16 +35,17 @@ export default async function OutdoorLookbook() {
               something to inspire you &amp; make your space with us phenomenal!
             </p>
             <p>
-              <strong>Required: a BACKDROP!</strong> If not all three sides, for
-              sure the very back of your space so it doesn&rsquo;t distract our
-              customers from focusing on YOUR shop, not your neighbors or
-              what&rsquo;s happening behind them.
+              Required: a BACKDROP! If not all three sides, for sure the very
+              back of your space so it doesn&#39;t distract our customers from
+              focusing on YOUR shop, not your neighbors or what&#39;s happening
+              behind them.
             </p>
             <p>
               Also remember, it does get windy out there and we are right on top
-              of the ocean. Remember this when displaying your products &amp;
-              bring duct tape to literally tape your cutie displays down. We will
-              have sandbags for each and every merchant.
+              of the ocean. Like walk 10 feet and you are swimming with dolphins.
+              Remember this when displaying your products &amp; bring duct tape
+              to literally bubble tape your cutie displays down. We will have
+              sandbags for each and every merchant.
             </p>
           </RichText>
 

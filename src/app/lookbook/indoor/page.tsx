@@ -23,10 +23,10 @@ export default async function IndoorLookbook() {
         <div className="container cf">
           <RichText title="Indoor Merchant Lookbook">
             <p>
-              It is proven time &amp; time again that when our merchants&rsquo;
+              It is proven time &amp; time again that when our merchants&#39;
               spaces look their best, they sell more product. Indoor @ Mermade
-              are much smaller spaces than any outdoor tent. But it doesn&rsquo;t
-              mean they can&rsquo;t look good!! See below of some past examples
+              are much smaller spaces than any outdoor tent. But it doesn&#39;t
+              mean they can&#39;t look good!! See below of some past examples
               and see how big they actually are.
             </p>
             <p><strong>Remember, vertical space is everything!</strong></p>

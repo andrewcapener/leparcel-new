@@ -74,14 +74,14 @@ export default async function Merchants() {
             >
               <p>
                 The {show.name} lineup goes up here the day the roster is set.
-                Join the list and we&rsquo;ll write the morning it does.
+                Join the list and we&#39;ll write the morning it does.
               </p>
             </RichText>
           ) : (
             <>
               <SubheadingSection>
                 Just below are the makers that are inside with us at Mermade.. all
-                3 days, they don&rsquo;t change, we restock for them! But keep
+                3 days, they don&#39;t change, we restock for them! But keep
                 scrolling and you will find the makers that are showcasing
                 &quot;outside&quot; and a lot of them change each day. More reason
                 to shop all 3 days with us!

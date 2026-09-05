@@ -1,9 +1,9 @@
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow } from '@/db/queries'
+import { activeShow, activeAddOns } from '@/db/queries'
 import { shows, spaceTypes } from '@/db/schema'
 import { SettingsForm } from './SettingsForm'
-import { updateSpace } from '@/app/actions'
+import { updateSpace, updateAddOn } from '@/app/actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +19,9 @@ export default async function ShowSettings() {
     where: eq(spaceTypes.showId, show.id),
     orderBy: [asc(spaceTypes.sortOrder)],
   })
+  // Migration-tolerant: an environment that has not run 0002 yet has no
+  // add_ons table, and the rest of this page still has to render.
+  const extras = await activeAddOns(show.id)
 
   return (
     <div style={{ padding: '26px 26px 80px', maxWidth: 900 }}>
@@ -63,6 +66,48 @@ export default async function ShowSettings() {
       <p style={{ fontSize: 'var(--t-lbl-s)', color: 'var(--ink-3)', marginTop: 10 }}>
         Price · capacity per row. Save applies that row only.
       </p>
+
+      <h2 style={{ fontFamily: 'var(--font-c)', fontWeight: 600, textTransform: 'uppercase' as const, fontSize: 'var(--t-d4)', margin: '44px 0 14px' }}>
+        Add-ons
+      </h2>
+      <p style={{ fontSize: 'var(--t-lbl)', color: 'var(--ink-3)', marginBottom: 14, maxWidth: 72 + 'ch' }}>
+        What a maker can ask for on top of a space. Same rule as above: an edit
+        changes what future applicants are quoted, never what an accepted maker
+        was promised. &ldquo;Limited&rdquo; shows as LMTD on the application and
+        the rules pages.
+      </p>
+      {extras.length === 0 ? (
+        <p style={{ fontSize: 'var(--t-s)', color: 'var(--ink-2)' }}>
+          No add-ons for this show yet. They are seeded with the show; if this is
+          unexpected, migration 0002 has not run against this database.
+        </p>
+      ) : (
+        <div style={{ display: 'grid', gap: 0, borderTop: '2px solid var(--ink)' }}>
+          {extras.map((a) => (
+            <form action={updateAddOn} key={a.id}
+              style={{ display: 'grid', gridTemplateColumns: '110px 80px 1.2fr 1.6fr 110px 90px auto',
+                gap: 12, alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
+              <input type="hidden" name="id" value={a.id} />
+              <span style={{ fontFamily: 'var(--font-c)', fontWeight: 600, fontSize: 'var(--t-lbl)', letterSpacing: '.05em' }}>{a.code}</span>
+              <span style={{ textTransform: 'capitalize', fontSize: 'var(--t-lbl)', color: 'var(--ink-2)' }}>
+                {a.track ?? 'both'}
+              </span>
+              <input className="inp" name="name" defaultValue={a.name} aria-label="Name" style={{ padding: '7px 10px', fontSize: 'var(--t-s)' }} />
+              <input className="inp" name="description" defaultValue={a.description} aria-label="Description" style={{ padding: '7px 10px', fontSize: 'var(--t-lbl)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ color: 'var(--ink-3)', fontSize: 'var(--t-lbl)' }}>$</span>
+                <input className="inp num" name="price" type="number" min={0} step={5}
+                  defaultValue={a.priceCents / 100} aria-label="Price in dollars" style={{ padding: '7px 10px', fontSize: 'var(--t-s)' }} />
+              </div>
+              <label style={{ display: 'flex', gap: 7, alignItems: 'center', fontSize: 'var(--t-lbl)' }}>
+                <input type="checkbox" name="isLimited" defaultChecked={a.isLimited} style={{ width: 20, height: 20 }} />
+                Limited
+              </label>
+              <button className="btn-o" type="submit">Save</button>
+            </form>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

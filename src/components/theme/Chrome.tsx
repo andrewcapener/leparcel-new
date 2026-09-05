@@ -112,6 +112,13 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
   return (
     <div className="shopify-section shopify-section-group-header-group section-header">
       <style dangerouslySetInnerHTML={{ __html: transparent ? HEADER_CSS : HEADER_CSS_SOLID }} />
+      {/* Their <page-header> custom element, not a plain div. main.js hangs
+          the scroll listener off it: that is what drops
+          pageheader--transparent once you scroll past the announcement bar,
+          keeps --theme-header-height current, and decides stickiness. Without
+          the element the header stays transparent all the way down the page
+          and the white nav disappears over the white content below the hero. */}
+      <PageHeaderElement>
       <div
         id="pageheader"
         className={
@@ -187,6 +194,7 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
       {/* The scrim behind the open drawer, and a second way to close it. */}
       {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
       <a href="#" className="header-shade mobile-nav-toggle" aria-label="Close" />
+      </PageHeaderElement>
       {/* Their theme measures the header the moment it is in the DOM: whether
           the inline nav fits beside the logo, and how tall the bar is, which
           is what the transparent header offsets the first section by. Both
@@ -195,6 +203,11 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
       <script dangerouslySetInnerHTML={{ __html: HEADER_BOOT }} />
     </div>
   )
+}
+
+/** Their custom element. React renders unknown tags as-is. */
+function PageHeaderElement({ children }: { children: React.ReactNode }) {
+  return React.createElement('page-header', { 'data-section-id': 'header' }, children)
 }
 
 const DRAWER_TEMPLATE = `

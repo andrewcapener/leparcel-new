@@ -27,7 +27,7 @@ export default async function Contact() {
             priority
           >
             <p>
-              Didn&rsquo;t find what you need on our <Link href="/faq">FAQ page?</Link>{' '}
+              Didn&#39;t find what you need on our <Link href="/faq">FAQ page?</Link>{' '}
               Reach out below.
             </p>
           </Banner>

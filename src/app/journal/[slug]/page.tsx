@@ -55,9 +55,11 @@ export default async function JournalPost({
             </div>
             <div className="article article--main">
               <div className="container container--reading-width">
-                <div className="rte cf spaced-row">
-                  {post.paras.map((p, i) => <p key={i}>{p}</p>)}
-                </div>
+                {/* Their article body, as they wrote it. See src/lib/journal.ts. */}
+                <div
+                  className="rte cf spaced-row"
+                  dangerouslySetInnerHTML={{ __html: post.body }}
+                />
               </div>
             </div>
           </div>

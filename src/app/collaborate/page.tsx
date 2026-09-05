@@ -62,13 +62,13 @@ export default async function Collaborate() {
           <RichText title="MERSTATS">
             <p>
               Our customer base is loyal, sensible and affluent. They are decision
-              makers who wear the pants and hold the wallet. They&rsquo;re keen on
-              intention and balance. They&rsquo;re not easily sold, but faithful to
+              makers who wear the pants and hold the wallet. They&#39;re keen on
+              intention and balance. They&#39;re not easily sold, but faithful to
               a fault. They are lifers.
             </p>
             <p />
             <p>
-              Through the years we&rsquo;ve been meticulous about who and what we
+              Through the years we&#39;ve been meticulous about who and what we
               put in front of our people. This has given us a unique advantage in
               our local community, and gives you the opportunity to build trust.
             </p>
@@ -124,7 +124,7 @@ export default async function Collaborate() {
             <p>Fuel our hydration stations</p>
             <p />
             <p>
-              In support of shopping small and thinking big - we&rsquo;re also
+              In support of shopping small and thinking big - we&#39;re also
               open to hear your ideas on how we can collaborate.
             </p>
           </RichText>

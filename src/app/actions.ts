@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { db } from '@/db'
 import { activeShow, activeAddOns, pgCode } from '@/db/queries'
 import {
-  shows, vendors, applications, bookings, spaceTypes, auditLog,
+  shows, vendors, applications, bookings, spaceTypes, addOns, auditLog,
   emailOutbox, subscribers, CATEGORIES, type ApplicationStatus,
 } from '@/db/schema'
 import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
@@ -595,6 +595,42 @@ export async function updateSpace(fd: FormData): Promise<void> {
   revalidatePath('/admin/show')
   revalidatePath('/apply')
   revalidatePath('/')
+  revalidatePath('/makers/indoor')
+  revalidatePath('/makers/outdoor')
+}
+
+/**
+ * Edit an add-on's name, blurb and price from /admin/show.
+ *
+ * Same shape and same rules as updateSpace: the edit changes what a future
+ * applicant is quoted, and never what an accepted maker was promised —
+ * booking_addons snapshots the price at booking time (docs/03-DATA-MODEL.md
+ * §6). The code and the track are fixed, because the application form and the
+ * rules pages key off them.
+ */
+export async function updateAddOn(fd: FormData): Promise<void> {
+  const id = String(fd.get('id'))
+  const addOn = await db.query.addOns.findFirst({ where: eq(addOns.id, id) })
+  if (!addOn) return
+
+  const priceDollars = Number(fd.get('price'))
+  const name = String(fd.get('name') ?? '').trim()
+  const description = String(fd.get('description') ?? '').trim()
+  const isLimited = fd.get('isLimited') === 'on'
+  if (!name || !Number.isFinite(priceDollars) || priceDollars < 0) return
+
+  const next = { name, description, priceCents: Math.round(priceDollars * 100), isLimited }
+  const before: Record<string, unknown> = {}
+  const after: Record<string, unknown> = {}
+  for (const k of Object.keys(next) as Array<keyof typeof next>) {
+    if (addOn[k] !== next[k]) { before[k] = addOn[k]; after[k] = next[k] }
+  }
+  if (Object.keys(after).length === 0) return
+
+  await db.update(addOns).set(next).where(eq(addOns.id, id))
+  await log('add_on', id, 'settings_change', before, after, '', 'staff')
+  revalidatePath('/admin/show')
+  revalidatePath('/apply')
   revalidatePath('/makers/indoor')
   revalidatePath('/makers/outdoor')
 }
