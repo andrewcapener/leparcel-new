@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow, activeAddOns } from '@/db/queries'
+import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import {
@@ -43,10 +43,7 @@ export default async function IndoorMerchants() {
   const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
-  const spaces = await db.query.spaceTypes.findMany({
-    where: eq(spaceTypes.showId, show.id),
-    orderBy: [asc(spaceTypes.sortOrder)],
-  })
+  const spaces = await activeSpaceTypes(show.id)
   const extras = await activeAddOns(show.id)
   const indoor = spaces.filter((s) => s.track === 'indoor')
   const days = show.hoursNote.split(' · ')
@@ -123,27 +120,42 @@ export default async function IndoorMerchants() {
             deepLink
             intro={
               <div className="mk-rules">
-                <h3 className="mk-rules__title">Rules that cost money</h3>
+                {/* This list used to open "Rules that cost money" and read
+                    like a schedule of fines: what we would take, item by item.
+                    The deadlines are real and the amounts have not moved, but
+                    the reason for each one is what a maker actually needs, and
+                    a room of a hundred shops selling through one register is a
+                    reason that holds up. docs/12-VOICE.md: warm through
+                    specifics, and the specifics here are the times. */}
+                <h3 className="mk-rules__title">The deadlines that matter</h3>
                 <ul className="mk-rules__list">
                   <li>
-                    Arrive after 6pm on set-up night and it is {usd(LATE_FEE_CENTS)}.
-                    After 7pm you are not in the show.
+                    Set-up runs one evening and closes at 6pm. We hold the door
+                    to 7pm for {usd(LATE_FEE_CENTS)}, and after that the floor is
+                    merchandised and we cannot add a shop to it.
                   </li>
                   <li>
-                    There is one set-up window and no Friday morning. If you cannot
-                    be there, you cannot sell inside.
+                    There is no Friday morning set-up. If that evening does not
+                    work for you, outside is the better track.
                   </li>
-                  <li>Your inventory list and prices are due two weeks before the show.</li>
                   <li>
-                    Every product carries your MM code and its price. Labelled
-                    wrong, or not at all, is {usd(LABEL_FEE_CENTS)} off your final payment.
+                    Your inventory list and prices reach us two weeks before the
+                    show. They are what we build the register from.
                   </li>
-                  <li>Prices cannot change on your labels without our approval first.</li>
                   <li>
-                    Jewelry needs bags or boxes left at your space. Without them
-                    it is {usd(JEWELRY_BAG_FEE_CENTS)} off your final sales.
+                    Every product carries your MM code and its price. It is how
+                    a sale finds its way back to you, so anything unlabelled is
+                    relabelled by us at {usd(LABEL_FEE_CENTS)}.
                   </li>
-                  <li>Your shop name goes somewhere in your space.</li>
+                  <li>
+                    Prices are set when the labels are printed. Tell us before
+                    you change one.
+                  </li>
+                  <li>
+                    Jewelry sells with a bag or a box, so leave a supply at your
+                    space. We buy them in at {usd(JEWELRY_BAG_FEE_CENTS)} if you run out.
+                  </li>
+                  <li>Put your shop name somewhere a shopper can see it.</li>
                 </ul>
                 <p className="mk-rules__note">
                   Each one is explained in full below. The binding version is the{' '}

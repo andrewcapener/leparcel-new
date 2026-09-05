@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { eq, and, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow, activeAddOns } from '@/db/queries'
+import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { CollapsibleTabs, Banner, PriceTable, type Tab } from '@/components/theme/Sections'
@@ -59,12 +59,7 @@ export default async function Apply({
   const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
-  // Active only. A withdrawn space keeps its row so that applications which
-  // already chose it still resolve, but it must never appear on the form.
-  const spaces = await db.query.spaceTypes.findMany({
-    where: and(eq(spaceTypes.showId, show.id), eq(spaceTypes.isActive, true)),
-    orderBy: [asc(spaceTypes.sortOrder)],
-  })
+  const spaces = await activeSpaceTypes(show.id)
   const extras = await activeAddOns(show.id)
   const indoor = spaces.filter((s) => s.track === 'indoor')
   const outdoor = spaces.filter((s) => s.track === 'outdoor')

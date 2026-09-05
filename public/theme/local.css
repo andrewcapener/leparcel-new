@@ -1212,15 +1212,9 @@ h3, .h3 { line-height: 1.15; }
    labels rather than as prose: Oswald, uppercase, and tight enough that ten
    of them fit on one screen. 20px vertical padding on a 1.4 line box is a
    56px target, well over WCAG 2.2 SC 2.5.8. */
-.mk-sections .collapsible-tabs__tab .disclosure__title {
-  padding-right: 40px;
-  font-family: var(--nav-font-family);
-  font-weight: var(--nav-font-weight);
-  font-size: var(--base-text-size);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgb(var(--heading-color));
-}
+/* The type here moved to the base rule, since every FAQ wears it now. What is
+   left is local: these summaries sit in a narrower column than the others. */
+.mk-sections .collapsible-tabs__tab .disclosure__title { padding-right: 40px; }
 /* The theme draws its +/− at the right edge of the summary; keep the plus
    sign clear of the last word on a narrow screen. */
 .mk-sections .disclosure__content { color: rgb(var(--text-color) / 0.9); }
@@ -1452,9 +1446,17 @@ h3, .h3 { line-height: 1.15; }
   padding-top: 26px;
   padding-bottom: 26px;
   padding-right: 52px;
-  font-size: clamp(1.0625rem, 1.6vw, 1.3125rem);
-  font-weight: 500;
-  line-height: 1.35;
+  /* Oswald, uppercase, letter-spaced. This started as a maker-pages-only
+     override, where a long list of rules had to read as a table of contents
+     rather than as ten competing headings. Set against the sentence-case
+     version on the other FAQs it won on sight, so it is the treatment
+     everywhere now: one component, one look, all four sets. */
+  font-family: var(--nav-font-family);
+  font-weight: var(--nav-font-weight);
+  font-size: var(--base-text-size);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.4;
   color: rgb(var(--heading-color));
   text-wrap: balance;
   transition: color 140ms ease;
@@ -1559,10 +1561,7 @@ h3, .h3 { line-height: 1.15; }
 /* The question keeps full-strength ink, which is where the contrast comes
    from, and the marker sits at the far edge of the row the way it does on the
    reference rather than floating inside it. */
-.collapsible-tabs__tab .disclosure__title {
-  padding-right: 64px;
-  color: rgb(var(--heading-color));
-}
+.collapsible-tabs__tab .disclosure__title { padding-right: 64px; }
 .collapsible-tabs__tab .disclosure__title::before,
 .collapsible-tabs__tab .disclosure__title::after {
   width: 18px;

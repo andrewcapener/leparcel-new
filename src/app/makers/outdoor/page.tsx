@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow, activeAddOns } from '@/db/queries'
+import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import {
@@ -33,10 +33,7 @@ export default async function OutdoorMerchants() {
   const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
-  const spaces = await db.query.spaceTypes.findMany({
-    where: eq(spaceTypes.showId, show.id),
-    orderBy: [asc(spaceTypes.sortOrder)],
-  })
+  const spaces = await activeSpaceTypes(show.id)
   const extras = await activeAddOns(show.id)
   const outdoor = spaces.filter((s) => s.track === 'outdoor')
   const days = show.hoursNote.split(' · ')

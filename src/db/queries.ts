@@ -1,6 +1,6 @@
 import { eq, and, asc } from 'drizzle-orm'
 import { db } from './index'
-import { shows, addOns, type Show, type AddOn } from './schema'
+import { shows, addOns, spaceTypes, type Show, type AddOn, type SpaceType } from './schema'
 
 /**
  * Migration-tolerant reads.
@@ -117,4 +117,23 @@ export async function activeAddOns(showId: string): Promise<AddOn[]> {
     console.warn('[db] add_ons is missing; run drizzle/0002_addons-and-loadin.sql')
     return []
   }
+}
+
+/**
+ * The spaces a show still offers, in display order.
+ *
+ * Three pages read this list — the application form and both maker rules
+ * pages — and each had its own copy of the query. When the boutique footprint
+ * was withdrawn, only one of the three stopped showing it, and the other two
+ * kept offering a space that no longer exists. One function, so a fourth
+ * caller cannot get it wrong.
+ *
+ * Withdrawn spaces keep their rows: an application that already chose one
+ * still has to resolve its space. `is_active` is what hides them.
+ */
+export async function activeSpaceTypes(showId: string): Promise<SpaceType[]> {
+  return db.query.spaceTypes.findMany({
+    where: and(eq(spaceTypes.showId, showId), eq(spaceTypes.isActive, true)),
+    orderBy: [asc(spaceTypes.sortOrder)],
+  })
 }
