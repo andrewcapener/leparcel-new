@@ -133,7 +133,10 @@ async function main() {
     hoursNote: 'Friday 13 November, 9am-6pm · Saturday 14th, 9am-5pm · Sunday 15th, 9am-5pm',
     // Prose, not dates: staff edit these at /admin/show when the venue moves.
     // Shape carried over from the old site's indoor maker rules.
-    loadInNote: 'Thursday 12 November, 1-7pm, in staggered arrival slots',
+    // Just the day and the window. The set-up row on /makers/indoor adds
+    // "time slot chosen in the application" itself, and saying "staggered
+    // arrival slots" here as well said the same thing twice.
+    loadInNote: 'Thursday 12 November, 1-7pm',
     // The three the market has actually run (Spring 2026 responses).
     loadInSlots: '1-3pm, 3-5pm, 5-7pm',
     takedownNote: 'Sunday 15 November at 5pm sharp',
