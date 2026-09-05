@@ -110,9 +110,10 @@ export const newsletter = {
 
 /** Archive films, Andrew's footage. The first plays in the home film block;
  *  the rest link out from the archive band. */
-/** The clip the old site runs behind its hero (its background-video
- *  section's video_external). Swappable for our own footage. */
-export const heroVideoId = 'caKMa9MVyEo'
+/** The clip behind the home page hero. Drew's, 5 Sep 2026:
+ *  https://youtu.be/dd23FXq6ZNw. It replaces the old site's own reel, which
+ *  was standing in until there was something of ours to run. */
+export const heroVideoId = 'dd23FXq6ZNw'
 
 /**
  * The clip in the home page's second background-video band. This is the one
@@ -121,9 +122,8 @@ export const heroVideoId = 'caKMa9MVyEo'
  *
  * On the hero we differ, and deliberately. Their hero is not a YouTube embed
  * at all: it is a 53MB 1080p mp4 served from their Shopify CDN, which is the
- * thing this build replaces. The id above is their own Fall 2025 reel, the
- * closest stand-in, and it costs the page nothing. Swap it for a hosted clip
- * whenever there is a compressed file to host.
+ * thing this build replaces. The hero above now runs Drew's own clip; this
+ * band still runs theirs, so it matches their page frame for frame.
  */
 export const bandVideoId = 'W5iWhyOzjYI'
 
