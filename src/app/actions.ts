@@ -191,8 +191,12 @@ const ApplicationSchema = z.object({
 
   category: z.enum(CATEGORIES, { message: 'Choose a category' }),
   description: z.string().min(40, 'Tell us a little more (40 characters minimum)').max(600, '600 characters max'),
-  priceLow: z.coerce.number().int().min(1, 'Required'),
-  priceHigh: z.coerce.number().int().min(1, 'Required'),
+  // Whole dollars. Without the explicit messages a maker who typed 12.50 got
+  // "Expected integer, received float", which is Zod talking to a developer.
+  priceLow: z.coerce.number({ message: 'Whole dollars, no cents' })
+    .int('Whole dollars, no cents').min(1, 'Required'),
+  priceHigh: z.coerce.number({ message: 'Whole dollars, no cents' })
+    .int('Whole dollars, no cents').min(1, 'Required'),
 
   madeByYou: z.enum(['all', 'mostly_sourced_components', 'curate_resell']),
   usesAiArtwork: z.enum(['yes', 'no']),
@@ -204,7 +208,10 @@ const ApplicationSchema = z.object({
   hasCoi: z.string().optional(),
 
   signedName: z.string().min(2, 'Type your name to sign'),
-  agree: z.string().refine((v) => v === 'on', 'You must accept the vendor agreement'),
+  // An unchecked checkbox posts no key, so the type error fired before the
+  // refine could and the maker was told "Vendor agreement: Required".
+  agree: z.string({ message: 'You must accept the vendor agreement' })
+    .refine((v) => v === 'on', 'You must accept the vendor agreement'),
 })
   .refine((d) => d.priceHigh >= d.priceLow, {
     message: 'High price must be at least the low price', path: ['priceHigh'],
@@ -283,16 +290,46 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     .filter((code) => offered.some((a) => a.code === code))
 
   // Vendors persist across shows — find or create, never duplicate on email.
+  //
+  // And then UPDATE. Mermade runs two shows a year, so a large share of any
+  // season's applicants are returning makers, and the form asks them for their
+  // shop name, contact, phone, Instagram, website, city and state every time.
+  // Without this branch every one of those answers was read, validated, shown
+  // back to them on the review step, and then silently dropped on the floor,
+  // because the vendor row already existed. A maker who had renamed the shop,
+  // moved, or changed a handle was juried on last season's record while their
+  // screen said "Thank you for applying". The application is the most recent
+  // thing they have told us; it wins.
   const email = d.email.trim().toLowerCase()
+  const details = {
+    shopName: d.shopName, contactName: d.contactName,
+    phone: d.phone, website: d.website || null, instagram: d.instagram,
+    city: d.city, state: d.state,
+  }
   let vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
   if (!vendor) {
     const id = randomUUID()
-    await db.insert(vendors).values({
-      id, shopName: d.shopName, contactName: d.contactName, email,
-      phone: d.phone, website: d.website || null, instagram: d.instagram,
-      city: d.city, state: d.state,
-    })
+    await db.insert(vendors).values({ id, email, ...details })
     vendor = await db.query.vendors.findFirst({ where: eq(vendors.id, id) })!
+  } else {
+    const before = {
+      shopName: vendor.shopName, contactName: vendor.contactName,
+      phone: vendor.phone, website: vendor.website, instagram: vendor.instagram,
+      city: vendor.city, state: vendor.state,
+    }
+    const changed = Object.entries(details)
+      .filter(([k, v]) => before[k as keyof typeof before] !== v)
+      .map(([k]) => k)
+    if (changed.length > 0) {
+      await db.update(vendors).set(details).where(eq(vendors.id, vendor.id))
+      // Audit-logged because it is a mutation of a record the jury and every
+      // export read from, made by a form rather than by a person in the admin.
+      await log(
+        'vendor', vendor.id, 'vendor.updated_by_application',
+        before, details, `changed on application: ${changed.join(', ')}`, email,
+      )
+      vendor = { ...vendor, ...details }
+    }
   }
 
   // Just the id: this is an existence test, and selecting the whole row would

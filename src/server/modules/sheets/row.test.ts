@@ -55,10 +55,16 @@ const vendor = {
 
 const row = applicationRow({ application, vendor, catalog, siteUrl: 'https://mermademarket.com/' })
 
-// 1 · ids and codes become labels a person can read, in the order checked
-check('spaces are labels', row.spaces === "3' × 6' space, Outdoor Saturday", row.spaces)
+// 1 · ids and codes become labels a person can read, in the order checked.
+//
+// Joined on a middle dot. This assertion used to read
+//   'Corner or endcap, inside, Share your space'
+// which is the whole argument for the change: an add-on called "Corner or
+// endcap, inside" has a comma inside its own name, so a comma-joined list of
+// two reads as a list of three to anyone scanning the Sheet.
+check('spaces are labels', row.spaces === "3' × 6' space · Outdoor Saturday", row.spaces)
 check('add-ons are names',
-  row.addons === 'Corner or endcap, inside, Share your space', row.addons)
+  row.addons === 'Corner or endcap, inside · Share your space', row.addons)
 
 // 2 · money comes out of src/lib/money.ts, formatted from integer cents
 check('price low', row.priceLow === '$18', row.priceLow)
@@ -112,7 +118,7 @@ check('admin link', row.adminLink === 'https://mermademarket.com/admin/applicati
     },
     vendor, catalog, siteUrl: 'https://x.test',
   })
-  check('unknown space kept', stale.spaces === "3' × 6' space, sp-retired", stale.spaces)
+  check('unknown space kept', stale.spaces === "3' × 6' space · sp-retired", stale.spaces)
   check('unknown add-on kept', stale.addons === 'GONE', stale.addons)
 }
 

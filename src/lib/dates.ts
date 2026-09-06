@@ -25,10 +25,25 @@ export function fmtRange(startIso: string, endIso: string) {
 
 export type WindowState = 'before' | 'open' | 'closed'
 
+/**
+ * Which side of the application window we are on.
+ *
+ * The close is inclusive of its whole minute. Staff set the deadline at
+ * /admin/show with a `datetime-local` input, which has no seconds field, so a
+ * close is always stored at :00 and "11:59pm PT" really means 23:59:00. Against
+ * a bare `>` that refused a submission at 23:59:01, while /apply printed
+ * "September 20, 11:59pm PT" and the FAQ counted the day as whole. Applications
+ * to a craft fair arrive in a rush in the last few minutes, so the difference is
+ * not theoretical, and staff cannot fix it themselves because the input they use
+ * cannot express :59.
+ */
+const MINUTE_MS = 60_000
+
 export function applicationWindow(openAt: string, closeAt: string, nowIso?: string): WindowState {
   const n = nowIso ? new Date(nowIso) : new Date()
   if (n < new Date(openAt)) return 'before'
-  if (n > new Date(closeAt)) return 'closed'
+  const closesAfter = new Date(closeAt).getTime() + MINUTE_MS - 1
+  if (n.getTime() > closesAfter) return 'closed'
   return 'open'
 }
 

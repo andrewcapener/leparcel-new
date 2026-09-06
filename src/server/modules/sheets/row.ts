@@ -185,8 +185,11 @@ export function applicationRow(input: RowInput): SheetRow {
     state: v.state,
     category: a.category,
     track: TRACK[a.track] ?? a.track,
-    spaces: spaces.join(', '),
-    addons: addons.join(', '),
+    // Joined on a middle dot, not a comma: "Corner or endcap, inside" has a
+    // comma in its own name, so a comma-joined cell of two add-ons reads as
+    // three in the Sheet and the CSV.
+    spaces: spaces.join(' · '),
+    addons: addons.join(' · '),
     // Already labels, not ids, so they go straight through. Empty for an
     // outdoor maker, who is never asked.
     loadInSlots: parseList(a.loadInSlots).join(', '),
