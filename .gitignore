@@ -22,3 +22,9 @@ node_modules
 # this is live git plumbing rather than project files: committing it would
 # commit a worktree into the repository it is a worktree of.
 /.claude/worktrees/
+
+# TypeScript's incremental build cache. "incremental": true in tsconfig.json
+# rewrites this on every tsc run, so tracking it means every typecheck dirties
+# the tree and it rides along in whatever commit happens next. It is generated,
+# it is machine-local, and nothing reads it but tsc.
+/tsconfig.tsbuildinfo
