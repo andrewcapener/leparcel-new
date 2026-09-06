@@ -7,9 +7,18 @@ import { PREVIEW_COOKIE } from '@/lib/preview'
  * every visitor-facing page says about the application window, so a stranger
  * must not be able to set it by visiting a URL.
  *
- * It is a session cookie on purpose. Close the browser and the preview is
- * gone, which is the right default for a thing nobody should leave on.
+ * It used to be a session cookie, on the reasoning that a thing nobody should
+ * leave on ought to switch itself off. In practice it switched off in the
+ * middle of a rehearsal, twice, and the failure reads as a broken form:
+ * "Applications are not open for this show" on the upload and again on
+ * submit, with nothing on screen to say the preview had lapsed. So it lasts
+ * twelve hours now, which covers an evening of testing and still expires by
+ * itself, and the banner on every page says it is on with a link to turn it
+ * off. Long enough to be useful, short enough that it cannot quietly outlive
+ * the window it is standing in for.
  */
+const PREVIEW_MAX_AGE_S = 12 * 60 * 60
+
 export async function GET(req: NextRequest) {
   if (!(await isValidSession(req.cookies.get(ADMIN_COOKIE)?.value))) {
     return new NextResponse('Staff only. Sign in at /admin/login first.', {
@@ -29,6 +38,7 @@ export async function GET(req: NextRequest) {
       httpOnly: false,   // the banner reads it to say the preview is on
       sameSite: 'lax',
       path: '/',
+      maxAge: PREVIEW_MAX_AGE_S,
     })
   } else {
     res.cookies.set(PREVIEW_COOKIE, '', { path: '/', maxAge: 0 })
