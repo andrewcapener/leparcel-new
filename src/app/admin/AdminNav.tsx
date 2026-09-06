@@ -45,6 +45,9 @@ const PREVIEWS: Array<{ href: string; label: string; icon: IconName }> = [
   // places this data lives are services somebody else runs; this is the one
   // that is just a file on a laptop. Worth taking before the jury sits.
   { href: '/admin/export', label: 'Download all applications', icon: 'clock' },
+  // The people who asked to be told when applications open. The site made that
+  // promise; this is how it gets kept on the morning.
+  { href: '/admin/subscribers', label: 'Download the waiting list', icon: 'clock' },
 ]
 
 export function AdminNav({ counts, onNavigate }: { counts: NavCounts; onNavigate?: () => void }) {

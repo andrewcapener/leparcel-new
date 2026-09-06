@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { transportDiagnostics } from '@/server/modules/sheets/transport'
 import { photoUploadDiagnostics } from '@/server/modules/uploads/config'
+import { applicationWindow } from '@/lib/dates'
 import { isCanonicalHost, siteUrl } from '@/lib/site-url'
 
 export const dynamic = 'force-dynamic'
@@ -65,11 +66,37 @@ export async function GET() {
   }
   try {
     const { db, schema } = await import('@/db')
-    const count = async (t: typeof schema.shows | typeof schema.applications | typeof schema.bookings) =>
+    const count = async (
+      t: typeof schema.shows | typeof schema.applications
+        | typeof schema.bookings | typeof schema.subscribers,
+    ) =>
       Number((await db.select({ n: sql<number>`count(*)` }).from(t))[0]!.n)
     diag.shows = await count(schema.shows)
     diag.applications = await count(schema.applications)
     diag.bookings = await count(schema.bookings)
+    diag.subscribers = await count(schema.subscribers)
+    // The dates the whole site is built from, as this deployment's database
+    // really holds them, plus where the application window stands right now.
+    //
+    // Worth the four lines: production's Show record was edited by hand in the
+    // Supabase editor, so a guarded migration written against the seed's value
+    // matched nothing and did nothing, the deploy went green, and the live site
+    // went on printing a roster date that had moved a week earlier. Nothing
+    // said so. Every one of these is already public on /apply, and having them
+    // here means the next drift is one request away instead of a hunt.
+    const { activeShow } = await import('@/db/queries')
+    const active = await activeShow()
+    diag.show = active
+      ? {
+          name: active.name,
+          applicationsOpenAt: active.applicationsOpenAt,
+          applicationsCloseAt: active.applicationsCloseAt,
+          rosterAnnouncedOn: active.rosterAnnouncedOn,
+          startsOn: active.startsOn,
+          endsOn: active.endsOn,
+          window: applicationWindow(active.applicationsOpenAt, active.applicationsCloseAt),
+        }
+      : null
     // Delivery, at a glance. Counts only, no addresses and no bodies.
     const rows = await db
       .select({ status: schema.emailOutbox.deliveryStatus, n: sql<number>`count(*)` })
