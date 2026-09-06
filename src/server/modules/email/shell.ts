@@ -185,7 +185,7 @@ export function plate(src: string, alt: string, height = 340): string {
 export function standfirst(label: string, value: string): string {
   return `<tr><td class="mm-pad" style="padding:4px 32px 0;">
     <div style="font-family:${HEAD_FONT};font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:${MUTED};padding-bottom:6px;">${esc(label)}</div>
-    <div style="font-family:${HEAD_FONT};font-size:26px;line-height:1.1;font-weight:600;text-transform:uppercase;color:${INK};">${esc(value)}</div>
+    <div style="font-family:${BODY_FONT};font-size:24px;line-height:1.2;font-weight:600;letter-spacing:-0.015em;color:${INK};">${esc(value)}</div>
   </td></tr>`
 }
 
@@ -244,11 +244,20 @@ export function shell({
   const fonts = webFonts
     ? `<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">`
     : ''
-  /* 52px for a headline that is four words, 38px for one carrying a shop name
-     somebody else chose. Both are a long way from the body, which is the
-     point: §1 of the design system calls the dynamic range the whole game. */
-  const HEAD_PX = display === 'wide' ? 52 : 38
-  const HEAD_LH = display === 'wide' ? '0.92' : '0.98'
+  /* Sentence case, and Figtree, not Oswald caps.
+     Drew: "I do not like all caps headers unless they use our fonts." Which
+     is the whole problem with setting a display line in caps here: Oswald
+     loads in Apple Mail and not in Gmail, so the same headline is a condensed
+     poster face for one reader and 44px of Helvetica capitals for the next,
+     and the second one is not our brand at any size. Uppercase now stops at
+     label size, where the fallback is a tracked 11px line and reads as a
+     label either way.
+     The system already has this register: §5.1 sets the admin page title in
+     "Figtree 500, sentence case ... Not uppercase and not Oswald". Figtree's
+     fallbacks are ordinary grotesques, so the line degrades to something
+     close instead of to something else. */
+  const HEAD_PX = display === 'wide' ? 44 : 34
+  const HEAD_LH = display === 'wide' ? '1.02' : '1.08'
 
   return `<!doctype html>
 <html lang="en"><head>
@@ -262,7 +271,7 @@ export function shell({
      is legible without it; this stops the display line from taking four
      lines of a 320px screen. */
   @media only screen and (max-width:480px) {
-    .mm-display { font-size:${display === 'wide' ? 38 : 30}px !important; }
+    .mm-display { font-size:${display === 'wide' ? 33 : 27}px !important; }
     .mm-pad { padding-left:22px !important; padding-right:22px !important; }
   }
 </style>
@@ -287,7 +296,7 @@ export function shell({
            masthead was a interface convention borrowed from software. -->
       <tr><td class="mm-pad" style="padding:34px 32px 0;">
         <div style="font-family:${HEAD_FONT};font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${GOLD};padding-bottom:14px;">${esc(eyebrow)}</div>
-        <div class="mm-display" style="font-family:${HEAD_FONT};font-size:${HEAD_PX}px;line-height:${HEAD_LH};font-weight:700;letter-spacing:-0.01em;text-transform:uppercase;color:${INK};">${esc(heading)}</div>
+        <div class="mm-display" style="font-family:${BODY_FONT};font-size:${HEAD_PX}px;line-height:${HEAD_LH};font-weight:600;letter-spacing:-0.021em;color:${INK};">${esc(heading)}</div>
         <div style="font-family:${BODY_FONT};font-size:17px;line-height:1.5;color:${BODY};padding-top:14px;">${esc(sub)}</div>
       </td></tr>
 
