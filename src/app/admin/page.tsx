@@ -192,7 +192,7 @@ export default async function Dashboard() {
 
       {rehearsal && (
         <>
-          <div className="adm-sec">
+          <div className="adm-sec" id="rehearsal" style={{ scrollMarginTop: '24px' }}>
             <h2>Rehearsal link</h2>
             <span className="c">Expires {fmtDateTime(new Date(Math.min(Date.now() + REHEARSAL_TTL_MS, opensAt)).toISOString())}</span>
           </div>
