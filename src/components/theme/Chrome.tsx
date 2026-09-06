@@ -178,11 +178,25 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
                       height={150}
                     />
                     {/* The transparent header swaps to the white mark. Their
-                        theme does this with a second <img>; so do we. */}
+                        theme does this with a second <img>; so do we.
+
+                        Two white files came off their CDN and only one is
+                        usable. Mermade-Market-Icon-white1-01.png is 900×371
+                        with the wordmark pushed hard to the left: its ink
+                        runs x=18..454, so the drawn mark sits 23.7% of the
+                        file's width left of the file's centre. The box it
+                        renders in is centred, but the mark inside it is not,
+                        which put the logo ~36px left of centre at the top of
+                        the home page and made it jump back to centre the
+                        moment the header went solid. Mermade-Market-Icon-
+                        white.png is the same artwork at 320×132, framed
+                        exactly like the dark mark beside it: same ink, same
+                        margins, so the two images overlap to the pixel and
+                        neither is off-centre. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       className="logo__image logo__image-transparent"
-                      src={img('Mermade-Market-Icon-white1-01.png')}
+                      src={img('Mermade-Market-Icon-white.png')}
                       alt=""
                       width={150}
                       height={150}
@@ -273,6 +287,13 @@ export function PageFooter({ show }: { show: Show }) {
           <div className="section-footer__row section-footer__row--blocks" data-num-blocks="3">
             <div className="section-footer__row__col section-footer__text-block">
               <span className="section-footer__text-block__image" style={{ maxWidth: 150 }}>
+                {/* Deliberately the -white1-01 file and not the centred
+                    -white one the header now uses. Its wordmark is drawn in
+                    the left quarter of its canvas, which is wrong under a
+                    centred header and right here: it puts the mark flush with
+                    the left edge of the column, in line with the copyright
+                    line below it. Swapping the file indents it by 38px and
+                    breaks that alignment. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={img('Mermade-Market-Icon-white1-01.png')} alt="" width={150} height={150} />
               </span>
