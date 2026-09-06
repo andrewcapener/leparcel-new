@@ -123,6 +123,67 @@ export function ThemeBoot() {
     return () => { clearInterval(id); clearTimeout(stop) }
   }, [])
 
+  /**
+   * The drawer, for anyone not using a finger.
+   *
+   * Symmetry opens the drawer by putting a class on <body>. It moves nothing
+   * else: focus stays wherever it was, so the first Tab after opening the nav
+   * went into the page behind the scrim, which is dimmed, unreadable and
+   * still fully tabbable. Escape did nothing either.
+   *
+   * `inert` on everything beside the drawer is the whole fix. It takes the
+   * page out of the tab order and out of the accessibility tree in one
+   * attribute, with no focus bookkeeping and nothing to unwind wrongly, and
+   * it is the browser's own trap rather than a keydown handler pretending to
+   * be one. The drawer's own close button takes focus on open; the hamburger
+   * that opened it takes focus back on close.
+   */
+  useEffect(() => {
+    if (!document.querySelector('page-header')) return
+    const body = document.body
+    let returnTo: HTMLElement | null = null
+
+    const drawer = () => document.querySelector<HTMLElement>('.mobile-navigation-drawer')
+    /* Everything at page level that is not the drawer or its scrim: the
+       announcement bar, the header, the content and the footer. */
+    const rest = () => {
+      const d = drawer()
+      if (!d?.parentElement) return [] as HTMLElement[]
+      return (Array.from(d.parentElement.children) as HTMLElement[])
+        .filter((el) => el !== d && !el.classList.contains('page-shade'))
+    }
+
+    const sync = () => {
+      const d = drawer()
+      if (!d) return
+      if (body.classList.contains('reveal-mobile-nav')) {
+        returnTo ??= document.querySelector<HTMLElement>('.logo-area .mobile-nav-toggle')
+        for (const el of rest()) el.setAttribute('inert', '')
+        if (!d.contains(document.activeElement)) {
+          d.querySelector<HTMLElement>('.mobile-nav-toggle')?.focus()
+        }
+      } else {
+        for (const el of rest()) el.removeAttribute('inert')
+        returnTo?.focus()
+        returnTo = null
+      }
+    }
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || !body.classList.contains('reveal-mobile-nav')) return
+      drawer()?.querySelector<HTMLElement>('.mobile-nav-toggle')?.click()
+    }
+
+    const watch = new MutationObserver(sync)
+    watch.observe(body, { attributes: true, attributeFilter: ['class'] })
+    document.addEventListener('keydown', onKey)
+    return () => {
+      watch.disconnect()
+      document.removeEventListener('keydown', onKey)
+      for (const el of rest()) el.removeAttribute('inert')
+    }
+  }, [])
+
   return (
     <>
       {SCRIPTS.map((src) => (

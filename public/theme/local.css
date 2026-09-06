@@ -1784,10 +1784,158 @@ h3, .h3 { line-height: 1.15; }
   font-size: var(--smaller-text-size-1);
   color: rgb(var(--text-color) / 0.7);
 }
-/* Sent: the same card, saying the one thing that matters. */
-.mm-signin--sent 
-/* A button that has to read as a link, because signing out is a POST. */
+/* A button that has to read as a link, because signing out is a POST.
+
+   The comment that used to sit between `.mm-signin--sent` and this selector
+   was inside the selector, not above it: a CSS comment is whitespace, so the
+   two class names read as a descendant selector and none of this applied to
+   the sign-out button, which is on /account and not inside a sent card. */
 .ap-link-btn {
   appearance: none; background: none; border: 0; padding: 0;
   font: inherit; color: inherit; text-decoration: underline; cursor: pointer;
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   The phone pass, September 2026.
+
+   Everything below is scoped to a phone-sized viewport and changes nothing
+   at desktop widths. Drew: "site needs a major mobile audit." What follows
+   is what the audit found, in the order it hurt.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── The hero, on a phone held sideways ───────────────────────────────────
+   The home hero is a fixed 500px on a phone and 600px from 768px up, which
+   is right in portrait and wrong the moment the phone turns: on a 360px-tall
+   landscape screen a 500px hero puts the dates and APPLY NOW below the fold
+   and nothing above it says what the show is or when.
+
+   So on a short screen the hero is at most the screen, measured in `svh` so
+   the browser chrome cannot cut it, and the type inside it takes the phone
+   size and centres below the header rather than under it. In portrait none
+   of this applies and the hero is untouched.
+
+   42px is the announcement bar, which the hero starts underneath. */
+@media (max-width: 1023.98px) and (max-height: 560px) {
+  #section-hero.video-section .height--fixed {
+    --image-height: calc(100svh - 42px);
+  }
+  #section-hero.video-section .text-overlay {
+    padding-top: var(--theme-header-height, 62px);
+  }
+  #section-hero.video-section .block-heading { font-size: 32px; }
+}
+
+/* ── The map plates, in `svh` ─────────────────────────────────────────────
+   Symmetry sizes the two stacked plates on a phone at 55vh each. `vh` is the
+   large viewport: with the address bar showing, 55vh is taller than 55% of
+   what you can see, and the plate resizes as the bar hides and returns.
+   `svh` is the same picture at a height that does not move. */
+@media (max-width: 767.98px) {
+  .map-section__feature,
+  .map-section__map,
+  .map-section__placeholder,
+  .map-section__map-container { height: 55svh; }
+}
+
+/* ── Targets a thumb can hit ──────────────────────────────────────────────
+   WCAG 2.2 SC 2.5.5 wants 44x44 for anything that is not inline in a
+   sentence. Four things on the site were under it on a phone: the Apply
+   button in the header (33px tall), the two footer social marks (24px), the
+   footer's secondary menu (29px), and the links on the 404 and under a
+   journal article (34-36px). The Apply button fits inside the 62px header
+   beside the 44px account mark, so none of this makes the header taller. */
+@media (max-width: 767.98px) {
+  .logo-area__right .header-apply-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .social__link { min-width: 44px; min-height: 44px; }
+  /* The negative margin gives a short word like FAQ a target wider than the
+     word without moving the word: the row sits where it sat. */
+  .section-footer__lower-menu__list a,
+  .nf__links a { padding: 14px 8px; margin-inline: -8px; }
+  .pagination-row a { padding: 14px 0; }
+  /* And large enough to read. The footer is the only route to Terms,
+     Privacy, the journal and the contact form, and it was set at 12px. */
+  .section-footer__lower-menu__list a,
+  .mm-signin__fine { font-size: var(--smaller-text-size-2); }
+}
+
+/* ── The account mark ─────────────────────────────────────────────────────
+   The mark alone is the only way back into an application on a phone, and
+   at 55% of the body grey it runs 2.2:1 on white, under the 3:1 that
+   SC 1.4.11 asks of a control. It is still the quiet thing beside APPLY;
+   it is now a thing you can see. */
+@media (max-width: 767.98px) {
+  .header-account-link { color: rgb(var(--text-color) / 0.85); }
+}
+
+/* ── The price table, actually stacking ───────────────────────────────────
+   "What it suits" was meant to sit under the space name on a phone. It did
+   not: `display: block` on one cell of a table row leaves the cell in its
+   own column, so the column stayed, 110px wide, at 12px, running six lines
+   deep on a 320px screen. The column a maker's decision turns on was the
+   hardest thing on the page to read.
+
+   Two consecutive non-cell children of a row are wrapped in one anonymous
+   cell, which is the mechanism `.timetable` above already uses: make the
+   name and the description blocks and they share a cell, while the money
+   stays a cell of its own on the right. The header row loses the middle
+   heading with them, so it reads SPACE / PRICE over what is underneath. */
+@media (max-width: 600px) {
+  .price-table thead th:nth-child(2) { display: none; }
+  /* Both rules off: as blocks these two would draw the theme's cell borders
+     on their own edges, which put a hairline between a space's name and its
+     description and made one row read as two. */
+  .price-table tbody th[scope="row"],
+  .price-table tbody td:nth-child(2) {
+    display: block;
+    border-top: 0;
+    border-bottom: 0;
+  }
+  .price-table tbody th[scope="row"] { padding-bottom: 0; }
+  .price-table tbody td:nth-child(2) {
+    padding-top: 0.35em;
+    /* 14px, not 12px. This is a sentence, and nothing you read runs under
+       14px on a phone. */
+    font-size: var(--smaller-text-size-2);
+    line-height: 1.5;
+  }
+  /* The two blocks share an anonymous cell, which cannot carry a border, so
+     the row draws the rule under them. The money cell keeps its own, and the
+     two meet as one line because they are the same weight and colour. */
+  .price-table tbody tr {
+    border-bottom: 1px solid rgb(var(--text-color) / var(--divider-opacity));
+  }
+  .price-table tbody th.price-table__group {
+    display: table-cell;
+    padding-bottom: 0.5em;
+  }
+}
+
+/* ── The drawer ───────────────────────────────────────────────────────────
+   The page behind an open drawer is already locked. What was missing is the
+   chain: scrolling past the end of the drawer, or dragging on the scrim,
+   hands the gesture to the page underneath on iOS. */
+.mobile-navigation-drawer { overscroll-behavior: contain; }
+.page-shade { overscroll-behavior: none; touch-action: none; }
+
+/* ── Headings that break badly on a narrow column ─────────────────────────
+   Display type set for a desktop measure drops a two-word last line on a
+   phone: "This page could not be / found." and "What this site / is for".
+   The theme already balances its banner titles; these four were the ones it
+   does not reach. Above 768 every one of them is a single line, so this is
+   a phone rule and nothing changes on a desktop. */
+@media (max-width: 767.98px) {
+  .lg-section__title,
+  .lg-part__title,
+  .mm-signin__title,
+  .nf__title { text-wrap: balance; }
+}
+
+/* ── Anchors, under a sticky header ───────────────────────────────────────
+   The masthead stays on screen, so anything scrolled to by id lands behind
+   it. The legal pages and the maker rules set their own margin; the skip
+   link had none, and it is the first thing a keyboard user uses. */
+#content { scroll-margin-top: calc(var(--theme-header-height, 62px) + 12px); }

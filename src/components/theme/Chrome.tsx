@@ -169,13 +169,18 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
                     is actually about. */}
                 <div className="logo__h1">
                   <Link className="logo__link" href="/" title="Mermade Market">
+                    {/* The mark's real pixels, 320x132. They were 150x150,
+                        which is not this file and not any file: the browser
+                        reserves the ratio it is given until the image
+                        decodes, so the header opened 100px tall on a phone
+                        and snapped to 41px, moving everything under it. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       className="logo__image"
                       src={img('Mermade-Market-Icon.png')}
                       alt="Mermade Market"
-                      width={150}
-                      height={150}
+                      width={320}
+                      height={132}
                     />
                     {/* The transparent header swaps to the white mark. Their
                         theme does this with a second <img>; so do we.
@@ -198,8 +203,8 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
                       className="logo__image logo__image-transparent"
                       src={img('Mermade-Market-Icon-white.png')}
                       alt=""
-                      width={150}
-                      height={150}
+                      width={320}
+                      height={132}
                       aria-hidden="true"
                     />
                   </Link>
@@ -279,6 +284,10 @@ const DRAWER_TEMPLATE = `
       <ul class="navigation__tier-1">
 ${NAV.map((n) => `        <li class="navigation__item${n.featured ? ' featured-link' : ''}"><a href="${n.href}" class="navigation__link">${n.label}</a></li>`).join('\n')}
         <li class="navigation__item"><a href="/apply" class="navigation__link">APPLY</a></li>
+        <!-- The account mark in the header is 44px of grey line drawing and
+             nothing else. On a phone it is the only way back into an
+             application, so the drawer says the word. -->
+        <li class="navigation__item"><a href="/account" class="navigation__link">ACCOUNT</a></li>
       </ul>
     </div>
   </div>
@@ -301,8 +310,9 @@ export function PageFooter({ show }: { show: Show }) {
                     the left edge of the column, in line with the copyright
                     line below it. Swapping the file indents it by 38px and
                     breaks that alignment. */}
+                {/* 900x371, its real pixels. Same reason as the header. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img('Mermade-Market-Icon-white1-01.png')} alt="" width={150} height={150} />
+                <img src={img('Mermade-Market-Icon-white1-01.png')} alt="" width={900} height={371} />
               </span>
             </div>
             <div className="section-footer__row__col section-footer__text-block section-footer__text-block--with-text">
