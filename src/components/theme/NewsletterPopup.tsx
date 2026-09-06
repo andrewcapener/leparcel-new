@@ -97,10 +97,10 @@ export function NewsletterPopup() {
             <div className="popup-section__background-image img-fill absolute top-0 left-0 h-full w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={img('7H3A8680.jpg')}
+                src={img('/photos/dresses.jpg')}
                 alt=""
-                width={2500}
-                height={3445}
+                width={1100}
+                height={1650}
                 loading="lazy"
                 sizes="(min-width: 768px) 640px, 95vw"
                 className="theme-img"

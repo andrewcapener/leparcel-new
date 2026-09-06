@@ -4,7 +4,7 @@ import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
-import { PageTitle, LogoGrid, RichText } from '@/components/theme/Sections'
+import { PageTitle, LogoGrid, RichText, Banner } from '@/components/theme/Sections'
 import { fmtDate } from '@/lib/dates'
 
 export const dynamic = 'force-dynamic'
@@ -118,6 +118,17 @@ export default async function Merchants() {
               ))}
             </>
           )}
+
+          {/* A page of names closes on the thing the names add up to: one
+              register at the front, and one bag at the end. */}
+          <Banner
+            id="section-merchants-plate"
+            image="/photos/tote.jpg"
+            title=""
+            heightMobile={420}
+            heightDesktop={560}
+            shadow={false}
+          />
         </SiteShell>
   )
 }

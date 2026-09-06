@@ -27,8 +27,9 @@ export const founderLetter = {
   ],
   signature: 'Elise',
   role: 'Founder · Mermade Market',
-  // TODO(content): replace with a real portrait of Elise. This is a floor shot.
-  photo: '/photos/vendor.jpg',
+  // TODO(content): replace with a real portrait of Elise. This is a floor shot,
+  // now one from the Community House rather than the harbour we left.
+  photo: '/photos/register.jpg',
   photoCaption: 'Show XXI, Fall 2025',
   photoIsPlaceholder: true,
 }

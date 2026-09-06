@@ -304,7 +304,7 @@ export default async function Apply({
 
       <Banner
         id="section-apply-band"
-        image="IMG_3335.jpg"
+        image="/photos/shopper.jpg"
         title=""
         heightMobile={460}
         heightDesktop={600}

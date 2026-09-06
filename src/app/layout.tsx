@@ -29,10 +29,11 @@ import { NewsletterPopup } from '@/components/theme/NewsletterPopup'
  * canonical on all of them. Pages here set their own description; this is the
  * fallback for anything that has not, and the canonical is per-page below.
  */
-/** The picture a shared link shows. The market crowd shot the FAQ opens with:
- *  1600x1067, landscape, and recognisably this market rather than a logo on a
- *  background. */
-const OG_IMAGE = img('IMG_2793.jpg')
+/** The picture a shared link shows: the painted backdrop with the hand-cut
+ *  MERMADE MARKET sign, cropped to the 1200x630 every scraper expects. It
+ *  carries the name, it is unmistakably this market rather than a logo on a
+ *  background, and there is no face in it to crop through. */
+const OG_IMAGE = img('/photos/og.jpg')
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),

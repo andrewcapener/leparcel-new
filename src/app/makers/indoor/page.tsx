@@ -5,7 +5,7 @@ import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import {
-  PageTitle, RichText, FactTable, PriceTable, CollapsibleTabs, type Tab,
+  PageTitle, RichText, FactTable, PriceTable, CollapsibleTabs, Banner, type Tab,
 } from '@/components/theme/Sections'
 import { indoorSections, fill } from '@/lib/page-html'
 import { dayBefore, fmtDayMonth, fmtWeekday, fmtWeekdayDate } from '@/lib/dates'
@@ -174,6 +174,19 @@ export default async function IndoorMerchants() {
             tabs={tabs}
           />
           </div>
+
+          {/* Two thousand words of rules and, until now, no picture of the
+              thing they describe. An indoor space is a few feet of shelving
+              against a white wall, and a maker who has read this far has
+              earned a look at one that works. */}
+          <Banner
+            id="section-indoor-plate"
+            image="/photos/ceramics.jpg"
+            title=""
+            heightMobile={420}
+            heightDesktop={560}
+            shadow={false}
+          />
 
           {/* The rules pages had no link to the application anywhere in two
               thousand words. A maker who reads to the bottom now has one. */}

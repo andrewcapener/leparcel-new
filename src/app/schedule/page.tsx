@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
-import { PageTitle, RichText, FactTable } from '@/components/theme/Sections'
+import { PageTitle, RichText, FactTable, Banner } from '@/components/theme/Sections'
 import { bookends, extrasFor, splitDay } from '@/lib/schedule'
 
 export const dynamic = 'force-dynamic'
@@ -137,6 +137,17 @@ export default async function Schedule() {
               { label: 'Coming twice', value: 'The outdoor tents change every day, so Saturday is a different market from Friday.' },
             ]}
             cta={{ href: `/api/calendar/${show.slug}`, label: 'Add to calendar', external: true }}
+          />
+
+          {/* The timetable answers when. This answers what it is like: one
+              long room, racks and shelves, and enough space to look twice. */}
+          <Banner
+            id="section-schedule-plate"
+            image="/photos/racks.jpg"
+            title=""
+            heightMobile={420}
+            heightDesktop={560}
+            shadow={false}
           />
 
         </SiteShell>
