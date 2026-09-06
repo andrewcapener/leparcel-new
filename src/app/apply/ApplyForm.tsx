@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { submitApplication, type FormState } from '@/app/actions'
 import { CATEGORIES, type AddOn, type Show, type SpaceType } from '@/db/schema'
+import { dayBefore, fmtWeekdayDate } from '@/lib/dates'
 import { bpsLabel, usd } from '@/lib/money'
 import { PhotoField } from './PhotoField'
 import type { PhotoItem } from './photo-upload'
@@ -294,6 +295,10 @@ export function ApplyForm({
   const visible = spaces.filter((s) => track === 'both' || s.track === track)
   const slots = (show.loadInSlots ?? '').split(',').map((x) => x.trim()).filter(Boolean)
   const showSlots = slots.length > 0 && track !== 'outdoor'
+  // What day these times are on. Staff prose wins, because they are the ones
+  // who know if load-in ever stops being the day before the doors open; the
+  // derived day is the floor, so the times are never on an unnamed day.
+  const loadInWhen = show.loadInNote || fmtWeekdayDate(dayBefore(show.startsOn))
   // A null-track add-on is offered to everyone; the rest follow the track.
   const visibleExtras = extras.filter(
     (a) => a.track === null || track === 'both' || a.track === track,
@@ -633,8 +638,13 @@ export function ApplyForm({
 
             {showSlots && (
               <div className="column column--full">
-                <fieldset className="ap-group" aria-describedby="slots-hint">
+                <fieldset className="ap-group" aria-describedby="slots-when slots-hint">
                   <legend className="ap-group__legend">Set-up time</legend>
+                  {/* The day, under the heading, the way a space carries its
+                      size under its name. Three times with no date beside them
+                      are three times on an unnamed day, and load-in is the one
+                      thing on this form that happens before the show. */}
+                  <p className="ap-group__when" id="slots-when">{loadInWhen}</p>
                   <p className="note" id="slots-hint">
                     Load-in is staggered so a hundred shops are not carrying
                     tables through one door at once. Check every slot you could

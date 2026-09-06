@@ -590,6 +590,14 @@ h3, .h3 { line-height: 1.15; }
   font-weight: 600;
   line-height: 1.4em;
 }
+/* The day the group is about, under its heading, matching the size caption a
+   space carries under its name. */
+.ap-group__when {
+  margin: -6px 0 8px;
+  color: rgb(var(--text-color) / 0.75);
+  font-size: var(--smaller-text-size-2);
+  line-height: 1.45;
+}
 
 /* A priced option. This is where the money is and where makers get confused,
    so the price is its own column at the size of a heading, the whole row is
