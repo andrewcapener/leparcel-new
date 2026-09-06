@@ -21,6 +21,11 @@ import { applicationReceivedHtml } from '@/server/modules/email/application-rece
 import { CONTACT_EMAIL } from '@/lib/agreement'
 import { parsePhotoKeys } from '@/server/modules/uploads/photos'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
+import { siteUrl } from '@/lib/site-url'
+import { signInLinkHtml, signInLinkText } from '@/server/modules/email/sign-in-link'
+import {
+  LINK_TTL_MS, makerAuthConfigured, normalizeEmail, signLinkToken,
+} from '@/lib/makerAuth'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 
 /* ═══════════════════════ helpers ═══════════════════════ */
@@ -173,6 +178,53 @@ export async function sendMessage(prev: FormState, fd: FormData): Promise<FormSt
     ok: true,
     message: 'Got it. Someone reads every one of these, usually within a day or two.',
   }
+}
+
+/* ═══════════════════════ maker sign-in ═══════════════════════ */
+
+const SignInSchema = z.object({ email: z.string().email('Enter the email you applied with') })
+
+/**
+ * Email a maker a link that signs them in.
+ *
+ * The reply is the same sentence whether or not the address is one of ours.
+ * A sign-in form that says "no account with that email" is a form that will
+ * tell anyone who asks which of a hundred makers applied, and the roster is
+ * not public until the roster is public. So: we always say we have sent it,
+ * and we only actually send when there is a maker to send to.
+ */
+export async function requestSignInLink(prev: FormState, fd: FormData): Promise<FormState> {
+  const attempt = (prev.attempt ?? 0) + 1
+  const raw = Object.fromEntries(fd.entries()) as Record<string, string>
+  const parsed = SignInSchema.safeParse(raw)
+  if (!parsed.success) {
+    return {
+      ok: false, attempt, values: raw,
+      errors: { email: parsed.error.issues[0]?.message ?? 'Enter a valid email address' },
+    }
+  }
+
+  const said = {
+    ok: true as const,
+    message: 'Check your email. If that address has applied to a Mermade show, a link is on its way.',
+  }
+  if (!makerAuthConfigured()) return said
+
+  const email = normalizeEmail(parsed.data.email)
+  const vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
+  if (!vendor) return said
+
+  const url = `${siteUrl()}/account/enter?token=${encodeURIComponent(await signLinkToken(email))}`
+  const minutes = Math.round(LINK_TTL_MS / 60_000)
+  await mail(
+    email,
+    'Your Mermade sign-in link',
+    signInLinkText({ url, minutes }),
+    'maker_sign_in',
+    undefined,
+    signInLinkHtml({ url, shopName: vendor.shopName, minutes }),
+  )
+  return said
 }
 
 /* ═══════════════════════ application ═══════════════════════ */
