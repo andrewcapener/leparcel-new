@@ -174,7 +174,7 @@ export function saveTheDateHtml({
       + `<tr><td style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>`
       + paragraphs([
         `The ${esc(season)} dates are set. Three days at the ${esc(venueName)} on San Juan Avenue, indoors and out, and free to walk in.`,
-        `Applications open this morning and close ${esc(applicationsClose)}. We read every one and we answer either way, on ${esc(rosterDate)}.`,
+        `Applications are open now and close ${esc(applicationsClose)}. We read every one and we answer either way, on ${esc(rosterDate)}.`,
       ])
       + actions(url('/apply'), url('/schedule'))
 
@@ -224,7 +224,7 @@ export function saveTheDateText(i: SaveTheDateInput): string {
     `Dana Point ${i.venueName}, ${i.venueAddress}. Free to attend.`,
     '',
     `The ${i.season} dates are set. Three days at the ${i.venueName} on San Juan Avenue, indoors and out, and free to walk in.`,
-    `Applications open this morning and close ${i.applicationsClose}. We read every one and we answer either way, on ${i.rosterDate}.`,
+    `Applications are open now and close ${i.applicationsClose}. We read every one and we answer either way, on ${i.rosterDate}.`,
     '',
     `Apply: ${i.siteUrl}/apply`,
     `Coming to shop instead, hours and parking: ${i.siteUrl}/schedule`,
