@@ -565,7 +565,7 @@ export function ApplyForm({
               name="track" label="Inside or outside" error={e.track}
               hint={
                 track === 'indoor'
-                  ? `Inside is consignment. We merchandise your work, sell it at one register, and take ${bpsLabel(show.commissionBps)}. You are not at the show.`
+                  ? `Inside is consignment. Your shop is on the floor all three days and you do not have to be: we merchandise it, sell it at one register, and take ${bpsLabel(show.commissionBps)}.`
                   : track === 'outdoor'
                     ? 'Outside is a tent for the day. You run your own payments and keep all of it.'
                     : 'One application, both tracks. Check what you want in each.'

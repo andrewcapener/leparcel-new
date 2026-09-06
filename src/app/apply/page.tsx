@@ -116,8 +116,9 @@ export default async function Apply({
         <>
           <PriceTable caption="Indoor spaces" spaces={indoor} extras={forTrack('indoor')} />
           <p>
-            Inside is consignment. We merchandise your work, sell it at one
-            register, and pay out after the show. You are not at the show.
+            Inside is consignment. Your shop is set up and on the floor for
+            all three days, and you do not have to be: we merchandise your
+            work, sell it at one register, and pay out after the show.
           </p>
         </>
       ),
@@ -222,10 +223,10 @@ export default async function Apply({
             </p>
             <h1 className="majortitle in-content h1 ap-head__title">Maker Application</h1>
             <p className="ap-head__lede">
-              One form covers both tracks. Inside is consignment at one
-              register. Outside is a tent we set up for you, for the day, and
-              you keep everything you sell. No fee to apply, and we answer
-              either way.
+              One form covers both tracks. Inside is consignment: we showcase
+              your shop for all three days and sell it at one register. Outside
+              is a tent we set up for you, for the day, and you keep everything
+              you sell. No fee to apply, and we answer either way.
             </p>
 
             <dl className="ap-glance">
