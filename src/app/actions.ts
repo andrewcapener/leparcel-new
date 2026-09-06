@@ -240,7 +240,7 @@ const ApplicationSchema = z.object({
   city: z.string().min(1, 'Required').max(80, 'Keep it under 80 characters'),
   state: z.string().min(2, 'Required').max(40, 'Keep it under 40 characters'),
 
-  track: z.enum(['indoor', 'outdoor', 'both']),
+  track: z.enum(['indoor', 'outdoor', 'both'], { message: 'Choose inside, outside, or both' }),
 
   category: z.enum(CATEGORIES, { message: 'Choose a category' }),
   description: z.string().min(40, 'Tell us a little more (40 characters minimum)').max(600, '600 characters max'),
@@ -251,9 +251,13 @@ const ApplicationSchema = z.object({
   priceHigh: z.coerce.number({ message: 'Whole dollars, no cents' })
     .int('Whole dollars, no cents').min(1, 'Required'),
 
-  madeByYou: z.enum(['all', 'mostly_sourced_components', 'curate_resell']),
-  usesAiArtwork: z.enum(['yes', 'no']),
-  isMlm: z.enum(['yes', 'no']),
+  // No default on any of these three in the form, so a blank really is a
+  // blank and the message has to read like a question, not a type error.
+  madeByYou: z.enum(['all', 'mostly_sourced_components', 'curate_resell'], {
+    message: 'Tell us how much of it you make',
+  }),
+  usesAiArtwork: z.enum(['yes', 'no'], { message: 'Answer yes or no' }),
+  isMlm: z.enum(['yes', 'no'], { message: 'Answer yes or no' }),
 
   permitStatus: z.enum(['have', 'occasional', 'unsure']).optional().or(z.literal('')),
   sellerPermit: z.string().optional(),
@@ -268,6 +272,16 @@ const ApplicationSchema = z.object({
 })
   .refine((d) => d.priceHigh >= d.priceLow, {
     message: 'High price must be at least the low price', path: ['priceHigh'],
+  })
+  /* Having a permit is not required to apply. Saying you have one and then
+     not giving the number is, because that answer is worth nothing to us:
+     it is the number that lets us meet Publication 111 before load-in, and
+     chasing it later by email is the work this field exists to avoid. The
+     other two answers, "occasional seller" and "not sure", stay free: they
+     are honest positions and we handle them after acceptance. */
+  .refine((d) => d.permitStatus !== 'have' || (d.sellerPermit ?? '').trim().length > 0, {
+    message: 'Add your permit number, or change the answer above',
+    path: ['sellerPermit'],
   })
   // NOT blocking at application. See the note on the compliance gate below.
   //

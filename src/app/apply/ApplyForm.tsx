@@ -489,8 +489,15 @@ export function ApplyForm({
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </Field>
+            {/* No default here, or on the two below. The default was the best
+                possible answer to the question the jury cares most about, so
+                an applicant who never read it was answered for, in their own
+                favour, and the row arrived indistinguishable from one somebody
+                chose. A blank first option costs one tap and makes the answer
+                mean something. */}
             <Field name="madeByYou" label="Is everything made by you?" error={e.madeByYou} half>
-              <select name="madeByYou" required defaultValue={v.madeByYou ?? 'all'}>
+              <select name="madeByYou" required defaultValue={v.madeByYou ?? ''}>
+                <option value="" disabled>Choose one</option>
                 <option value="all">Yes, I make everything</option>
                 <option value="mostly_sourced_components">Mostly, with sourced components</option>
                 <option value="curate_resell">I curate and resell</option>
@@ -516,13 +523,15 @@ export function ApplyForm({
             {/* Renegade and Patchwork both added the AI question in 2025.
                 docs/01-PRODUCT-SPEC.md §3.1 — ask it now, not later. */}
             <Field name="usesAiArtwork" label="Any AI-generated artwork?" error={e.usesAiArtwork} half>
-              <select name="usesAiArtwork" defaultValue={v.usesAiArtwork ?? 'no'}>
+              <select name="usesAiArtwork" required defaultValue={v.usesAiArtwork ?? ''}>
+                <option value="" disabled>Choose one</option>
                 <option value="no">No</option>
                 <option value="yes">Yes</option>
               </select>
             </Field>
             <Field name="isMlm" label="Are you an MLM / direct-sales brand?" error={e.isMlm} half>
-              <select name="isMlm" defaultValue={v.isMlm ?? 'no'}>
+              <select name="isMlm" required defaultValue={v.isMlm ?? ''}>
+                <option value="" disabled>Choose one</option>
                 <option value="no">No</option>
                 <option value="yes">Yes</option>
               </select>
@@ -696,18 +705,20 @@ export function ApplyForm({
             {/* Only once they have said they have one. Asking everybody for a
                 number most of them do not have is the errand that emptied the
                 old paperwork step; asking the one person who just told us they
-                have it is a single field they can answer. Optional, so a maker
-                who cannot find it right now still submits. */}
+                have it is a single field they can answer, and now one they
+                have to: "I have a permit" without the number is the answer
+                that costs us an email chain later, and they can always pick
+                one of the other two options instead. */}
             {track !== 'indoor' && permit === 'have' && (
                 <Field
-                  name="sellerPermit" label="Your permit number (optional)"
+                  name="sellerPermit" label="Your permit number"
                   error={e.sellerPermit}
-                  hint="If you have it to hand, this saves us both an email later. If not, leave it and we will ask once you are accepted."
+                  hint="The number on your CDTFA permit. If you cannot find it right now, change the answer above and we will ask again once you are accepted."
                 >
                   {/* No inputMode: a permit number carries a hyphen, and a
                       numeric keypad on a phone has no key for it. */}
                   <input
-                    type="text" name="sellerPermit"
+                    type="text" name="sellerPermit" required
                     autoCapitalize="characters" autoCorrect="off" {...keep('sellerPermit')}
                   />
                 </Field>
