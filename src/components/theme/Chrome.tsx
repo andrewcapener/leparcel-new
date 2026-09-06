@@ -365,6 +365,11 @@ export function PageFooter({ show }: { show: Show }) {
                   <li><Link href="/journal">Journal</Link></li>
                   <li><Link href="/apply">Apply</Link></li>
                   <li><Link href="/collaborate">Collaborate</Link></li>
+                  {/* The footer is where people look for these, and they have
+                      to be reachable from every page rather than only from the
+                      form that asks you to accept them. */}
+                  <li><Link href="/terms">Terms</Link></li>
+                  <li><Link href="/privacy">Privacy</Link></li>
                 </ul>
               </div>
             </div>

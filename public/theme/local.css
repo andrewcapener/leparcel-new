@@ -1333,15 +1333,18 @@ h3, .h3 { line-height: 1.15; }
 }
 /* A rule you are held to, marked once at the left. The glyph is decorative,
    so it is drawn rather than typed and a screen reader never says "bullet". */
+/* A square, not a diamond. Drew, 6 Sep 2026: no diamond icon anywhere. It was
+   a 7px square rotated 45deg; the rotation is what made it a diamond, so the
+   rotation is what goes. Filled and in the gold, which is the mark the rest of
+   the brand uses to point at things. */
 .mk-rules__list li::before {
   content: "";
   position: absolute;
-  top: 1.35em;
-  left: 0.15em;
-  width: 7px;
-  height: 7px;
-  border: 1.5px solid rgb(var(--heading-color));
-  transform: rotate(45deg);
+  top: 1.45em;
+  left: 0.2em;
+  width: 6px;
+  height: 6px;
+  background: rgb(var(--link-color));
 }
 .mk-rules__note {
   margin: 0.9em 0 0;
@@ -1598,26 +1601,26 @@ h3, .h3 { line-height: 1.15; }
 /* ── The accordions, second pass ───────────────────────────────────────────
    Leadsower's FAQ is the reference. Two things separate it from what we had.
 
-   Width. Symmetry caps `.collapsible-tabs` at `--reading-container-width`,
-   which is a measure meant for paragraphs of prose. An accordion is not
-   prose: the question is one line and the answer is short, so the cap only
-   stranded the whole set in the middle of a wide page while every other
-   section ran full. It now takes the page container, with a cap high enough
-   that a question never has to travel across a desktop to reach its marker.
+   Width. It ran to 1180px for a while, on the argument that a question is one
+   line and does not need a prose measure. On the page that was wrong: every
+   other section on /makers/indoor and /makers/outdoor is a reading-width
+   container, so the accordion's rules ran 150px past the text above and below
+   them and the page stepped out and back in halfway down. It takes the same
+   measure as everything else now, which puts the rules on the same left edge
+   as the paragraphs. Drew, 6 Sep 2026.
 
    Contrast. There, the question is near-black and the answer is a clear step
    lighter, so an open panel reads as an aside to its question rather than as
    more headings. That difference is what makes a long list scannable. */
 .collapsible-tabs {
-  max-width: 1180px;
+  max-width: var(--reading-container-width);
   margin-inline: auto;
 }
 
-/* The answer runs wide now. The old 68ch measure was set when the whole
-   column was 880px, where it did nothing; at this width it would have left
-   the answers in a narrow strip under full-width questions. */
+/* The column is the measure. An answer used to carry its own cap, which
+   mattered only while the accordion was wider than the page's text; now it
+   would just be a second number to keep in step with the first. */
 .collapsible-tabs__tab .disclosure__content {
-  max-width: 96ch;
   color: rgb(var(--text-color) / 0.72);
   padding-bottom: 34px;
   line-height: 1.75;
