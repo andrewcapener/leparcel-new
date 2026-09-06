@@ -146,6 +146,13 @@ export default async function Apply({
             { label: 'Line-up announced', value: fmtDate(show.rosterAnnouncedOn) },
             { label: 'Booth fee due', value: `Within ${show.paymentWindowHours} hours of being accepted` },
             ...(show.loadInNote ? [{ label: 'Inside set-up', value: show.loadInNote }] : []),
+            /* Outside is a separate row because it is a separate day: inside
+               loads in the evening before the doors open, outside the morning
+               of the one day they booked. One row headed "Set-up" would tell
+               half the applicants the wrong thing. */
+            ...(show.outdoorLoadInNote
+              ? [{ label: 'Outside set-up', value: show.outdoorLoadInNote }]
+              : []),
             ...(show.takedownNote ? [{ label: 'Inside take-down', value: show.takedownNote }] : []),
             {
               label: 'Show hours',

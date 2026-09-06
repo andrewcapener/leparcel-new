@@ -137,6 +137,10 @@ async function main() {
     // "time slot chosen in the application" itself, and saying "staggered
     // arrival slots" here as well said the same thing twice.
     loadInNote: 'Thursday 12 November, 1-7pm',
+    // Outside sets up the morning of the day they booked, not the night
+    // before. Drew, 6 Sep 2026. The doors time is not typed here: the page
+    // takes it off the hours so the two cannot drift apart.
+    outdoorLoadInNote: '7am on your day',
     // The three the market has actually run (Spring 2026 responses).
     loadInSlots: '1-3pm, 3-5pm, 5-7pm',
     takedownNote: 'Sunday 15 November at 5pm sharp',

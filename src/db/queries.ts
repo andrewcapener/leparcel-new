@@ -67,8 +67,12 @@ export async function activeShow(): Promise<Show | undefined> {
     .limit(1)
   // Same reasoning as loadInNote: this path runs only when the deployed code
   // is ahead of the database, and an empty slot list simply hides the
-  // set-up time question rather than taking the form down.
-  return row ? { ...row, loadInNote: '', takedownNote: '', loadInSlots: '' } : undefined
+  // set-up time question rather than taking the form down. Every load-in
+  // field empties together, and each caller has its own words for a load-in
+  // nobody knows yet.
+  return row
+    ? { ...row, loadInNote: '', outdoorLoadInNote: '', takedownNote: '', loadInSlots: '' }
+    : undefined
 }
 
 let addOnsMissingUntil = 0

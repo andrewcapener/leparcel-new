@@ -98,10 +98,20 @@ export function SettingsForm({ show }: { show: Show }) {
         </Field>
         <div className="adm-row2">
           <Field
-            name="loadInNote" label="Load-in, as shown to makers" error={e.loadInNote}
-            hint="Appears on both maker rules pages and on /apply. Prose, e.g. “Thursday 12 November, 1-7pm”."
+            name="loadInNote" label="Load-in inside, as shown to makers" error={e.loadInNote}
+            hint="The evening before the doors open. Appears on /makers/indoor, on /apply above the set-up times, and in the signed agreement. Prose, e.g. “Thursday 12 November, 1-7pm”."
           >
             <input className="inp" id="loadInNote" name="loadInNote" {...keep('loadInNote', show.loadInNote)} />
+          </Field>
+          <Field
+            name="outdoorLoadInNote" label="Load-in outside, as shown to makers"
+            error={e.outdoorLoadInNote}
+            hint="Outside sets up the morning of the day they booked, so it gets its own line. Prose, e.g. “7am on your day”. The page adds the time the market opens, so do not type that here."
+          >
+            <input
+              className="inp" id="outdoorLoadInNote" name="outdoorLoadInNote"
+              {...keep('outdoorLoadInNote', show.outdoorLoadInNote)}
+            />
           </Field>
           <Field
             name="takedownNote" label="Take-down, as shown to makers" error={e.takedownNote}

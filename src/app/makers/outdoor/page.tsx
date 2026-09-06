@@ -10,7 +10,8 @@ import {
 import { outdoorSections, fill } from '@/lib/page-html'
 import { POLICY } from '@/lib/agreement'
 import { usd } from '@/lib/money'
-import { dayBefore, fmtDate, fmtWeekdayDate } from '@/lib/dates'
+import { fmtDate } from '@/lib/dates'
+import { bookends, splitDay } from '@/lib/schedule'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,17 +53,27 @@ export default async function OutdoorMerchants() {
      mismatch itself is theirs to settle at /admin/show. */
   const dayName = (d: string) => d.replace(/,\s*[^,]*$/, '').trim()
 
+  /* When the market opens, taken off the hours rather than typed beside the
+     set-up time. Only printed when every day opens together: three days that
+     start at different times cannot be summed up in one sentence, and a
+     sentence that picks the first day would be wrong for the other two. */
+  const opens = days.map((d) => bookends(splitDay(d).hours).opens).filter(Boolean)
+  const sameOpen = opens.length > 0 && opens.every((o) => o === opens[0])
+  /* Outside sets up the morning of the day they booked. This used to be a
+     sentence typed into the page, which meant it could not be edited at
+     /admin/show and could not follow the venue (CLAUDE.md rule 6). */
+  const outdoorLoadIn = show.outdoorLoadInNote || 'the morning of your day'
+
   const vars = {
     indoorCapacity: show.indoorCapacity,
     outdoorCapacity: show.outdoorCapacity,
     // One source for the payout window, so the fact table, this prose and
     // the signed agreement cannot say three different things.
-    // Load-in day on its own, for copy that names the day rather than the
-    // window (CLAUDE.md rule 6: never a typed date).
-    loadInDay: fmtWeekdayDate(dayBefore(show.startsOn)),
     payoutMin: POLICY.payoutDaysMin,
     payoutMax: POLICY.payoutDays,
-    loadIn: show.loadInNote || 'announced with your acceptance',
+    // The outdoor note, not the indoor one. Inside loads in the evening
+    // before the doors open; outside is not there that day.
+    loadIn: outdoorLoadIn,
     takedown: show.takedownNote || 'announced with your acceptance',
     day1: days[0] ?? '',
     day2: days[1] ?? '',
@@ -96,7 +107,9 @@ export default async function OutdoorMerchants() {
                 ? `${usd(Math.min(...outdoor.map((x) => x.priceCents)))} to ${usd(Math.max(...outdoor.map((x) => x.priceCents)))} a day`
                 : 'See the table below' },
               { label: 'The tent', value: '6.5ft square and 7.5ft tall, provided. A few 10 × 10s exist and you can ask for one.' },
-              { label: 'Set-up', value: '7am on your day. The market opens at 9am.' },
+              { label: 'Set-up', value: sameOpen
+                ? `${outdoorLoadIn}. The market opens at ${opens[0]}.`
+                : `${outdoorLoadIn}, before the market opens.` },
               { label: 'Choosing days', value: 'Pick more than one and your odds go up. It tells us you are flexible.' },
               { label: 'Applications close', value: fmtDate(show.applicationsCloseAt) },
             ]}

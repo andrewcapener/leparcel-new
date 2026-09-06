@@ -37,6 +37,11 @@ export const shows = pgTable('shows', {
   // Load-in and take-down are prose, not dates: they move with the venue and
   // the staff edit them at /admin/show. Never hardcode them in a page.
   loadInNote: text('load_in_note').notNull().default(''),
+  // Outside runs on its own clock: an outdoor maker books a single day and
+  // sets up the morning of it, so the indoor note (the evening before the
+  // doors open, in staggered slots) is not merely imprecise for them, it names
+  // a day most of them are not there. Confirmed by Drew, 6 Sep 2026.
+  outdoorLoadInNote: text('outdoor_load_in_note').notNull().default(''),
   // The staggered arrival slots offered on the application, comma separated,
   // e.g. "1-3pm, 3-5pm, 5-7pm". On the Show record because the load-in window
   // moves with the venue (CLAUDE.md rule 6) and staff edit it at /admin/show.
