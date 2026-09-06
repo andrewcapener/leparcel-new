@@ -16,6 +16,7 @@ import { plainDashes } from '@/lib/dashes'
 import { syncApplication } from '@/server/modules/sheets/sync'
 import { gatherRow } from '@/server/modules/sheets/gather'
 import { SHEET_HEADERS, sheetValues } from '@/server/modules/sheets/row'
+import { staffNoticeHtml } from '@/server/modules/email/staff-notice'
 import { parsePhotoKeys } from '@/server/modules/uploads/photos'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
@@ -60,6 +61,7 @@ const DEFAULT_EMAIL_FROM = 'Mermade Market <hello@mermademarket.com>'
 
 async function mail(
   toEmail: string, subject: string, body: string, template: string, replyTo?: string,
+  html?: string,
 ) {
   const id = randomUUID()
   await db.insert(emailOutbox).values({ id, toEmail, subject, body, template })
@@ -77,7 +79,11 @@ async function mail(
         from: process.env.EMAIL_FROM ?? DEFAULT_EMAIL_FROM,
         to: [toEmail],
         subject,
+        // Both parts, always. The text one is what arrives when a client
+        // refuses HTML, what a screen reader reads happily, and what the
+        // outbox stores. The HTML one is what the team opens.
         text: body,
+        ...(html ? { html } : {}),
         ...(replyTo ? { reply_to: replyTo } : {}),
       }),
     })
@@ -466,7 +472,25 @@ async function notifyStaff(applicationId: string, showName: string): Promise<voi
     const row = await gatherRow(db, applicationId)
     if (!row) return
     const values = sheetValues(row)
-    const body = SHEET_HEADERS.map((h, i) => `${h}: ${values[i] ?? ''}`).join('\n')
+    const pairs = SHEET_HEADERS.map((h, i) => ({ label: h, value: values[i] ?? '' }))
+    const body = pairs.map((f) => `${f.label}: ${f.value}`).join('\n')
+
+    // The same fields twice, deliberately. src/server/modules/email/ explains
+    // why both parts go out and why the text one is the record.
+    const html = staffNoticeHtml({
+      title: 'New application',
+      heading: row.shopName || 'A maker',
+      sub: `${row.category || 'Uncategorised'} · ${row.track} · applied for ${showName}`,
+      // The admin link is the button, so it does not also need to be a row.
+      fields: pairs
+        .filter((f) => f.label !== 'Open in admin')
+        .map((f) => ({
+          ...f,
+          strong: ['Shop', 'Contact', 'Email', 'Category', 'Track', 'Spaces requested'].includes(f.label),
+        })),
+      cta: { href: row.adminLink, label: 'Open in admin' },
+    })
+
     await mail(
       to,
       `New application: ${row.shopName || 'a maker'} (${row.category || 'uncategorised'})`,
@@ -474,6 +498,7 @@ async function notifyStaff(applicationId: string, showName: string): Promise<voi
         + `This message is also the backup copy. Every field is above.`,
       'application_staff_notice',
       row.email || undefined,
+      html,
     )
   } catch {
     // Deliberately silent. The row is saved; this is the third copy, not the
