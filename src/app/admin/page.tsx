@@ -6,6 +6,9 @@ import { applications, bookings, emailOutbox, vendors } from '@/db/schema'
 import { fmtDate, fmtDateTime, fmtRange, applicationWindow } from '@/lib/dates'
 import { bpsLabel, usd } from '@/lib/money'
 import { PageHead, Stats, Stat, ActionCard, Progress } from './ui'
+import { RehearsalLink } from './RehearsalLink'
+import { REHEARSAL_TTL_MS, rehearsalConfigured, signRehearsalToken } from '@/lib/rehearsal'
+import { siteUrl } from '@/lib/site-url'
 import { Icon } from './Icon'
 
 export const dynamic = 'force-dynamic'
@@ -102,6 +105,18 @@ export default async function Dashboard() {
 
   const state = applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt)
 
+  /* The rehearsal link, minted fresh on every load of this page rather than
+     stored. There is nothing to revoke and nothing to look up: the signature
+     is the record, and reloading gives you a new one. It only exists before
+     the window opens, because afterwards the form is open to everybody and a
+     link that grants what everybody already has is a loose end. */
+  const opensAt = new Date(show.applicationsOpenAt).getTime()
+  const rehearsal = state === 'before' && rehearsalConfigured()
+    ? `${siteUrl()}/api/rehearse?t=${encodeURIComponent(
+        await signRehearsalToken(Math.min(Date.now() + REHEARSAL_TTL_MS, opensAt)),
+      )}`
+    : null
+
   return (
     <>
       <PageHead
@@ -174,6 +189,22 @@ export default async function Dashboard() {
           note={mailTotal === 0 ? 'Nothing sent yet' : `${mailTotal} sent, ${mailOf('failed')} failed`}
         />
       </div>
+
+      {rehearsal && (
+        <>
+          <div className="adm-sec">
+            <h2>Rehearsal link</h2>
+            <span className="c">Expires {fmtDateTime(new Date(Math.min(Date.now() + REHEARSAL_TTL_MS, opensAt)).toISOString())}</span>
+          </div>
+          <p className="adm-note">
+            Send this to anyone who should submit a test application before the form opens.
+            It puts their browser in the launch preview and drops them on the form, without
+            a staff password. What they submit is a real application in the queue below, so
+            delete the rehearsals before opening day.
+          </p>
+          <RehearsalLink url={rehearsal} />
+        </>
+      )}
 
       <div className="adm-sec">
         <h2>Latest applications</h2>

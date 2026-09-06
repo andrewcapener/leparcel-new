@@ -590,6 +590,31 @@
 .adm .adm-body .adm-note { margin: 0 0 20px }
 .adm .adm-note strong { color: var(--ad-ink-2); font-weight: 500 }
 .adm .adm-note.tight { margin-bottom: 12px }
+/* The rehearsal link: a URL nobody retypes, and the button that saves them
+   from trying. The URL stays visible and wraps rather than scrolling, so it
+   is obvious which host it points at and a failed copy still leaves you
+   something to select. */
+.adm .adm-share {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 20px;
+}
+.adm .adm-share__url {
+  flex: 1 1 22rem;
+  min-width: 0;
+  padding: 11px 13px;
+  border: 1px solid var(--ad-line);
+  border-radius: 3px;
+  background: var(--ad-sunk);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ad-ink-2);
+  overflow-wrap: anywhere;
+}
+
 .adm .adm-empty {
   padding: 26px 0 0; font-size: var(--t-b); line-height: 1.65;
   color: var(--ad-ink-2); max-width: 64ch;
