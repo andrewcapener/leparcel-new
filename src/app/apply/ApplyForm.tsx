@@ -914,15 +914,28 @@ export function ApplyForm({
                 Back
               </button>
             )}
+            {/* Two DIFFERENT buttons, and the keys are what make them
+                different. Rendered without them React reuses the one DOM
+                node and only patches `type`, and that patch lands inside the
+                click on the last Next: React flushes a discrete event's
+                update before the browser runs the click's activation
+                behaviour, so the node the maker pressed as "Next" had become
+                a submit button by the time the browser acted on the press.
+                Step 3's Next submitted the application: a maker who had
+                already signed filed it without ever seeing step 4, and one
+                who had not got a wall of validation errors instead. Distinct
+                keys mean the Next button is removed from the form rather
+                than reclassified, and a detached button submits nothing. */}
             {nextStep ? (
               <button
+                key="next"
                 type="button" className="btn ap-nav__next"
                 onClick={() => go(step + 1)}
               >
                 Next<span className="ap-nav__hint">: {nextStep.title}</span>
               </button>
             ) : (
-              <button className="btn ap-nav__next" type="submit" disabled={pending}>
+              <button key="submit" className="btn ap-nav__next" type="submit" disabled={pending}>
                 {pending ? 'Sending…' : 'Submit application'}
               </button>
             )}

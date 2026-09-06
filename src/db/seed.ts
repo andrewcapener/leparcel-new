@@ -182,9 +182,9 @@ async function main() {
     { code: 'IN-3x6',   track: 'indoor' as const,  label: '3x6',   priceCents: 28_000, capacity: 13, dimensions: '6ft wide, 3ft deep', description: 'Our best seller. Not suggested for apparel unless you have great vertical space.' },
     { code: 'IN-3x8',   track: 'indoor' as const,  label: '3x8',   priceCents: 34_000, capacity:  8, dimensions: '8ft wide, 3ft deep', description: 'Our other best seller, and only a few are chosen. Great for apparel and end caps.' },
     { code: 'IN-3x12',  track: 'indoor' as const,  label: '3x12',  priceCents: 45_000, capacity:  2, dimensions: '12ft wide, 3ft deep', description: 'Limited, and best used for apparel.' },
-    { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 25, dimensions: '10ft wide, 10ft deep', description: 'We provide the tent. You run your own payments and keep 100%.' },
-    { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 25, dimensions: '10ft wide, 10ft deep', description: 'We provide the tent. You run your own payments and keep 100%.' },
-    { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 25, dimensions: '10ft wide, 10ft deep', description: 'We provide the tent. You run your own payments and keep 100%.' },
+    { code: 'OUT-FRI',  track: 'outdoor' as const, label: 'Outdoor Friday',    priceCents: 40_000, capacity: 25, dimensions: '6.5ft wide, 6.5ft deep', description: 'We provide the tent. You run your own payments and keep 100%.' },
+    { code: 'OUT-SAT',  track: 'outdoor' as const, label: 'Outdoor Saturday',  priceCents: 50_000, capacity: 25, dimensions: '6.5ft wide, 6.5ft deep', description: 'We provide the tent. You run your own payments and keep 100%.' },
+    { code: 'OUT-SUN',  track: 'outdoor' as const, label: 'Outdoor Sunday',    priceCents: 45_000, capacity: 25, dimensions: '6.5ft wide, 6.5ft deep', description: 'We provide the tent. You run your own payments and keep 100%.' },
   ]
   const spaceIds: Record<string, string> = {}
   for (const [i, s] of spaces.entries()) {
