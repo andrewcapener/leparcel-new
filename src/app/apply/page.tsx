@@ -260,8 +260,13 @@ export default async function Apply({
               <>
                 {win !== 'open' && (
                   <p className="ap-preview" role="status">
-                    Preview. Applications are not open, and submissions are
-                    disabled until {fmtDate(show.applicationsOpenAt)}.
+                    {previewingLaunch
+                      ? <>Staff preview. Applications open to the public on{' '}
+                        {fmtDate(show.applicationsOpenAt)}, and anything you submit
+                        here before then is a real application. Delete it from the
+                        admin when you are done.</>
+                      : <>Preview. Applications are not open, and submissions are
+                        disabled until {fmtDate(show.applicationsOpenAt)}.</>}
                   </p>
                 )}
                 <ApplyForm

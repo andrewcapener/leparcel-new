@@ -187,7 +187,7 @@ export function shell({
 
       <tr><td style="padding:22px 24px;border-bottom:2px solid ${INK};">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-          <td style="font-family:${HEAD_FONT};font-size:15px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${INK};"><span style="color:${GOLD};letter-spacing:0;">&#10022;</span>&nbsp;&nbsp;Mermade Market</td>
+          <td style="font-family:${HEAD_FONT};font-size:15px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${INK};">Mermade Market</td>
           <td align="right"><span style="display:inline-block;background:${GOLD};color:#ffffff;font-family:${HEAD_FONT};font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:6px 12px;">${esc(pill)}</span></td>
         </tr></table>
       </td></tr>

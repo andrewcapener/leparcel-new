@@ -46,8 +46,9 @@ export async function SiteShell({
       {previewing && (
         <div className="preview-bar" role="status">
           <strong>Launch preview.</strong> This browser is being shown the site
-          as it will read once applications open. Nobody else sees this, and
-          the form will not accept a submission until the real window opens.
+          as it will read once applications open. Nobody else sees this. The
+          form will accept a submission from you, and it makes a real
+          application, so delete it from the admin when you are done.
           {' '}
           <Link href="/api/preview?on=0">Turn it off</Link>
         </div>

@@ -21,7 +21,6 @@ export function SignInForm({ expired }: { expired?: boolean }) {
   if (state.ok) {
     return (
       <div className="mm-signin mm-signin--sent" role="status">
-        <span className="mm-signin__mark" aria-hidden="true">✦</span>
         <h2 className="mm-signin__title">Check your email</h2>
         <p className="mm-signin__note">{state.message}</p>
         <p className="mm-signin__fine">
@@ -34,7 +33,6 @@ export function SignInForm({ expired }: { expired?: boolean }) {
 
   return (
     <div className="mm-signin">
-      <span className="mm-signin__mark" aria-hidden="true">✦</span>
       <h2 className="mm-signin__title">Welcome back, maker</h2>
       <p className="mm-signin__note">
         Use the email you applied with and we will send you a link. No password
