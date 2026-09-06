@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { transportDiagnostics } from '@/server/modules/sheets/transport'
 import { lastUploadError, photoUploadDiagnostics } from '@/server/modules/uploads/config'
 import { applicationWindow } from '@/lib/dates'
+import { staffList } from '@/lib/adminAuth'
 import { isCanonicalHost, siteUrl } from '@/lib/site-url'
 
 export const dynamic = 'force-dynamic'
@@ -31,6 +32,12 @@ export async function GET() {
         variable: process.env.ADMIN_PASSWORD ? 'ADMIN_PASSWORD' : 'ADMIN_PASS',
       }
     })(),
+    // Who can sign in. Names only, from the variable names, so an operator can
+    // see that ADMIN_PASS_HILLARY actually arrived without any secret leaving
+    // the deployment. Lengths, so a pasted value with a stray newline is
+    // visible as the wrong length rather than as a password that "does not
+    // work".
+    staff: staffList().map((s) => ({ name: s.name, length: s.secret.length })),
     // The one switch that has to be thrown at cutover. Until SITE_URL names
     // the real domain, every canonical URL points at the Vercel host and the
     // site is noindex so that host never competes with mermademarket.com.

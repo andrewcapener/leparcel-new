@@ -2,6 +2,7 @@
 
 import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
@@ -21,6 +22,7 @@ import { applicationReceivedHtml } from '@/server/modules/email/application-rece
 import { CONTACT_EMAIL } from '@/lib/agreement'
 import { parsePhotoKeys } from '@/server/modules/uploads/photos'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
+import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
 import { previewingOpenWindow } from '@/lib/preview'
 import { siteUrl } from '@/lib/site-url'
 import { signInLinkHtml, signInLinkText } from '@/server/modules/email/sign-in-link'
@@ -31,12 +33,35 @@ import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storag
 
 /* ═══════════════════════ helpers ═══════════════════════ */
 
+/**
+ * Who did this.
+ *
+ * It used to be the string 'elise@mermademarket.com', hardcoded, for every
+ * row: a placeholder from when one shared password meant there was no way to
+ * know. There is now, so the audit log carries the name of whoever's password
+ * signed the session. Anything with no staff session is the site acting on a
+ * maker's behalf, which is what a submitted application is, and it says so
+ * rather than borrowing somebody's name for it.
+ */
+async function actorNow(): Promise<string> {
+  try {
+    const jar = await cookies()
+    const who = await staffForSession(jar.get(ADMIN_COOKIE)?.value)
+    return who?.name ?? 'the site'
+  } catch {
+    // Outside a request scope. Never in production, but a script importing
+    // this module should not crash on a cookie jar that is not there.
+    return 'the site'
+  }
+}
+
 async function log(
   entity: string, entityId: string, action: string,
-  before: unknown, after: unknown, reason = '', actor = 'elise@mermademarket.com',
+  before: unknown, after: unknown, reason = '', actor?: string,
 ) {
+  const by = actor ?? await actorNow()
   await db.insert(auditLog).values({
-    id: randomUUID(), entity, entityId, action, actor,
+    id: randomUUID(), entity, entityId, action, actor: by,
     before: before ? JSON.stringify(before) : null,
     after: after ? JSON.stringify(after) : null,
     reason,

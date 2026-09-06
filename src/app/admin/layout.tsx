@@ -1,7 +1,9 @@
+import { cookies } from 'next/headers'
 import { and, eq, inArray, or, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { applications, bookings, emailOutbox } from '@/db/schema'
+import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
 import { AdminShell } from './AdminShell'
 // The admin's own stylesheet. Imported here rather than in the root layout so
 // the public site gets the vendored Symmetry theme and nothing else.
@@ -62,8 +64,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .then((r) => num(r[0]?.n))
     .catch(() => 0)
 
+  const jar = await cookies()
+  const staff = await staffForSession(jar.get(ADMIN_COOKIE)?.value)
+
   return (
-    <AdminShell showName={show?.name} counts={counts} failedMail={failedMail}>
+    <AdminShell
+      showName={show?.name} counts={counts} failedMail={failedMail}
+      staffName={staff?.name}
+    >
       {children}
     </AdminShell>
   )

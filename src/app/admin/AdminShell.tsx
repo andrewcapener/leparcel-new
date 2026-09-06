@@ -21,9 +21,10 @@ import { Icon } from './Icon'
  * would be absurd, so the chrome drops out on that one path.
  */
 export function AdminShell({
-  showName, counts, failedMail, children,
+  showName, counts, failedMail, staffName, children,
 }: {
   showName?: string
+  staffName?: string
   counts: NavCounts
   /** Messages that came back failed from the delivery provider. */
   failedMail: number
@@ -63,9 +64,13 @@ export function AdminShell({
             <span className="show" data-warn={showName ? undefined : '1'}>
               {showName ?? 'No active show'}
             </span>
+            {/* Whose password opened this session. It is what the audit log
+                writes against anything decided here, so it belongs where the
+                person can see it before they decide anything. */}
             <span className="who">
-              Staff, on a shared password
-              <br />until real accounts land
+              {staffName
+                ? <>Signed in as {staffName}<br />until real accounts land</>
+                : <>Staff, on a shared password<br />until real accounts land</>}
             </span>
           </div>
         </aside>

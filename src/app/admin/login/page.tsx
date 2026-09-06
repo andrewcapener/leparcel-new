@@ -1,22 +1,27 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { ADMIN_COOKIE, adminPassword, sessionToken } from '@/lib/adminAuth'
+import { ADMIN_COOKIE, adminConfigured, sessionToken, staffForPassword } from '@/lib/adminAuth'
 
 export const dynamic = 'force-dynamic'
 
 async function signIn(fd: FormData) {
   'use server'
-  const password = adminPassword()
   const next = String(fd.get('next') || '/admin/jury')
   const target = next.startsWith('/admin') ? next : '/admin/jury'
-  // No password configured. Locally that is the open-door dev default; in
+  // Nobody configured. Locally that is the open-door dev default; in
   // production it is a misconfigured deployment, and saying so is the honest
   // answer to the question the old length-leak was trying to answer.
-  if (!password) redirect(process.env.NODE_ENV !== 'production' ? target : '/admin/login?err=unset')
+  if (!adminConfigured()) {
+    redirect(process.env.NODE_ENV !== 'production' ? target : '/admin/login?err=unset')
+  }
   // Trimmed on both sides: password managers and mobile keyboards append a
   // space often enough that it is worth not failing on it.
   const typed = String(fd.get('password')).trim()
-  if (typed !== password) {
+  // One box, and which person you are is whichever secret matched. A username
+  // field would be a second thing to get wrong for no security it does not
+  // already have: the password is the whole credential either way.
+  const who = await staffForPassword(typed)
+  if (!who) {
     // Only ever that it was wrong. This used to carry both the typed length
     // and the configured length back in the query string as a debugging aid,
     // which put the exact length of the production admin password into the
@@ -31,7 +36,7 @@ async function signIn(fd: FormData) {
   }
 
   const jar = await cookies()
-  jar.set(ADMIN_COOKIE, await sessionToken(password!), {
+  jar.set(ADMIN_COOKIE, await sessionToken(who.secret), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
