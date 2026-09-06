@@ -17,3 +17,8 @@ node_modules
 # dependency: only the face that actually gets chosen moves up into
 # public/theme/fonts/ and gets committed.
 /public/theme/fonts/candidates/
+
+# Subagent worktrees. Parallel agents get their own checkout under here, so
+# this is live git plumbing rather than project files: committing it would
+# commit a worktree into the repository it is a worktree of.
+/.claude/worktrees/
