@@ -147,7 +147,9 @@ async function main() {
     // apart. Editable in /admin/show, never in code.
     applicationsOpenAt: '2026-09-07T09:00:00-07:00',
     applicationsCloseAt: '2026-09-20T23:59:00-07:00',
-    rosterAnnouncedOn: '2026-09-28T12:00:00-07:00',
+    // Moved from 28 September to the 25th by Drew, 6 Sep 2026: official.
+    // Five days after the close rather than eight.
+    rosterAnnouncedOn: '2026-09-25T12:00:00-07:00',
     commissionBps: 2000,
     paymentWindowHours: 48,   // moved from 36 to 48 per Drew, Sept 2026 (audit §2.3)
     // The old maker rules pages say 45 shops inside and 25 tents a day
