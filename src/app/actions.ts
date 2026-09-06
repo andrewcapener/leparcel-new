@@ -136,7 +136,7 @@ export async function subscribe(_prev: FormState, fd: FormData): Promise<FormSta
 
 const MessageSchema = z.object({
   name: z.string().min(2, 'Required'),
-  email: z.string().email('Enter a valid email address'),
+  email: z.string().email('Enter a valid email address').max(200, 'That address is too long'),
   message: z.string().min(10, 'Tell us a little more').max(4000, '4000 characters max'),
   /** Which form it came from, so the subject line says so. */
   topic: z.string().optional(),
@@ -178,14 +178,14 @@ export async function sendMessage(prev: FormState, fd: FormData): Promise<FormSt
 /* ═══════════════════════ application ═══════════════════════ */
 
 const ApplicationSchema = z.object({
-  shopName: z.string().min(2, 'Required'),
-  contactName: z.string().min(2, 'Required'),
+  shopName: z.string().min(2, 'Required').max(120, 'Keep it under 120 characters'),
+  contactName: z.string().min(2, 'Required').max(120, 'Keep it under 120 characters'),
   email: z.string().email('Enter a valid email address'),
-  phone: z.string().min(7, 'Required'),
-  instagram: z.string().min(1, 'Required. It’s how we look at your work'),
-  website: z.string().optional(),
-  city: z.string().min(1, 'Required'),
-  state: z.string().min(2, 'Required'),
+  phone: z.string().min(7, 'Required').max(40, 'Keep it under 40 characters'),
+  instagram: z.string().min(1, 'Required. It’s how we look at your work').max(60, 'Keep it under 60 characters'),
+  website: z.string().max(300, 'That address is too long').optional(),
+  city: z.string().min(1, 'Required').max(80, 'Keep it under 80 characters'),
+  state: z.string().min(2, 'Required').max(40, 'Keep it under 40 characters'),
 
   track: z.enum(['indoor', 'outdoor', 'both']),
 
@@ -207,7 +207,7 @@ const ApplicationSchema = z.object({
   occasionalSeller: z.string().optional(),
   hasCoi: z.string().optional(),
 
-  signedName: z.string().min(2, 'Type your name to sign'),
+  signedName: z.string().min(2, 'Type your name to sign').max(120, 'Keep it under 120 characters'),
   // An unchecked checkbox posts no key, so the type error fired before the
   // refine could and the maker was told "Vendor agreement: Required".
   agree: z.string({ message: 'You must accept the vendor agreement' })
@@ -342,7 +342,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   if (existing) {
     return {
       ok: false, attempt, values: strings(raw),
-      message: 'We already have an application from this email for this show.',
+      message: 'We already have an application from this email for this show. If that was you just now, it is in and there is nothing else to do.',
     }
   }
 
