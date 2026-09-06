@@ -561,6 +561,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
       fields: receiptFields,
       rosterDate: fmtDate(show.rosterAnnouncedOn),
       contactEmail: CONTACT_EMAIL,
+      siteUrl: siteUrl(),
     }),
   )
 

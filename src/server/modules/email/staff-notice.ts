@@ -82,7 +82,7 @@ export function staffNoticeHtml({
   const rest = fields.filter((f) => !taken.has(f.label))
 
   return shell({
-    pill: 'New application',
+    eyebrow: 'New application',
     heading,
     sub,
     // The button sits above the record. A notification you have to scroll past

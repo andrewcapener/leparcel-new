@@ -41,9 +41,11 @@ check('a label is escaped too', html.includes('&lt;b&gt;Label&lt;/b&gt;'))
 check('an ampersand in a url is escaped', html.includes('a=1&amp;b=2'))
 
 // Emitted tags: only the ones this template writes. Anything else means data
-// became markup.
+// became markup. `style` is on the list because the shell writes one media
+// query for phones; the check below is that nothing from a field can reach
+// inside it.
 const tags = [...new Set([...html.matchAll(/<\s*\/?\s*([a-zA-Z][a-zA-Z0-9-]*)/g)].map((m) => m[1]!.toLowerCase()))]
-const allowed = new Set(['html', 'head', 'body', 'meta', 'title', 'table', 'tr', 'td', 'div', 'span', 'a', 'img', 'doctype'])
+const allowed = new Set(['html', 'head', 'body', 'meta', 'title', 'style', 'table', 'tr', 'td', 'div', 'span', 'a', 'img', 'doctype'])
 const unexpected = tags.filter((t) => !allowed.has(t))
 check('no unexpected tags', unexpected.length === 0, unexpected.join(', '))
 
@@ -81,6 +83,16 @@ check('the only image is our own wordmark', imgs(html).join(' ') === MARK, imgs(
   check('an image typed into a field is still text', !srcs.includes('https://evil.test/beacon.gif'))
   check('and it is escaped in the record', withShots.includes('&lt;img'))
 }
+/* The one <style> block is the shell's own phone media query, written from
+   constants. Nothing a maker typed goes near it, which is what makes the tag
+   safe to allow above. */
+{
+  const blocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]!)
+  check('exactly one style block', blocks.length === 1, String(blocks.length))
+  check('and it carries no data',
+    blocks.every((b) => !/Ceramics|a@b\.com|Label|script/i.test(b)))
+}
+
 check('no external stylesheet or font', !/<link/i.test(html) && !/@import/i.test(html))
 
 if (failures) { console.error(`staff notice: ${failures} failure(s)`); process.exit(1) }

@@ -21,9 +21,10 @@ export function signInLinkHtml({
   minutes: number
 }): string {
   return shell({
-    pill: 'Sign in',
+    webFonts: true,
+    eyebrow: shopName ? `Sign in · ${shopName}` : 'Sign in',
     heading: 'Your way in',
-    sub: shopName ? `${shopName} · Mermade Market` : 'Mermade Market',
+    sub: 'One tap, no password, nothing to remember.',
     inner:
       paragraphs([
         'Tap the button and you are in. No password, and nothing to remember.',

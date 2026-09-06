@@ -26,8 +26,8 @@
  */
 import { bpsLabel } from '@/lib/money'
 import {
-  BODY, BODY_FONT, CREAM, GOLD, HEAD_FONT, INK, MUTED, RULE,
-  esc, paragraphs, rule, sectionHead, shell,
+  BODY, BODY_FONT, GOLD, HEAD_FONT, INK, MUTED, RULE, SHELL,
+  esc, paragraphs, plate, rule, sectionHead, shell,
 } from './shell'
 
 /**
@@ -54,14 +54,6 @@ type Track = {
   linkLabel: string
 }
 
-/** One full-width plate. Width as an attribute as well as a style, because
- *  Outlook's Word renderer ignores CSS width on an image. */
-function plate(src: string, alt: string): string {
-  return `<tr><td style="padding:0;background:${CREAM};">
-    <img src="${esc(src)}" width="558" alt="${esc(alt)}" style="display:block;width:100%;max-width:558px;height:auto;border:0;" />
-  </td></tr>`
-}
-
 /**
  * Inside and outside, side by side.
  *
@@ -74,7 +66,7 @@ function plate(src: string, alt: string): string {
 function tracks(a: Track, b: Track, base: string): string {
   const cell = (t: Track, side: 'l' | 'r') => `
     <td width="50%" valign="top" style="${side === 'l' ? 'padding:0 8px 0 0;' : 'padding:0 0 0 8px;'}">
-      <img src="${esc(`${base}/photos/${t.photo.file}`)}" width="248" alt="${esc(t.photo.alt)}" style="display:block;width:100%;max-width:248px;height:auto;border:0;background:${CREAM};" />
+      <img src="${esc(`${base}/photos/${t.photo.file}`)}" width="248" alt="${esc(t.photo.alt)}" style="display:block;width:100%;max-width:248px;height:auto;border:0;background:${SHELL};" />
       <div style="font-family:${HEAD_FONT};font-size:13px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:${INK};padding:12px 0 5px;">${esc(t.label)}</div>
       <div style="font-family:${BODY_FONT};font-size:14px;line-height:1.55;color:${BODY};">${t.line}</div>
       <div style="padding-top:7px;"><a href="${esc(t.href)}" style="font-family:${BODY_FONT};font-size:14px;color:${GOLD};text-decoration:underline;">${esc(t.linkLabel)}</a></div>
@@ -166,12 +158,16 @@ export function saveTheDateHtml({
   const url = (path: string) => `${siteUrl}${path}`
 
   return shell({
-    pill: showName,
+    webFonts: true,
+    // The date is four words and can afford to be enormous. It is also the
+    // one thing every part of this list wants, shoppers included.
+    display: 'wide',
+    eyebrow: `${showName} · Save the date`,
     heading: dateRange,
     sub: `Dana Point ${venueName}. Free to attend, all three days. Makers have until ${applicationsCloseDay}.`,
     inner:
       plate(url(`/photos/${PHOTOS.floor.file}`), PHOTOS.floor.alt)
-      + `<tr><td style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>`
+      + `<tr><td style="height:30px;line-height:30px;font-size:0;">&nbsp;</td></tr>`
       + paragraphs([
         `The ${esc(season)} dates are set. Three days at the ${esc(venueName)} on San Juan Avenue, indoors and out, and free to walk in.`,
         `Applications are open now and close ${esc(applicationsClose)}. We read every one and we answer either way, on ${esc(rosterDate)}.`,
