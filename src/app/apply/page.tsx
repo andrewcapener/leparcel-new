@@ -254,8 +254,13 @@ export default async function Apply({
       {/* ── The form ─────────────────────────────────────────────────────── */}
       <div className="shopify-section section-custom-liquid">
         <div className="custom-html">
-          <div id="apply" className="ap-anchor" />
           <div className="container">
+            {/* Inside the container, not above it. Outside it the anchor sat
+                above the section's own top padding, so "Start your
+                application" landed a maker with the top of the form 345px
+                down a 390px screen: a swipe of empty page between the button
+                they pressed and the thing it was for. */}
+            <div id="apply" className="ap-anchor" />
             {showForm ? (
               <>
                 {win !== 'open' && (

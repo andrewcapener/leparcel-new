@@ -423,13 +423,17 @@ export function ApplyForm({
             <ul>
               {problems.map(([k, msg]) => (
                 <li key={k}>
+                  {/* The whole line is the button, not just the field name.
+                      On a phone the name alone is a 32px target inside a
+                      sentence that wraps to three lines, and the sentence is
+                      what a thumb aims at. The underline stays on the name,
+                      so the line still reads as a way into that field. */}
                   <button
                     type="button" className="ap-errors__link"
                     onClick={() => goToField(k)}
                   >
-                    {LABELS[k] ?? k}
+                    <span className="ap-errors__field">{LABELS[k] ?? k}</span>: {msg}
                   </button>
-                  : {msg}
                 </li>
               ))}
             </ul>
@@ -454,7 +458,7 @@ export function ApplyForm({
               <input type="text" name="contactName" autoComplete="name" required {...keep('contactName')} />
             </Field>
             <Field name="email" label="Email" error={e.email} half>
-              <input name="email" type="email" inputMode="email" autoComplete="email" required {...keep('email')} />
+              <input name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} required {...keep('email')} />
             </Field>
             <Field name="phone" label="Phone" error={e.phone} half>
               <input type="tel" name="phone" inputMode="tel" autoComplete="tel" required {...keep('phone')} />
@@ -463,10 +467,17 @@ export function ApplyForm({
               name="instagram" label="Instagram" error={e.instagram} half
               hint="It’s the main thing the jury looks at."
             >
-              <input type="text" name="instagram" placeholder="@yourshop" autoCapitalize="none" autoCorrect="off" required {...keep('instagram')} />
+              <input type="text" name="instagram" placeholder="@yourshop" autoCapitalize="none" autoCorrect="off" spellCheck={false} required {...keep('instagram')} />
             </Field>
             <Field name="website" label="Website (optional)" error={e.website} half>
-              <input type="text" name="website" inputMode="url" autoCapitalize="none" autoCorrect="off" {...keep('website')} />
+              {/* inputMode, not type="url": inputMode is what brings up the
+                  phone keyboard with a ".com" key on it, and it is the whole
+                  win here. type="url" would also take the field out of every
+                  one of the theme's input rules, which name text, email, tel,
+                  number, password and date and stop there, so the one field on
+                  the form with no border would be this one. autoComplete lets
+                  a phone offer the address it already knows. */}
+              <input type="text" name="website" inputMode="url" autoComplete="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} {...keep('website')} />
             </Field>
             <Field name="city" label="City" error={e.city} half>
               <input type="text" name="city" autoComplete="address-level2" required {...keep('city')} />
@@ -849,7 +860,13 @@ export function ApplyForm({
                 {' '}·{' '}
                 <Link href="/terms" target="_blank" rel="noreferrer">terms and privacy</Link>
               </p>
-              <label className="check-option" htmlFor="agree">
+              {/* The link is OUT of the label, and this is a phone fix.
+                  Inside it, "Mermade Market maker agreement" ran to two lines
+                  and covered 76% of the label's area at 390px, so a maker
+                  reaching for the words to tick the box opened the agreement
+                  in a new tab instead. Two rows now: one to tick, one to read,
+                  and neither one can be hit by aiming at the other. */}
+              <label className="check-option ap-agree" htmlFor="agree">
                 <input
                   type="checkbox" name="agree" id="agree"
                   defaultChecked={v.agree === 'on'} required
@@ -857,16 +874,18 @@ export function ApplyForm({
                   aria-invalid={e.agree ? 'true' : undefined}
                 />
                 <span>
-                  I have read and accept the{' '}
-                  <Link href="/agreement" target="_blank" rel="noreferrer">
-                    Mermade Market maker agreement
-                  </Link>
-                  {' '}(v2026.1).
+                  I have read and accept the Mermade Market maker agreement
+                  (v2026.1).
                 </span>
               </label>
               {e.agree && (
                 <small className="form-error" id="agree-error">{e.agree}</small>
               )}
+              <p className="ap-agree__read">
+                <Link href="/agreement" target="_blank" rel="noreferrer">
+                  Read the agreement
+                </Link>
+              </p>
             </div>
             <Field
               name="signedName" label="Type your name to sign" error={e.signedName}

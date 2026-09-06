@@ -616,6 +616,13 @@ h3, .h3 { line-height: 1.15; }
   border-color: rgb(179 38 30 / 0.35);
   border-inline-start: 3px solid #b3261e;
   background: rgb(179 38 30 / 0.06);
+  /* The header is sticky, 62px on a phone. A rejected submit puts focus on
+     this box, and focus scrolls it into view; where the summary is taller
+     than the screen, which at 320px it is as soon as there are four or five
+     problems, that scroll aligns its top with the top of the viewport and the
+     header lands on the first line. A maker arrived mid-list, with the
+     sentence saying what had happened above the fold. */
+  scroll-margin-top: 76px;
 }
 .ap-errors__h { margin: 0; font-weight: 700; color: rgb(var(--heading-color)); }
 .ap-errors ul { margin: 0.5em 0 0; padding-inline-start: 1.2em; list-style: disc; }
@@ -631,6 +638,11 @@ h3, .h3 { line-height: 1.15; }
   text-decoration: underline;
   cursor: pointer;
 }
+/* In the summary the button is now the whole line, so the underline sits on
+   the field name inside it: the line still reads as a way into that field,
+   and the message after the colon is not dressed up as a second link. */
+.ap-errors ul .ap-errors__link { text-decoration: none; }
+.ap-errors__field { text-decoration: underline; }
 
 /* ── A checkbox group ──────────────────────────────────────────────────────
    `fieldset`/`legend` is the grouping a screen reader wants; the legend is
@@ -688,6 +700,18 @@ h3, .h3 { line-height: 1.15; }
    at their content width, which in a column of full-width fields reads as a
    field that failed to load. */
 .ap-form select { box-sizing: border-box; width: 100%; }
+/* iOS Safari zooms the whole page in on any control it focuses whose text is
+   under 16px, and it does not zoom back out: the maker is left on a page
+   wider than the screen, scrolling sideways to read a form.
+   Under 768px the theme sets 16px on input, select and textarea and the trap
+   is shut. Above it nothing names a select at all, so it fell to the user
+   agent's 13.33px, which is an iPad in either orientation and a phone held
+   sideways: six of this form's controls, including the category a maker must
+   answer. Held to the widths and pointers where a touch keyboard exists, so
+   the desktop select is exactly as it was. */
+@media (max-width: 1024px), (max-width: 1366px) and (pointer: coarse) {
+  .account-form .ap-form select { font-size: 16px; }
+}
 .ap-option__body { min-width: 0; }
 .ap-option__name { display: block; font-weight: 600; color: rgb(var(--heading-color)); }
 .ap-option__note {
@@ -776,6 +800,16 @@ h3, .h3 { line-height: 1.15; }
 }
 
 .ap-lede { color: rgb(var(--text-color) / 0.85); }
+/* The agreement, on its own row under the box that accepts it. It is out of
+   the label because inside it, at 390px, the link covered 76% of the label
+   and a maker reaching for the words to tick the box opened the agreement
+   instead. Indented to the label's text, so the two rows read as one thing. */
+.ap-agree__read { margin: 4px 0 0; padding-inline-start: 34px; }
+.ap-agree__read a {
+  color: rgb(var(--link-color));
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
 .ap-submit__note { margin: 0; color: rgb(var(--text-color) / 0.8); font-size: var(--smaller-text-size-2); }
 
 /* What is still unanswered, on the last step. Nothing here blocks a submit:
@@ -850,6 +884,75 @@ h3, .h3 { line-height: 1.15; }
   .ap-nav__btns { justify-content: flex-end; }
   .ap-nav__back { margin-inline-end: auto; }
   .ap-nav__next { flex: 0 0 auto; min-width: 220px; }
+}
+
+/* ── On a phone ────────────────────────────────────────────────────────────
+   Applications open with most makers on a phone, so this is where the form is
+   tuned for one: a 44px target on everything a thumb has to hit, a progress
+   row that uses the whole width, and a picture that leaves room for the form
+   around it.
+
+   The query is width OR a coarse pointer up to 1024px, because a phone turned
+   sideways is 780px wide and an iPad is 768 or 1024, and every one of them is
+   a thumb. Nothing in here reaches a desktop.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 767.98px), (max-width: 1024px) and (pointer: coarse) {
+  /* Four steps, four segments. The row is declared as five columns, from the
+     Paperwork step that came out, so a fifth of the width sat empty at the
+     right and every bar was a fifth narrower than the space it had. Auto
+     columns take the count from the list, so it stays right whatever the
+     step count becomes. */
+  .ap-steps__list {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  /* Every line of the rejection summary, and of "still open", is a whole tap
+     row. The field name on its own is what a thumb had to find: "City" was
+     28px by 32px, inside a sentence wrapping to three lines. */
+  .ap-errors ul .ap-errors__link,
+  .ap-open ul .ap-errors__link {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 0;
+    text-align: start;
+  }
+
+  /* Try again, on a photograph that did not go up. 56px by 28px, in the
+     middle of a sentence, and the one control a maker wants at the moment
+     the form has just failed them. */
+  .ap-photos__err .ap-errors__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 0;
+  }
+
+  /* Tick, and read: two rows, each a target of its own. */
+  .account-form .ap-form .ap-agree { min-height: 44px; padding-block: 3px; }
+  .ap-agree__read a { display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* The one thing in the head that is a link rather than a button. */
+  .ap-head__alt { min-height: 44px; }
+
+  /* 96px of clearance is the desktop header, which is 103px tall. A phone's
+     is 62, so every jump to the form and every step change was leaving a
+     third of a field's worth of empty page under the header. */
+  .ap-anchor, .ap-card { scroll-margin-top: 72px; }
+
+  /* Back and Submit ten pixels apart is a wrong tap waiting to happen. */
+  .ap-nav__btns { gap: 14px; }
+}
+
+/* Landscape, and any short screen. The action bar is 104px tall, which is a
+   quarter of a phone turned sideways; the step number is already in the
+   progress row above and the total is on the step it belongs to, so on a
+   screen this short the bar is the buttons and nothing else. */
+@media (max-height: 520px) and (max-width: 1024px) {
+  .ap-nav { padding-top: 8px; }
+  .ap-nav__meta { display: none; }
 }
 
 /* ── The prospectus ────────────────────────────────────────────────────────
@@ -1263,6 +1366,16 @@ h3, .h3 { line-height: 1.15; }
 /* Announced politely, and it holds its line so the layout does not jump
    between "" and a sentence. */
 .ap-photos__status { display: block; min-height: 1.4em; margin-top: 10px; }
+
+/* On a phone the thumbnail is held to something a maker can see past. A
+   column of 148px minimum across a 320px screen is one 288px square: an
+   optional field taking half the phone, with the rest of the step below it
+   and the remove button 288px from where the eye is. Same query as the rest
+   of the phone rules further up this file, and it has to sit here rather than
+   with them, because it is overriding the grid two rules above. */
+@media (max-width: 767.98px), (max-width: 1024px) and (pointer: coarse) {
+  .ap-photos__grid { grid-template-columns: repeat(auto-fill, minmax(0, 168px)); }
+}
 
 /* ───────────────────────────────────────────────────────────────────────────
    The maker rules pages (/makers/indoor, /makers/outdoor).
