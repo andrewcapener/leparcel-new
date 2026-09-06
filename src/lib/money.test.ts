@@ -30,8 +30,8 @@ for (const gross of [1_00, 18_00, 2_450, 412_00, 8_420_00, 120_000_00]) {
   check('20% is 20%', r.commissionCents === Math.round(gross * 0.2), String(gross))
 }
 
-// 3 · the half-cent case: rounding must favour the house, not the vendor
-//    $0.025 commission on a 5¢ sale at 50% -> 3¢ house, 2¢ vendor
+// 3 · the half-cent case: rounding must favour the house, not the maker
+//    $0.025 commission on a 5¢ sale at 50% -> 3¢ house, 2¢ maker
 {
   const r = splitCommission(5, 5000)
   check('rounds to the house', r.commissionCents === 3 && r.netCents === 2,

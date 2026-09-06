@@ -16,7 +16,7 @@ import { bookends, splitDay } from '@/lib/schedule'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Outdoor Merchants',
+  title: 'Outdoor Makers',
   description:
     'Selling outside at Mermade Market: a 10ft tent we set up, you run your own payments and keep everything you take. Day rates, add-ons and the rules.',
   alternates: { canonical: '/makers/outdoor' },
@@ -96,7 +96,7 @@ export default async function OutdoorMerchants() {
 
   return (
     <SiteShell show={show} template="page template-suffix-outdoor-merchants">
-          <PageTitle title="Outdoor Merchants" />
+          <PageTitle title="Outdoor Makers" />
 
           <FactTable
             title="The deal, in short"
@@ -153,7 +153,7 @@ export default async function OutdoorMerchants() {
                 </ul>
                 <p className="mk-rules__note">
                   Each one is explained in full below. The binding version is the{' '}
-                  <Link href="/agreement">vendor agreement</Link>, with the site{' '}
+                  <Link href="/agreement">maker agreement</Link>, with the site{' '}
                   <Link href="/terms">terms</Link> alongside it.
                 </p>
               </div>

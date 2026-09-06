@@ -1,4 +1,4 @@
-# Mermade Market — Vendor Agreement
+# Mermade Market — Maker Agreement
 
 **Draft v2026.1 · August 25, 2026 · NOT YET REVIEWED BY COUNSEL**
 
@@ -31,7 +31,7 @@
 Your two tracks are not two flavours of the same deal. They are different legal
 instruments and they fail in different ways.
 
-**Outdoor** is a *licence to occupy space*. The vendor is the retailer, holds
+**Outdoor** is a *licence to occupy space*. The maker is the retailer, holds
 their own permit, takes their own money, and keeps 100%. Your exposure is
 premises liability and CDTFA Publication 111 record-keeping. This is the
 ordinary craft-fair contract, and every market I looked at has one.
@@ -81,7 +81,7 @@ the sale, the maker isn't even in the building. That means:
    You are the seller. Their permit obligation, if any, comes from their own
    separate business, not from consigning to you.
 3. **Publication 111's operator duty is an outdoor-track problem**, because
-   outdoor vendors are the ones selling for themselves at your event.
+   outdoor makers are the ones selling for themselves at your event.
 
 This refines the correction we made to the platform yesterday. The permit gate
 belongs on the **outdoor** roster, not on every booking. ⟨COUNSEL⟩ Confirm the
@@ -94,7 +94,7 @@ Reg. 1569 characterisation and its consequences for the 1099 question below.
 ## 1. Parties and the Show
 
 **1.1** This Agreement is between **Mermade Market** ("Mermade," "we," "us") and
-the applicant identified in the signed application ("you," "Vendor").
+the applicant identified in the signed application ("you," "Maker").
 
 **1.2** It governs your participation in the single show identified in your
 acceptance (the "Show"). The Show's dates, venue, hours, booth fees, commission
@@ -104,7 +104,7 @@ incorporated here by reference. Participating in one Show gives you no right to
 any future Show.
 
 **1.3** This Agreement is versioned. The version you signed is recorded against
-your vendor record with the date and time of signature, and governs your
+your maker record with the date and time of signature, and governs your
 participation in that Show even if a later version is published.
 
 > ⟨COUNSEL — **the draft promised more than the code records**⟩ This clause used
@@ -177,7 +177,7 @@ receipt. Your space is released and may be offered to another maker.
 > **It is now worth more than it used to be.** Outdoor days are $400–500 each, so a
 > forfeited Saturday tent is a real number to a maker, not a rounding error. If you
 > ever want to soften it without giving up the money, the cheapest version is a
-> *transfer* right rather than a refund: let a cancelling vendor's fee move to the
+> *transfer* right rather than a refund: let a cancelling maker's fee move to the
 > next show once, at your discretion. Costs you nothing in cash and removes most of
 > the sting. Not drafted — flagging it as the option you'd reach for first.
 
@@ -221,7 +221,7 @@ maker would quote whichever one helped them. The refund audit resolved it toward
 > not refund vendors due to unseasonable weather"*; Rose Bowl says *"EVENT GOES
 > ON RAIN OR SHINE."* **You postponed Fall 2025 from mid-November to December 5–7
 > for rain.** A rain-or-shine clause would be a term you have already broken. It
-> would also be the first thing a vendor pointed at if they were annoyed.
+> would also be the first thing a maker pointed at if they were annoyed.
 
 **4.1 The Show proceeds in ordinary bad weather.** Rain, wind or cold alone are
 not grounds for a refund, and the indoor track proceeds in essentially all
@@ -239,7 +239,7 @@ attendance. If we postpone:
 - (c) we will announce a postponement as early as we reasonably can.
 
 ⟨DECISION — **still open, and it is yours**⟩ (b) offers a credit rather than cash.
-Cash is more generous and a better vendor story; credit protects your working
+Cash is more generous and a better maker story; credit protects your working
 capital in exactly the season where a postponement has already hurt revenue.
 Nothing in the repo answers it, because you have postponed but never had to
 settle up afterwards. What each costs, at your numbers: a postponed November with
@@ -370,7 +370,7 @@ documentary evidence."* Misrepresentation is a material breach under §12.
 
 ## 6. Compliance and permits
 
-**6.1 Seller's permit — outdoor vendors.** Outdoor vendors sell for their own
+**6.1 Seller's permit — outdoor makers.** Outdoor makers sell for their own
 account and must hold a valid California seller's permit, or qualify as an
 occasional seller and provide a completed **CDTFA-410-D**. You must give us the
 permit number or the 410-D **before load-in**. We are required to keep this
@@ -381,14 +381,14 @@ $1,000 for each seller for which you did not keep records if that person is
 required to hold a seller's permit and does not hold a valid permit."* We retain
 these records for four years.
 
-**6.2 Seller's permit — indoor vendors.** Because Mermade takes possession of
+**6.2 Seller's permit — indoor makers.** Because Mermade takes possession of
 your goods and sells them in its own name, **Mermade is the retailer of record**
 for those sales under Cal. Code Regs. tit. 18 §1569 and CDTFA Publication 114.
 Mermade collects and remits California sales tax on the full retail price. You
 do not need a seller's permit *for sales Mermade makes on your behalf*. You
 remain responsible for your own tax obligations on your own separate business.
 
-**6.3 Food vendors** must hold the applicable Orange County health permit and
+**6.3 Food makers** must hold the applicable Orange County health permit and
 provide it before load-in. Cottage-food operators must provide their CDPH
 registration or permit.
 
@@ -402,11 +402,11 @@ venue's jurisdiction requires of you.
 and you are most of the way there. Before it can be drafted, one thing has to be
 checked, because it is the difference between being covered and believing you are:
 
-> ### Your policy covering the event is not the same as your vendors being covered.
+> ### Your policy covering the event is not the same as your makers being covered.
 >
 > A commercial general liability policy in Mermade's name responds to claims
-> against **Mermade**. If a shopper trips over a vendor's display rack and sues
-> **that vendor**, the vendor has no coverage — and because Mermade is the entity
+> against **Mermade**. If a shopper trips over a maker's display rack and sues
+> **that maker**, the maker has no coverage — and because Mermade is the entity
 > with a policy and a bank account, Mermade becomes the defendant worth naming.
 >
 > `00-BUSINESS-AUDIT.md` §1.3 records that the River Street asset manager asked you
@@ -414,7 +414,7 @@ checked, because it is the difference between being covered and believing you ar
 > that language added."* **That question strongly implies it did not.** Being asked
 > to add language is what a broker says when the language isn't there yet.
 >
-> **One call to your broker settles it.** Ask exactly: *can participating vendors be
+> **One call to your broker settles it.** Ask exactly: *can participating makers be
 > added as additional insureds under our existing event policy, and what is the
 > premium delta?* Three possible answers:
 >
@@ -422,12 +422,12 @@ checked, because it is the difference between being covered and believing you ar
 >   it ("coverage included"), and delete this clause entirely. Best outcome, and a
 >   genuine differentiator — Junk Bonanza does exactly this.
 > - **Yes, large delta** → price it as an optional add-on line, or fall back to A.
-> - **No** → Option A. Vendors bring their own COI.
+> - **No** → Option A. Makers bring their own COI.
 >
 > Until that call happens, the draft keeps Option A, because Option A is the version
 > that needs contract language and Option B mostly needs a line item.
 
-> **Option A — each vendor brings a COI.** The standard approach at larger shows.
+> **Option A — each maker brings a COI.** The standard approach at larger shows.
 > West Coast Craft requires General Liability $1M per occurrence / $2M aggregate,
 > $2M products-completed operations, $100K damage to rented premises, $5K medical.
 > One of a Kind requires $5M with 30 days' notice of cancellation. Naming Mermade
@@ -435,9 +435,9 @@ checked, because it is the difference between being covered and believing you ar
 >
 > **Option B — Mermade carries a blanket policy and bakes it into the booth fee.**
 > `00-BUSINESS-AUDIT.md` §1.3 records that the River Street asset manager asked you
-> directly whether your policy covers participating vendors and invited you to add
+> directly whether your policy covers participating makers and invited you to add
 > that language. Junk Bonanza bundles coverage into the booth fee. This is a
-> materially nicer vendor story, removes ~100 COI chases per show, and is a
+> materially nicer maker story, removes ~100 COI chases per show, and is a
 > differentiator you can advertise. Ask your broker for the premium delta first.
 
 The draft below assumes **Option A**, because it is the version that needs
@@ -487,7 +487,7 @@ anyone working with you, however caused. You participate at your own risk.
 
 **8.2** Mermade's total liability to you arising out of or relating to this
 Agreement, on any theory, **will not exceed the total fees you paid us for the
-Show** — plus, for indoor vendors, any consignment proceeds properly owed to you
+Show** — plus, for indoor makers, any consignment proceeds properly owed to you
 and not yet paid.
 
 **8.3** Neither party is liable for indirect, incidental, special, consequential
@@ -511,7 +511,7 @@ intellectual property.
 
 > This is the single most universal clause in the field. Every market I examined
 > that publishes any terms at all has one, and every one of them runs in one
-> direction only — vendor indemnifies organiser, never the reverse. Urban Craft
+> direction only — maker indemnifies organiser, never the reverse. Urban Craft
 > Uprising, which publishes almost nothing else, still tells applicants *"you will
 > also be required to sign a hold harmless agreement."*
 
@@ -540,7 +540,7 @@ a licence for Show-related promotion, not an assignment of anything.
 > field and the only one that promises to try to credit the maker. Deliberately
 > *not* modelled on Informa/One of a Kind, whose version claims to be *"the
 > exclusive owner of all rights in the Content,"* worldwide and perpetual and
-> unpaid, while simultaneously banning vendors from filming anything themselves.
+> unpaid, while simultaneously banning makers from filming anything themselves.
 > That is a fine clause for a trade-show conglomerate and a terrible one for a
 > market whose whole proposition is that it is on the maker's side.
 
@@ -567,17 +567,17 @@ abandoning your space; failing to appear after confirming; and conduct under
 **12.2** On material breach we may remove you from the Show without refund, and
 may decline your future applications. We will tell you the reason in writing.
 
-**12.3 ⟨DECISION — resolved from the schema⟩ No-show.** A confirmed vendor who neither appears nor cancels
+**12.3 ⟨DECISION — resolved from the schema⟩ No-show.** A confirmed maker who neither appears nor cancels
 forfeits the booth fee and — the part worth writing down — **is recorded as a
-no-show on their vendor record and may be declined or required to prepay in
-future seasons.** You already carry at least one vendor flagged for exactly this.
+no-show on their maker record and may be declined or required to prepay in
+future seasons.** You already carry at least one maker flagged for exactly this.
 One of a Kind is the only market I found that names an unattended booth as a
 contract breach in terms; everyone else leaves it to general forfeiture, which
 means in practice nothing happens.
 
 > The platform already has the field this clause needs: `vendors.is_flagged` and
 > `vendors.flag_reason`, persistent across shows, which is what makes "recorded on
-> their vendor record" a true statement rather than an intention. Drafted and
+> their maker record" a true statement rather than an intention. Drafted and
 > published as written. What is not built is the prepay path, so "may be required
 > to prepay" is a promise about a future season.
 
@@ -606,7 +606,7 @@ application and that is how it already works.
 > `(show_id, vendor_id)` and a vendor is unique on email, so a shared pair submits
 > **one** application under **one** email today, and "both sign this Agreement" is
 > not something the form can currently record: there is one `signed_name` field.
-> `06-OPEN-QUESTIONS.md` §19 wants two vendor records, two statements and one
+> `06-OPEN-QUESTIONS.md` §19 wants two maker records, two statements and one
 > shared space, which is the right end state. Until then, either collect the second
 > maker's signature by email before load-in, or take the second name and email on
 > the application. This is the shortest path from "the clause is true" to "the
@@ -632,7 +632,7 @@ Ask whether an arbitration clause is worth having at all at these amounts. My
 read is no, and that a small-claims carve-out plus a talk-first sentence is the
 whole of what is useful here.
 
-**14.3 Notices** go to the email addresses on the vendor record.
+**14.3 Notices** go to the email addresses on the maker record.
 
 **14.4 Entire agreement.** This Agreement, the accepted application, and the Show
 record together are the whole agreement, and supersede the pages on
@@ -646,7 +646,7 @@ mermademarket.com and anything said in email.
 
 # SCHEDULE A — INDOOR CONSIGNMENT TERMS
 
-*Applies only to indoor vendors. If you have both an indoor space and an outdoor
+*Applies only to indoor makers. If you have both an indoor space and an outdoor
 tent, both schedules apply to their respective goods.*
 
 ## A1. What this relationship is
@@ -685,16 +685,16 @@ Show** (which is what the live indoor page already requires) and deliver the goo
 at your assigned load-in slot. Mermade counts in against that list; the
 countersigned list is the baseline record for settlement.
 
-**A2.2 Tagging.** Every item must carry your **vendor code and price** — e.g.
+**A2.2 Tagging.** Every item must carry your **maker code and price** — e.g.
 `MM07 $18`. That is all the register needs and all you have to do. There is no
 barcode, no SKU, and nothing to print.
 
 **A2.3 ⟨DECISION — my read stands, and the site now argues with it⟩ The $100
 label-noncompliance deduction is not in this draft.**
 `00-BUSINESS-AUDIT.md` §2.1 puts it plainly: the penalty exists because the old
-manual tally could not function without perfect vendor compliance, which
-converted an engineering problem into a penalty pointed at your own vendors. The
-new register reads vendor code plus price directly. If an item arrives untagged,
+manual tally could not function without perfect maker compliance, which
+converted an engineering problem into a penalty pointed at your own makers. The
+new register reads maker code plus price directly. If an item arrives untagged,
 the fix is a staff member writing a tag, not a hundred-dollar charge. If you keep
 any deduction, make it cost-based and small.
 
@@ -838,7 +838,7 @@ in the buyer's possession."*
 > weekend's inventory and the till, makers could be unsecured creditors for their
 > own goods and their own money. No maker is going to file an individual UCC-1 for
 > a weekend. Ask counsel about **an operator-level UCC-1 filing** covering consigned
-> vendor goods, and about segregating proceeds. This is the highest-value structural
+> maker goods, and about segregating proceeds. This is the highest-value structural
 > fix in this document and no contract clause alone accomplishes it.
 
 ## A7. Returns and exchanges
@@ -868,7 +868,7 @@ consignor"*; Modo Boutique disclaims *"theft or damage... customer handling, fir
 flood, earthquakes, stains, tears, missing parts."* Those shops hold goods for
 months in an unstaffed showroom. You hold them for a weekend, in a room you staff,
 having chosen to take possession because it is your service. Disclaiming
-everything would be both a worse vendor story and a weaker legal position.
+everything would be both a worse maker story and a weaker legal position.
 
 **A8.3 Mermade is not responsible** for: ordinary shoplifting and shrinkage
 despite reasonable care; damage by customers handling goods normally; damage in
@@ -878,7 +878,7 @@ fire, flood, earthquake or other event beyond our reasonable control.
 **A8.4 ⟨DECISION — answered, overrule if you disagree⟩ Shrinkage.** Where an item cannot be accounted for at
 reconciliation and §A8.3 does not explain it, the draft proposes Mermade credits
 you **the item's retail price less commission** — the same net you would have
-received had it sold. The alternative is a stated per-vendor cap. Decide which,
+received had it sold. The alternative is a stated per-maker cap. Decide which,
 and say it out loud, because right now it is decided ad hoc each show and that is
 exactly the kind of thing that turns into a story.
 
@@ -948,7 +948,7 @@ is true of the code.
 
 # SCHEDULE B — OUTDOOR BOOTH LICENCE TERMS
 
-*Applies only to outdoor vendors.*
+*Applies only to outdoor makers.*
 
 ## B1. What this relationship is
 
@@ -1010,7 +1010,7 @@ lower or remove a tent that has become unsafe.
 ## B4. Load-in, load-out and vehicles
 
 **B4.1** Load-in and load-out happen at assigned times. Vehicles must be moved to
-vendor parking before doors open.
+maker parking before doors open.
 
 **B4.2** Leave your space as you found it. Take your rubbish with you.
 ⟨DECISION — **still open, small, and cheap to answer**⟩ A stated cleanup charge is
@@ -1063,8 +1063,8 @@ An hour or two of an attorney's time, focused here. In priority order.
 | 4 | **Does Civ. Code §1738 (fine art consignment) reach any of our product lines** — sculptural ceramics, hand-pulled prints? Is voluntarily adopting trust language for everything wise? | Where it applies it is non-waivable, and it imposes near-strict liability for loss | §A1.2 |
 | 5 | **Risk-of-loss allocation and the shrinkage rule** — is §A8 the right split, and is it enforceable? | This is the clause that will actually get argued about, in the room, at breakdown | §A8 |
 | 6 | **Postponement mechanics** — is a credit rather than a refund defensible, and does §4.2 hold up given you have already postponed once? | Weather is your uninsured single point of failure | §4 |
-| 7 | **Blanket vendor insurance vs. individual COIs** — and if blanket, what the policy must say | Changes ~100 COI chases per show into a line item, and is a real differentiator | §7 |
-| 8 | Does the indemnity survive an incident involving a **food vendor**, and does §9 need a food-specific rider? | Highest-severity plausible incident on the floor | §9 |
+| 7 | **Blanket maker insurance vs. individual COIs** — and if blanket, what the policy must say | Changes ~100 COI chases per show into a line item, and is a real differentiator | §7 |
+| 8 | Does the indemnity survive an incident involving a **food maker**, and does §9 need a food-specific rider? | Highest-severity plausible incident on the floor | §9 |
 | 9 | E-signature sufficiency: is capturing **name + timestamp + terms version** enough under **UETA / ESIGN**? Note the platform does **not** capture an IP address, and the clause no longer claims one | Everything above is worthless if the signature doesn't hold | §1.3 |
 | 10 | **Minors.** A JR maker is 14 or under and cannot be bound. Is a guardian signature on the same form enough, and does the guardian carry the indemnity? | Today a child can tick the box and none of the agreement holds. There is no guardian field on the form | §A10.3 |
 | 11 | Does the **carry-forward** in §B6.4, published on the outdoor page for years, sit consistently with "all spaces are non-refundable" in §3.2? | Two published promises that a maker will read together | §3.2, §B6.4 |

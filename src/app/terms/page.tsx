@@ -14,9 +14,9 @@ export const metadata = {
 }
 
 /**
- * /terms — the site, not the vendor relationship.
+ * /terms — the site, not the maker relationship.
  *
- * The vendor relationship is /agreement, and this page says so in the first
+ * The maker relationship is /agreement, and this page says so in the first
  * screen so that a maker looking for the wrong one leaves quickly. Privacy is
  * its own page for the same reason: it is the one people arrive looking for.
  */
@@ -31,7 +31,7 @@ export default async function Terms() {
       <PageTitle title="Terms of use">
         <p>
           These cover this website. Selling with us is covered by the{' '}
-          <Link href="/agreement">vendor agreement</Link>, and what we do with
+          <Link href="/agreement">maker agreement</Link>, and what we do with
           your information is on the <Link href="/privacy">privacy page</Link>.
         </p>
         <p>Version {LEGAL_VERSION}. Questions to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>

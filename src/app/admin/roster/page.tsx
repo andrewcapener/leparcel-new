@@ -72,7 +72,7 @@ export default async function Roster() {
     : null
 
   /* Sort order is the whole point of the screen. Blocked before unpaid,
-     unpaid before a missing COI, everything else last, and vendor code
+     unpaid before a missing COI, everything else last, and maker code
      inside each band so a row stays where you last saw it. */
   const rank = (r: typeof rows[number]) => {
     if (!documented(r.app)) return 0
@@ -191,7 +191,7 @@ export default async function Roster() {
           unit={`of ${usd(expected)} expected`}
           pct={expected > 0 ? (collected / expected) * 100 : 0}
           status={example
-            ? `${confirmed.length} of ${rows.length} spaces confirmed. At the snapshotted rate, a $100 indoor sale splits ${usd(example.commissionCents)} to Mermade and ${usd(example.netCents)} to the vendor.`
+            ? `${confirmed.length} of ${rows.length} spaces confirmed. At the snapshotted rate, a $100 indoor sale splits ${usd(example.commissionCents)} to Mermade and ${usd(example.netCents)} to the maker.`
             : `${confirmed.length} of ${rows.length} spaces confirmed.`}
           link={{ href: '/admin/show', label: 'Prices' }}
         />
@@ -261,13 +261,13 @@ export default async function Roster() {
           against a document. Reveal one when you need the whole number.
         </p>
         <p className="adm-note">
-          <strong>Mark paid</strong> stands in for the vendor paying in the portal. In production
+          <strong>Mark paid</strong> stands in for the maker paying in the portal. In production
           this is a Stripe Checkout webhook; payment state is only ever set from a verified webhook,
           never a client callback (CLAUDE.md rule 5).
         </p>
         <p className="adm-note">
           <strong>Commission is snapshotted per booking</strong> and immutable. Changing the show
-          rate later never changes what an accepted vendor was promised.
+          rate later never changes what an accepted maker was promised.
         </p>
       </div>
     </>

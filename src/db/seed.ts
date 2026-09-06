@@ -93,7 +93,7 @@ function pick<T>(arr: readonly T[], i: number): T {
  * Modes:
  *   SEED_MODE=demo (default) — the show, prices, and 30 fake applicants.
  *   SEED_MODE=show           — the show and prices only. Use in production:
- *                              fake merchants must never reach the public
+ *                              fake makers must never reach the public
  *                              roster or the jury queue.
  * A non-empty database is never wiped unless SEED_FORCE=1 is set.
  */
@@ -194,7 +194,7 @@ async function main() {
   }
 
   /* ── priced extras ──
-   * Prices confirmed against the old merchant application page. A null
+   * Prices confirmed against the old application page. A null
    * track means both tracks are offered it.
    */
   const extras = [

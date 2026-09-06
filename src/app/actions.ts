@@ -45,7 +45,7 @@ async function log(
 
 /**
  * The prototype writes mail to a table instead of sending it, so you can read
- * exactly what a vendor would receive at /admin/outbox. Swap for Resend +
+ * exactly what a maker would receive at /admin/outbox. Swap for Resend +
  * React Email at the same call site — nothing else changes.
  */
 /**
@@ -262,9 +262,9 @@ const ApplicationSchema = z.object({
 
   signedName: z.string().min(2, 'Type your name to sign').max(120, 'Keep it under 120 characters'),
   // An unchecked checkbox posts no key, so the type error fired before the
-  // refine could and the maker was told "Vendor agreement: Required".
-  agree: z.string({ message: 'You must accept the vendor agreement' })
-    .refine((v) => v === 'on', 'You must accept the vendor agreement'),
+  // refine could and the maker was told "Maker agreement: Required".
+  agree: z.string({ message: 'You must accept the maker agreement' })
+    .refine((v) => v === 'on', 'You must accept the maker agreement'),
 })
   .refine((d) => d.priceHigh >= d.priceLow, {
     message: 'High price must be at least the low price', path: ['priceHigh'],
@@ -358,7 +358,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     .map(String)
     .filter((code) => offered.some((a) => a.code === code))
 
-  // Vendors persist across shows — find or create, never duplicate on email.
+  // Makers persist across shows — find or create, never duplicate on email.
   //
   // And then UPDATE. Mermade runs two shows a year, so a large share of any
   // season's applicants are returning makers, and the form asks them for their
@@ -642,7 +642,7 @@ async function notifyStaff(applicationId: string, showName: string): Promise<voi
 
 /**
  * Accepting creates the Booking and snapshots commission_bps (CLAUDE.md rule 6).
- * Vendor codes are assigned here, sequentially per show, and are what the
+ * Maker codes are assigned here, sequentially per show, and are what the
  * register reads: MM07 + a price is the whole of the money model.
  */
 export async function decide(fd: FormData): Promise<void> {
@@ -675,7 +675,7 @@ export async function decide(fd: FormData): Promise<void> {
     if (!already && app.spaceTypeId) {
       const space = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, app.spaceTypeId) })
       if (space) {
-        // Sequential per-show vendor code. Reused across shows if the vendor has one.
+        // Sequential per-show maker code. Reused across shows if the maker has one.
         const [{ n }] = await db
           .select({ n: sql<number>`count(*)` })
           .from(bookings)
@@ -730,7 +730,7 @@ export async function decide(fd: FormData): Promise<void> {
           `You’re in: ${show.name}`,
           `${vendor.contactName}, you’re in.\n\n`
             + `${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${show.venueName}\n`
-            + `Your vendor code is ${code}. Tag every item ${code} plus the price. That's all the register needs.\n\n`
+            + `Your maker code is ${code}. Tag every item ${code} plus the price. That's all the register needs.\n\n`
             + `Space: ${space.label}\nBooth fee: ${usd(space.priceCents)}\n`
             + granted.map((a) => `${a.name}: ${usd(a.priceCents)}\n`).join('')
             + (granted.length > 0 ? `Total: ${usd(space.priceCents + addonsCents)}\n` : '')
@@ -771,7 +771,7 @@ export async function decide(fd: FormData): Promise<void> {
       vendor.email,
       `Waitlisted for ${show.name}`,
       `${vendor.contactName}, you're on the waitlist for ${show.name}.\n\n`
-        + `Spaces open up when accepted vendors don't pay in time, and we offer them in order. `
+        + `Spaces open up when accepted makers don't pay in time, and we offer them in order. `
         + `We'll email either way by ${fmtDate(show.rosterAnnouncedOn)}.\n\nMermade Market`,
       'waitlisted',
     )
@@ -783,7 +783,7 @@ export async function decide(fd: FormData): Promise<void> {
   revalidatePath('/')
 }
 
-/** Simulates the vendor paying the booth fee in the portal. */
+/** Simulates the maker paying the booth fee in the portal. */
 export async function markPaid(fd: FormData): Promise<void> {
   const bookingId = String(fd.get('bookingId'))
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })

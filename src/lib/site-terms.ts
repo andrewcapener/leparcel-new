@@ -71,7 +71,7 @@ export const TERMS: LegalSection[] = [
     id: 'apply',
     title: 'Applying to sell',
     body: [
-      'The application is at /apply, and it is free. What you agree to when you sign it is the vendor agreement, which is published in full at /agreement. That agreement, your accepted application and the show record are what govern selling with us. These terms cover the site itself.',
+      'The application is at /apply, and it is free. What you agree to when you sign it is the maker agreement, which is published in full at /agreement. That agreement, your accepted application and the show record are what govern selling with us. These terms cover the site itself.',
       'One application per shop per show. We read every application and answer either way.',
     ],
   },
@@ -88,7 +88,7 @@ export const TERMS: LegalSection[] = [
     title: 'What you send us stays yours',
     body: [
       'The photographs, descriptions and shop names you send with an application stay yours. You give us permission to use them to jury your application, to run the show, and to promote the show, and nothing more. We do not sell them and we do not license them on.',
-      'Section 10 of the vendor agreement covers photographs taken at the show itself.',
+      'Section 10 of the maker agreement covers photographs taken at the show itself.',
     ],
   },
   {
@@ -130,7 +130,7 @@ export const TERMS: LegalSection[] = [
     id: 'changes',
     title: 'Changes',
     body: [
-      'These terms are version {{legalVersion}}, last updated {{legalUpdated}}. When we change something that matters we change the version and the date. The vendor agreement is versioned separately, and the version you signed is the one that governs your show.',
+      'These terms are version {{legalVersion}}, last updated {{legalUpdated}}. When we change something that matters we change the version and the date. The maker agreement is versioned separately, and the version you signed is the one that governs your show.',
     ],
   },
 ]
@@ -175,7 +175,7 @@ export const PRIVACY: LegalSection[] = [
         'your seller’s permit number if you gave one, or that you told us you are an occasional seller;',
         'whether you told us you carry liability insurance;',
         'any photographs you attached;',
-        'the name you typed to sign the vendor agreement, the version you signed, and the date and time.',
+        'the name you typed to sign the maker agreement, the version you signed, and the date and time.',
       ],
       'Phone numbers are for load-in day, which runs on text messages. The permit number is a compliance record we are required to keep: CDTFA Publication 111 makes an event operator keep it for four years.',
       'If you are accepted and you pay, your shop name and your public handles appear on the roster page. Your email address, your phone number and your permit number do not, and never will.',
@@ -224,7 +224,7 @@ export const PRIVACY: LegalSection[] = [
     id: 'keeping',
     title: 'How long we keep it',
     body: [
-      'Applications and vendor records are the market’s own history and we keep them: who applied, who was accepted, who sold, at which show. Permit records are kept four years, which is what CDTFA Publication 111 requires. Mailing list entries stay until you ask to come off. Messages sent through the contact form stay in the admin so an old thread can be found again.',
+      'Applications and maker records are the market’s own history and we keep them: who applied, who was accepted, who sold, at which show. Permit records are kept four years, which is what CDTFA Publication 111 requires. Mailing list entries stay until you ask to come off. Messages sent through the contact form stay in the admin so an old thread can be found again.',
     ],
   },
   {
@@ -239,7 +239,7 @@ export const PRIVACY: LegalSection[] = [
     id: 'children',
     title: 'Children',
     body: [
-      'This site is not aimed at children and we do not knowingly collect anything from one. Junior maker spaces are real, and the application for one comes from a parent or guardian, who is also the person who signs the vendor agreement.',
+      'This site is not aimed at children and we do not knowingly collect anything from one. Junior maker spaces are real, and the application for one comes from a parent or guardian, who is also the person who signs the maker agreement.',
     ],
   },
   {

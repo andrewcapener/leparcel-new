@@ -546,7 +546,7 @@ export function CollapsibleTabs({
 
 /**
  * `section-multi-column` — a row of text columns. Their price lists, their
- * sponsor tiers and their merchant grids are all this section.
+ * sponsor tiers and their maker grids are all this section.
  */
 export function MultiColumn({
   id, columns, align = 'left', imageMaxWidth = 700, scheme = false, titles,
@@ -694,7 +694,7 @@ export function SubheadingSection({ children }: { children: React.ReactNode }) {
 export type LogoCard = { name: string; href?: string | null; image?: string | null }
 
 /**
- * `section-multi-column` with an image block per column — their merchant
+ * `section-multi-column` with an image block per column — their maker
  * grids. A shop with no logo yet renders as the name alone rather than a
  * broken frame.
  */

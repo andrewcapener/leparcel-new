@@ -46,11 +46,11 @@ export default async function FAQ() {
 
   const merchants: Tab[] = [
     {
-      q: 'What are my chances of being accepted as a Merchant?',
+      q: 'What are my chances of being accepted as a Maker?',
       a: <p>Our inside space (all 3 days) only allows {show.indoorCapacity}.. Outside, {show.outdoorCapacity} each day. If you create a fresh product we haven&#39;t seen before, or put a new spin to something we have seen, chances are high you&#39;ll get in. You have great branding &amp; a vision for your online brand? Yes.. can&#39;t wait to have you.</p>,
     },
     {
-      q: 'How are merchants selected?',
+      q: 'How are makers selected?',
       a: <p>The moment applications open &amp; start coming in, we get the wheels turning. We are emailing applicants, requesting new content or a photographs we can&#39;t find online... and we have them categorized. New Makers/Repeat Makers/Need improvement makers. We choose the freshest, best branded shops that come in. We also only select 1-3 makers in each category.</p>,
     },
     {
@@ -63,15 +63,15 @@ export default async function FAQ() {
     },
     {
       q: "If I'm not accepted this time, can I apply again?",
-      a: <p>Yes! We don&#39;t <em>want</em> to accept our old vendors a million times. We gotta keep it FRESH. If you weren&#39;t accepted, you were most likely given a reason why so that you can fix it by the next time! That&#39;s the great thing about being a creator. Creating &amp; changing often is a beautiful work of art! Or you weren&#39;t accepted because there simply was too many jewelry makers and we just can&#39;t have you all! No hard feelings!</p>,
+      a: <p>Yes! We don&#39;t <em>want</em> to accept our old makers a million times. We gotta keep it FRESH. If you weren&#39;t accepted, you were most likely given a reason why so that you can fix it by the next time! That&#39;s the great thing about being a creator. Creating &amp; changing often is a beautiful work of art! Or you weren&#39;t accepted because there simply was too many jewelry makers and we just can&#39;t have you all! No hard feelings!</p>,
     },
     {
-      q: 'Outdoor Merchant Info',
-      a: <p>For information about being an outdoor merchant <Link href="/makers/outdoor">click here</Link></p>,
+      q: 'Outdoor Maker Info',
+      a: <p>For information about being an outdoor maker <Link href="/makers/outdoor">click here</Link></p>,
     },
     {
-      q: 'Indoor Merchant Info',
-      a: <p>For information about being an indoor merchant <Link href="/makers/indoor">click here</Link></p>,
+      q: 'Indoor Maker Info',
+      a: <p>For information about being an indoor maker <Link href="/makers/indoor">click here</Link></p>,
     },
   ]
 
@@ -81,7 +81,7 @@ export default async function FAQ() {
             id="section-faq-banner"
             image="/photos/merch.jpg"
             subheading="Mermade Market FAQ"
-            title="Frequently asked questions for both shoppers and merchants"
+            title="Frequently asked questions for both shoppers and makers"
             heightMobile={300}
             heightDesktop={400}
             heading={[32, 36.4, 52]}
@@ -90,7 +90,7 @@ export default async function FAQ() {
 
           <FaqHeader />
           <CollapsibleTabs heading="Shop Small" id="faq-shop-small" tabs={shoppers} />
-          <CollapsibleTabs heading="Merchants" id="faq-merchants" tabs={merchants} />
+          <CollapsibleTabs heading="Makers" id="faq-merchants" tabs={merchants} />
 
           <RichText
             title="Get in touch"

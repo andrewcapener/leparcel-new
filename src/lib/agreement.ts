@@ -1,5 +1,5 @@
 /**
- * The vendor agreement, as structured content.
+ * The maker agreement, as structured content.
  *
  * Same shape as src/lib/page-html.ts: the prose lives here, everything
  * dated, priced, counted or rated is a `{{token}}` filled from the Show
@@ -336,7 +336,7 @@ const partOne: Part = {
         { n: '12.2', text: ['On material breach we may remove you from the show without a refund, and may decline your future applications. We tell you the reason in writing.'] },
         {
           n: '12.3', lead: 'No-show.',
-          text: ['A confirmed maker who neither appears nor cancels forfeits the fee, is recorded as a no-show on their vendor record, and may be declined or asked to prepay in a future season.'],
+          text: ['A confirmed maker who neither appears nor cancels forfeits the fee, is recorded as a no-show on their maker record, and may be declined or asked to prepay in a future season.'],
         },
       ],
     },
@@ -367,7 +367,7 @@ const partOne: Part = {
       clauses: [
         { n: '14.1', lead: 'Independent contractor.', text: ['Nothing here creates employment, partnership, joint venture or franchise. Except as section A1 provides for consignment, neither of us is the other’s agent.'] },
         { n: '14.2', lead: 'Governing law.', text: ['California law governs this agreement. The state and federal courts in Orange County, California have jurisdiction.'] },
-        { n: '14.3', lead: 'Notices.', text: ['Notices go to the email addresses on the vendor record. Ours is {{contactEmail}}.'] },
+        { n: '14.3', lead: 'Notices.', text: ['Notices go to the email addresses on the maker record. Ours is {{contactEmail}}.'] },
         { n: '14.4', lead: 'Entire agreement.', text: ['This agreement, your accepted application, and the show record are the whole agreement between us. They replace what the rest of this site says and anything said in email.'] },
         { n: '14.5', lead: 'Severability.', text: ['If a provision cannot be enforced, the rest of the agreement survives.'] },
         { n: '14.6', lead: 'Survival.', text: ['Sections 8, 9, 10, A6, A8 and 14 survive the show.'] },
@@ -581,7 +581,7 @@ const scheduleB: Part = {
     {
       id: 'b4', n: 'B4', title: 'Load-in, load-out and vehicles',
       clauses: [
-        { n: 'B4.1', text: ['Load-in and load-out happen at the times you are assigned. Vehicles move to vendor parking before doors open.'] },
+        { n: 'B4.1', text: ['Load-in and load-out happen at the times you are assigned. Vehicles move to maker parking before doors open.'] },
         { n: 'B4.2', text: ['Leave your space the way you found it and take your rubbish with you.'] },
       ],
     },

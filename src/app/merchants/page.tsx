@@ -10,7 +10,7 @@ import { fmtDate } from '@/lib/dates'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Merchants',
+  title: 'Makers',
   description:
     'The makers selling at the next Mermade Market, inside and outside, by category and by day.',
   alternates: { canonical: '/merchants' },
@@ -73,7 +73,7 @@ export default async function Merchants() {
 
   return (
     <SiteShell show={show} template="page template-suffix-merchants">
-          <PageTitle title={`${show.name} Merchants`} />
+          <PageTitle title={`${show.name} Makers`} />
 
           {roster.length === 0 ? (
             <RichText

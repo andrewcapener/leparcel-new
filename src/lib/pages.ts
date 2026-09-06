@@ -9,11 +9,11 @@ import type { Metadata } from 'next'
  *   'unlisted' reachable by URL and nothing else. Not in the sitemap, not in
  *              any nav, and marked noindex so it does not turn up in a search
  *              for "mermade market". This is the shape for a page we hand to
- *              accepted vendors as a link.
+ *              accepted makers as a link.
  *   'private'  behind the admin gate.
  *
  * Unlisted is not security. Anyone with the link can read it, and links get
- * forwarded, so nothing sensitive to one vendor belongs on one. Per-vendor
+ * forwarded, so nothing sensitive to one maker belongs on one. Per-maker
  * material belongs behind the login (see the maker portal work).
  */
 export type Visibility = 'nav' | 'unlisted' | 'private'
@@ -32,7 +32,7 @@ export const PAGES: Array<{ path: string; visibility: Visibility; note: string }
   { path: '/lookbook/indoor', visibility: 'nav',      note: 'Indoor space lookbook' },
   { path: '/lookbook/outdoor',visibility: 'nav',      note: 'Outdoor tent lookbook' },
   { path: '/sponsorships',    visibility: 'nav',      note: 'Sponsorships' },
-  { path: '/agreement',       visibility: 'nav',      note: 'The vendor agreement every maker signs' },
+  { path: '/agreement',       visibility: 'nav',      note: 'The agreement every maker signs' },
   { path: '/terms',           visibility: 'nav',      note: 'Terms of use for the site' },
   { path: '/privacy',         visibility: 'nav',      note: 'What the site collects and where it goes' },
 ]

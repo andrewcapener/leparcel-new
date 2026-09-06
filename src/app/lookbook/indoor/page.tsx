@@ -22,9 +22,9 @@ export default async function IndoorLookbook() {
 
   return (
     <SiteShell show={show} template="page template-suffix-lookbook">
-          <RichText primary title="Indoor Merchant Lookbook">
+          <RichText primary title="Indoor Maker Lookbook">
             <p>
-              It is proven time &amp; time again that when our merchants&#39;
+              It is proven time &amp; time again that when our makers&#39;
               spaces look their best, they sell more product. Indoor @ Mermade
               are much smaller spaces than any outdoor tent. But it doesn&#39;t
               mean they can&#39;t look good!! See below of some past examples

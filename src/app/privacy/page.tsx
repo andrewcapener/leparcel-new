@@ -43,7 +43,7 @@ export default async function Privacy() {
         </p>
         <p>
           The <Link href="/terms">terms of use</Link> cover the site itself, and
-          the <Link href="/agreement">vendor agreement</Link> covers selling
+          the <Link href="/agreement">maker agreement</Link> covers selling
           with us.
         </p>
       </PageTitle>

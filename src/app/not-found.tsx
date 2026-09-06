@@ -31,7 +31,7 @@ export default function NotFound() {
           <ul className="nf__links">
             <li><Link href="/">Home</Link></li>
             <li><Link href="/schedule">Schedule</Link></li>
-            <li><Link href="/merchants">Merchants</Link></li>
+            <li><Link href="/merchants">Makers</Link></li>
             <li><Link href="/apply">Apply</Link></li>
             <li><Link href="/journal">Journal</Link></li>
             <li><Link href="/contact">Contact</Link></li>

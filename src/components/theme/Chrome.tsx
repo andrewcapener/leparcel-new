@@ -50,7 +50,7 @@ const HEADER_CSS_SOLID = `.logo img { width: 150px; }
 
 const NAV = [
   { href: '/faq', label: 'FAQ', featured: false },
-  { href: '/merchants', label: 'MERCHANTS', featured: false },
+  { href: '/merchants', label: 'MAKERS', featured: false },
   { href: '/schedule', label: 'SCHEDULE', featured: true },
 ]
 
@@ -210,7 +210,7 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
           <div className="logo-area__right">
             <div className="logo-area__right__inner">
               {/* Theirs carries an Account link here, to Shopify's customer
-                  login. Ours is the vendor portal: the same place in the
+                  login. Ours is the maker portal: the same place in the
                   header, pointing at the thing that replaces it.
 
                   The mark alone, at every width. Drew, 6 Sep 2026: ACCOUNT set
@@ -310,7 +310,7 @@ export function PageFooter({ show }: { show: Show }) {
                 <p>Shop small. Think Big. </p>
                 <p>
                   Mermade Market is a hand curated market. Uniting creators with
-                  community, we feature 100+ indoor &amp; outdoor merchants every
+                  community, we feature 100+ indoor &amp; outdoor makers every
                   spring &amp; winter!{' '}
                 </p>
                 <p>Dana Point {show.venueName}</p>

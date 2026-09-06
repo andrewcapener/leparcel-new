@@ -223,7 +223,7 @@ export const applications = pgTable('applications', {
 /* ─────────────────────── bookings ───────────────────────
  * Created on acceptance. commission_bps is SNAPSHOTTED here and
  * immutable (CLAUDE.md rule 6) — changing the show rate later must
- * never retroactively change what a vendor was promised.
+ * never retroactively change what a maker was promised.
  */
 export const bookings = pgTable('bookings', {
   id: text('id').primaryKey(),
@@ -261,7 +261,7 @@ export const bookingAddons = pgTable('booking_addons', {
 
 /* ─────────────────────── audit log ───────────────────────
  * CLAUDE.md rule 3 — every state change that touches money or a
- * vendor's standing is logged with actor, before, after, reason.
+ * maker's standing is logged with actor, before, after, reason.
  */
 export const auditLog = pgTable('audit_log', {
   id: text('id').primaryKey(),

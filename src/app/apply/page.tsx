@@ -16,7 +16,7 @@ import { bpsLabel, usd } from '@/lib/money'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Merchant Application',
+  title: 'Maker Application',
   description:
     'Apply to sell at Mermade Market in Dana Point. Indoor consignment spaces and outdoor tent days, prices, dates and the rules, with no fee to apply.',
   alternates: { canonical: '/apply' },
@@ -220,7 +220,7 @@ export default async function Apply({
             <p className="ap-head__eyebrow">
               {show.name} · {fmtRange(show.startsOn, show.endsOn)} · {show.venueName}
             </p>
-            <h1 className="majortitle in-content h1 ap-head__title">Merchant Application</h1>
+            <h1 className="majortitle in-content h1 ap-head__title">Maker Application</h1>
             <p className="ap-head__lede">
               One form covers both tracks. Inside is consignment at one
               register. Outside is a tent we set up for you, for the day, and
