@@ -54,78 +54,34 @@ export default async function Schedule() {
             </p>
           </RichText>
 
-          {/* One table for the run of show, not one per day.
-              Until the trucks and the musicians are booked a day has exactly
-              two facts, its open and its close, and three separate tables of
-              two rows each put a page of white space between them and printed
-              the same hours twice: once as the caption, once as the rows. The
-              days belong in one column so they compare, which is the whole
-              reason a shopper is on this page. Booked extras become rows
-              under their own day as they land. */}
-          <div className="shopify-section section-rich-text">
-            <div className="fully-spaced-row--medium" data-cc-animate="">
-              <div className="container container--reading-width">
-                <div className="rte timetable timetable--run">
-                  <table>
-                    <caption>The run of show</caption>
-                    <thead>
-                      <tr>
-                        <th scope="col">Day</th>
-                        <th scope="col">Open</th>
-                        <th scope="col">What is on</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {days.map((row) => {
-                        const { day, hours } = splitDay(row)
-                        const { opens, closes } = bookends(hours)
-                        const x = extrasFor(day)
-                        const on: string[] = []
-                        if (x?.foodTruck) on.push(x.foodTruck)
-                        if (x && x.allDay.length > 0) on.push(...x.allDay)
-                        if (x) on.push(...x.music.map((m) => `${m.time} ${m.what}`))
-                        return (
-                          <tr key={row}>
-                            <th scope="row">{day}</th>
-                            {/* The hours as written on the Show record, so a
-                                range that cannot be parsed still shows. */}
-                            <td className="num">{opens && closes ? `${opens} to ${closes}` : hours}</td>
-                            <td>
-                              {on.length > 0
-                                ? on.join(' · ')
-                                : 'Inside and outdoor market open.'}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* The run of show, in the same two-column shape as "Before you
+              come" below it. It was a three-column table with its own header
+              row, which put a second visual language on one short page: two
+              tables of the same facts, one with a DAY / OPEN / WHAT IS ON
+              header and heavier rules, one without. The day is the label and
+              everything true about that day is the value, which is exactly
+              what the fact table already does, so it uses the fact table.
+              Booked extras join the value as they land. */}
+          <FactTable
+            title="The run of show"
+            rows={days.map((row) => {
+              const { day, hours } = splitDay(row)
+              const { opens, closes } = bookends(hours)
+              const x = extrasFor(day)
+              const on: string[] = []
+              if (x?.foodTruck) on.push(x.foodTruck)
+              if (x && x.allDay.length > 0) on.push(...x.allDay)
+              if (x) on.push(...x.music.map((m) => `${m.time} ${m.what}`))
+              /* The hours as written on the Show record when the range cannot
+                 be parsed, so an unusual day still shows its own times. */
+              const when = opens && closes ? `${opens} to ${closes}` : hours
+              return {
+                label: day,
+                value: `${when} · ${on.length > 0 ? on.join(' · ') : 'Inside and outdoor market open.'}`,
+              }
+            })}
+          />
 
-          {/* The lineup note and the link to the makers used to be a row
-              inside every day, which printed the same two sentences three
-              times over. They are the same on all three days because they
-              are about the show, not about a day, so they sit once, here,
-              under the timetable they qualify. */}
-          <RichText large={false}>
-            {someDayUnbooked && (
-              <p>
-                The live music, the food trucks and the rest of each day go up
-                about a week before the show. The list hears first.
-              </p>
-            )}
-            <p>
-              <Link href="/merchants">See the maker line up</Link>. Inside is the
-              same all three days; the outdoor tents change daily.
-            </p>
-          </RichText>
-
-          {/* The most under-served content on a market site, per
-              docs/08-DESIGN-SYSTEM.md §6: the practical questions that decide
-              whether someone comes. None of it was anywhere on the site. */}
           <FactTable
             title="Before you come"
             rows={[

@@ -130,7 +130,7 @@ async function main() {
     venueAddress: '24642 San Juan Avenue, Dana Point, CA 92629',
     startsOn: '2026-11-13T12:00:00-08:00',
     endsOn: '2026-11-15T12:00:00-08:00',
-    hoursNote: 'Friday 13 November, 9am-6pm · Saturday 14th, 9am-5pm · Sunday 15th, 9am-5pm',
+    hoursNote: 'Friday 13 November, 9am to 6pm · Saturday 14 November, 9am to 5pm · Sunday 15 November, 9am to 5pm',
     // Prose, not dates: staff edit these at /admin/show when the venue moves.
     // Shape carried over from the old site's indoor maker rules.
     // Just the day and the window. The set-up row on /makers/indoor adds
