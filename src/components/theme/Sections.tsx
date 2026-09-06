@@ -409,9 +409,15 @@ export function ArticleRow({
     <div className="shopify-section section-featured-blog">
       <div className="fully-spaced-row--medium">
         <div className="container blog-row">
-          <h2 className="hometitle h4 align-center">
-            {headingHref ? <Link href={headingHref}>{heading}</Link> : heading}
-          </h2>
+          {/* Only when there is one. /journal passes no heading, because the
+              page title already says what the row is, and an empty <h2> is a
+              heading with no text: WCAG 2.4.6, and a screen reader announcing
+              "heading level two" over silence. */}
+          {heading && (
+            <h2 className="hometitle h4 align-center">
+              {headingHref ? <Link href={headingHref}>{heading}</Link> : heading}
+            </h2>
+          )}
           <div className="article-list article-layout--columns article-layout--one-row">
             {articles.map((a, i) => (
               <div className="article" key={a.href} data-cc-animate="" data-cc-animate-delay={`${0.15 * (i + 1)}s`}>
