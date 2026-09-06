@@ -28,10 +28,33 @@ import {
    word of the message. */
 const PLATE = { file: 'floor.jpg', alt: 'The room at Mermade Market, shelves and racks under the lights' }
 
+/**
+ * The name to greet somebody by.
+ *
+ * Their first name, because this is the one warm message in the sequence and
+ * a shop name in the greeting reads like an invoice. Everything else about
+ * the application is filed under the shop, and the shop is named in the line
+ * underneath and again in the record, so nothing is lost by not leading with
+ * it.
+ *
+ * The first whitespace-separated word, with any trailing punctuation off.
+ * Two people who share a shop often type "Sarah and Tom" and "Sarah" is the
+ * right greeting for that. Anything that leaves nothing usable, an empty
+ * field or a string of symbols, falls back to the shop name, which is never
+ * empty because the form requires it.
+ */
+export function firstName(contactName: string, shopName: string): string {
+  const first = contactName.trim().split(/\s+/)[0] ?? ''
+  const clean = first.replace(/[^\p{L}\p{N}'-]+$/u, '')
+  return clean.length > 0 ? clean : shopName
+}
+
 export function applicationReceivedHtml({
-  shopName, showName, fields, rosterDate, contactEmail, siteUrl,
+  shopName, contactName, showName, fields, rosterDate, contactEmail, siteUrl,
 }: {
   shopName: string
+  /** Their own name. The greeting uses the first word of it. */
+  contactName: string
   showName: string
   /** What they asked for, short: category, track, spaces. */
   fields: Field[]
@@ -43,12 +66,13 @@ export function applicationReceivedHtml({
 }): string {
   return shell({
     webFonts: true,
-    // Their name, not a metaphor about a stack of paper. The team read
-    // "You're in the pile" as cold, and they were right: it describes our
-    // side of the desk at the moment somebody is nervous about theirs.
+    // Their own first name. It was "You're in the pile", which the team read
+    // as cold and which described our side of the desk at the moment somebody
+    // is nervous about theirs; then it was the shop name, which is how an
+    // invoice greets you. The shop is on the next line and in the record.
     eyebrow: `Application received · ${showName}`,
-    heading: `Thank you, ${shopName}`,
-    sub: 'It is in, and there is nothing else you need to do right now.',
+    heading: `Thank you, ${firstName(contactName, shopName)}`,
+    sub: `${shopName} is in for ${showName}, and there is nothing else you need to do right now.`,
     inner:
       plate(`${siteUrl}/photos/${PLATE.file}`, PLATE.alt)
       + `<tr><td style="height:30px;line-height:30px;font-size:0;">&nbsp;</td></tr>`

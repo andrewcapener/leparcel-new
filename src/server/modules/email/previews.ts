@@ -117,7 +117,7 @@ export function previews(show: Show, siteUrl: string): Preview[] {
         + receiptFields.map((f) => `${f.label}: ${f.value}`).join('\n')
         + `\n\nWe read every application and answer either way. The roster is announced ${roster}.\n\nMermade Market`,
       html: applicationReceivedHtml({
-        shopName: SHOP, showName: show.name, fields: receiptFields,
+        shopName: SHOP, contactName: 'Sarah Whitfield', showName: show.name, fields: receiptFields,
         rosterDate: roster, contactEmail: CONTACT_EMAIL, siteUrl,
       }),
     },

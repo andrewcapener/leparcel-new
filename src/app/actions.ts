@@ -582,6 +582,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     undefined,
     applicationReceivedHtml({
       shopName: d.shopName,
+      contactName: d.contactName,
       showName: show.name,
       fields: receiptFields,
       rosterDate: fmtDate(show.rosterAnnouncedOn),
