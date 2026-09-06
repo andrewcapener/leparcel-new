@@ -581,6 +581,21 @@ async function notifyStaff(applicationId: string, showName: string): Promise<voi
 
     // The same fields twice, deliberately. src/server/modules/email/ explains
     // why both parts go out and why the text one is the record.
+    // The photographs are not on the sheet row (the Sheet does not want them),
+    // so they are read here. Already verified at submit: parsePhotoKeys drops
+    // anything outside our prefix and verifyPhotoKeys reads the bytes, so what
+    // is stored is ours and is an image.
+    const [withPhotos] = await db
+      .select({ photos: applications.photos })
+      .from(applications)
+      .where(eq(applications.id, applicationId))
+      .limit(1)
+    let photos: string[] = []
+    try {
+      const parsed: unknown = JSON.parse(withPhotos?.photos || '[]')
+      if (Array.isArray(parsed)) photos = parsed.filter((u): u is string => typeof u === 'string')
+    } catch { photos = [] }
+
     const html = staffNoticeHtml({
       heading: row.shopName || 'A maker',
       sub: `${row.category || 'Uncategorised'} · ${row.track} · applied for ${showName}`,
@@ -588,6 +603,7 @@ async function notifyStaff(applicationId: string, showName: string): Promise<voi
       // The admin link is the button, so it does not also need to be a row.
       fields: pairs.filter((f) => f.label !== 'Open in admin'),
       cta: { href: row.adminLink, label: 'Open in admin' },
+      photos,
     })
 
     await mail(

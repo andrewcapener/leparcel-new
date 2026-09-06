@@ -205,8 +205,8 @@ async function main() {
     // New for 2026, priced and capped by Drew on 5 Sep. Five indoor for the
     // show; five outdoor PER DAY, which the number below expresses because
     // each outdoor day is its own space type.
-    { code: 'PRIORITY-IN',  track: 'indoor'  as const, name: 'Priority placement, inside',  priceCents: 10_000, isLimited: true, capacity: 5, description: 'A spot on the busiest run of the room. Only {{capacity}} of these exist.' },
-    { code: 'PRIORITY-OUT', track: 'outdoor' as const, name: 'Priority placement, outside', priceCents: 10_000, isLimited: true, capacity: 5, description: 'A tent near the entrance. Only {{capacity}} exist each day.' },
+    { code: 'PRIORITY-IN',  track: 'indoor'  as const, name: 'Priority placement, inside',  priceCents: 10_000, isLimited: true, capacity: 5, description: 'A spot on the busiest run of the room. Only {{capacity}} of these exist, and we choose the one that suits your shop best.' },
+    { code: 'PRIORITY-OUT', track: 'outdoor' as const, name: 'Priority placement, outside', priceCents: 10_000, isLimited: true, capacity: 5, description: 'A tent near the entrance. Only {{capacity}} exist each day, and we choose the one that suits your shop best.' },
   ]
   for (const [i, a] of extras.entries()) {
     await db.insert(addOns).values({ id: randomUUID(), showId, sortOrder: i, ...a })

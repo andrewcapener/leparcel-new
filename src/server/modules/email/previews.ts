@@ -102,6 +102,9 @@ export function previews(show: Show, siteUrl: string): Preview[] {
         sub: `Ceramics · indoor · applied for ${show.name}`,
         fields: staffFields,
         cta: { href: `${siteUrl}/admin/jury`, label: 'Open in admin' },
+        // Two of the market's own photographs, so the preview shows the strip
+        // a real notice carries rather than describing it.
+        photos: [`${siteUrl}/photos/ceramics.jpg`, `${siteUrl}/photos/racks.jpg`],
       }),
     },
   ]

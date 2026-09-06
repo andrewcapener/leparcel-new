@@ -53,6 +53,89 @@ export function fieldRows(fields: Field[]): string {
   }).join('')
 }
 
+/**
+ * A small gold label with a hairline, to break a long record into blocks.
+ *
+ * Twenty-three fields in one undifferentiated column is a scroll, not a
+ * record. Three or four named groups is the same information and half the
+ * reading, because you stop at the group you came for.
+ */
+export function sectionHead(label: string): string {
+  return `<tr><td style="padding:20px 24px 8px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td width="1" style="padding-right:9px;white-space:nowrap;font-family:${HEAD_FONT};font-size:10px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:${GOLD};">${esc(label)}</td>
+      <td><div style="height:1px;background:${RULE};line-height:1px;font-size:0;">&nbsp;</div></td>
+    </tr></table>
+  </td></tr>`
+}
+
+/**
+ * The long tail of a record, two fields to a row.
+ *
+ * `fieldRows` gives a field the full width, which is right for the six that
+ * decide anything and wasteful for the seventeen that do not: at one per row
+ * the internal notice ran past three screens. Two columns halves it without
+ * dropping a single field, which matters because this message is a backup.
+ *
+ * A plain two-cell table rather than anything clever, because it has to
+ * survive Outlook's Word renderer, which ignores inline-block on a cell. At
+ * the shell's 560px it lands around 250px a column, which is comfortable on a
+ * phone and does not need to stack.
+ */
+export function compactRows(fields: Field[]): string {
+  const cell = (f: Field | undefined, side: 'l' | 'r', last: boolean) => {
+    const pad = side === 'l' ? 'padding:9px 12px 9px 0;' : 'padding:9px 0 9px 12px;'
+    const border = last ? '' : `border-bottom:1px solid ${RULE};`
+    if (!f) return `<td width="50%" valign="top" style="${pad}${border}">&nbsp;</td>`
+    return `<td width="50%" valign="top" style="${pad}${border}">
+      <div style="font-family:${HEAD_FONT};font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${MUTED};padding-bottom:3px;">${esc(f.label)}</div>
+      <div style="font-family:${BODY_FONT};font-size:14px;line-height:1.45;color:${BODY};word-break:break-word;">${linkify(f.value) || `<span style="color:#b5aea5;">not given</span>`}</div>
+    </td>`
+  }
+  const rows: string[] = []
+  for (let i = 0; i < fields.length; i += 2) {
+    const last = i + 2 >= fields.length
+    rows.push(`<tr>${cell(fields[i], 'l', last)}${cell(fields[i + 1], 'r', last)}</tr>`)
+  }
+  return `<tr><td style="padding:0 24px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows.join('')}</table>
+  </td></tr>`
+}
+
+/**
+ * The maker's own photographs, three across, each linking to the full size.
+ *
+ * The only remote content any of these emails loads, and it is deliberate:
+ * this one goes to Mermade's own inbox, and the jury's actual question is
+ * "what does the work look like". A row of thumbnails answers it before
+ * anybody opens the admin.
+ *
+ * Two rules hold even so. The urls come from our own storage bucket and are
+ * checked by the caller, never from anything a maker typed; and a client that
+ * blocks remote images loses the pictures and nothing else, because every
+ * field is still in the record below and in the plain-text part.
+ *
+ * Width as an attribute as well as a style, because Outlook's Word renderer
+ * ignores CSS width on an image.
+ */
+export function photoStrip(urls: string[]): string {
+  if (urls.length === 0) return ''
+  const W = 160
+  const cells = urls.slice(0, 6).map((u) => `
+    <td width="${W}" valign="top" style="padding:0 8px 8px 0;">
+      <a href="${esc(u)}" style="text-decoration:none;">
+        <img src="${esc(u)}" width="${W}" alt="" style="display:block;width:${W}px;height:${W}px;object-fit:cover;border:1px solid ${RULE};" />
+      </a>
+    </td>`)
+  const rows: string[] = []
+  for (let i = 0; i < cells.length; i += 3) {
+    rows.push(`<tr>${cells.slice(i, i + 3).join('')}</tr>`)
+  }
+  return `<tr><td style="padding:4px 24px 8px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">${rows.join('')}</table>
+  </td></tr>`
+}
+
 export function paragraphs(text: string[]): string {
   return text.map((t) => `
     <tr><td style="padding:0 24px 14px;">
@@ -104,7 +187,7 @@ export function shell({
 
       <tr><td style="padding:22px 24px;border-bottom:2px solid ${INK};">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-          <td style="font-family:${HEAD_FONT};font-size:15px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${INK};">Mermade Market</td>
+          <td style="font-family:${HEAD_FONT};font-size:15px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${INK};"><span style="color:${GOLD};letter-spacing:0;">&#10022;</span>&nbsp;&nbsp;Mermade Market</td>
           <td align="right"><span style="display:inline-block;background:${GOLD};color:#ffffff;font-family:${HEAD_FONT};font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:6px 12px;">${esc(pill)}</span></td>
         </tr></table>
       </td></tr>

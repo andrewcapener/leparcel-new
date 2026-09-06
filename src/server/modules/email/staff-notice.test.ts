@@ -10,7 +10,8 @@
  * lives, so a template that quietly drops an empty value is a backup with a
  * hole in it.
  */
-import { staffNoticeHtml } from './staff-notice'
+import { SHEET_HEADERS } from '../sheets/row'
+import { PLACED_LABELS, staffNoticeHtml } from './staff-notice'
 
 let failures = 0
 const check = (name: string, ok: boolean, detail = '') => {
@@ -51,8 +52,41 @@ check('links are linked', html.includes('mailto:a@b.com'))
 
 // No remote anything: a client that blocks external content shows this whole,
 // and a maker's details never travel to a third party to render a header.
-check('no remote images', !/<img/i.test(html))
+check('no remote images when there are no photographs', !/<img/i.test(html))
+
+/* ── the maker's own photographs, and nothing else ───────────────────────
+   The one place these emails load remote content. It goes to Mermade's own
+   inbox and answers the jury's actual question before they open the admin.
+   The guard is that every src is a url the caller passed, so a shop name or a
+   website field can never become an image beacon. */
+{
+  const shots = [
+    'https://qobjvearelvdcvdcffhn.supabase.co/storage/v1/object/public/application-photos/a/b/c.jpg',
+    'https://qobjvearelvdcvdcffhn.supabase.co/storage/v1/object/public/application-photos/a/b/d.jpg',
+  ]
+  const withShots = staffNoticeHtml({
+    heading: 'Shop', sub: 'x', photos: shots,
+    fields: [{ label: 'Shop', value: '<img src="https://evil.test/beacon.gif">' }],
+  })
+  const srcs = [...withShots.matchAll(/<img[^>]+src="([^"]*)"/g)].map((m) => m[1]!)
+  check('the photographs are shown', srcs.length === shots.length, String(srcs.length))
+  check('every image is one the caller passed', srcs.every((u) => shots.includes(u)), srcs.join(' '))
+  check('an image typed into a field is still text', !srcs.includes('https://evil.test/beacon.gif'))
+  check('and it is escaped in the record', withShots.includes('&lt;img'))
+}
 check('no external stylesheet or font', !/<link/i.test(html) && !/@import/i.test(html))
 
 if (failures) { console.error(`staff notice: ${failures} failure(s)`); process.exit(1) }
 console.log('staff notice: escapes everything, keeps every field, fetches nothing')
+
+/* ── every canonical field has a home ─────────────────────────────────────
+   SHEET_HEADERS is the one list of what an application carries; the notice,
+   the CSV and the Sheet all read from it. A label this template does not
+   place still appears, under "Everything else", so nothing is ever lost, but
+   it appears under the wrong heading and silently. This turns that into a
+   failure. "Open in admin" is the button, not a field. */
+{
+  const placed = new Set(PLACED_LABELS)
+  const homeless = SHEET_HEADERS.filter((h) => h !== 'Open in admin' && !placed.has(h))
+  check('every application field has a named group', homeless.length === 0, homeless.join(', '))
+}
