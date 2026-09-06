@@ -19,7 +19,6 @@ const check = (name: string, ok: boolean, detail = '') => {
 
 const nasty = '<script>alert(1)</script>'
 const html = staffNoticeHtml({
-  title: 'New application',
   heading: nasty,
   sub: 'Ceramics " onload="x',
   fields: [

@@ -35,6 +35,7 @@ const MAIN: Array<{
   { href: '/admin/roster', label: 'Roster', icon: 'roster', count: 'needsPerson' },
   { href: '/admin/show', label: 'Show settings', icon: 'settings' },
   { href: '/admin/outbox', label: 'Outbox', icon: 'mail' },
+  { href: '/admin/emails', label: 'Emails', icon: 'bell' },
 ]
 
 const PREVIEWS: Array<{ href: string; label: string; icon: IconName }> = [

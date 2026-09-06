@@ -806,3 +806,43 @@
 @media (prefers-reduced-motion: reduce) {
   .adm .adm-side, .adm .adm-scrim, .adm .adm-exp svg { transition: none }
 }
+
+/* ── /admin/emails ────────────────────────────────────────────────────────
+   Every email we send, as the person receiving it will see it. The frames are
+   real documents in iframes, so nothing here can style them and nothing in
+   them can style this. */
+.adm .adm-emails { display: grid; gap: var(--ad-pad); margin-top: 22px; }
+.adm .adm-email {
+  background: var(--ad-card); border: 1px solid var(--ad-line); border-radius: 2px;
+  overflow: hidden;
+}
+.adm .adm-email__head { padding: 18px 20px 16px; border-bottom: 1px solid var(--ad-line); }
+.adm .adm-email__title {
+  margin: 0 0 10px; font-family: var(--font-g); font-weight: 600;
+  font-size: 1.0625rem; letter-spacing: -.01em; color: var(--ad-ink);
+}
+.adm .adm-email__meta { display: grid; gap: 6px; margin: 0; }
+.adm .adm-email__meta > div { display: flex; gap: 10px; align-items: baseline; }
+.adm .adm-email__meta dt {
+  flex: 0 0 62px; font-family: var(--font-m); font-size: .6875rem; font-weight: 500;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ad-ink-3);
+}
+.adm .adm-email__meta dd { margin: 0; min-width: 0; font-size: .875rem; color: var(--ad-ink-2); }
+
+/* The height here is the fallback. EmailFrame measures the message on load
+   and grows to it, so the preview is never cut off partway down a row. */
+.adm .adm-email__frame { background: var(--ad-sunk); }
+.adm .adm-email__frame iframe {
+  display: block; width: 100%; height: 620px; border: 0;
+}
+.adm .adm-email__text { border-top: 1px solid var(--ad-line); }
+.adm .adm-email__text summary {
+  padding: 12px 20px; cursor: pointer; font-family: var(--font-m);
+  font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ad-ink-3);
+}
+.adm .adm-email__text summary:hover { color: var(--ad-ink); }
+.adm .adm-email__text pre {
+  margin: 0; padding: 0 20px 18px; overflow-x: auto;
+  font-family: var(--font-m); font-size: .8125rem; line-height: 1.6;
+  color: var(--ad-ink-2); white-space: pre-wrap; word-break: break-word;
+}
