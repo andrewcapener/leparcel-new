@@ -165,9 +165,16 @@ const partOne: Part = {
           n: '3.2', lead: 'Cancelling.',
           text: ['All spaces are non-refundable. If you cancel, for any reason, at any time, the fee is not returned. Cancel in writing to {{contactEmail}}. It takes effect when we receive it, and your space is released to another maker.'],
         },
-        { n: '3.3', lead: 'Transfer.', text: ['Your fee is not transferable to another maker or another person. Section 4 and section B6 are the only places it moves to another show.'] },
         {
-          n: '3.4', lead: 'Your sales are not our promise.',
+          /* ⟨COUNSEL⟩ Added 6 Sep 2026 on Drew's decision. The agreement said
+             the fee was due and never said how it was paid, which is the one
+             question a maker has at the moment they read the acceptance. */
+          n: '3.3', lead: 'How you pay it.',
+          text: ['Your acceptance carries a payment link. Pay by card or by bank transfer, whichever suits you, and the space is held the moment it goes through. We do not take payment by any other route: nobody from Mermade will ever ask you to send money by Zelle, Venmo, a wire, or a link that did not come from us.'],
+        },
+        { n: '3.4', lead: 'Transfer.', text: ['Your fee is not transferable to another maker or another person. Section 4 and section B6 are the only places it moves to another show.'] },
+        {
+          n: '3.5', lead: 'Your sales are not our promise.',
           /* Elise, 5 Sep 2026. Her wording ended "you will find success"; a
              sentence like that in a contract is a representation about results,
              and it is the one sentence a maker who had a bad day would quote.
@@ -449,10 +456,22 @@ const scheduleA: Part = {
         { n: 'A6.1', text: ['Money from the sale of your goods is held by us in trust for you until it is paid, less commission and anything agreed under A2.5.'] },
         {
           n: 'A6.2',
-          text: ['Within {{payoutDays}} days of the show closing we send you a statement showing units sold, retail price, sales tax collected, commission kept, any deduction with its reason, and the net owed. We pay the net by the method on your vendor record in the same window.'],
+          text: ['Within {{payoutDays}} days of the show closing we send you a statement showing units sold, retail price, sales tax collected, commission kept, any deduction with its reason, and the net owed. We pay the net into your own bank account in the same window.'],
         },
-        { n: 'A6.3', lead: 'If a statement looks wrong.', text: ['Tell us in writing within {{disputeDays}} days of the statement and we will reconcile it against the counted inventory list and the register record. After that the statement is final except for a manifest error.'] },
-        { n: 'A6.4', text: ['A statement is never deleted. A correction is issued as a new statement that supersedes the old one, and both stay on your record.'] },
+        {
+          /* ⟨COUNSEL⟩ Added 6 Sep 2026 on Drew's decision to move payouts onto
+             Stripe. Mermade used to hold Zelle and Venmo handles on a
+             spreadsheet, which meant the market kept payment details it had no
+             business keeping and paid people by hand. Stripe holds the bank
+             details instead; Mermade never sees an account number.
+
+             The clause deliberately does NOT forfeit money over unfinished
+             paperwork. What is owed is owed: it waits. */
+          n: 'A6.3', lead: 'Setting up your payout, once.',
+          text: ['Before we can pay you, set up your payout account with Stripe, who handle the money. It asks who you are and where the money goes, takes about ten minutes, and you only do it once: it carries to every show after this one. Your bank details go to Stripe and not to us, and we never see them. If your account is not ready when statements go out, your money waits for you rather than going anywhere else.'],
+        },
+        { n: 'A6.4', lead: 'If a statement looks wrong.', text: ['Tell us in writing within {{disputeDays}} days of the statement and we will reconcile it against the counted inventory list and the register record. After that the statement is final except for a manifest error.'] },
+        { n: 'A6.5', text: ['A statement is never deleted. A correction is issued as a new statement that supersedes the old one, and both stay on your record.'] },
       ],
     },
     {

@@ -87,7 +87,7 @@ const STEPS: Step[] = [
     n: 4,
     id: 'ap-sign',
     title: 'Agree and submit',
-    blurb: 'Read the rules for your track, sign, and send it.',
+    blurb: 'Sign and send it.',
   },
 ]
 
@@ -667,13 +667,15 @@ export function ApplyForm({
               </div>
             )}
 
+            {/* Outdoor only. An indoor maker does not need a permit, because
+                Mermade is the retailer of record for their sales (agreement
+                6.2), and asking would imply they do. We ask the question and
+                not the number: the number is paperwork nobody has to hand
+                while applying, and it is collected after acceptance.
+
+                No wrapping column: Field renders its own, and the two nested
+                put the permit 28px in from the space options above it. */}
             {track !== 'indoor' && (
-              <div className="column column--full">
-                {/* Outdoor only. An indoor maker does not need a permit, because
-                    Mermade is the retailer of record for their sales (agreement
-                    6.2), and asking would imply they do. We ask the question and
-                    not the number: the number is paperwork nobody has to hand
-                    while applying, and it is collected after acceptance. */}
                 <Field
                   name="permitStatus" label="Selling outside: your seller’s permit"
                   error={e.permitStatus}
@@ -689,16 +691,14 @@ export function ApplyForm({
                     <option value="unsure">I’m not sure yet, help me</option>
                   </select>
                 </Field>
-              </div>
             )}
 
+            {/* Only once they have said they have one. Asking everybody for a
+                number most of them do not have is the errand that emptied the
+                old paperwork step; asking the one person who just told us they
+                have it is a single field they can answer. Optional, so a maker
+                who cannot find it right now still submits. */}
             {track !== 'indoor' && permit === 'have' && (
-              <div className="column column--full">
-                {/* Only once they have said they have one. Asking everybody for a
-                    number most of them do not have is the errand that emptied
-                    the old paperwork step; asking the one person who just told
-                    us they have it is a single field they can answer. Optional,
-                    so a maker who cannot find it right now still submits. */}
                 <Field
                   name="sellerPermit" label="Your permit number (optional)"
                   error={e.sellerPermit}
@@ -711,7 +711,6 @@ export function ApplyForm({
                     autoCapitalize="characters" autoCorrect="off" {...keep('sellerPermit')}
                   />
                 </Field>
-              </div>
             )}
 
             <div className="column column--full">
@@ -827,16 +826,17 @@ export function ApplyForm({
           <div className="flexible-layout flexible-layout--form">
             <div className="column column--full">
               {/* Everything a maker is agreeing to, reachable from the place
-                  they agree to it. All four open in a new tab so a half-filled
-                  form is never lost to a click. */}
+                  they agree to it, and said once. This was a paragraph naming
+                  the agreement and then a checkbox naming it again, above a
+                  hint about timestamps and a line about the fee: four sentences
+                  where the step needs one. The links open in a new tab so a
+                  half-filled form is never lost to a click. */}
               <p className="ap-lede">
-                Before you sign, the rules for your track:{' '}
+                The rules for your track:{' '}
                 <Link href="/makers/indoor" target="_blank" rel="noreferrer">inside</Link> ·{' '}
-                <Link href="/makers/outdoor" target="_blank" rel="noreferrer">outside</Link>.
-                {' '}The full{' '}
-                <Link href="/agreement" target="_blank" rel="noreferrer">vendor agreement</Link>
-                {' '}and our{' '}
-                <Link href="/terms" target="_blank" rel="noreferrer">terms and privacy</Link>.
+                <Link href="/makers/outdoor" target="_blank" rel="noreferrer">outside</Link>
+                {' '}·{' '}
+                <Link href="/terms" target="_blank" rel="noreferrer">terms and privacy</Link>
               </p>
               <label className="check-option" htmlFor="agree">
                 <input
@@ -859,7 +859,6 @@ export function ApplyForm({
             </div>
             <Field
               name="signedName" label="Type your name to sign" error={e.signedName}
-              hint="We record the terms version and the timestamp with your signature."
             >
               <input type="text" name="signedName" autoComplete="name" required {...keep('signedName')} />
             </Field>

@@ -21,6 +21,7 @@ import { applicationReceivedHtml } from '@/server/modules/email/application-rece
 import { CONTACT_EMAIL } from '@/lib/agreement'
 import { parsePhotoKeys } from '@/server/modules/uploads/photos'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
+import { previewingOpenWindow } from '@/lib/preview'
 import { siteUrl } from '@/lib/site-url'
 import { signInLinkHtml, signInLinkText } from '@/server/modules/email/sign-in-link'
 import {
@@ -283,7 +284,23 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   const show = await activeShow()
   if (!show) return { ok: false, attempt, message: 'No active show.' }
 
-  if (applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt) !== 'open') {
+  /* The window, or a member of staff rehearsing.
+   *
+   * This used to be the window alone, deliberately: the launch preview put the
+   * form on screen and the server still refused, so nothing could slip through
+   * early. The cost was that the one path nobody could exercise before opening
+   * day was the whole path, and a dress rehearsal that stops at the submit
+   * button is not one.
+   *
+   * The preview cookie is not something a stranger can set. /api/preview
+   * requires a valid /admin session before it will issue it, so this opens
+   * submission to staff and to nobody else. A rehearsal application is a real
+   * row on purpose, so that the emails, the Sheet and the jury queue are all
+   * exercised too; delete it from the admin when you are done.
+   */
+  const staffRehearsal = await previewingOpenWindow()
+  if (applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt) !== 'open'
+      && !staffRehearsal) {
     return { ok: false, attempt, message: 'Applications are not open for this show.' }
   }
 

@@ -211,12 +211,19 @@ export function PageHeader({ transparent = false }: { transparent?: boolean }) {
             <div className="logo-area__right__inner">
               {/* Theirs carries an Account link here, to Shopify's customer
                   login. Ours is the vendor portal: the same place in the
-                  header, pointing at the thing that replaces it. The word is
-                  hidden on a phone, as theirs is, so the Apply button keeps
-                  the room. */}
+                  header, pointing at the thing that replaces it.
+
+                  The mark alone, at every width. Drew, 6 Sep 2026: ACCOUNT set
+                  in caps beside APPLY read as a second call to action, and it
+                  is not one. Almost everyone here has never applied, and the
+                  few who have want a way back in rather than to be sold one.
+                  The word stays on the link for a screen reader, in the
+                  aria-label and in the span, which is hidden visually rather
+                  than removed. `mobile-only` is gone from the icon because the
+                  theme sets it `display:none!important` above 768. */}
               <Link href="/account" className="header-account-link" aria-label="Account">
-                <span className="header-account-link__text visually-hidden-mobile">Account</span>
-                <span className="header-account-link__icon mobile-only">
+                <span className="header-account-link__text">Account</span>
+                <span className="header-account-link__icon">
                   <svg className="icon" width="24" height="24" viewBox="0 0 24 24"
                     aria-hidden="true" focusable="false" role="presentation">
                     <g fill="none" fillRule="evenodd">

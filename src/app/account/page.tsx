@@ -7,6 +7,8 @@ import { applications, spaceTypes, vendors } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, FactTable, RichText } from '@/components/theme/Sections'
 import { fmtDate, fmtDateTime } from '@/lib/dates'
+import { POLICY } from '@/lib/agreement'
+import { bpsLabel } from '@/lib/money'
 import { MAKER_COOKIE, readSession } from '@/lib/makerAuth'
 import { SignInForm } from './SignInForm'
 
@@ -121,6 +123,44 @@ export default async function Account({
           { label: 'Email', value: vendor.email },
           { label: 'Instagram', value: vendor.instagram || 'Not given' },
           { label: 'Where you are', value: [vendor.city, vendor.state].filter(Boolean).join(', ') || 'Not given' },
+        ]}
+      />
+
+      {/* How the money moves, both directions, on the one page a maker is
+          signed into. Drew's call, 6 Sep 2026: payouts move off the Zelle and
+          Venmo handles the market used to keep on a spreadsheet and onto
+          Stripe. The step that needs explaining is the ten minutes of setup, so
+          it is explained here rather than arriving as a surprise in an
+          acceptance email.
+
+          Deliberately no "set up payouts" button yet: Stripe is not connected,
+          and a button that goes nowhere is worse than a sentence that says
+          when it will. */}
+      <FactTable
+        title={app?.status === 'accepted' ? 'Getting paid' : 'How the money will work'}
+        rows={[
+          {
+            label: 'Your booth fee',
+            value: <>Your acceptance carries a payment link. Card or bank transfer, whichever suits you, due within {show.paymentWindowHours} hours.</>,
+          },
+          ...(app?.track === 'outdoor' ? [] : [{
+            label: 'What you sell inside',
+            value: <>We sell at the register, keep {bpsLabel(show.commissionBps)}, and pay you the rest {POLICY.payoutDaysMin} to {POLICY.payoutDays} days after the show closes.</>,
+          }]),
+          {
+            label: 'Where it lands',
+            value: 'Your own bank account, through Stripe. Setting that up asks who you are and where the money goes, takes about ten minutes, and you only do it once.',
+          },
+          {
+            label: 'When you do it',
+            value: app?.status === 'accepted'
+              ? 'Now is a good time. We will email you the link, and your money waits for you if it is not ready by statement day.'
+              : 'After you are accepted. Nothing to do yet.',
+          },
+          {
+            label: 'What we never do',
+            value: 'Ask you to send money by Zelle, Venmo, a wire, or any link that did not come from us. If someone does, it is not us.',
+          },
         ]}
       />
 
