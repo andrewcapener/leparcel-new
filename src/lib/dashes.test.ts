@@ -45,7 +45,11 @@ check('idempotent', CASES.every(([i]) => plainDashes(plainDashes(i)) === plainDa
 /* ── the guard ──────────────────────────────────────────────────────────── */
 
 /** Files whose job is to handle dashes, and so must be allowed to name them. */
-const ALLOWED = new Set(['src/lib/dashes.ts', 'src/lib/dashes.test.ts', 'src/lib/schedule.ts'])
+const ALLOWED = new Set([
+  'src/lib/dashes.ts', 'src/lib/dashes.test.ts',
+  // schedule.ts parses the dash a phone produces; its test has to type one.
+  'src/lib/schedule.ts', 'src/lib/schedule.test.ts',
+])
 /** Where user-facing strings live. Comments are excluded below, docs are not
  *  shipped, and the vendored theme under public/ is checked separately. */
 const ROOTS = ['src']

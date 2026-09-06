@@ -1,6 +1,7 @@
 import { eq, and, asc } from 'drizzle-orm'
 import { db } from './index'
 import { fillCapacity } from '@/lib/counts'
+import { tidyHoursNote } from '@/lib/schedule'
 import { shows, addOns, spaceTypes, type Show, type AddOn, type SpaceType } from './schema'
 
 /**
@@ -41,7 +42,9 @@ export async function activeShow(): Promise<Show | undefined> {
     try {
       const full = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
       showsPre0002Until = 0
-      return full
+      // Tidied here rather than in six pages: a bare opening time is what a
+      // person types, and every caller wants the same reading of it.
+      return full && { ...full, hoursNote: tidyHoursNote(full.hoursNote) }
     } catch (err) {
       if (pgCode(err) !== MISSING_COLUMN) throw err
       showsPre0002Until = Date.now() + RECHECK_AFTER_MS
@@ -71,7 +74,11 @@ export async function activeShow(): Promise<Show | undefined> {
   // field empties together, and each caller has its own words for a load-in
   // nobody knows yet.
   return row
-    ? { ...row, loadInNote: '', outdoorLoadInNote: '', takedownNote: '', loadInSlots: '' }
+    ? {
+        ...row,
+        hoursNote: tidyHoursNote(row.hoursNote),
+        loadInNote: '', outdoorLoadInNote: '', takedownNote: '', loadInSlots: '',
+      }
     : undefined
 }
 

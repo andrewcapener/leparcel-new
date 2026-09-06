@@ -105,6 +105,40 @@ export function bookends(hours: string): { opens: string; closes: string } {
   return { opens, closes }
 }
 
+/** A clock time that carries its own meridiem: "9am", "12:30pm". */
+const CLOCK = /^\d{1,2}(:\d{2})?(am|pm)$/i
+
+/**
+ * One day of the hours note, with a bare opening time given its meridiem.
+ *
+ * Staff type the hours at /admin/show and every human writes a nine-to-six day
+ * as "9 - 6pm", so that is what the record holds. `bookends` already works out
+ * that this means 9am, but only the schedule page was asking: /apply, both
+ * maker pages and the home page printed the row as typed, so Friday read
+ * "9 to 6pm" next to a Saturday that read "9am to 5pm".
+ *
+ * A row is only rewritten when both ends come back as real clock times.
+ * Anything else, "noon to 4pm", "by appointment", a row with no comma in it,
+ * is returned exactly as it was typed.
+ */
+export function tidyDayHours(row: string): string {
+  // The last comma, not the first: `splitDay` wants the day and takes the
+  // first, but "Friday, 13 November, 9 to 6pm" puts a comma inside the date
+  // and the hours are always what follows the last one.
+  const cut = row.lastIndexOf(',')
+  if (cut < 0) return row
+  const day = row.slice(0, cut)
+  const { opens, closes } = bookends(row.slice(cut + 1).trim())
+  if (!CLOCK.test(opens) || !CLOCK.test(closes)) return row
+  return `${day}, ${opens} to ${closes}`
+}
+
+/** Every day of the hours note, tidied. The separator is untouched: five
+ *  pages split on " · " and the Show record's field is documented by it. */
+export function tidyHoursNote(note: string): string {
+  return note.split(' · ').map(tidyDayHours).join(' · ')
+}
+
 export function extrasFor(day: string): DayExtras | undefined {
   const first = day.split(' ')[0]?.toLowerCase()
   return extras.find((e) => e.slug.toLowerCase() === first)
