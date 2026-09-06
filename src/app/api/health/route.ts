@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { transportDiagnostics } from '@/server/modules/sheets/transport'
-import { photoUploadDiagnostics } from '@/server/modules/uploads/config'
+import { lastUploadError, photoUploadDiagnostics } from '@/server/modules/uploads/config'
 import { applicationWindow } from '@/lib/dates'
 import { isCanonicalHost, siteUrl } from '@/lib/site-url'
 
@@ -63,6 +63,7 @@ export async function GET() {
     // variable is missing if it cannot. The bucket name and the project host
     // are not secrets; the service key never appears here in any form.
     photos: photoUploadDiagnostics(),
+    lastUploadError: lastUploadError(),
   }
   try {
     const { db, schema } = await import('@/db')

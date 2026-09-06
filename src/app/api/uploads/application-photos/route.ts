@@ -6,7 +6,7 @@ import { previewingOpenWindow } from '@/lib/preview'
 import {
   MAX_PHOTOS, MAX_PHOTO_BYTES, isPhotoType, mb, photoKey,
 } from '@/server/modules/uploads/photos'
-import { photoUploadsEnabled } from '@/server/modules/uploads/config'
+import { noteUploadFailure, photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { signPhotoUpload } from '@/server/modules/uploads/storage'
 
 /**
@@ -110,8 +110,10 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     // Never the key material, never the token, never the maker's filename.
-    console.error('[uploads] could not sign an upload URL:',
-      err instanceof Error ? err.message : String(err))
+    const why = err instanceof Error ? err.message : String(err)
+    console.error('[uploads] could not sign an upload URL:', why)
+    // And where an operator will actually look: /api/health.
+    noteUploadFailure(why)
     return bad(502, 'We could not start that upload. Try again in a moment.')
   }
 }

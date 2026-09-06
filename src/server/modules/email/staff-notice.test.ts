@@ -10,6 +10,7 @@
  * lives, so a template that quietly drops an empty value is a backup with a
  * hole in it.
  */
+import { siteUrl } from '@/lib/site-url'
 import { SHEET_HEADERS } from '../sheets/row'
 import { PLACED_LABELS, staffNoticeHtml } from './staff-notice'
 
@@ -42,7 +43,7 @@ check('an ampersand in a url is escaped', html.includes('a=1&amp;b=2'))
 // Emitted tags: only the ones this template writes. Anything else means data
 // became markup.
 const tags = [...new Set([...html.matchAll(/<\s*\/?\s*([a-zA-Z][a-zA-Z0-9-]*)/g)].map((m) => m[1]!.toLowerCase()))]
-const allowed = new Set(['html', 'head', 'body', 'meta', 'title', 'table', 'tr', 'td', 'div', 'span', 'a', 'doctype'])
+const allowed = new Set(['html', 'head', 'body', 'meta', 'title', 'table', 'tr', 'td', 'div', 'span', 'a', 'img', 'doctype'])
 const unexpected = tags.filter((t) => !allowed.has(t))
 check('no unexpected tags', unexpected.length === 0, unexpected.join(', '))
 
@@ -50,9 +51,14 @@ check('every label appears', ['Shop', 'Email', 'Website', 'Blank'].every((l) => 
 check('an empty value is shown as empty, not dropped', html.includes('not given'))
 check('links are linked', html.includes('mailto:a@b.com'))
 
-// No remote anything: a client that blocks external content shows this whole,
-// and a maker's details never travel to a third party to render a header.
-check('no remote images when there are no photographs', !/<img/i.test(html))
+/* Remote content, and the short list of what is allowed to be it.
+   A client that blocks external content still shows this whole, and a maker's
+   details never travel to a third party to render a header. Two images can
+   appear and no others: our own wordmark, on our own origin, and the maker's
+   own photographs, which the caller passed in. */
+const MARK = `${siteUrl()}/email/wordmark.png`
+const imgs = (h: string) => [...h.matchAll(/<img[^>]+src="([^"]*)"/g)].map((m) => m[1]!)
+check('the only image is our own wordmark', imgs(html).join(' ') === MARK, imgs(html).join(' '))
 
 /* ── the maker's own photographs, and nothing else ───────────────────────
    The one place these emails load remote content. It goes to Mermade's own
@@ -68,9 +74,10 @@ check('no remote images when there are no photographs', !/<img/i.test(html))
     heading: 'Shop', sub: 'x', photos: shots,
     fields: [{ label: 'Shop', value: '<img src="https://evil.test/beacon.gif">' }],
   })
-  const srcs = [...withShots.matchAll(/<img[^>]+src="([^"]*)"/g)].map((m) => m[1]!)
+  const srcs = imgs(withShots).filter((u) => u !== MARK)
   check('the photographs are shown', srcs.length === shots.length, String(srcs.length))
-  check('every image is one the caller passed', srcs.every((u) => shots.includes(u)), srcs.join(' '))
+  check('every image is the wordmark or one the caller passed',
+    srcs.every((u) => shots.includes(u)), srcs.join(' '))
   check('an image typed into a field is still text', !srcs.includes('https://evil.test/beacon.gif'))
   check('and it is escaped in the record', withShots.includes('&lt;img'))
 }

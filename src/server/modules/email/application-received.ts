@@ -25,12 +25,15 @@ export function applicationReceivedHtml({
 }): string {
   return shell({
     pill: 'Application received',
-    heading: "You're in the pile",
-    sub: `${shopName} · ${showName}`,
+    // Their name, not a metaphor about a stack of paper. The team read
+    // "You're in the pile" as cold, and they were right: it describes our
+    // side of the desk at the moment somebody is nervous about theirs.
+    heading: `Thank you, ${shopName}`,
+    sub: `Your ${showName} application is in. Nothing else is needed from you right now.`,
     inner:
       paragraphs([
-        'Thank you. Your application is in and nothing else is needed from you right now.',
-        `We read every one of them, and we answer either way. The roster goes out on <strong style="color:#171717;">${esc(rosterDate)}</strong>.`,
+        'We read every application ourselves, all the way through, and we answer either way.',
+        `You will hear from us on <strong style="color:#171717;">${esc(rosterDate)}</strong>, when the roster goes out.`,
       ])
       + rule()
       + fieldRows(fields)

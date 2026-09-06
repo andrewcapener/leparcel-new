@@ -140,6 +140,29 @@ export function photoUploadDiagnostics(): Record<string, unknown> {
 }
 
 /**
+ * The last reason an upload could not be started, for /api/health.
+ *
+ * The route on purpose tells a maker nothing useful ("try again in a moment"),
+ * because the reason is between us and Supabase. But then the reason is only
+ * in a function log, and the first time this broke it broke on the day
+ * applications opened. So the redacted reason is kept in memory, on this
+ * instance, and /api/health reads it back: an operator gets an answer without
+ * going to look for it, and a maker still gets a sentence they can act on.
+ *
+ * Redacted before it is stored, never persisted, and gone on the next deploy.
+ */
+type UploadFailure = { at: string; reason: string }
+let lastUploadFailure: UploadFailure | null = null
+
+export function noteUploadFailure(detail: string): void {
+  lastUploadFailure = { at: new Date().toISOString(), reason: redactUpload(detail).slice(0, 400) }
+}
+
+export function lastUploadError(): UploadFailure | null {
+  return lastUploadFailure
+}
+
+/**
  * Strip anything secret out of a message before it is stored, printed or
  * served. Same idea as the Sheets transport's redact().
  */

@@ -8,10 +8,15 @@
  * Word. Tables and inline styles are not old-fashioned here, they are the only
  * thing that survives.
  *
- * Nothing is ever fetched. No web font, no remote image, no beacon. A client
- * that blocks external content shows the message whole, and a maker's details
- * never travel to a third party to render a header.
+ * One image only: the Mermade wordmark in the header. Everything else is text,
+ * so a maker's details never travel anywhere to render, there is no web font,
+ * and there is no tracking pixel. The mark is the one thing worth a request,
+ * because set in a fallback face the name is just grey Helvetica and the email
+ * arrives looking like nobody's. It carries real alt text, so a client that
+ * blocks images still reads "Mermade Market" where the mark would be.
  */
+
+import { siteUrl } from '@/lib/site-url'
 
 export const GOLD = '#bc9658'
 export const INK = '#171717'
@@ -25,6 +30,10 @@ export const CREAM = '#faf8f5'
  *  something every device has. The look survives; the exact face need not. */
 export const HEAD_FONT = "Oswald, 'Helvetica Neue', Helvetica, Arial, sans-serif"
 export const BODY_FONT = "Figtree, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+
+/** The header mark, drawn at 2x and served from our own origin. */
+const MARK_W = 140
+const MARK_H = 70
 
 export function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -169,6 +178,7 @@ export function shell({
   inner: string
   footer: string
 }): string {
+  const origin = siteUrl()
   return `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">
@@ -185,10 +195,10 @@ export function shell({
   <tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:${PAPER};border:1px solid ${RULE};">
 
-      <tr><td style="padding:22px 24px;border-bottom:2px solid ${INK};">
+      <tr><td style="padding:20px 24px;border-bottom:2px solid ${INK};">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-          <td style="font-family:${HEAD_FONT};font-size:15px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${INK};">Mermade Market</td>
-          <td align="right"><span style="display:inline-block;background:${GOLD};color:#ffffff;font-family:${HEAD_FONT};font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:6px 12px;">${esc(pill)}</span></td>
+          <td valign="middle"><img src="${esc(origin)}/email/wordmark.png" width="${MARK_W}" height="${MARK_H}" alt="Mermade Market" style="display:block;width:${MARK_W}px;height:${MARK_H}px;border:0;outline:none;text-decoration:none;"></td>
+          <td valign="middle" align="right"><span style="display:inline-block;background:${GOLD};color:#ffffff;font-family:${HEAD_FONT};font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:6px 12px;">${esc(pill)}</span></td>
         </tr></table>
       </td></tr>
 
