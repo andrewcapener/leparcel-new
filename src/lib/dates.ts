@@ -93,3 +93,19 @@ export function fmtWeekday(iso: string): string {
 export function fmtDayMonth(iso: string): string {
   return fmtDate(iso, { year: undefined })
 }
+
+/**
+ * "September 20, 11:59pm PT" — an application deadline, as a person says it.
+ *
+ * The time is read off the stored timestamp rather than typed beside it. A
+ * deadline printed as a date plus a literal "11:59pm" is two facts that can
+ * disagree, and staff move the close at /admin/show without touching any copy.
+ * (CLAUDE.md rules 6 and 8.)
+ */
+export function fmtDeadline(iso: string): string {
+  const time = new Date(iso)
+    .toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' })
+    .replace(/\s*AM$/, 'am')
+    .replace(/\s*PM$/, 'pm')
+  return `${fmtDate(iso, { year: undefined })}, ${time} PT`
+}

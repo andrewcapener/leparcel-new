@@ -30,7 +30,13 @@ export async function GET(req: NextRequest) {
       'Cache-Control': 'no-store',
       // It is our own markup, but it is markup built from data, and it is
       // rendered in a frame inside the admin. Nothing in it needs to run.
-      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src data:",
+      //
+      // Images are allowed from this origin because the broadcast is mostly
+      // photographs and a preview that cannot show them is not a preview. It
+      // stays 'self' and data: only: the pictures are ours, out of
+      // public/photos, and nothing a maker typed can point this frame at a
+      // third party.
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:",
     },
   })
 }

@@ -11,12 +11,13 @@
  * real applicant would put somebody's phone number on a page for no reason.
  */
 import type { Show } from '@/db/schema'
-import { fmtDate, fmtRange } from '@/lib/dates'
+import { fmtDate, fmtDeadline, fmtRange } from '@/lib/dates'
 import { usd } from '@/lib/money'
 import { CONTACT_EMAIL } from '@/lib/agreement'
 import { SHEET_HEADERS } from '@/server/modules/sheets/row'
 import { staffNoticeHtml } from './staff-notice'
 import { applicationReceivedHtml } from './application-received'
+import { saveTheDateHtml, saveTheDateText, type SaveTheDateInput } from './save-the-date'
 
 export type Preview = {
   id: string
@@ -63,6 +64,29 @@ const SAMPLE_VALUES: Record<string, string> = {
 
 export function previews(show: Show, siteUrl: string): Preview[] {
   const roster = fmtDate(show.rosterAnnouncedOn)
+
+  /* The broadcast. Everything it prints comes off the record below. */
+  const saveTheDate: SaveTheDateInput = {
+    showName: show.name,
+    season: show.season,
+    dateRange: fmtRange(show.startsOn, show.endsOn),
+    venueName: show.venueName,
+    venueAddress: show.venueAddress,
+    hoursNote: show.hoursNote,
+    applicationsClose: fmtDeadline(show.applicationsCloseAt),
+    applicationsCloseDay: fmtDate(show.applicationsCloseAt, { year: undefined }),
+    rosterDate: fmtDate(show.rosterAnnouncedOn, { year: undefined }),
+    commissionBps: show.commissionBps,
+    siteUrl,
+    // A real send carries the list's own unsubscribe url, which the sending
+    // tool mints per subscriber. The preview has no subscriber, so it shows
+    // the shape of the line rather than a link that would work.
+    unsubscribeUrl: `${siteUrl}/unsubscribe?token=sample`,
+  }
+  // "November 13-15". The heading wants the year and a phone's subject line
+  // does not: forty characters in and it is truncated either way.
+  const shortRange = saveTheDate.dateRange.replace(/,\s*\d{4}$/, '')
+
   const receiptFields = [
     { label: 'Shop', value: SHOP, strong: true },
     { label: 'Category', value: 'Ceramics' },
@@ -74,6 +98,15 @@ export function previews(show: Show, siteUrl: string): Preview[] {
     .map((h) => ({ label: h, value: SAMPLE_VALUES[h] ?? '' }))
 
   return [
+    {
+      id: 'save_the_date',
+      name: 'Save the date, applications open',
+      who: 'The whole list. Past makers, people we said no to, and shoppers, all in one send',
+      when: 'Once a show, the morning applications open',
+      subject: `${shortRange}. Applications are open.`,
+      text: saveTheDateText(saveTheDate),
+      html: saveTheDateHtml(saveTheDate),
+    },
     {
       id: 'application_received',
       name: 'Application received',
