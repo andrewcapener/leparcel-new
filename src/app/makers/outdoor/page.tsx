@@ -5,7 +5,7 @@ import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import {
-  PageTitle, RichText, FactTable, PriceTable, CollapsibleTabs, type Tab,
+  PageTitle, RichText, FactTable, PriceTable, CollapsibleTabs, Banner, type Tab,
 } from '@/components/theme/Sections'
 import { outdoorSections, fill } from '@/lib/page-html'
 import { POLICY } from '@/lib/agreement'
@@ -161,6 +161,18 @@ export default async function OutdoorMerchants() {
             tabs={tabs}
           />
           </div>
+
+          {/* The outdoor half in one frame: a table under a tent on the lot,
+              which is what the six and a half feet described above actually
+              buys. */}
+          <Banner
+            id="section-outdoor-plate"
+            image="/photos/jewelry.jpg"
+            title=""
+            heightMobile={420}
+            heightDesktop={560}
+            shadow={false}
+          />
 
           <RichText cta={{ href: '/apply', label: 'Apply to sell' }}>
             <p>

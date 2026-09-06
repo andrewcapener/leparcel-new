@@ -79,7 +79,7 @@ export default async function FAQ() {
     <SiteShell show={show} template="page template-suffix-faq">
           <Banner
             id="section-faq-banner"
-            image="IMG_2793.jpg"
+            image="/photos/merch.jpg"
             subheading="Mermade Market FAQ"
             title="Frequently asked questions for both shoppers and merchants"
             heightMobile={300}

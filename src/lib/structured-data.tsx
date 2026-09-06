@@ -62,7 +62,7 @@ export function eventLd(show: Show) {
     endDate: show.endsOn.slice(0, 10),
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    image: [`${origin}${img('IMG_2793.jpg')}`],
+    image: [`${origin}${img('/photos/og.jpg')}`],
     url: `${origin}/schedule`,
     location: {
       '@type': 'Place',

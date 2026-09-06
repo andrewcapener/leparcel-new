@@ -148,7 +148,7 @@ export default async function Collaborate() {
           {/* Their closing full-bleed photograph, a one-slide slideshow. */}
           <Banner
             id="section-collab-close"
-            image="7H3A8680.jpg"
+            image="/photos/backdrop.jpg"
             title=""
             heightMobile={460}
             heightDesktop={600}

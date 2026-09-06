@@ -40,7 +40,7 @@ export default async function Home() {
       
           <VideoBanner
             id="section-hero"
-            poster="41df92641ed44b9c95d14621276977b2.thumbnail.0000000000.jpg"
+            poster="/photos/shelf.jpg"
             video={C.heroVideoId}
             subheading="HAND CURATED"
             title={<>SHOP SMALL <br /> MAKERS MARKET</>}
@@ -65,8 +65,8 @@ export default async function Home() {
             id="section-map"
             title={`Mermade Market ${show.name} showcase`}
             directionsTo={show.venueAddress}
-            image="IMG_2793.jpg"
-            map="IMG_3335.jpg"
+            image="/photos/register.jpg"
+            map="/photos/lot.jpg"
           >
             <p />
             <p>{show.venueAddress}</p>
@@ -80,13 +80,13 @@ export default async function Home() {
           <ScrollingBanner id="section-banner" text="SHOP SMALL · THINK BIG · MERMADE MARKET ·" />
 
           {/* Their second background-video section, on their clip. Theirs
-              carries no poster at all; ours is the clip's own opening frame,
-              so the band is their photography rather than a grey rectangle
-              while the embed loads, and the hand-off is seamless. IMG_3335
-              would have duplicated the map's third column just above. */}
+              carries no poster at all; ours is a 2026 still, so the band is a
+              photograph rather than a grey rectangle while the embed loads.
+              The painted backdrop and the sign are the show's one landmark,
+              and nothing else on the page repeats them. */}
           <VideoBand
             id="section-film"
-            poster="band-video-poster.jpg"
+            poster="/photos/sign.jpg"
             video={C.bandVideoId}
           />
 

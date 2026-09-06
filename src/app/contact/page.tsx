@@ -22,7 +22,7 @@ export default async function Contact() {
     <SiteShell show={show} template="page template-suffix-contact">
           <Banner
             id="section-contact-banner"
-            image="IMG_2793.jpg"
+            image="/photos/vases.jpg"
             subheading="We're here for you"
             title="REACH OUT"
             priority

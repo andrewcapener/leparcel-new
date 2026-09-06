@@ -163,7 +163,15 @@ export const IMG: Record<string, string> = {
   "vesl_ee368fce-d9e9-4210-9e0c-6c7241479fa4.png": "/theme/img/vesl_ee368fce-d9e9-4210-9e0c-6c7241479fa4.jpg",
 }
 
-/** The vendored path for a CDN file name, or the name itself if unvendored. */
+/**
+ * The vendored path for a CDN file name, or the name itself if unvendored.
+ *
+ * A name that already starts with `/` is a path of ours, not a Shopify CDN
+ * file name, and passes straight through. That is how the 2026 photography in
+ * `public/photos/` reaches the same sections the vendored theme images do,
+ * without inventing a second image prop on every component.
+ */
 export function img(name: string): string {
+  if (name.startsWith('/')) return name
   return IMG[name] ?? `/theme/img/${name}`
 }
