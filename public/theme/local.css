@@ -1280,8 +1280,11 @@ h3, .h3 { line-height: 1.15; }
    ─────────────────────────────────────────────────────────────────────────── */
 
 /* An open section can be a thousand words, so a link to a later one lands
-   under the sticky header without this. */
-.mk-sections .collapsible-tabs__block { scroll-margin-top: 96px; }
+   under the sticky header without this. The rule that does it is now the
+   shared one in the accordion block below, measured against the header at
+   each width: this page's 96px was one number for a header that is 62px on a
+   phone and 103px from 768px up, so on a desktop a linked section landed
+   under the masthead. */
 
 /* Their summary lines are the page's table of contents, so they read as
    labels rather than as prose: Oswald, uppercase, and tight enough that ten
@@ -1292,7 +1295,9 @@ h3, .h3 { line-height: 1.15; }
 .mk-sections .collapsible-tabs__tab .disclosure__title { padding-right: 40px; }
 /* The theme draws its +/− at the right edge of the summary; keep the plus
    sign clear of the last word on a narrow screen. */
-.mk-sections .disclosure__content { color: rgb(var(--text-color) / 0.9); }
+/* The answer colour is set once, on the accordion, for all four sets. The
+   0.9 that used to sit here never applied: it carries the same specificity as
+   the accordion's own rule and lost on document order. */
 .mk-sections .disclosure__content > .rte--long > *:first-child { margin-top: 0; }
 
 /* The rules that carry money. Not a card and not a callout box: a ruled list
@@ -1363,12 +1368,13 @@ h3, .h3 { line-height: 1.15; }
 .mk-sections .rte--long p:last-child,
 .mk-sections .rte--long ul:last-child { margin-bottom: 0; }
 
+/* The maker sections used to shrink here: 12px type and 16px of padding,
+   which made a 49px row carrying a label smaller than the paragraph beside
+   it. On the one screen where a control has to be found by thumb it was the
+   smallest thing on the page, and it read as a caption rather than as a
+   button. The rows keep the size they have everywhere else now. Twelve of
+   them cost about 280px of scroll, which is what a target you can hit costs. */
 @media (max-width: 600px) {
-  .mk-sections .collapsible-tabs__tab .disclosure__title {
-    padding-top: 16px;
-    padding-bottom: 16px;
-    font-size: var(--smaller-text-size-1);
-  }
   .mk-rules { padding-top: 1.1em; }
 }
 
@@ -1542,6 +1548,16 @@ h3, .h3 { line-height: 1.15; }
   color: rgb(var(--heading-color));
   text-wrap: balance;
   transition: color 140ms ease;
+  /* The row is the control, not the words in it, and it is never shorter
+     than a thumb: WCAG 2.2 SC 2.5.8 asks 24px and this holds the 44px the
+     mobile guidelines ask for, whatever a future question turns out to say.
+     The padding above already clears it; the floor is what keeps it cleared. */
+  min-height: 44px;
+  box-sizing: border-box;
+  /* A tap gets an answer on the frame it lands, before the panel opens. iOS
+     draws nothing here on its own once a summary is styled, and the silence
+     is what reads as "nothing happened". */
+  -webkit-tap-highlight-color: rgb(var(--heading-color) / 0.07);
 }
 .collapsible-tabs__tab .disclosure__title:hover { color: rgb(var(--link-color)); }
 .collapsible-tabs__tab .disclosure__title:focus-visible {
@@ -1620,8 +1636,14 @@ h3, .h3 { line-height: 1.15; }
 /* The column is the measure. An answer used to carry its own cap, which
    mattered only while the accordion was wider than the page's text; now it
    would just be a second number to keep in step with the first. */
+/* The step down from the question is 0.86, not 0.72. At 0.72 the answer
+   resolved to #8A8A8A on white, which is 3.45:1 and fails WCAG 2.2 AA for
+   body text; every answer on the FAQ and on both maker pages was under it,
+   and a phone held outside in Dana Point is the worst place to read it. At
+   0.86 it is #737373 and 4.76:1, and the question at #171717 is still the
+   obviously darker of the two, which is all the step was for. */
 .collapsible-tabs__tab .disclosure__content {
-  color: rgb(var(--text-color) / 0.72);
+  color: rgb(var(--text-color) / 0.86);
   padding-bottom: 34px;
   line-height: 1.75;
 }
@@ -1634,10 +1656,16 @@ h3, .h3 { line-height: 1.15; }
 .collapsible-tabs__tab .disclosure__content li + li { margin-top: 0.5em; }
 
 /* A link inside an answer has to stay visible against the lighter body. */
+/* And it has to be hittable. Several answers end in "click here", and the
+   anchor's own box is the height of the type, 17px, inside a 26px line. The
+   padding grows the touch target to about 26px without moving anything:
+   vertical padding on an inline box does not change the line box it sits in.
+   Nothing here is drawn, so the answer looks the same as it did. */
 .collapsible-tabs__tab .disclosure__content a {
   color: rgb(var(--heading-color));
   text-decoration: underline;
   text-underline-offset: 0.18em;
+  padding-block: 0.3em;
 }
 
 /* The question keeps full-strength ink, which is where the contrast comes
@@ -1656,6 +1684,32 @@ h3, .h3 { line-height: 1.15; }
   .collapsible-tabs__tab .disclosure__title { padding-right: 44px; }
   .collapsible-tabs__tab .disclosure__title::before,
   .collapsible-tabs__tab .disclosure__title::after { width: 15px; }
+}
+
+/* A link into the middle of an accordion has to clear the sticky masthead,
+   which is 62px on a phone and 103px from the nav breakpoint up. One number
+   cannot serve both: 96px used to, and on a desktop it put the section title
+   under the header it was supposed to clear. Both the block a `#fragment`
+   names and the group heading above it get it, so /faq#faq-merchants lands
+   the same way /makers/outdoor#rules does. */
+.collapsible-tabs__block,
+.collapsible-tabs__heading { scroll-margin-top: 84px; }
+@media (min-width: 768px) {
+  .collapsible-tabs__block,
+  .collapsible-tabs__heading { scroll-margin-top: 124px; }
+}
+
+/* On a phone a bulleted answer gave up 49px of a 288px column to indentation
+   before a word of it started: the theme's 2em on the list plus our own
+   1.25em, one behind the other. One indent is an indent; two is a margin.
+   The bullet still hangs, so the list still reads as a list. Phones only,
+   where the column is the screen. */
+@media (max-width: 600px) {
+  .collapsible-tabs__tab .disclosure__content ul,
+  .collapsible-tabs__tab .disclosure__content ol {
+    margin-inline-start: 0;
+    padding-left: 1.15em;
+  }
 }
 
 /* The lookbook prompt on the space step. Sits under the hint as a second,
