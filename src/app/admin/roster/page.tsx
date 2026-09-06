@@ -72,7 +72,7 @@ export default async function Roster() {
     : null
 
   /* Sort order is the whole point of the screen. Blocked before unpaid,
-     unpaid before a missing COI, everything else last, and maker code
+     unpaid before a missing COI, everything else last, and Mermade ID
      inside each band so a row stays where you last saw it. */
   const rank = (r: typeof rows[number]) => {
     if (!documented(r.app)) return 0

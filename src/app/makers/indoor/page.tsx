@@ -115,7 +115,7 @@ export default async function IndoorMerchants() {
               { label: 'Booth fee', value: <>Varies by space size. <Link href="/apply">See the application</Link> for details.</> },
               { label: 'Load-in', value: show.loadInNote || 'Announced with your acceptance' },
               { label: 'Take-down', value: show.takedownNote || 'Announced with your acceptance' },
-              { label: 'Getting paid', value: `${POLICY.payoutDaysMin} to ${POLICY.payoutDays} days after the show, with a follow-up email showing your space's report under your unique ID.` },
+              { label: 'Getting paid', value: `${POLICY.payoutDaysMin} to ${POLICY.payoutDays} days after the show, with a follow-up email showing your space's report under your Mermade ID.` },
             ]}
             cta={{ href: '/apply', label: 'Apply to sell' }}
           />

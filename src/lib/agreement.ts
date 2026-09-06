@@ -396,7 +396,7 @@ const scheduleA: Part = {
         { n: 'A2.1', text: ['You send us your inventory list with prices at least two weeks before the show, and you deliver the goods at your load-in slot. Load-in for {{showName}} is {{loadIn}}. We count your goods in against your list, and the counted list is the record we settle against.'] },
         {
           n: 'A2.2', lead: 'Tagging.',
-          text: ['Every item for sale carries your maker code and its price, like MM7 $18. There is no barcode or SKU for us to scan, so that tag is the whole of what the register reads. Printed tags are always better than handwritten. Do not make a tag larger than the item it is on.'],
+          text: ['Every item for sale carries your Mermade ID and its price, like MM7 $18. There is no barcode or SKU for us to scan, so that tag is the whole of what the register reads. Printed tags are always better than handwritten. Do not make a tag larger than the item it is on.'],
         },
         {
           n: 'A2.3', lead: 'Prices, and changing them.',

@@ -63,7 +63,7 @@ export function ApplicationRow({
   const shortlisted = app.status === 'shortlist'
 
   /* Triage belongs to the undecided states. An accepted maker has a booking,
-     a maker code and an invoice in their inbox, and none of that should be
+     a Mermade ID and an invoice in their inbox, and none of that should be
      one stray click from being undone on a list. */
   const triage = app.status === 'new' || app.status === 'under_review' || shortlisted
 

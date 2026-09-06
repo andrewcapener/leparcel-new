@@ -642,7 +642,7 @@ async function notifyStaff(applicationId: string, showName: string): Promise<voi
 
 /**
  * Accepting creates the Booking and snapshots commission_bps (CLAUDE.md rule 6).
- * Maker codes are assigned here, sequentially per show, and are what the
+ * Mermade IDs are assigned here, sequentially per show, and are what the
  * register reads: MM07 + a price is the whole of the money model.
  */
 export async function decide(fd: FormData): Promise<void> {
@@ -675,7 +675,7 @@ export async function decide(fd: FormData): Promise<void> {
     if (!already && app.spaceTypeId) {
       const space = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, app.spaceTypeId) })
       if (space) {
-        // Sequential per-show maker code. Reused across shows if the maker has one.
+        // Sequential per-show Mermade ID. Reused across shows if the maker has one.
         const [{ n }] = await db
           .select({ n: sql<number>`count(*)` })
           .from(bookings)
@@ -730,7 +730,7 @@ export async function decide(fd: FormData): Promise<void> {
           `You’re in: ${show.name}`,
           `${vendor.contactName}, you’re in.\n\n`
             + `${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${show.venueName}\n`
-            + `Your maker code is ${code}. Tag every item ${code} plus the price. That's all the register needs.\n\n`
+            + `Your Mermade ID is ${code}. Tag every item ${code} plus the price. That's all the register needs.\n\n`
             + `Space: ${space.label}\nBooth fee: ${usd(space.priceCents)}\n`
             + granted.map((a) => `${a.name}: ${usd(a.priceCents)}\n`).join('')
             + (granted.length > 0 ? `Total: ${usd(space.priceCents + addonsCents)}\n` : '')
