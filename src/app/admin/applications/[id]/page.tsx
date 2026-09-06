@@ -115,7 +115,7 @@ export default async function ApplicationDetail({
     app.isMlm && 'MLM / direct sales',
     app.usesAiArtwork && 'AI artwork',
     app.madeByYou === 'curate_resell' && 'Resells',
-    vendor.isFlagged && 'Flagged vendor',
+    vendor.isFlagged && 'Flagged maker',
   ].filter(Boolean) as string[]
 
   let photos: string[] = []
@@ -158,7 +158,7 @@ export default async function ApplicationDetail({
           {vendor.showsAttended > 0 && <span className="adm-tag">Repeat {vendor.showsAttended}</span>}
           {flags.map((f) => (
             <span key={f} className="adm-tag" data-warn="1"
-              title={f === 'Flagged vendor' ? vendor.flagReason ?? undefined : undefined}>{f}</span>
+              title={f === 'Flagged maker' ? vendor.flagReason ?? undefined : undefined}>{f}</span>
           ))}
         </span>
       </PageHead>

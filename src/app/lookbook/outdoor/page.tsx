@@ -19,9 +19,9 @@ export default async function OutdoorLookbook() {
 
   return (
     <SiteShell show={show} template="page template-suffix-lookbook">
-          <RichText primary title="Outdoor Merchant Lookbook">
+          <RichText primary title="Outdoor Maker Lookbook">
             <p>
-              Our merchant tents are the bomb! They&#39;re 6.5 x 6.5 feet so
+              Our maker tents are the bomb! They&#39;re 6.5 x 6.5 feet so
               that we can still fit inside with ease. We also find that people
               with 10x10 tents have a hard time making every single inch
               intentional because it is quite large. Most makers that get the
@@ -46,7 +46,7 @@ export default async function OutdoorLookbook() {
               of the ocean. Like walk 10 feet and you are swimming with dolphins.
               Remember this when displaying your products &amp; bring duct tape
               to literally bubble tape your cutie displays down. We will have
-              sandbags for each and every merchant.
+              sandbags for each and every maker.
             </p>
           </RichText>
 

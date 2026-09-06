@@ -7,7 +7,7 @@
  * goes to, so there is nothing new for a maker to remember or lose.
  *
  * INTERIM, like the staff gate in adminAuth.ts. docs/02-ARCHITECTURE.md puts
- * vendors on Supabase Auth magic links; that needs the Supabase dashboard and
+ * makers on Supabase Auth magic links; that needs the Supabase dashboard and
  * a user record per maker, and this needs neither. The shape is the same from
  * outside, so replacing it later changes these two files and nothing else.
  *

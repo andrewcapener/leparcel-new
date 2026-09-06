@@ -15,7 +15,7 @@ import { POLICY } from '@/lib/agreement'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Indoor Merchants',
+  title: 'Indoor Makers',
   description:
     'Selling inside at Mermade Market: we merchandise your goods, sell them at a central register and pay you after the show. Space sizes, prices and the rules.',
   alternates: { canonical: '/makers/indoor' },
@@ -90,12 +90,12 @@ export default async function IndoorMerchants() {
   const LATE_FEE_CENTS = 10_000
   /* The label and jewelry-bag fees came off this summary on 5 Sep 2026: it is
      a short list of what a maker must do before the show, and those two are
-     things that happen at it. Both are still in the vendor agreement, which is
+     things that happen at it. Both are still in the maker agreement, which is
      the binding version, and both are still explained in the sections below. */
 
   return (
     <SiteShell show={show} template="page template-suffix-indoor-merchants">
-          <PageTitle title="Indoor Merchants" />
+          <PageTitle title="Indoor Makers" />
 
           {/* The six facts a maker needs before two thousand words of rules.
               An audit timed the top questions against this page and found the
@@ -166,7 +166,7 @@ export default async function IndoorMerchants() {
                 </ul>
                 <p className="mk-rules__note">
                   Each one is explained in full below. The binding version is the{' '}
-                  <Link href="/agreement">vendor agreement</Link>, with the site{' '}
+                  <Link href="/agreement">maker agreement</Link>, with the site{' '}
                   <Link href="/terms">terms</Link> alongside it.
                 </p>
               </div>

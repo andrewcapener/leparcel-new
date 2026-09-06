@@ -13,7 +13,7 @@ export function usd(cents: number): string {
 
 /**
  * Split a gross amount into commission and net at a basis-point rate.
- * Rounding goes to the house, never against the vendor (CLAUDE.md rule 2).
+ * Rounding goes to the house, never against the maker (CLAUDE.md rule 2).
  * Invariant: commission + net === gross, exactly, for every input.
  */
 export function splitCommission(grossCents: number, bps: number) {

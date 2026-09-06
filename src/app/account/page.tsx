@@ -15,7 +15,7 @@ import { SignInForm } from './SignInForm'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Vendor account',
+  title: 'Maker account',
   robots: { index: false, follow: false },
 }
 
@@ -50,7 +50,7 @@ export default async function Account({
   if (!vendor) {
     return (
       <SiteShell show={show} template="page template-suffix-account">
-        <PageTitle title="Vendor account" />
+        <PageTitle title="Maker account" />
         <div className="shopify-section section-rich-text">
           <div className="fully-spaced-row--medium">
             <div className="container container--reading-width">

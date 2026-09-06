@@ -1,5 +1,5 @@
 /**
- * The two merchant lookbooks, from mermademarket.com/pages/indoor-lookbook
+ * The two maker lookbooks, from mermademarket.com/pages/indoor-lookbook
  * and /pages/outdoor-lookbook.
  *
  * `file` is the image's own name on their CDN, which is the key the vendored

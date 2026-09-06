@@ -123,7 +123,7 @@ const LABELS: Record<string, string> = {
   track: 'Inside or outside',
   spaces: 'Spaces',
   signedName: 'Type your name to sign',
-  agree: 'Vendor agreement',
+  agree: 'Maker agreement',
 }
 
 /**
@@ -817,7 +817,7 @@ export function ApplyForm({
         {/* Paperwork is OPTIONAL here on purpose. The CDTFA obligation
             attaches to renting space, not to reading an application, so the
             hard gate is at load-in (see /admin/roster). Asking here just gets
-            us a head start on the vendors who already have their papers. */}
+            us a head start on the makers who already have their papers. */}
         <section
           className="ap-step" id={STEPS[3]!.id} hidden={step !== 4}
           aria-labelledby={`${STEPS[3]!.id}-h`}
@@ -848,7 +848,7 @@ export function ApplyForm({
                 <span>
                   I have read and accept the{' '}
                   <Link href="/agreement" target="_blank" rel="noreferrer">
-                    Mermade Market vendor agreement
+                    Mermade Market maker agreement
                   </Link>
                   {' '}(v2026.1).
                 </span>

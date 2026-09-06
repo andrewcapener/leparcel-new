@@ -11,13 +11,13 @@ import { fmtDate } from '@/lib/dates'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Vendor agreement',
+  title: 'Maker agreement',
   description:
     'The agreement every maker signs when they apply: terms for both tracks, the indoor consignment schedule, and the outdoor booth licence.',
 }
 
 /**
- * /agreement — the vendor agreement, in full, as a maker can actually read it.
+ * /agreement — the maker agreement, in full, as a maker can actually read it.
  *
  * The text is src/lib/agreement.ts; every date, price, rate and window in it
  * is a token filled from the Show record (CLAUDE.md rule 6), and the fee
@@ -47,7 +47,7 @@ export default async function Agreement() {
 
   return (
     <SiteShell show={show} template="page template-suffix-agreement">
-      <PageTitle title="Vendor agreement">
+      <PageTitle title="Maker agreement">
         <p>
           This is what you sign when you apply. Version {TERMS_VERSION}, for{' '}
           {show.name}, {fmtDate(show.startsOn)} to {fmtDate(show.endsOn)}.

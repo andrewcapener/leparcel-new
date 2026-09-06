@@ -148,7 +148,7 @@ export function SettingsForm({ show }: { show: Show }) {
         </div>
         <Field
           name="rosterAnnouncedOn" label="Roster announced" error={e.rosterAnnouncedOn}
-          hint="The promise on /apply, in the application form, on /merchants, and in every waitlist email."
+          hint="The promise on /apply, in the application form, on the roster page, and in every waitlist email."
         >
           <input className="inp" id="rosterAnnouncedOn" name="rosterAnnouncedOn" type="datetime-local" required {...keep('rosterAnnouncedOn', isoToLaWall(show.rosterAnnouncedOn))} />
         </Field>

@@ -86,7 +86,7 @@ export default async function Collaborate() {
           <StatRow
             id="section-merstats-2"
             stats={[
-              { value: '100+', label: 'Merchants per show' },
+              { value: '100+', label: 'Makers per show' },
               { value: '22', label: 'Past shows' },
               { value: '10,000', label: 'Email subscribers' },
             ]}
@@ -124,8 +124,8 @@ export default async function Collaborate() {
             <p>Sponsor Merstage </p>
             <p>Sponsor Beer Garden </p>
             <p>Sponsor E-Bike Parking</p>
-            <p>Feed our merchants (setup night) </p>
-            <p>Feed our merchants (during event) </p>
+            <p>Feed our makers (setup night) </p>
+            <p>Feed our makers (during event) </p>
             <p>Fuel our hydration stations</p>
             <p />
             <p>
