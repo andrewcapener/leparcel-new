@@ -75,10 +75,11 @@ export const POLICY = {
   abandonDays: 14,
   /** Window to decline a rescheduled date, or a carried-forward outdoor day. */
   electionDays: 7,
-  /** Outdoor weather reimbursement, from the live outdoor maker page:
-   *  "we will reimburse you for 30% of your shop fee". */
-  weatherPct: 30,
-  /** How long a credit stays live after a postponement. From the draft. */
+  /** How long a credit stays live, whatever created it. One instrument now:
+   *  a postponement (4.2), an outright cancellation (4.3) and a called
+   *  outdoor day (B6.2) all produce the same 18 month credit. The 30%
+   *  weather reimbursement that used to live here was retired on 6 Sep 2026
+   *  by Drew's refund audit; nothing pays cash any more. */
   creditMonths: 18,
   /** CDTFA Publication 111 operator penalty, per seller, in dollars. Statutory. */
   pub111PenaltyUsd: 1_000,
@@ -184,11 +185,21 @@ const partOne: Part = {
           text: ['We may move the show to later dates if, in our reasonable judgment, weather or another condition outside our control makes it unsafe, unworkable, or seriously damaging to attendance. If we do:'],
           list: [
             'your fee moves to the new dates at no extra cost;',
-            'if you cannot make the new dates, tell us in writing within {{electionDays}} days of the announcement and we will credit the full fee against your next show within {{creditMonths}} months, or refund it, at our option;',
+            'if you cannot make the new dates, tell us in writing within {{electionDays}} days of the announcement and we will credit the full fee against any Mermade show within {{creditMonths}} months;',
             'we announce a postponement as early as we reasonably can.',
           ],
         },
-        { n: '4.3', lead: 'If we cancel outright.', text: ['If we cancel the show and do not reschedule it, we refund the booth fee. We are not liable for anything else: travel, lodging, stock you made, or sales you expected.'] },
+        {
+          /* ⟨COUNSEL⟩ Rewritten 6 Sep 2026 on the recommendation of Drew's
+             refund audit. This clause used to promise a cash refund, which is
+             the single largest cash exposure in the agreement: an outright
+             cancellation makes every booth fee for the season fall due at
+             once, at the moment the venue and the advertising are already paid
+             for and no sales have come in. A credit keeps the maker whole and
+             keeps the business alive to honour it. */
+          n: '4.3', lead: 'If we cancel outright.',
+          text: ['If we cancel the show and do not reschedule it, your fee becomes a credit against any Mermade show within {{creditMonths}} months. Ask for it when you apply and we apply it to that booking. We are not liable for anything else: travel, lodging, stock you made, or sales you expected.'],
+        },
         { n: '4.4', text: ['An outdoor day cancelled for weather is covered by section B6, which is more specific and governs.'] },
         {
           n: '4.5', lead: 'Force majeure.',
@@ -575,8 +586,16 @@ const scheduleB: Part = {
           n: 'B6.1', lead: 'When we call a day off.',
           text: ['The call is ours and we make it as early as we can. We call a day off when conditions or the forecast make it unsafe to put tents up or to have shoppers among them, or when the venue, the city or the county closes the site. Rain, wind or cold on their own do not stop an outdoor day: section 4.1 says the show runs in ordinary bad weather, and it does.'],
         },
-        { n: 'B6.2', text: ['If we call a day off, your fee for that day carries to the next show, on the same day you booked, at no extra charge.'] },
-        { n: 'B6.3', text: ['If you would rather not take that day at the next show, tell us in writing within {{electionDays}} days of the cancellation and we reimburse {{weatherPct}}% of that day’s fee. We keep the rest against the advertising already spent on your shop.'] },
+        /* ⟨COUNSEL⟩ Rewritten 6 Sep 2026. These were two clauses: the fee
+           carried to the same day at the next show, or the maker took 30% back
+           in cash. Drew's refund audit replaced both with one credit, and Drew
+           settled the shape of it: an outdoor day we call off becomes a credit
+           for an outdoor day, good for 18 months, with no indoor
+           element and no cash. It is simpler to read, it is more use to the
+           maker than the same weekday at one particular show, and it is the
+           end of the 30% reimbursement the old Shopify page promised. */
+        { n: 'B6.2', text: ['If we call a day off, your fee for that day becomes a credit towards an outdoor day at any Mermade show within {{creditMonths}} months. It is not refunded in cash.'] },
+        { n: 'B6.3', text: ['Ask for the credit when you apply and we apply it to that booking. If the day you want costs more than the day you lost, you pay the difference; if it costs less, the balance stays on the credit until it runs out.'] },
         { n: 'B6.4', text: ['If we run the day and you decide not to come, there is no refund and no day at a later show, whatever the weather was doing. A day we have not called off is a day that is going ahead.'] },
         /* ⟨COUNSEL⟩ Reworded 5 Sep 2026: "wording is weird". It was, and the
            reason is that it said what does not happen before what does. This
@@ -584,8 +603,16 @@ const scheduleB: Part = {
            maker reads it in. The policy is unchanged, and Drew's refund audit
            may change it again. */
         {
+          /* ⟨COUNSEL⟩ Rewritten 6 Sep 2026. This used to carry a cancelling
+             maker's fee to the next show for free, which section 3.2 flatly
+             contradicts: 3.2 says a cancelled fee is never returned, for any
+             reason, at any time. Two clauses, opposite answers, in one signed
+             document, and a maker would quote whichever helped them. The
+             refund audit resolved it towards 3.2. Nothing stops Mermade
+             carrying a fee as a goodwill gesture; it is no longer a term a
+             maker can hold them to. */
           n: 'B6.5', lead: 'If you cancel a day yourself.',
-          text: ['We will carry your fee once to the next show, at no extra charge. You have to ask us for it, during that show’s application window, and we do not carry a fee forward on our own. The fee is not refunded either way.'],
+          text: ['Section 3.2 governs: the fee is not returned and it does not carry to another show, whatever notice you give us. A day we are still running is a day that is going ahead, and section B6.4 covers deciding not to come to it.'],
         },
       ],
     },
@@ -621,7 +648,6 @@ export function agreementVars(show: Show): PageVars {
     disputeDays: POLICY.disputeDays,
     abandonDays: POLICY.abandonDays,
     electionDays: POLICY.electionDays,
-    weatherPct: POLICY.weatherPct,
     creditMonths: POLICY.creditMonths,
     pub111Penalty: POLICY.pub111PenaltyUsd.toLocaleString('en-US'),
   }

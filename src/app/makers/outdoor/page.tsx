@@ -146,8 +146,9 @@ export default async function OutdoorMerchants() {
                     work at your tent. It costs you the next show.
                   </li>
                   <li>
-                    If we cancel a day for weather you get that day at the next show,
-                    or 30% back. If we run it and you stay home, nothing carries over.
+                    If we cancel a day for weather, your fee becomes a credit towards an
+                    outdoor day at any show in the next 18 months. If we run it and you
+                    stay home, nothing carries over.
                   </li>
                 </ul>
                 <p className="mk-rules__note">

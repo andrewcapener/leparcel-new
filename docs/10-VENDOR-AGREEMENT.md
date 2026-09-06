@@ -196,6 +196,14 @@ Show, or another person, except as §4 and §B6 provide.
 > whole policy. The published agreement now carries the carry-forward at **§B6.4**,
 > in the market's own shape: not refunded, carried once, only if the maker asks
 > inside the next application window, never automatic.
+
+✅ **Settled 6 Sep 2026, the other way.** The free carry-forward for a maker who
+cancels their own day is gone, and the question of whether it also applied inside
+is moot. It had to go: §3.2 says a cancelled fee is never returned, for any
+reason, at any time, and the carry-forward said an outdoor maker gets a second
+chance anyway. Two clauses with opposite answers in one signed document, and a
+maker would quote whichever one helped them. The refund audit resolved it towards
+§3.2, and §B6.5 now points there instead of contradicting it.
 >
 > **What you have to decide: does it apply inside as well?** The promise appears
 > only on the outdoor page, so that is where it has been drafted. Indoor spaces run
@@ -242,9 +250,23 @@ did not arrive. The draft, and the published page, take the credit, with the
 refund at your option, which is the middle. Overrule it if you would rather be
 able to say "we refund".
 
+✅ **Settled 6 Sep 2026.** Drew's refund audit came back recommending the credit,
+and Drew took it. The published §4.2(b) now issues the credit and nothing else:
+"or refund it, at our option" is gone, so Part I no longer contains a route to
+cash. Mermade can still refund as a goodwill gesture; it is simply not a term a
+maker can hold them to.
+
 **4.3 Cancellation by Mermade.** If we cancel the Show outright and do not
 reschedule it, we will refund the booth fee. We are not liable for any other
 loss — travel, lodging, inventory produced, lost sales, or anything else.
+
+✅ **Settled 6 Sep 2026, and this is the one that mattered.** The refund audit
+recommended a credit here too, and Drew took it. The clause above was the single
+largest cash exposure in the agreement: an outright cancellation made every booth
+fee for the season fall due at once, in the month the revenue did not arrive and
+after the venue and the advertising were already paid for. At the numbers in the
+note on 4.2, that is $30,000 to $40,000 payable at the worst possible moment. The
+published §4.3 now reads as an 18 month credit against any Mermade show.
 
 **4.4 Outdoor weather reimbursement.** ⟨DECISION — **resolved from the live copy,
 and it was never as undefined as it looked**⟩ I said this clause was undefined.
@@ -265,6 +287,17 @@ the 30% is **of that day's booth fee**; and it is only paid to a maker who
 declines the rolled-forward day. That is a rule you can apply without arguing,
 which is what I wanted from a measurement, and it is already what makers have
 been told. It is drafted at **§B6** and the published page carries it there.
+
+✅ **Retired 6 Sep 2026.** The 30% is gone. Drew settled the shape himself: a day
+we call off becomes a credit towards an outdoor day at any Mermade show within 18
+months, with no cash and no indoor element. The legal recommendation had paired
+the credit with first refusal on an indoor space; Drew declined that, and he is
+right to, because an indoor promise made on a rained out Saturday is a capacity
+commitment against 45 spaces that are already sold and merchandised.
+
+That kills `POLICY.weatherPct`, which no longer has a reader, and it rewrites the
+outdoor maker page in two places: the rules list and the block of the market's own
+Shopify prose quoted above. The published text is at §B6.2 and §B6.3.
 
 **The one piece still open** is who decides and on what: "our best judgement"
 about the week ahead is a judgment call in a clause otherwise made of facts. A
