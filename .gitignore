@@ -8,10 +8,14 @@ node_modules
 /public/build-info.json
 
 # Scratch files. A throwaway query script written at the repo root got swept
-# into a commit by `git add -A`; these patterns stop that recurring.
+# into a commit by `git add -A`; these patterns stop that recurring. The
+# .scratch.mts ones have to sit at the repo root rather than in a temp
+# directory, because they import the project's own dependencies and tsx
+# resolves those from where the file is.
 /.peek.ts
 /.realrow*.ts
 /*.peek.ts
+/*.scratch.mts
 
 # Body-face candidates for the typography comparison. A proposal, not a
 # dependency: only the face that actually gets chosen moves up into
