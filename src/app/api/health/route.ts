@@ -1,14 +1,36 @@
 import { sql } from 'drizzle-orm'
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { transportDiagnostics } from '@/server/modules/sheets/transport'
 import { lastUploadError, photoUploadDiagnostics } from '@/server/modules/uploads/config'
 import { applicationWindow } from '@/lib/dates'
-import { staffList } from '@/lib/adminAuth'
+import { ADMIN_COOKIE, isValidSession, staffList } from '@/lib/adminAuth'
 import { isCanonicalHost, siteUrl } from '@/lib/site-url'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+/**
+ * What an anonymous caller gets.
+ *
+ * Everything else on this route is an operator's view of the deployment, and
+ * it had no gate at all: the names of every environment variable, the length
+ * of the staff password, the names of everyone who can sign in and the length
+ * of each of their secrets, the Supabase project host, and the count of every
+ * application and booking, to anybody who asked.
+ *
+ * None of that is a key on its own. Together it is a map: it tells you which
+ * secrets exist, how long each one is, who to phish, and where the storage
+ * lives, which is most of the work of getting in. It was built as a cutover
+ * aid on a site nobody had heard of, and it stayed public into a launch.
+ *
+ * So the shape stays the same and the gate is the admin session. What is left
+ * here is what an uptime check needs and what a stranger already knows from
+ * looking at the site: whether it is up, what it is running, and whether
+ * applications are open.
+ */
+const PUBLIC_KEYS = new Set(['ok', 'commit', 'branch', 'show'])
+
+export async function GET(req: NextRequest) {
+  const staff = await isValidSession(req.cookies.get(ADMIN_COOKIE)?.value)
   const diag: Record<string, unknown> = {
     ok: true,
     commit: process.env.VERCEL_GIT_COMMIT_SHA ?? 'local',
@@ -133,5 +155,13 @@ export async function GET() {
     diag.ok = false
     diag.dbError = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
   }
-  return NextResponse.json(diag, { status: diag.ok ? 200 : 500 })
+  const body = staff
+    ? diag
+    : Object.fromEntries(Object.entries(diag).filter(([k]) => PUBLIC_KEYS.has(k)))
+  return NextResponse.json(body, {
+    status: diag.ok ? 200 : 500,
+    // An operator's view of one instance is never a thing to cache, and the
+    // public view is cheap enough to recompute.
+    headers: { 'Cache-Control': 'no-store' },
+  })
 }
