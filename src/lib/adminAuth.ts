@@ -25,8 +25,15 @@
 
 export const ADMIN_COOKIE = 'mm_admin'
 
-/** `ADMIN_PASS_HILLARY` names Hillary. */
-const PER_PERSON = /^ADMIN_PASS_([A-Z0-9_]+)$/
+/**
+ * `ADMIN_PASS_HILLARY` names Hillary.
+ *
+ * Case-insensitive, because a hosting dashboard will happily accept
+ * `ADMIN_PASS_hillary` and the failure would be silent: the variable is there,
+ * the password is right, and the person simply cannot sign in with no message
+ * anywhere saying why. Not worth a launch morning.
+ */
+const PER_PERSON = /^ADMIN_PASS_([A-Za-z0-9_]+)$/
 
 /**
  * The original shared password. Named for what it is rather than for a
@@ -67,7 +74,7 @@ export function staffList(): Staff[] {
 
   for (const [key, value] of Object.entries(process.env)) {
     // ADMIN_PASSWORD would match ADMIN_PASS_(WORD) otherwise.
-    if (key === 'ADMIN_PASSWORD') continue
+    if (key.toUpperCase() === 'ADMIN_PASSWORD') continue
     const m = PER_PERSON.exec(key)
     const secret = clean(value)
     if (!m || !secret) continue
