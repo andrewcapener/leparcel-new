@@ -2144,10 +2144,23 @@ h3, .h3 { line-height: 1.15; }
    there is more of it without a control saying so. */
 .mm-strip {
   position: relative;
-  overflow: hidden;
+  /* A real scroller, not a clipped box. The motion is JavaScript moving
+     scrollLeft, so a finger and the animation push the same thing instead of
+     fighting: a CSS transform moves pixels without moving any scroll
+     position, which is why the old one could not be swiped. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* A horizontal flick must not become a browser back-gesture. */
+  overscroll-behavior-x: contain;
+  /* No smooth scrolling: it would fight the per-frame writes. */
+  scroll-behavior: auto;
+  scrollbar-width: none;
   background: rgb(var(--bg-color, 255 255 255));
   padding: 6px 0;
 }
+.mm-strip::-webkit-scrollbar { display: none }
+.mm-strip:focus-visible { outline: 3px solid #171717; outline-offset: -3px }
 /* The soft edges used to be a -webkit-mask-image gradient. On iOS Safari a
    masked element that is also compositing an animated transform can paint as
    fully transparent, which takes the WHOLE strip with it: Drew, on a phone,
@@ -2172,11 +2185,7 @@ h3, .h3 { line-height: 1.15; }
   right: 0;
   background: linear-gradient(270deg, rgb(var(--bg-color, 255 255 255)), rgba(255, 255, 255, 0));
 }
-.mm-strip__track {
-  display: flex;
-  width: max-content;
-  animation: mm-strip-run 64s linear infinite;
-}
+.mm-strip__track { display: flex; width: max-content; }
 .mm-strip__run { display: flex; flex-shrink: 0; }
 .mm-strip__frame {
   display: block;
@@ -2185,21 +2194,13 @@ h3, .h3 { line-height: 1.15; }
   margin-right: 10px;
   object-fit: cover;
 }
-@keyframes mm-strip-run {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(-50%, 0, 0); }
-}
 @media (min-width: 768px) {
   .mm-strip__frame { height: 380px; margin-right: 14px; }
-  .mm-strip__track { animation-duration: 78s; }
 }
-/* Somebody who asked for less motion gets the same photographs as a strip
-   they can push themselves, rather than a still that hides eight of them. */
-@media (prefers-reduced-motion: reduce) {
-  .mm-strip { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .mm-strip__track { animation: none; }
-  .mm-strip__run + .mm-strip__run { display: none; }
-}
+/* Reduced motion is handled in the component now, which simply does not
+   advance it. Both runs stay in the DOM: the strip is still a scroller, so
+   somebody who asked for less motion gets all ten photographs to push
+   themselves rather than a still frame hiding eight of them. */
 
 /* ── /brand: the brand kit ───────────────────────────────────────────────
    Structure first, because the first version had none: four cards in a
