@@ -32,14 +32,18 @@ export function PhotoStrip({ id, frames }: { id: string; frames: readonly Frame[
 
   const run = (hidden: boolean) => (
     <div className="mm-strip__run" aria-hidden={hidden || undefined}>
-      {frames.map((f) => (
+      {frames.map((f, i) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           key={`${hidden ? 'b' : 'a'}-${f.file}`}
           className="mm-strip__frame"
           src={`/photos/strip/${f.file}`}
           alt={hidden ? '' : f.alt}
-          loading="lazy"
+          /* The first two of the real run load eagerly. Everything else is
+             lazy, and lazy inside a track that is 5700px wide and moving is
+             the sort of thing a browser can decide never to trigger. Two
+             eager frames mean the strip is never an empty band. */
+          loading={!hidden && i < 2 ? 'eager' : 'lazy'}
           decoding="async"
         />
       ))}
