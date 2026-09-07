@@ -17,6 +17,23 @@
  */
 export const FOUNDED_YEAR = 2015
 
+/**
+ * NOT RENDERED ANYWHERE YET. Written for an about section that does not exist,
+ * so nothing below is on the site today.
+ *
+ * ⚠️ Two lines have to be checked before it ever is. The photo archive now
+ * reaches back to December 2015, and it contradicts the opening sentence:
+ * there is no harbour in any frame from 2015, 2016, 2017 or 2018, the setting
+ * throughout is the inland Community House lot, and by spring 2016, the show
+ * after the first, the market already ran an indoor room plus a full outdoor
+ * tent field, food trucks and live music. "Sixteen makers in a room by the
+ * harbor" does not survive that, and neither does "four hundred people",
+ * which is a number nobody has sourced (docs/09-CONTENT-AUDIT.md §5: never
+ * publish an unsourced number).
+ *
+ * The archive does support FOUNDED_YEAR = 2015 over the 2013 note above: the
+ * oldest photography anyone can find is December 2015. Evidence, not proof.
+ */
 export const founderLetter = {
   eyebrow: 'A note from the founder',
   heading: 'I started this because I wanted somewhere to buy things made by people I could meet.',

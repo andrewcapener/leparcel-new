@@ -1,7 +1,7 @@
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
-import { VideoBanner, RichText, MapSection, ScrollingBanner, ArticleRow } from '@/components/theme/Sections'
+import { VideoBanner, RichText, MapSection, ArticleRow } from '@/components/theme/Sections'
 import { PhotoStrip } from '@/components/theme/PhotoStrip'
 import { fmtRange } from '@/lib/dates'
 import { journal, excerpt } from '@/lib/journal'
@@ -78,7 +78,20 @@ export default async function Home() {
             </p>
           </MapSection>
 
-          <ScrollingBanner id="section-banner" text="SHOP SMALL · THINK BIG · MERMADE MARKET ·" />
+          {/* The text ticker that used to run here is gone.
+
+              It said SHOP SMALL · THINK BIG · MERMADE MARKET, and it sat
+              directly on top of the filmstrip, which put two moving things
+              within a few hundred pixels of each other and made the page feel
+              busy rather than alive. Drew: "the ticker tape above, should we
+              move that somewhere?"
+
+              Moving it would only have relocated the problem, because there
+              is nowhere on this page a second marquee earns its keep. The
+              ticker existed to make the page feel alive and the strip now
+              does that with a hundred real makers instead of three slogans.
+              It still runs on /collaborate and /sponsorships, where there is
+              no strip to compete with it. */}
 
           {/* The filmstrip that replaced the second background video.
 
