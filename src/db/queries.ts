@@ -78,6 +78,10 @@ export async function activeShow(): Promise<Show | undefined> {
         ...row,
         hoursNote: tidyHoursNote(row.hoursNote),
         loadInNote: '', outdoorLoadInNote: '', takedownNote: '', loadInSlots: '',
+        // Same reasoning again: a database that predates these columns simply
+        // makes no promise about when a maker will hear, which is what the
+        // thank-you screen falls back to.
+        decisionsFromOn: null, decisionsToOn: null,
       }
     : undefined
 }

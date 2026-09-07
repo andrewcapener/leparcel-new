@@ -52,6 +52,15 @@ export const SHEET_COLUMNS = [
   // this column, so re-sending an application updates its row instead of
   // appending a second one.
   { key: 'applicationId', header: 'Application ID' },
+  /* Appended after the id, deliberately, and the id stays where it is.
+     The live tab's header row is only written when the tab is empty, and the
+     sync finds an existing row by looking up the application id in a fixed
+     column, so a column inserted anywhere to the left of it would move the id
+     out from under every row already written and every re-sync would append a
+     duplicate instead of updating. Growing the sheet to the right costs
+     nothing that already exists. */
+  { key: 'postalCode', header: 'Zip' },
+  { key: 'flyersWanted', header: 'Flyers' },
 ] as const
 
 export type SheetColumnKey = (typeof SHEET_COLUMNS)[number]['key']
@@ -76,6 +85,7 @@ export type RowApplication = {
   priceHighCents: number
   madeByYou: string
   usesAiArtwork: boolean
+  flyersWanted: string
   isMlm: boolean
   requestedSpaceIds: string
   requestedAddons: string
@@ -87,6 +97,7 @@ export type RowApplication = {
 
 export type RowVendor = {
   shopName: string
+  postalCode: string
   contactName: string
   email: string
   phone: string
@@ -204,6 +215,8 @@ export function applicationRow(input: RowInput): SheetRow {
        shift every value under the wrong heading for every row already in it.
        Empty is also honest, where "No" would be an answer nobody gave. */
     usesAiArtwork: '',
+    postalCode: v.postalCode ?? '',
+    flyersWanted: a.flyersWanted ?? '',
     isMlm: yesNo(a.isMlm),
     description: a.description,
     adminLink: `${siteUrl.replace(/\/$/, '')}/admin/applications/${a.id}`,

@@ -9,6 +9,7 @@ import { submitApplication, type FormState } from '@/app/actions'
 import { CATEGORIES, type AddOn, type Show, type SpaceType } from '@/db/schema'
 import { dayBefore, fmtWeekdayDate } from '@/lib/dates'
 import { bpsLabel, usd } from '@/lib/money'
+import { spaceAllowed } from '@/server/modules/spaces/eligibility'
 import { PhotoField } from './PhotoField'
 import type { PhotoItem } from './photo-upload'
 
@@ -112,6 +113,7 @@ const LABELS: Record<string, string> = {
   instagram: 'Instagram',
   website: 'Website',
   city: 'City',
+  postalCode: 'Zip code',
   state: 'State',
   category: 'Primary category',
   madeByYou: 'Made by you',
@@ -119,6 +121,7 @@ const LABELS: Record<string, string> = {
   priceLow: 'Lowest price',
   priceHigh: 'Highest price',
   isMlm: 'MLM or direct sales',
+  flyersWanted: 'Printed flyers',
   track: 'Inside or outside',
   spaces: 'Spaces',
   signedName: 'Type your name to sign',
@@ -135,7 +138,7 @@ const STEP_OF: Record<string, number> = {
   shopName: 1, contactName: 1, email: 1, phone: 1, instagram: 1, website: 1,
   city: 1, state: 1,
   category: 2, madeByYou: 2, description: 2, priceLow: 2, priceHigh: 2,
-  isMlm: 2,
+  isMlm: 2, flyersWanted: 2,
   track: 3, spaces: 3, addons: 3, permitStatus: 3, sellerPermit: 3,
   agree: 4, signedName: 4,
 }
@@ -222,6 +225,9 @@ export function ApplyForm({
   // have one. The team's rule is to ask for as little as possible after the
   // application, so anything they can give us now, we take now.
   const [permit, setPermit] = useState(v.permitStatus ?? '')
+  /* Controlled, because the spaces on the next step depend on it: apparel
+     cannot take a 3x4 and only Treats can take the shelf. */
+  const [category, setCategory] = useState(v.category ?? '')
   const keep = (k: string) => ({ defaultValue: v[k] ?? '' })
 
   // Which step is on screen. This lives outside the <form>, so it survives
@@ -343,10 +349,19 @@ export function ApplyForm({
           easy.. A member of our team will be in touch. If we have questions you
           will hear from us sooner than later.
         </p>
-        <p>
-          Please be patient and know we are doing our best to curate the best
-          market we could give you!
-        </p>
+        {show.decisionsFromOn && show.decisionsToOn ? (
+          <p>
+            You may hear from us as early as{' '}
+            <strong>{fmtWeekdayDate(show.decisionsFromOn)}</strong> or as late as{' '}
+            <strong>{fmtWeekdayDate(show.decisionsToOn)}</strong>. Please be patient
+            and know we are working hard to curate a great showcase!
+          </p>
+        ) : (
+          <p>
+            Please be patient and know we are doing our best to curate the best
+            market we could give you!
+          </p>
+        )}
         <p>
           You&rsquo;ll get a confirmation email in a moment. The {show.name}{' '}
           roster is announced{' '}
@@ -484,6 +499,15 @@ export function ApplyForm({
             <Field name="state" label="State" error={e.state} half>
               <input type="text" name="state" autoComplete="address-level1" required defaultValue={v.state ?? 'CA'} />
             </Field>
+            <Field name="postalCode" label="Zip code (optional)" error={e.postalCode} half>
+              {/* Elise mails flyers to accepted makers, so the address has to be
+                  postable. Optional and not format-checked: it is a courtesy field,
+                  and a maker outside the US has a postcode that is not five digits. */}
+              <input
+                type="text" name="postalCode" inputMode="numeric"
+                autoComplete="postal-code" maxLength={12} {...keep('postalCode')}
+              />
+            </Field>
           </div>
         </section>
 
@@ -494,7 +518,10 @@ export function ApplyForm({
           <StepHead step={STEPS[1]!} />
           <div className="flexible-layout flexible-layout--form">
             <Field name="category" label="Primary category" error={e.category} half>
-              <select name="category" required defaultValue={v.category ?? ''}>
+              <select
+                name="category" required value={category}
+                onChange={(ev) => setCategory(ev.target.value)}
+              >
                 <option value="" disabled>Choose one</option>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -535,6 +562,20 @@ export function ApplyForm({
                 <option value="" disabled>Choose one</option>
                 <option value="no">No</option>
                 <option value="yes">Yes</option>
+              </select>
+            </Field>
+            {/* Elise, 7 Sep 2026: "Can you add I want flyers to promote (how many
+                25 or 50?)". Asked here rather than after acceptance because she
+                prints once, and a count she has before the roster goes out is a
+                count she does not have to chase forty makers for. */}
+            <Field
+              name="flyersWanted" label="Printed flyers to promote your shop" error={e.flyersWanted} half
+              hint="If you are accepted. We post them to you."
+            >
+              <select name="flyersWanted" defaultValue={v.flyersWanted ?? ''}>
+                <option value="">No thanks</option>
+                <option value="25">Yes, 25</option>
+                <option value="50">Yes, 50</option>
               </select>
             </Field>
             {/* Last on the step, and optional. It is the first thing the jury
@@ -606,11 +647,18 @@ export function ApplyForm({
                 </p>
                 {visible.map((s) => {
                   const rank = chosen.indexOf(s)
+                  /* Elise's curation rules, said at the option rather than
+                     three weeks later in a rejection. */
+                  const allowed = spaceAllowed(s.code, category)
                   return (
-                    <label key={s.id} className="ap-option">
+                    <label
+                      key={s.id}
+                      className={`ap-option${allowed.ok ? '' : ' ap-option--barred'}`}
+                    >
                       <input
                         type="checkbox" name="spaces" value={s.id}
                         checked={pickedSpaces.includes(s.id)}
+                        disabled={!allowed.ok}
                         onChange={(ev) => toggle(pickedSpaces, setPickedSpaces, s.id)(ev.target.checked)}
                       />
                       <span className="ap-option__body">
@@ -643,6 +691,11 @@ export function ApplyForm({
                         {s.description && (
                           <small className="ap-option__note ap-option__note--advice">
                             {s.description}
+                          </small>
+                        )}
+                        {!allowed.ok && (
+                          <small className="ap-option__note ap-option__note--barred">
+                            {allowed.reason}
                           </small>
                         )}
                       </span>

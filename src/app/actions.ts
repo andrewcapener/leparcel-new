@@ -23,6 +23,7 @@ import { CONTACT_EMAIL } from '@/lib/agreement'
 import { parsePhotoKeys } from '@/server/modules/uploads/photos'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
+import { spaceAllowed } from '@/server/modules/spaces/eligibility'
 import { previewingOpenWindow } from '@/lib/preview'
 import { siteUrl } from '@/lib/site-url'
 import { signInLinkHtml, signInLinkText } from '@/server/modules/email/sign-in-link'
@@ -264,6 +265,10 @@ const ApplicationSchema = z.object({
   website: z.string().max(300, 'That address is too long').optional(),
   city: z.string().min(1, 'Required').max(80, 'Keep it under 80 characters'),
   state: z.string().min(2, 'Required').max(40, 'Keep it under 40 characters'),
+  // Optional, and deliberately not format-checked: it exists so Elise can post
+  // a flyer, and a maker outside the US has a postcode that is not five digits.
+  postalCode: z.string().max(12, 'That does not look like a postal code').optional(),
+  flyersWanted: z.enum(['', '25', '50']).optional(),
 
   track: z.enum(['indoor', 'outdoor', 'both'], { message: 'Choose inside, outside, or both' }),
 
@@ -378,6 +383,19 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
       errors: { spaces: 'One of those spaces is no longer offered' },
     }
   }
+  /* Elise's curation rules, enforced here as well as in the form. A disabled
+     checkbox is a courtesy, not a control: this endpoint takes space ids and
+     anybody can post whatever they like. */
+  const barred = requested
+    .map((sp) => ({ sp, verdict: spaceAllowed(sp.code, d.category) }))
+    .find(({ verdict }) => !verdict.ok)
+  if (barred && !barred.verdict.ok) {
+    return {
+      ok: false, attempt, values: strings(raw),
+      errors: { spaces: `${barred.sp.label} is not open to ${d.category}. ${barred.verdict.reason}` },
+    }
+  }
+
   const space = requested[0]!
 
   // Add-on requests. Validated against the catalog so a hand-built POST can't
@@ -411,7 +429,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   const details = {
     shopName: d.shopName, contactName: d.contactName,
     phone: d.phone, website: d.website || null, instagram: d.instagram,
-    city: d.city, state: d.state,
+    city: d.city, state: d.state, postalCode: d.postalCode?.trim() ?? '',
   }
   let vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
   if (!vendor) {
@@ -422,7 +440,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     const before = {
       shopName: vendor.shopName, contactName: vendor.contactName,
       phone: vendor.phone, website: vendor.website, instagram: vendor.instagram,
-      city: vendor.city, state: vendor.state,
+      city: vendor.city, state: vendor.state, postalCode: vendor.postalCode,
     }
     const changed = Object.entries(details)
       .filter(([k, v]) => before[k as keyof typeof before] !== v)
@@ -503,6 +521,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     // shape, the Sheet's columns and every existing row are untouched; see
     // the note in src/server/modules/sheets/row.ts.
     usesAiArtwork: false,
+    flyersWanted: d.flyersWanted ?? '',
     isMlm: d.isMlm === 'yes',
     // Only meaningful for someone selling outside, and null rather than
     // empty so a report can tell "indoor, not asked" from "asked, skipped".
@@ -542,14 +561,14 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
         id, show_id, vendor_id, track, space_type_id, requested_space_ids,
         category, description, price_low_cents, price_high_cents, made_by_you,
         uses_ai_artwork, is_mlm, seller_permit, occasional_seller, has_coi,
-        photos, status, signed_name, terms_version
+        photos, status, signed_name, terms_version, flyers_wanted
       ) values (
         ${row.id}, ${row.showId}, ${row.vendorId}, ${row.track}, ${row.spaceTypeId},
         ${row.requestedSpaceIds}, ${row.category}, ${row.description},
         ${row.priceLowCents}, ${row.priceHighCents}, ${row.madeByYou},
         ${row.usesAiArtwork}, ${row.isMlm}, ${row.sellerPermit},
         ${row.occasionalSeller}, ${row.hasCoi}, ${row.photos}, ${row.status},
-        ${row.signedName}, ${row.termsVersion}
+        ${row.signedName}, ${row.termsVersion}, ${row.flyersWanted}
       )`)
   }
 

@@ -35,6 +35,7 @@ const application = {
   priceHighCents: 18_500,
   madeByYou: 'all',
   usesAiArtwork: false,
+  flyersWanted: '25',
   isMlm: false,
   requestedSpaceIds: JSON.stringify(['sp-3x6', 'sp-out-sat']),
   loadInSlots: '[]', wantsOnboardingCall: false, permitStatus: null, requestedAddons: JSON.stringify(['ENDCAP-IN', 'SHARE']),
@@ -51,6 +52,7 @@ const vendor = {
   website: 'https://kilnandcoast.example',
   city: 'Dana Point',
   state: 'CA',
+  postalCode: '92629',
 }
 
 const row = applicationRow({ application, vendor, catalog, siteUrl: 'https://mermademarket.com/' })
@@ -141,9 +143,17 @@ check('admin link', row.adminLink === 'https://mermademarket.com/admin/applicati
     `${values.length} vs ${SHEET_HEADERS.length}`)
   check('every cell is a string', values.every((v) => typeof v === 'string'))
   check('first column is the timestamp', SHEET_HEADERS[0] === 'Submitted (PT)')
-  check('last column is the dedupe key',
-    SHEET_HEADERS[SHEET_HEADERS.length - 1] === 'Application ID'
-    && values[values.length - 1] === 'app-1')
+  /* The dedupe key must never move.
+     The sync finds an existing row by looking up the application id in one
+     fixed column. Every row already in the live Sheet has its id in column X,
+     so inserting or removing any column to the LEFT of it silently orphans
+     every one of them: the lookup reads a column of shop names, finds
+     nothing, and appends a duplicate instead of updating. New columns go on
+     the right, after it, which is why it is no longer last. */
+  const KEY_INDEX = 23
+  check('the application id is still in its own column',
+    SHEET_HEADERS[KEY_INDEX] === 'Application ID', String(SHEET_HEADERS.indexOf('Application ID')))
+  check('and the row still carries the id there', values[KEY_INDEX] === 'app-1', values[KEY_INDEX])
   check('no duplicate headers', new Set(SHEET_HEADERS).size === SHEET_HEADERS.length)
 }
 

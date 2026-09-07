@@ -100,7 +100,12 @@ export function colLetter(n: number): string {
 }
 
 const LAST_COL = colLetter(SHEET_HEADERS.length)
-const KEY_COL = LAST_COL          // the application id is the last column
+/* The application id's own column, named rather than assumed to be the last
+   one. It was LAST_COL, which was true until a column was appended after it;
+   the day that happened the lookup would have started reading an empty column
+   and every re-sync would have appended a duplicate row instead of updating
+   the one already there. */
+const KEY_COL = colLetter(SHEET_HEADERS.indexOf('Application ID') + 1)
 const a1 = (tab: string, range: string) => encodeURIComponent(`'${tab.replace(/'/g, "''")}'!${range}`)
 
 /** The header row exists for the life of the process once we have seen it. */

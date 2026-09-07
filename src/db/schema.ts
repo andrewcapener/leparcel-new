@@ -51,6 +51,12 @@ export const shows = pgTable('shows', {
   applicationsOpenAt: text('applications_open_at').notNull(),
   applicationsCloseAt: text('applications_close_at').notNull(),
   rosterAnnouncedOn: text('roster_announced_on').notNull(),
+  /* When a maker might actually hear, which is not when the roster is public.
+     Elise: "you may hear from us as early as Sept 21 or as late as Sep 24."
+     Nullable: with neither set the thank-you screen makes no promise, which is
+     right for a show whose jury is not scheduled yet. */
+  decisionsFromOn: text('decisions_from_on'),
+  decisionsToOn: text('decisions_to_on'),
 
   // money is integer cents, always
   commissionBps: integer('commission_bps').notNull().default(2000),   // 20.00%
@@ -124,6 +130,8 @@ export const vendors = pgTable('vendors', {
   website: text('website'),
   instagram: text('instagram').notNull().default(''),
   city: text('city').notNull().default(''),
+  // Elise mails flyers to accepted makers, so the address has to be postable.
+  postalCode: text('postal_code').notNull().default(''),
   state: text('state').notNull().default('CA'),
   vendorCode: text('vendor_code'),               // "MM07" — assigned at acceptance
   showsAttended: integer('shows_attended').notNull().default(0),
@@ -184,6 +192,8 @@ export const applications = pgTable('applications', {
     enum: ['all', 'mostly_sourced_components', 'curate_resell'],
   }).notNull(),
   usesAiArtwork: boolean('uses_ai_artwork').notNull().default(false),
+  // '', '25' or '50'. How many printed flyers they want if they are accepted.
+  flyersWanted: text('flyers_wanted').notNull().default(''),
   isMlm: boolean('is_mlm').notNull().default(false),
 
   // compliance — closes audit §1.1 / §1.3

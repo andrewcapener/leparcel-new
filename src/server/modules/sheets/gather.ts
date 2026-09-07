@@ -30,6 +30,7 @@ const APP_COLUMNS = {
   priceHighCents: applications.priceHighCents,
   madeByYou: applications.madeByYou,
   usesAiArtwork: applications.usesAiArtwork,
+  flyersWanted: applications.flyersWanted,
   isMlm: applications.isMlm,
   requestedSpaceIds: applications.requestedSpaceIds,
   requestedAddons: applications.requestedAddons,
@@ -81,6 +82,7 @@ export async function gatherRow(db: DbHandle, applicationId: string): Promise<Sh
       website: vendors.website,
       city: vendors.city,
       state: vendors.state,
+      postalCode: vendors.postalCode,
     })
     .from(vendors)
     .where(eq(vendors.id, app.vendorId))
@@ -115,6 +117,7 @@ export async function gatherShowRows(db: DbHandle, showId: string): Promise<Shee
       website: vendors.website,
       city: vendors.city,
       state: vendors.state,
+      postalCode: vendors.postalCode,
     })
     .from(vendors)
     .where(inArray(vendors.id, ids))

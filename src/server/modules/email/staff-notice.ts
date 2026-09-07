@@ -28,7 +28,7 @@ const LEAD = ['Shop', 'Contact', 'Email', 'Category', 'Track', 'Spaces requested
 const GROUPS: Array<{ head: string; labels: string[] }> = [
   {
     head: 'Reaching them',
-    labels: ['Phone', 'Instagram', 'Website', 'City', 'State'],
+    labels: ['Phone', 'Instagram', 'Website', 'City', 'State', 'Zip'],
   },
   {
     head: 'What they make',
@@ -36,7 +36,7 @@ const GROUPS: Array<{ head: string; labels: string[] }> = [
   },
   {
     head: 'What they asked for',
-    labels: ['Add-ons requested', 'Set-up times', 'Wants Zoom call', 'Seller permit'],
+    labels: ['Add-ons requested', 'Set-up times', 'Wants Zoom call', 'Flyers', 'Seller permit'],
   },
   {
     head: 'For the record',

@@ -727,6 +727,19 @@ h3, .h3 { line-height: 1.15; }
 /* Elise's advice sits under the measurements, one step quieter than the name
    and separated from the size so the two do not read as one run-on line. */
 .ap-option__note--advice { margin-top: 5px; }
+
+/* A space this maker's category cannot take. Greyed rather than hidden,
+   because a maker who was told about the cheap 3x4 by a friend needs to see
+   that it exists and read why it is not for them; a missing row just looks
+   like the form is broken. The reason carries the accent, so the eye goes to
+   the sentence rather than to the disabled box. */
+.ap-option--barred { opacity: 0.62; }
+.ap-option--barred .ap-option__price { text-decoration: line-through; }
+.ap-option__note--barred {
+  margin-top: 5px;
+  color: rgb(var(--link-color));
+  font-weight: 500;
+}
 .ap-option__price {
   font-size: 1.0625rem;
   font-weight: 700;
