@@ -198,7 +198,12 @@ export function applicationRow(input: RowInput): SheetRow {
     priceLow: usd(a.priceLowCents),
     priceHigh: usd(a.priceHighCents),
     madeByYou: MADE_BY[a.madeByYou] ?? a.madeByYou,
-    usesAiArtwork: yesNo(a.usesAiArtwork),
+    /* The application stopped asking this in September 2026. The column
+       stays, empty, rather than being deleted: the live Sheet's header row is
+       only written when the tab is empty, so removing a column here would
+       shift every value under the wrong heading for every row already in it.
+       Empty is also honest, where "No" would be an answer nobody gave. */
+    usesAiArtwork: '',
     isMlm: yesNo(a.isMlm),
     description: a.description,
     adminLink: `${siteUrl.replace(/\/$/, '')}/admin/applications/${a.id}`,

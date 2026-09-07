@@ -81,7 +81,8 @@ check('PST, not just PDT', ptStamp('2026-12-01T02:00:00Z') === '2026-11-30 18:00
 
 // 4 · flags read as words, not booleans
 check('made by them', row.madeByYou === 'Makes everything', row.madeByYou)
-check('ai artwork', row.usesAiArtwork === 'No', row.usesAiArtwork)
+// The form stopped asking; the column stays so the Sheet's headings do not shift.
+check('ai artwork is blank, not a guess', row.usesAiArtwork === '', row.usesAiArtwork)
 check('mlm', row.isMlm === 'No', row.isMlm)
 check('track', row.track === 'Indoor', row.track)
 {
@@ -89,7 +90,7 @@ check('track', row.track === 'Indoor', row.track)
     application: { ...application, usesAiArtwork: true, isMlm: true, track: 'both', madeByYou: 'curate_resell' },
     vendor, catalog, siteUrl: 'https://mermademarket.com',
   })
-  check('ai artwork yes', flagged.usesAiArtwork === 'Yes', flagged.usesAiArtwork)
+  check('ai artwork stays blank even when the old column is true', flagged.usesAiArtwork === '', flagged.usesAiArtwork)
   check('mlm yes', flagged.isMlm === 'Yes', flagged.isMlm)
   check('both tracks', flagged.track === 'Indoor and outdoor', flagged.track)
   check('resells', flagged.madeByYou === 'Curates and resells', flagged.madeByYou)

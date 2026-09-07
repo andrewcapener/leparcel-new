@@ -276,12 +276,11 @@ const ApplicationSchema = z.object({
   priceHigh: z.coerce.number({ message: 'Whole dollars, no cents' })
     .int('Whole dollars, no cents').min(1, 'Required'),
 
-  // No default on any of these three in the form, so a blank really is a
-  // blank and the message has to read like a question, not a type error.
+  // No default on either of these in the form, so a blank really is a blank
+  // and the message has to read like a question, not a type error.
   madeByYou: z.enum(['all', 'mostly_sourced_components', 'curate_resell'], {
     message: 'Tell us how much of it you make',
   }),
-  usesAiArtwork: z.enum(['yes', 'no'], { message: 'Answer yes or no' }),
   isMlm: z.enum(['yes', 'no'], { message: 'Answer yes or no' }),
 
   permitStatus: z.enum(['have', 'occasional', 'unsure']).optional().or(z.literal('')),
@@ -500,7 +499,10 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     category: d.category, description: d.description,
     priceLowCents: d.priceLow * 100, priceHighCents: d.priceHigh * 100,
     madeByYou: d.madeByYou,
-    usesAiArtwork: d.usesAiArtwork === 'yes',
+    // The form stopped asking. The column keeps its default so the row
+    // shape, the Sheet's columns and every existing row are untouched; see
+    // the note in src/server/modules/sheets/row.ts.
+    usesAiArtwork: false,
     isMlm: d.isMlm === 'yes',
     // Only meaningful for someone selling outside, and null rather than
     // empty so a report can tell "indoor, not asked" from "asked, skipped".

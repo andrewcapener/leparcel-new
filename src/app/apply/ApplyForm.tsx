@@ -118,7 +118,6 @@ const LABELS: Record<string, string> = {
   description: 'Describe your product',
   priceLow: 'Lowest price',
   priceHigh: 'Highest price',
-  usesAiArtwork: 'AI-generated artwork',
   isMlm: 'MLM or direct sales',
   track: 'Inside or outside',
   spaces: 'Spaces',
@@ -136,7 +135,7 @@ const STEP_OF: Record<string, number> = {
   shopName: 1, contactName: 1, email: 1, phone: 1, instagram: 1, website: 1,
   city: 1, state: 1,
   category: 2, madeByYou: 2, description: 2, priceLow: 2, priceHigh: 2,
-  usesAiArtwork: 2, isMlm: 2,
+  isMlm: 2,
   track: 3, spaces: 3, addons: 3, permitStatus: 3, sellerPermit: 3,
   agree: 4, signedName: 4,
 }
@@ -530,15 +529,6 @@ export function ApplyForm({
             </Field>
             <Field name="priceHigh" label="Highest price ($)" error={e.priceHigh} half>
               <input name="priceHigh" type="number" inputMode="numeric" min={1} step={1} required {...keep('priceHigh')} />
-            </Field>
-            {/* Renegade and Patchwork both added the AI question in 2025.
-                docs/01-PRODUCT-SPEC.md §3.1 — ask it now, not later. */}
-            <Field name="usesAiArtwork" label="Any AI-generated artwork?" error={e.usesAiArtwork} half>
-              <select name="usesAiArtwork" required defaultValue={v.usesAiArtwork ?? ''}>
-                <option value="" disabled>Choose one</option>
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-              </select>
             </Field>
             <Field name="isMlm" label="Are you an MLM / direct-sales brand?" error={e.isMlm} half>
               <select name="isMlm" required defaultValue={v.isMlm ?? ''}>
