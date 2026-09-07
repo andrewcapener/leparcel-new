@@ -363,7 +363,25 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
 
   // Every checked space, in display order. The first is the primary request:
   // it is what acceptance books; the rest are visible to the jury and staff.
-  const requestedIds = fd.getAll('spaces').map(String).filter(Boolean)
+  /* In the order the maker ticked them, which a checkbox cannot tell us: a
+     form posts its boxes in document order however they were clicked. The
+     hidden spaceOrder field carries the ranking, and it is only ever used to
+     SORT ids that were posted, never to add one, so a hand-built POST cannot
+     smuggle a space in through it. An older cached page sends no order and
+     falls back to document order, which is what it always did.
+
+     This mattered on the first morning: an applicant ranked Saturday, Sunday,
+     Friday and the form recorded Friday first, because Friday is listed
+     first. She noticed. Nobody else would have. */
+  const posted = fd.getAll('spaces').map(String).filter(Boolean)
+  const ranking = String(fd.get('spaceOrder') ?? '').split(',').map((x) => x.trim()).filter(Boolean)
+  const rankOf = (id: string) => {
+    const i = ranking.indexOf(id)
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i
+  }
+  const requestedIds = ranking.length > 0
+    ? [...posted].sort((a, b) => rankOf(a) - rankOf(b))
+    : posted
   if (requestedIds.length === 0) {
     return {
       ok: false, attempt, values: strings(raw),

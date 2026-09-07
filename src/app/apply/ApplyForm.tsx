@@ -311,7 +311,16 @@ export function ApplyForm({
   // Only what is on screen is submitted, so only what is on screen counts.
   // The order here is the order the boxes are rendered in, which is the order
   // FormData reports them in, which is the order the action reads them in.
-  const chosen = visible.filter((s) => pickedSpaces.includes(s.id))
+  /* In the order they were CHECKED, not the order they are listed.
+     Valerie, an applicant on the morning applications opened: "Was trying to
+     put my days in order of 1, 2 or 3 choice and when i would click Saturday
+     as first choice, Sunday as second and Friday as third it kept making
+     Friday first." She was right, and she is the only person who found out.
+     Checking boxes down a list is how anybody expresses a ranking, and this
+     silently re-sorted her ranking into our row order. */
+  const chosen = pickedSpaces
+    .map((id) => visible.find((s) => s.id === id))
+    .filter((s): s is NonNullable<typeof s> => Boolean(s))
   const chosenExtras = visibleExtras.filter((a) => pickedAddons.includes(a.code))
   // The action books the first requested space and treats the rest as
   // alternates (actions.ts: `const space = requested[0]`). Money is integer
@@ -621,9 +630,10 @@ export function ApplyForm({
               >
                 <legend className="ap-group__legend">Spaces</legend>
                 <p className="note" id="spaces-hint">
-                  Check everything you’d say yes to. The highest one you check
-                  becomes your first choice, and the rest tell the jury what
-                  else works. Outside makers can check more than one day.
+                  Check everything you’d say yes to, in the order you want them.
+                  The first one you check is your first choice, and the rest
+                  tell the jury what else works. Outside makers can check more
+                  than one day.
                 </p>
                 {/* The hardest question on this form is what a space actually
                     looks like, and the answer is already on the site. A maker
@@ -645,6 +655,11 @@ export function ApplyForm({
                   )}
                   .
                 </p>
+                {/* The ranking, as its own value. A checkbox posts in the
+                    order it appears in the document, never in the order it
+                    was ticked, so without this the server would rebuild the
+                    same wrong order that the screen just stopped showing. */}
+                <input type="hidden" name="spaceOrder" value={chosen.map((s) => s.id).join(',')} />
                 {visible.map((s) => {
                   const rank = chosen.indexOf(s)
                   /* Elise's curation rules, said at the option rather than
