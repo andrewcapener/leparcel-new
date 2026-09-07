@@ -714,13 +714,19 @@ h3, .h3 { line-height: 1.15; }
 }
 .ap-option__body { min-width: 0; }
 .ap-option__name { display: block; font-weight: 600; color: rgb(var(--heading-color)); }
+/* 0.9, not 0.75. At 0.75 this resolves to about #8D8D8D on white, roughly
+   3.3:1, which fails WCAG AA for text this size, and it is the line that
+   tells a maker what a space is for while they are spending money on it. */
 .ap-option__note {
   display: block;
   margin-top: 3px;
-  color: rgb(var(--text-color) / 0.75);
+  color: rgb(var(--text-color) / 0.9);
   font-size: var(--smaller-text-size-2);
   line-height: 1.45;
 }
+/* Elise's advice sits under the measurements, one step quieter than the name
+   and separated from the size so the two do not read as one run-on line. */
+.ap-option__note--advice { margin-top: 5px; }
 .ap-option__price {
   font-size: 1.0625rem;
   font-weight: 700;

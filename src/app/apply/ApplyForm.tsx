@@ -624,16 +624,26 @@ export function ApplyForm({
                             </span>
                           )}
                         </span>
-                        {/* The size, not the advice. Drew took suitability off
-                            the picker: a maker choosing between six spaces
-                            wants to know what fits, and "not suggested for
-                            apparel" reads as a warning at the moment they are
-                            trying to commit. Elise's advice is on
-                            /makers/indoor and in the reference table below,
-                            which is where somebody goes to read rather than
-                            to choose. */}
+                        {/* The size and the advice, both.
+                            Suitability was taken off this picker on the
+                            reasoning that "not suggested for apparel" reads
+                            as a warning at the moment somebody is trying to
+                            commit, and that Elise's advice was a click away
+                            on /makers/indoor. Elise, 7 Sep 2026: "I see you
+                            did that on the indoor information link but I
+                            think ON THE APP is important too." She is right,
+                            and the earlier reasoning had it backwards: a
+                            maker who picks 3x12 for candles finds out it was
+                            wrong when we tell them, which is a worse moment
+                            than reading it here. Nobody clicks away from a
+                            form they are halfway through. */}
                         {s.dimensions && (
                           <small className="ap-option__note">{s.dimensions}</small>
+                        )}
+                        {s.description && (
+                          <small className="ap-option__note ap-option__note--advice">
+                            {s.description}
+                          </small>
                         )}
                       </span>
                       <span className="ap-option__price num">{usd(s.priceCents)}</span>
