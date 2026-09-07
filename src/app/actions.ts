@@ -949,6 +949,15 @@ export async function purgeRehearsals(): Promise<void> {
   revalidatePath('/admin')
   revalidatePath('/admin/jury')
   revalidatePath('/admin/roster')
+  /* Then leave, rather than re-rendering in place.
+     The button lives inside `{rehearsalCount > 0 && ...}` on the dashboard, so
+     a successful purge takes the count to zero and unmounts the very form
+     whose action is still in flight. React reconciled that away mid
+     transition and the whole main column came back empty: Drew pressed Delete
+     and got a blank page. A redirect makes it a fresh navigation, so what
+     arrives is a page the server rendered whole, with the block correctly
+     gone. */
+  redirect('/admin')
 }
 
 /**

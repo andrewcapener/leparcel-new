@@ -138,18 +138,55 @@ export const bandVideoId = 'W5iWhyOzjYI'
  *
  * Swapping one is a line here and a file in public/photos/strip.
  */
+/**
+ * The homepage filmstrip.
+ *
+ * ORDERED, not shuffled, and the order is the whole point. Drew, on the day
+ * it shipped: "there were a bunch at the beginning that were the same
+ * person." He was right: 213 and 214 are one maker at one booth, and they sat
+ * side by side, so the strip opened by showing you the same white tent twice.
+ *
+ * A random shuffle does not fix that. It is just as free to put those two
+ * together again, and about a fifth of the time it would. What fixes it is a
+ * sequence built so that neighbours differ, on three counts at once:
+ *
+ *   · never the same maker twice in a row (213 and 214 are now six apart),
+ *   · never two still lifes in a row (23, 27 and 123 are spread),
+ *   · never two of the same shape in a row, so the landscape frames land
+ *     every third or fourth position and give the run a beat.
+ *
+ * The list is a CYCLE, not a line: the strip loops, so the last frame sits
+ * next to the first and 214 → 178 has to obey the rules too. It does. That is
+ * also why `rotated()` below is safe and a shuffle would not be, because
+ * rotating a cycle leaves every neighbour exactly where it was.
+ */
 export const stripFrames = [
   { file: 'mermade-178.jpg', alt: 'A maker crocheting in her own tent, her bags hung behind her' },
   { file: 'mermade-23.jpg', alt: 'Handmade mugs and hanging ornaments on a walnut shelf' },
   { file: 'mermade-130.jpg', alt: 'A shopper walking the outdoor aisle between white Mermade tents' },
-  { file: 'mermade-27.jpg', alt: 'Embroidered caps hung on horseshoe hooks' },
-  { file: 'mermade-183.jpg', alt: 'A maker serving a shopper at the Charm Bar under a Mermade tent' },
   { file: 'mermade-213.jpg', alt: 'A jewellery booth laid out on linen risers' },
-  { file: 'mermade-214.jpg', alt: 'A maker fastening a clasp for a customer' },
   { file: 'mermade-123.jpg', alt: 'Handmade rag dolls on a rust linen cloth' },
-  { file: 'mermade-180.jpg', alt: 'A candle maker beside her shelf under the Mermade tent' },
+  { file: 'mermade-183.jpg', alt: 'A maker serving a shopper at the Charm Bar under a Mermade tent' },
+  { file: 'mermade-27.jpg', alt: 'Embroidered caps hung on horseshoe hooks' },
   { file: 'mermade-139.jpg', alt: 'A shopper looking over a shelf of goods under warm bulbs' },
+  { file: 'mermade-180.jpg', alt: 'A candle maker beside her shelf under the Mermade tent' },
+  { file: 'mermade-214.jpg', alt: 'A maker fastening a clasp for a customer' },
 ] as const
+
+/**
+ * The same cycle, started somewhere else.
+ *
+ * Drew asked to randomize the strip. Rotation is how you get the "different
+ * every time I land on it" he wants without giving back the adjacency the
+ * order above was built to guarantee: turning a necklace does not change
+ * which beads touch. So each visit begins on a different frame and the run
+ * is otherwise identical.
+ */
+export function rotated<T>(list: readonly T[], by: number): readonly T[] {
+  if (list.length === 0) return list
+  const n = ((Math.trunc(by) % list.length) + list.length) % list.length
+  return [...list.slice(n), ...list.slice(0, n)]
+}
 
 /**
  * Shopper quotes for the testimonials row. EMPTY ON PURPOSE.

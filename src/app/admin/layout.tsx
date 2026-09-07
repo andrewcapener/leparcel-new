@@ -24,8 +24,8 @@ export const dynamic = 'force-dynamic'
 
 const num = (v: number | string | null | undefined) => Number(v ?? 0)
 
-async function navCounts(showId: string | undefined) {
-  if (!showId) return { undecided: 0, needsPerson: 0 }
+async function navCounts(showId: string | undefined, openAt: string | undefined) {
+  if (!showId || !openAt) return { undecided: 0, needsPerson: 0, rehearsals: 0 }
   const [undecided] = await db
     .select({ n: sql<number>`count(*)` })
     .from(applications)
@@ -48,7 +48,24 @@ async function navCounts(showId: string | undefined) {
         eq(applications.hasCoi, false),
       ),
     ))
-  return { undecided: num(undecided?.n), needsPerson: num(needsPerson?.n) }
+  /* Rehearsals: submitted before the window opened, so ours. Cast both sides
+     to timestamptz. These are text columns holding two shapes, Postgres's
+     "2026-09-07 17:12:00+00" and the Show record's ISO
+     "2026-09-07T09:00:00-07:00", and a space sorts before a T, so compared as
+     text every application submitted today counted as a rehearsal. Same
+     comparison as purgeRehearsals, and pinned by rehearsal-window.test.ts. */
+  const [rehearsals] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(applications)
+    .where(and(
+      eq(applications.showId, showId),
+      sql`${applications.submittedAt}::timestamptz < ${openAt}::timestamptz`,
+    ))
+  return {
+    undecided: num(undecided?.n),
+    needsPerson: num(needsPerson?.n),
+    rehearsals: num(rehearsals?.n),
+  }
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -56,7 +73,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // take the whole admin down: /admin/show is where you would go to fix it,
   // and /admin/login has to render before there is a session at all.
   const show = await activeShow().catch(() => undefined)
-  const counts = await navCounts(show?.id).catch(() => ({ undecided: 0, needsPerson: 0 }))
+  const counts = await navCounts(show?.id, show?.applicationsOpenAt).catch(() => ({ undecided: 0, needsPerson: 0, rehearsals: 0 }))
   const failedMail = await db
     .select({ n: sql<number>`count(*)` })
     .from(emailOutbox)

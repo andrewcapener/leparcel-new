@@ -4,7 +4,7 @@ import { db } from '@/db'
 import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
-import { CollapsibleTabs, Banner, PriceTable, type Tab } from '@/components/theme/Sections'
+import { CollapsibleTabs, PriceTable, type Tab } from '@/components/theme/Sections'
 import { ApplyForm } from './ApplyForm'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { applyFaq, fill } from '@/lib/page-html'
@@ -12,6 +12,8 @@ import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
 import { previewingOpenWindow } from '@/lib/preview'
 import { SignupForm } from '@/components/theme/SignupForm'
 import { bpsLabel, usd } from '@/lib/money'
+import { PhotoStrip } from '@/components/theme/PhotoStrip'
+import { rotated, stripFrames } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 
@@ -319,12 +321,15 @@ export default async function Apply({
         />
       </div>
 
-      <Banner
-        id="section-apply-band"
-        image="/photos/shopper.jpg"
-        title=""
-        heightMobile={460}
-        heightDesktop={600}
+      {/* ── The last thing an applicant sees ─────────────────────────────
+          This was a single 600px photograph of one shopper. The filmstrip
+          is the same gesture making a better argument: the person reading
+          this page is deciding whether to spend a weekend and a booth fee
+          on us, and a hundred makers going past answers that question in a
+          way one shopper cannot. Rotated per visit, like the homepage. */}
+      <PhotoStrip
+        id="section-apply-strip"
+        frames={rotated(stripFrames, Math.floor(Math.random() * stripFrames.length))}
       />
     </SiteShell>
   )

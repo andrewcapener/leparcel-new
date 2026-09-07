@@ -90,7 +90,10 @@ export default async function Home() {
               it, so it reads as part of the page rather than as a widget. */}
           <PhotoStrip
             id="section-strip"
-            frames={C.stripFrames}
+            /* Started on a different frame each visit. The cycle is fixed, so
+               rotating it cannot put the same maker beside herself again;
+               see the note on stripFrames. */
+            frames={C.rotated(C.stripFrames, Math.floor(Math.random() * C.stripFrames.length))}
           />
 
           <ArticleRow heading="Mermade Journal" headingHref="/journal" articles={posts} />

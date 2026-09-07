@@ -23,6 +23,8 @@ export type NavCounts = {
   undecided: number
   /** Roster rows waiting on a person: undocumented, unpaid, or no COI. */
   needsPerson: number
+  /** Applications submitted before the window opened, so ours to delete. */
+  rehearsals: number
 }
 
 const MAIN: Array<{
@@ -38,16 +40,22 @@ const MAIN: Array<{
   { href: '/admin/emails', label: 'Emails', icon: 'bell' },
 ]
 
-const PREVIEWS: Array<{ href: string; label: string; icon: IconName }> = [
+const PREVIEWS: Array<{
+  href: string; label: string; icon: IconName
+  /** Rendered only when the matching count is above zero. */
+  only?: keyof NavCounts
+}> = [
   { href: '/apply?preview=1', label: 'Application form', icon: 'external' },
   { href: '/api/preview?on=1&to=%2F', label: 'The site at launch', icon: 'external' },
   // The one thing here that is for somebody else to click. It lives on the
   // dashboard because it needs a copy button beside it, and it is listed here
   // because that is where you go looking for it.
   { href: '/admin#rehearsal', label: 'Rehearsal link for the team', icon: 'external' },
-  // Only useful while there are any, and the dashboard hides the block when
-  // there are none. Listed anyway: somebody looking for it looks here first.
-  { href: '/admin#tests', label: 'Delete test applications', icon: 'clock' },
+  // Only while there are any. The dashboard hides the block when the count is
+  // zero, and a nav row pointing at an anchor that is not on the page is a row
+  // that does nothing when pressed, which on a screen full of working rows
+  // reads as the app being broken rather than as there being nothing to do.
+  { href: '/admin#tests', label: 'Delete test applications', icon: 'clock', only: 'rehearsals' },
   // A copy of every application, as a file, in one click. Three of the four
   // places this data lives are services somebody else runs; this is the one
   // that is just a file on a laptop. Worth taking before the jury sits.
@@ -89,7 +97,7 @@ export function AdminNav({ counts, onNavigate }: { counts: NavCounts; onNavigate
       })}
 
       <p className="adm-nav-sec">Preview</p>
-      {PREVIEWS.map((t) => (
+      {PREVIEWS.filter((t) => !t.only || counts[t.only] > 0).map((t) => (
         <a key={t.href} href={t.href} className="adm-nav-row" target="_blank" rel="noreferrer">
           <Icon name={t.icon} />
           <span className="t">{t.label}</span>

@@ -317,6 +317,18 @@
 .adm .adm-btn-q:hover { border-color: var(--ad-ink); background: var(--ad-ink); color: #fff }
 .adm .adm-btn-q[data-on="1"] { background: var(--ad-ink); border-color: var(--ad-ink); color: #fff }
 .adm .adm-btn-q[data-on="1"]:hover { background: var(--ad-card); color: var(--ad-ink) }
+/* the error boundary: readable, centred on the reading measure, not a card */
+.adm .adm-oops { max-width: 52ch; padding: 8vh 0 0 }
+.adm .adm-oops h1 {
+  font-family: var(--font-c); font-weight: 600; font-size: var(--t-title);
+  line-height: 1.1; margin: 6px 0 14px;
+}
+.adm .adm-oops__ref {
+  margin-top: 16px; color: var(--ad-ink-3); font-size: var(--t-mono);
+  font-family: var(--font-m);
+}
+.adm .adm-oops__acts { display: flex; align-items: center; gap: 20px; margin-top: 26px }
+
 /* ── the one destructive control ──
    Deleting an application is the only real delete in the app, so it is folded
    away rather than sitting next to the six buttons a juror presses all day.
