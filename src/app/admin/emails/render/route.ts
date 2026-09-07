@@ -30,6 +30,16 @@ function bucketOrigin(): string {
   }
 }
 
+/**
+ * The origin the emails' own images are written against.
+ *
+ * Same source as the urls in the mail itself, so the two cannot drift: if
+ * SITE_URL changes, the allowance follows it in the same deploy.
+ */
+function siteOrigin(): string {
+  try { return new URL(siteUrl()).origin } catch { return '' }
+}
+
 /* The outward emails link Oswald and Figtree from Google. Blocking them does
    not break the preview, it just renders it in a face no recipient with Apple
    Mail will see, which makes the preview a worse answer to the question it
@@ -63,10 +73,23 @@ export async function GET(req: NextRequest) {
       // one part of that email somebody opens it to look at. Still no
       // third-party origin, and still nothing a maker typed can point this
       // frame anywhere, because every src is built by us.
-      'Content-Security-Policy':
-        `default-src 'none'; style-src 'unsafe-inline' ${FONT_CSS}; `
-        + `font-src ${FONT_FILES}; `
-        + `img-src 'self' data: ${bucketOrigin()}`.trim(),
+      'Content-Security-Policy': [
+        `default-src 'none'`,
+        `style-src 'unsafe-inline' ${FONT_CSS}`,
+        `font-src ${FONT_FILES}`,
+        /* Every origin the pictures can legitimately come from, named.
+           'self' alone was not enough and that is the bug: an email's
+           <img> is an ABSOLUTE url built from SITE_URL, because a mail
+           client has no origin to be relative to. So the pictures say
+           https://mermademarket.com/photos/... while 'self' means
+           whichever host you happen to have the admin open on. On the
+           bare domain those agree and everything loads; on a Vercel
+           deployment url they do not, every image is cross origin, and
+           the preview renders with all of them broken. Naming the site
+           origin makes the preview work wherever it is being viewed. */
+        ['img-src', "'self'", 'data:', siteOrigin(), bucketOrigin()]
+          .filter(Boolean).join(' '),
+      ].join('; '),
     },
   })
 }
