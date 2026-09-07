@@ -1,7 +1,8 @@
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
-import { VideoBanner, VideoBand, RichText, MapSection, ScrollingBanner, ArticleRow } from '@/components/theme/Sections'
+import { VideoBanner, RichText, MapSection, ScrollingBanner, ArticleRow } from '@/components/theme/Sections'
+import { PhotoStrip } from '@/components/theme/PhotoStrip'
 import { fmtRange } from '@/lib/dates'
 import { journal, excerpt } from '@/lib/journal'
 import * as C from '@/lib/content'
@@ -79,15 +80,17 @@ export default async function Home() {
 
           <ScrollingBanner id="section-banner" text="SHOP SMALL · THINK BIG · MERMADE MARKET ·" />
 
-          {/* Their second background-video section, on their clip. Theirs
-              carries no poster at all; ours is a 2026 still, so the band is a
-              photograph rather than a grey rectangle while the embed loads.
-              The painted backdrop and the sign are the show's one landmark,
-              and nothing else on the page repeats them. */}
-          <VideoBand
-            id="section-film"
-            poster="/photos/sign.jpg"
-            video={C.bandVideoId}
+          {/* The filmstrip that replaced the second background video.
+
+              That band ran the clip from the old Shopify site, which is why
+              it was full of a venue Mermade left. Drew asked for a slider;
+              this is a marquee instead, because a slider shows one
+              photograph at a time and the argument this band has to make is
+              quantity. It also rhymes with the text ticker directly above
+              it, so it reads as part of the page rather than as a widget. */}
+          <PhotoStrip
+            id="section-strip"
+            frames={C.stripFrames}
           />
 
           <ArticleRow heading="Mermade Journal" headingHref="/journal" articles={posts} />

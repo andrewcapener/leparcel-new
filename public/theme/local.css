@@ -2125,3 +2125,55 @@ h3, .h3 { line-height: 1.15; }
    it. The legal pages and the maker rules set their own margin; the skip
    link had none, and it is the first thing a keyboard user uses. */
 #content { scroll-margin-top: calc(var(--theme-header-height, 62px) + 12px); }
+
+
+/* ── the photo filmstrip ───────────────────────────────────────────────
+   The band that replaced the second background video. Full bleed, one
+   direction, slow enough to read a photograph as it passes.
+
+   The animation moves the track by exactly -50%, and the track holds the
+   same photographs twice, so the instant the first copy has left the second
+   is standing where the first began. No JavaScript, no snap points, and
+   nothing to get out of step.
+
+   Frames are cut to a uniform 600px height and keep their own width, which
+   is what stops it reading as a grid that happens to be moving: a portrait
+   next to a landscape is a filmstrip, six equal squares are a carousel.
+
+   Cut off at both edges on purpose. Two half-frames are how somebody knows
+   there is more of it without a control saying so. */
+.mm-strip {
+  overflow: hidden;
+  background: rgb(var(--bg-color, 255 255 255));
+  padding: 6px 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+}
+.mm-strip__track {
+  display: flex;
+  width: max-content;
+  animation: mm-strip-run 64s linear infinite;
+}
+.mm-strip__run { display: flex; flex-shrink: 0; }
+.mm-strip__frame {
+  display: block;
+  height: 300px;
+  width: auto;
+  margin-right: 10px;
+  object-fit: cover;
+}
+@keyframes mm-strip-run {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+@media (min-width: 768px) {
+  .mm-strip__frame { height: 380px; margin-right: 14px; }
+  .mm-strip__track { animation-duration: 78s; }
+}
+/* Somebody who asked for less motion gets the same photographs as a strip
+   they can push themselves, rather than a still that hides eight of them. */
+@media (prefers-reduced-motion: reduce) {
+  .mm-strip { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .mm-strip__track { animation: none; }
+  .mm-strip__run + .mm-strip__run { display: none; }
+}

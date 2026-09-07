@@ -183,6 +183,33 @@ export default async function Dashboard() {
         />
       </div>
 
+      {rehearsalCount > 0 && (
+        <>
+          {/* "Test applications", not "Rehearsals": the Preview group in the
+              sidebar already has a "Rehearsal link", and two things called
+              rehearsal something on one screen is how somebody ends up
+              looking in the wrong place for this button. */}
+          <div className="adm-sec" id="tests" style={{ scrollMarginTop: '24px' }}>
+            <h2>Test applications</h2>
+            <span className="c">{rehearsalCount} to clear</span>
+          </div>
+          <p className="adm-note">
+            {rehearsalCount} application{rehearsalCount === 1 ? '' : 's'} submitted before the
+            window opened, so {rehearsalCount === 1 ? 'it is' : 'they are'} ours: seeded demo
+            rows and anything the team sent through the rehearsal link. Deleting them is
+            permanent, it is written to the audit log first, and it cannot reach a real
+            application because a real one can only arrive after{' '}
+            {fmtDateTime(show.applicationsOpenAt)}.
+          </p>
+          <form action={purgeRehearsals}>
+            <button className="adm-btn" type="submit">
+              Delete {rehearsalCount} test application{rehearsalCount === 1 ? '' : 's'}
+            </button>
+          </form>
+          <div style={{ height: 26 }} />
+        </>
+      )}
+
       <div className="adm-sec">
         <h2>Where the work is</h2>
         <span className="c">{undecided + needsPerson} open</span>
@@ -219,29 +246,6 @@ export default async function Dashboard() {
             delete the rehearsals before opening day.
           </p>
           <RehearsalLink url={rehearsal} />
-        </>
-      )}
-
-      {rehearsalCount > 0 && (
-        <>
-          <div className="adm-sec">
-            <h2>Rehearsals</h2>
-            <span className="c">{rehearsalCount} to clear</span>
-          </div>
-          <p className="adm-note">
-            {rehearsalCount} application{rehearsalCount === 1 ? '' : 's'} submitted before the
-            window opened, so {rehearsalCount === 1 ? 'it is' : 'they are'} ours: seeded demo
-            rows and anything the team sent through the rehearsal link. Deleting them is
-            permanent, it is written to the audit log first, and it cannot reach a real
-            application because a real one can only arrive after{' '}
-            {fmtDateTime(show.applicationsOpenAt)}.
-          </p>
-          <form action={purgeRehearsals}>
-            <button className="adm-btn" type="submit">
-              Delete {rehearsalCount} rehearsal{rehearsalCount === 1 ? '' : 's'}
-            </button>
-          </form>
-          <div style={{ height: 26 }} />
         </>
       )}
 

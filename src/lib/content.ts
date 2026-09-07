@@ -129,6 +129,29 @@ export const heroVideoId = 'dd23FXq6ZNw'
 export const bandVideoId = 'W5iWhyOzjYI'
 
 /**
+ * The homepage filmstrip.
+ *
+ * Ten frames from the Fall 2026 shoot, cut to a uniform 600px height and
+ * keeping their own widths, which is what makes a strip read as a strip
+ * rather than as a moving grid. People and things alternate on purpose: a
+ * booth, then the work in it, then the room, then a pair of hands.
+ *
+ * Swapping one is a line here and a file in public/photos/strip.
+ */
+export const stripFrames = [
+  { file: 'mermade-178.jpg', alt: 'A maker crocheting in her own tent, her bags hung behind her' },
+  { file: 'mermade-23.jpg', alt: 'Handmade mugs and hanging ornaments on a walnut shelf' },
+  { file: 'mermade-130.jpg', alt: 'A shopper walking the outdoor aisle between white Mermade tents' },
+  { file: 'mermade-27.jpg', alt: 'Embroidered caps hung on horseshoe hooks' },
+  { file: 'mermade-183.jpg', alt: 'A maker serving a shopper at the Charm Bar under a Mermade tent' },
+  { file: 'mermade-213.jpg', alt: 'A jewellery booth laid out on linen risers' },
+  { file: 'mermade-214.jpg', alt: 'A maker fastening a clasp for a customer' },
+  { file: 'mermade-123.jpg', alt: 'Handmade rag dolls on a rust linen cloth' },
+  { file: 'mermade-180.jpg', alt: 'A candle maker beside her shelf under the Mermade tent' },
+  { file: 'mermade-139.jpg', alt: 'A shopper looking over a shelf of goods under warm bulbs' },
+] as const
+
+/**
  * Shopper quotes for the testimonials row. EMPTY ON PURPOSE.
  *
  * The old site's testimonials section still carries the theme's demo text

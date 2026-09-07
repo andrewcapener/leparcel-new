@@ -80,7 +80,13 @@ export default async function Apply({
 
   const openMs = new Date(show.applicationsOpenAt).getTime()
   const closeMs = new Date(show.applicationsCloseAt).getTime()
-  const windowDays = Math.max(1, Math.round((closeMs - openMs) / 86_400_000))
+  /* Full days, floored, not rounded.
+     The window opens Monday morning and closes Monday night, which is
+     fourteen days and is how the team says it: Elise, "applications are open
+     14 days. Monday to Monday". Rounding turned 14.6 into 15 and the FAQ said
+     so. The copy this feeds reads "only open for N full days", and a day that
+     is five sixths over is not a full day. */
+  const windowDays = Math.max(1, Math.floor((closeMs - openMs) / 86_400_000))
 
   /** The cheapest and dearest space in a track, as one string. Integer cents
    *  in, usd() out (CLAUDE.md rule 1). A single space prices as itself. */

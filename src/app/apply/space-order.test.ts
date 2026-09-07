@@ -12,6 +12,8 @@
  * with the copy in src/app/actions.ts.
  */
 
+export {}   // a module, so its locals do not collide with the other test scripts
+
 /** The same sort the action does. */
 function rank(posted: string[], order: string[]): string[] {
   if (order.length === 0) return posted

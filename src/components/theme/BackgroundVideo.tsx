@@ -7,10 +7,21 @@ import { useEffect, useRef, useState } from 'react'
  * poster frame.
  *
  * The poster is always rendered underneath, so this only ever adds motion.
- * It stays hidden on a narrow screen and for anyone who asked for reduced
- * motion, and it waits for the player to answer before revealing itself: a
- * blocked embed still fires the iframe's `load` event for its error page, and
- * showing that would put a grey rectangle where the photograph was.
+ * It waits for the player to answer before revealing itself: a blocked embed
+ * still fires the iframe's `load` event for its error page, and showing that
+ * would put a grey rectangle where the photograph was.
+ *
+ * It used to be desktop only, on the reasoning that a phone arriving from an
+ * Instagram story should not be made to pull a video stream before it has
+ * read the dates. Drew, 7 Sep 2026: "i want the video if possible on mobile
+ * yeah at least to see." It is the best thing on the page and it is his call,
+ * so it plays everywhere now. The embed already carries mute, playsinline and
+ * autoplay, which is exactly the combination iOS requires.
+ *
+ * Two people still get the still: anyone who asked for reduced motion, and
+ * anyone whose phone is in data-saver mode. The second is not caution on our
+ * part, it is somebody having told their device they are metered or nearly
+ * out, and honouring that is not the same as deciding for them.
  */
 export function BackgroundVideo({ youtubeId }: { youtubeId: string }) {
   const [show, setShow] = useState(false)
@@ -18,16 +29,16 @@ export function BackgroundVideo({ youtubeId }: { youtubeId: string }) {
   const frame = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
-    const wide = window.matchMedia('(min-width: 768px)')
     const still = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const decide = () => setShow(wide.matches && !still.matches)
+    /* Chrome and the Android browsers expose this; Safari does not, and an
+       absent value is not a request to save data, so it reads as false. */
+    const saveData = () => Boolean(
+      (navigator as { connection?: { saveData?: boolean } }).connection?.saveData,
+    )
+    const decide = () => setShow(!still.matches && !saveData())
     decide()
-    wide.addEventListener('change', decide)
     still.addEventListener('change', decide)
-    return () => {
-      wide.removeEventListener('change', decide)
-      still.removeEventListener('change', decide)
-    }
+    return () => still.removeEventListener('change', decide)
   }, [])
 
   useEffect(() => {

@@ -45,6 +45,9 @@ const PREVIEWS: Array<{ href: string; label: string; icon: IconName }> = [
   // dashboard because it needs a copy button beside it, and it is listed here
   // because that is where you go looking for it.
   { href: '/admin#rehearsal', label: 'Rehearsal link for the team', icon: 'external' },
+  // Only useful while there are any, and the dashboard hides the block when
+  // there are none. Listed anyway: somebody looking for it looks here first.
+  { href: '/admin#tests', label: 'Delete test applications', icon: 'clock' },
   // A copy of every application, as a file, in one click. Three of the four
   // places this data lives are services somebody else runs; this is the one
   // that is just a file on a laptop. Worth taking before the jury sits.

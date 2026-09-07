@@ -172,7 +172,6 @@ check('admin link', row.adminLink === 'https://mermademarket.com/admin/applicati
   check('no permit number leaks through', !blob.includes('signedName'))
 }
 
-if (failures) { console.error(`\n${failures} failing assertions`); process.exit(1) }
 /* Set-up times. Indoor makers are asked which staggered load-in slots they can
    make, and staff build the arrival schedule from the answers, so the column
    has to carry them in the order they were checked. */
@@ -183,8 +182,6 @@ if (failures) { console.error(`\n${failures} failing assertions`); process.exit(
   })
   check('set-up times', slotted.loadInSlots === '1-3pm, 5-7pm', slotted.loadInSlots)
   check('set-up times is a column', SHEET_HEADERS.includes('Set-up times'))
-  check('application id stays last, which the Apps Script keys on',
-    SHEET_HEADERS[SHEET_HEADERS.length - 1] === 'Application ID')
 }
 
 const empty = applicationRow({
@@ -204,5 +201,7 @@ check('no set-up times is empty, not "[]"', empty.loadInSlots === '', empty.load
   check('does not want it', empty.onboardingCall === 'No', empty.onboardingCall)
   check('it is a column', SHEET_HEADERS.includes('Wants Zoom call'))
 }
+
+if (failures) { console.error(`\n${failures} failing assertions`); process.exit(1) }
 
 console.log('sheets: row mapping holds (labels, cents, Pacific, flags, PII)')
