@@ -2321,3 +2321,78 @@ h3, .h3 { line-height: 1.15; }
   .brand-pg .grid, .brand-pg .rules, .brand-pg .faces { grid-template-columns: minmax(0, 1fr) }
   .brand-pg .spec, .brand-pg .spec.osw { font-size: 34px }
 }
+
+/* ── the apply band ──────────────────────────────────────────────────────
+   Type on paper, sitting between two bands of photography. That is half its
+   job: the map's pictures and the filmstrip used to touch, and the whole
+   lower page read as one collage. A block with no photograph in it is what
+   separates them.
+
+   The other half is the ask. Dune rather than white, so it reads as a panel
+   the page stops at rather than more of the same sheet, and the one solid
+   button on the page after the hero. */
+/* White, deliberately. Dune (#EBEFED) was the first choice and it was wrong:
+   the map section above is dune, so the two grounds ran together into one grey
+   block and the band stopped separating anything, which was half its job.
+   Three distinct grounds now: dune, paper, photographs. */
+.section-apply-band { background: #fff }
+.ab { padding: clamp(56px, 7vw, 92px) 0 }
+.ab__in {
+  max-width: 1180px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(36px, 5vw, 76px); align-items: start;
+}
+.ab__k {
+  font-family: var(--heading-font-family); font-weight: 600;
+  font-size: 12px; letter-spacing: .24em; text-transform: uppercase;
+  color: #BC9658; margin: 0 0 14px;
+}
+.ab__h {
+  font-family: var(--heading-font-family); font-weight: 600;
+  font-size: clamp(32px, 4.4vw, 52px); line-height: 1.04; letter-spacing: .01em;
+  text-transform: uppercase; color: #171717; margin: 0 0 18px;
+}
+.ab__p { font-size: 17px; line-height: 1.62; color: #5C5C5C; margin: 0 0 28px; max-width: 46ch }
+.ab__acts { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 26px; margin-bottom: 18px }
+.ab__btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 50px; padding: 0 30px; border-radius: 3px;
+  background: #232323; color: #fff; text-decoration: none;
+  font-family: var(--heading-font-family); font-weight: 600;
+  font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+}
+.ab__btn:hover { background: #BC9658; color: #fff }
+.ab__lk {
+  font-family: var(--heading-font-family); font-weight: 600;
+  font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: #171717; text-decoration: none;
+}
+.ab__lk:hover { color: #BC9658 }
+.ab__deadline { font-size: 14px; color: #767676; margin: 0 }
+.ab__days { color: #171717; font-weight: 600 }
+
+/* the two tracks, which the homepage never explained */
+.ab__ways { display: grid; gap: 30px }
+.ab__way { border-top: 2px solid #171717; padding-top: 16px }
+.ab__way-k {
+  font-family: var(--heading-font-family); font-weight: 600;
+  font-size: 11.5px; letter-spacing: .2em; text-transform: uppercase;
+  color: #767676; margin: 0 0 8px;
+}
+.ab__way-h {
+  font-family: var(--heading-font-family); font-weight: 600;
+  font-size: 21px; letter-spacing: .04em; text-transform: uppercase;
+  color: #171717; margin: 0 0 10px;
+}
+.ab__way-p { font-size: 15px; line-height: 1.6; color: #5C5C5C; margin: 0 0 12px }
+.ab__way-n {
+  font-family: var(--heading-font-family); font-weight: 600;
+  font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: #171717; margin: 0;
+}
+
+@media (max-width: 860px) {
+  .ab__in { grid-template-columns: minmax(0, 1fr); gap: 42px }
+  .ab__btn { width: 100% }
+  .ab__acts { gap: 14px }
+}

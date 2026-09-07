@@ -1,10 +1,12 @@
 import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
-import { VideoBanner, RichText, MapSection, ArticleRow } from '@/components/theme/Sections'
+import { VideoBanner, RichText, MapSection } from '@/components/theme/Sections'
 import { PhotoStrip } from '@/components/theme/PhotoStrip'
-import { fmtRange } from '@/lib/dates'
-import { journal, excerpt } from '@/lib/journal'
+import { ApplyBand } from '@/components/theme/ApplyBand'
+import { activeSpaceTypes } from '@/db/queries'
+import { fmtRange, fmtDeadline, daysUntil } from '@/lib/dates'
+import { usd, bpsLabel } from '@/lib/money'
 import * as C from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
@@ -24,12 +26,22 @@ export default async function Home() {
   const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
-  const posts = journal.slice(0, 3).map((p) => ({
-    href: `/journal/${p.slug}`,
-    title: p.title,
-    excerpt: excerpt(p),
-    image: p.image,
-  }))
+  /* The apply band's numbers, all read rather than written. The cheapest way
+     in on each track is the honest headline figure: a maker deciding whether
+     to bother wants to know what it costs at the bottom, not the average. */
+  const spaces = await activeSpaceTypes(show.id)
+  const cheapest = (track: string) =>
+    spaces.filter((s) => s.track === track).reduce<number | null>(
+      (low, s) => (low === null || s.priceCents < low ? s.priceCents : low), null)
+  const indoorFrom = cheapest('indoor')
+  const outdoorFrom = cheapest('outdoor')
+
+  /* Days to the deadline, as Pacific calendar dates rather than as elapsed
+     time. Dividing milliseconds gave FIFTEEN on opening morning, against a
+     window Elise called fourteen days and the FAQ now states, so the homepage
+     would have contradicted the FAQ on day one. See daysUntil and its test. */
+  const daysLeft = daysUntil(show.applicationsCloseAt)
+  const open = new Date(show.applicationsCloseAt).getTime() > Date.now()
 
   return (
     <SiteShell show={show} template="index" transparentHeader>
@@ -93,6 +105,26 @@ export default async function Home() {
               It still runs on /collaborate and /sponsorships, where there is
               no strip to compete with it. */}
 
+          {/* The ask, on paper, between the two picture bands.
+
+              It does two jobs that turned out to be one job. The page had no
+              way to apply below the hero, and it had the map's photographs
+              touching the filmstrip. A block made of type separates the two
+              picture bands AND is the thing the page was failing to ask for.
+
+              Only while the window is open. A dead form is worse than no
+              form: it asks somebody to do a thing and then refuses them. */}
+          {open && indoorFrom !== null && outdoorFrom !== null && (
+            <ApplyBand
+              id="section-apply"
+              deadline={fmtDeadline(show.applicationsCloseAt)}
+              commission={bpsLabel(show.commissionBps)}
+              indoorFrom={usd(indoorFrom)}
+              outdoorFrom={usd(outdoorFrom)}
+              daysLeft={daysLeft}
+            />
+          )}
+
           {/* The filmstrip that replaced the second background video.
 
               That band ran the clip from the old Shopify site, which is why
@@ -109,7 +141,12 @@ export default async function Home() {
             frames={C.rotated(C.stripFrames, Math.floor(Math.random() * C.stripFrames.length))}
           />
 
-          <ArticleRow heading="Mermade Journal" headingHref="/journal" articles={posts} />
+          {/* The Mermade Journal row used to close this page, and it was the
+              biggest block on it: three full article cards, 1480px of them on
+              a phone, in the position of emphasis right above the footer.
+              Elise asked for it off the homepage. The journal itself is
+              unchanged and still linked from the footer, so nothing is lost
+              except the weight it was carrying here. */}
         </SiteShell>
   )
 }

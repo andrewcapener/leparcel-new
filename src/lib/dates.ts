@@ -109,3 +109,26 @@ export function fmtDeadline(iso: string): string {
     .replace(/\s*PM$/, 'pm')
   return `${fmtDate(iso, { year: undefined })}, ${time} PT`
 }
+
+/**
+ * Whole days from today to a deadline, counted in Pacific calendar days.
+ *
+ * Not (close - now) / 86400000. That is a duration, and it rounds to 15 on the
+ * morning the window opens, which contradicts the fourteen-day window on the
+ * FAQ and in Elise's own words. What a person means by "days left" is how many
+ * dates are left on the calendar, so this compares dates, in the timezone the
+ * deadline is written in (CLAUDE.md rule 8).
+ *
+ * Returns 0 on the closing day itself, which callers render as "last day"
+ * rather than "0 days left", and a negative number once it has passed.
+ */
+export function daysUntil(iso: string, now: Date = new Date()): number {
+  const ymd = (d: Date) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(d)
+  // Parsed back as UTC midnight, so the subtraction is whole days with no DST
+  // shift hiding in it.
+  const at = (d: Date) => Date.parse(`${ymd(d)}T00:00:00Z`)
+  return Math.round((at(new Date(iso)) - at(now)) / 86_400_000)
+}
