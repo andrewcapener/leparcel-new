@@ -317,6 +317,36 @@
 .adm .adm-btn-q:hover { border-color: var(--ad-ink); background: var(--ad-ink); color: #fff }
 .adm .adm-btn-q[data-on="1"] { background: var(--ad-ink); border-color: var(--ad-ink); color: #fff }
 .adm .adm-btn-q[data-on="1"]:hover { background: var(--ad-card); color: var(--ad-ink) }
+/* ── the one destructive control ──
+   Deleting an application is the only real delete in the app, so it is folded
+   away rather than sitting next to the six buttons a juror presses all day.
+   The colour arrives only on the button itself: a red-bordered panel would
+   shout at somebody who opened the disclosure to read what it does. */
+.adm .adm-danger { margin-top: 28px; border-top: 1px solid var(--ad-line); padding-top: 14px }
+.adm .adm-danger > summary {
+  cursor: pointer; list-style: none;
+  font-family: var(--font-c); font-weight: 600; text-transform: uppercase;
+  letter-spacing: .12em; font-size: var(--t-cap-s); color: var(--ad-ink-3);
+}
+.adm .adm-danger > summary::-webkit-details-marker { display: none }
+.adm .adm-danger > summary::before { content: "+ " }
+.adm .adm-danger[open] > summary::before { content: "\2212 " }
+.adm .adm-danger > summary:hover { color: var(--ad-warn) }
+.adm .adm-danger .adm-note { margin-top: 10px }
+.adm .adm-deny {
+  margin-top: 10px; color: var(--ad-warn);
+  border-left: 2px solid var(--ad-warn); padding-left: 10px;
+  font-size: var(--t-s);
+}
+.adm .adm-btn-danger {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 32px; padding: 8px 14px 7px; margin-top: 4px;
+  border: 1px solid var(--ad-warn); border-radius: 2px;
+  background: var(--ad-card); color: var(--ad-warn); cursor: pointer;
+  font-family: var(--font-c); font-weight: 600; text-transform: uppercase;
+  letter-spacing: .1em; font-size: var(--t-cap-s); line-height: 1;
+}
+.adm .adm-btn-danger:hover { background: var(--ad-warn); color: #fff }
 /* the secondary action: a caps link with a trailing arrow */
 .adm .adm-lk {
   display: inline-flex; align-items: center; gap: 7px; min-height: 26px;

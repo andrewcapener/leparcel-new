@@ -2,6 +2,7 @@
 
 import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
@@ -948,6 +949,66 @@ export async function purgeRehearsals(): Promise<void> {
   revalidatePath('/admin')
   revalidatePath('/admin/jury')
   revalidatePath('/admin/roster')
+}
+
+/**
+ * Delete one application, by hand, from its own page.
+ *
+ * The purge on the dashboard only ever reaches rows submitted before the
+ * window opened, which is exactly what makes it safe and exactly what makes
+ * it insufficient: it cannot touch a rehearsal somebody sent through the live
+ * form this morning, a maker who applied twice, or a spam entry. Drew, on
+ * opening day: "we just got access... can we delete entries?!"
+ *
+ * So this one CAN take a real application, and everything about it is built
+ * around that. The shop name has to be typed to match, which is the only
+ * guard that survives a mis-click on the wrong maker's page, and a reason is
+ * required. On a mismatch nothing is touched and the page says so.
+ *
+ * The whole row goes into the audit log first, so the deletion leaves a
+ * record even though the record it deletes is gone. That log is the reason
+ * this is allowed to be a real delete rather than a void: the evidence
+ * outlives the row.
+ *
+ * The vendor is left alone, for the same reason the purge leaves them: a
+ * vendor row is a person, and a maker whose duplicate we removed should still
+ * find their details waiting.
+ *
+ * The Sheet is a separate copy and this does not reach into it. Deleting the
+ * sheetSyncs row means the Sheet keeps its line and a later sync will append
+ * a fresh one rather than update; staff delete the row there themselves.
+ */
+export async function deleteApplication(fd: FormData): Promise<void> {
+  const id = String(fd.get('applicationId') ?? '')
+  const typed = String(fd.get('confirm') ?? '').trim()
+  const reason = String(fd.get('reason') ?? '').trim()
+  const back = `/admin/applications/${encodeURIComponent(id)}`
+
+  const app = await db.query.applications.findFirst({ where: eq(applications.id, id) })
+  if (!app) redirect('/admin/jury')
+  const vendor = await db.query.vendors.findFirst({ where: eq(vendors.id, app.vendorId) })
+  if (!vendor) redirect(`${back}?deny=missing`)
+
+  // Case and surrounding space are noise; the name is the check.
+  if (typed.toLowerCase() !== vendor.shopName.trim().toLowerCase()) {
+    redirect(`${back}?deny=name`)
+  }
+  if (reason.length < 3) redirect(`${back}?deny=reason`)
+
+  await log('application', id, 'deleted', app, null,
+    `${reason} (confirmed "${vendor.shopName}")`)
+
+  const held = await db.select({ id: bookings.id }).from(bookings)
+    .where(eq(bookings.applicationId, id))
+  for (const b of held) await db.delete(bookingAddons).where(eq(bookingAddons.bookingId, b.id))
+  await db.delete(bookings).where(eq(bookings.applicationId, id))
+  await db.delete(sheetSyncs).where(eq(sheetSyncs.applicationId, id))
+  await db.delete(applications).where(eq(applications.id, id))
+
+  revalidatePath('/admin')
+  revalidatePath('/admin/jury')
+  revalidatePath('/admin/roster')
+  redirect('/admin/jury')
 }
 
 export async function markPaid(fd: FormData): Promise<void> {

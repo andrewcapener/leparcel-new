@@ -6,7 +6,7 @@ import {
   applications, vendors, spaceTypes, addOns, bookings, auditLog,
   APPLICATION_STATUSES, type ApplicationStatus,
 } from '@/db/schema'
-import { decide, saveScores } from '@/app/actions'
+import { decide, deleteApplication, saveScores } from '@/app/actions'
 import { usd, bpsLabel } from '@/lib/money'
 import { fmtDateTime } from '@/lib/dates'
 import { timelineFor } from '@/server/modules/history/timeline'
@@ -44,10 +44,10 @@ export default async function ApplicationDetail({
   /** Which queue the juror came from, so this screen can page through the
    *  same list. Optional: the application's own status is the fallback, so
    *  the URL still works pasted into a browser on its own. */
-  searchParams: Promise<{ from?: string }>
+  searchParams: Promise<{ from?: string; deny?: string }>
 }) {
   const { id } = await params
-  const { from: fromParam } = await searchParams
+  const { from: fromParam, deny } = await searchParams
   const app = await db.query.applications.findFirst({ where: eq(applications.id, id) })
   if (!app) notFound()
   const vendor = await db.query.vendors.findFirst({ where: eq(vendors.id, app.vendorId) })
@@ -404,6 +404,45 @@ export default async function ApplicationDetail({
             Accepting books the primary space and sends the invoice. Declining sends the reason
             above it.
           </p>
+
+          {/* ── delete, last and folded away ──
+              A real delete, which nothing else in this app does, so it is
+              behind a disclosure at the bottom of the column a juror uses
+              least, and it asks for the shop name in the maker's own words.
+              A reason is required because the row is about to stop existing
+              and the audit entry is all that will be left of it. */}
+          <details className="adm-danger">
+            <summary>Delete this application</summary>
+            <p className="adm-note">
+              This removes {vendor.shopName}&rsquo;s application, any held space, and the
+              row that tracks the Sheet sync. It does not remove them from the Sheet,
+              and it does not remove {vendor.contactName} as a maker. It cannot be undone.
+            </p>
+            {deny === 'name' && (
+              <p className="adm-deny">That is not the shop name on this application.
+                Nothing was deleted.</p>
+            )}
+            {deny === 'reason' && (
+              <p className="adm-deny">Say why, in a few words. Nothing was deleted.</p>
+            )}
+            <form action={deleteApplication}>
+              <input type="hidden" name="applicationId" value={app.id} />
+              <label className="adm-field" htmlFor="confirm">
+                <span className="lb">Type <b>{vendor.shopName}</b> to confirm</span>
+                <input className="inp" id="confirm" name="confirm" required
+                  autoComplete="off" spellCheck={false} />
+              </label>
+              <label className="adm-field" htmlFor="delReason">
+                <span className="lb">Why</span>
+                <input className="inp" id="delReason" name="reason" required
+                  placeholder="Duplicate of MM12" autoComplete="off" />
+              </label>
+              <button className="adm-btn-danger" type="submit">
+                Delete this application
+                <span className="adm-sr"> for {vendor.shopName}</span>
+              </button>
+            </form>
+          </details>
 
           {/* The hand is here after a decision, so the way on is here too. */}
           {next && (
