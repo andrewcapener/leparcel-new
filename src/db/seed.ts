@@ -150,7 +150,7 @@ async function main() {
     // from these two timestamps, so the sentence and the deadline cannot drift
     // apart. Editable in /admin/show, never in code.
     applicationsOpenAt: '2026-09-07T09:00:00-07:00',
-    applicationsCloseAt: '2026-09-20T23:59:00-07:00',
+    applicationsCloseAt: '2026-09-21T23:59:00-07:00',
     // Moved from 28 September to the 25th by Drew, 6 Sep 2026: official.
     // Five days after the close rather than eight.
     rosterAnnouncedOn: '2026-09-25T12:00:00-07:00',

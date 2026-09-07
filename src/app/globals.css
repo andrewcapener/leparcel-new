@@ -594,6 +594,56 @@
    from trying. The URL stays visible and wraps rather than scrolling, so it
    is obvious which host it points at and a failed copy still leaves you
    something to select. */
+/* ── the history timeline ──────────────────────────────────────────────
+   One column of moments, newest first, with the clock in mono down the left
+   the way every other machine-written value in this admin is set. A rule down
+   the left ties them into one thread rather than leaving them as a stack of
+   unrelated rows; the marker on each is the only ornament, and it is coloured
+   by what kind of moment it was, so a run of emails is distinguishable from a
+   decision without reading a word. */
+.adm .adm-time { list-style: none; margin: 4px 0 0; padding: 0 0 0 22px; position: relative; }
+.adm .adm-time::before {
+  content: ""; position: absolute; left: 4px; top: 8px; bottom: 8px;
+  width: 1px; background: var(--ad-line);
+}
+.adm .adm-time__row {
+  position: relative; display: grid; gap: 2px 18px;
+  padding: 13px 0; border-bottom: 1px solid var(--ad-line);
+}
+.adm .adm-time__row:last-child { border-bottom: 0; }
+.adm .adm-time__row::before {
+  content: ""; position: absolute; left: -22px; top: 19px;
+  width: 9px; height: 9px; border-radius: 999px;
+  background: var(--ad-bg); border: 2px solid var(--ad-line-2);
+}
+/* An email is the one kind somebody scans for, so it is the one kind marked. */
+.adm .adm-time__row[data-kind="email"]::before { border-color: var(--ad-ink-2); }
+.adm .adm-time__row[data-kind="decision"]::before { background: var(--ad-ink); border-color: var(--ad-ink); }
+.adm .adm-time__when { font-size: 12px; color: var(--ad-ink-3); }
+.adm .adm-time__title { font-size: 15px; color: var(--ad-ink); }
+.adm .adm-time__flag {
+  margin-left: 8px; padding: 1px 7px; border-radius: 2px;
+  font-family: var(--font-c, inherit); font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; background: var(--ad-sunk); color: var(--ad-ink-2);
+}
+.adm .adm-time__flag[data-status="failed"] { background: var(--ad-warn); color: #fff; }
+.adm .adm-time__body { margin-top: 8px; }
+.adm .adm-time__body summary {
+  cursor: pointer; font-size: 13px; color: var(--ad-ink-3);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.adm .adm-time__body pre {
+  margin: 10px 0 2px; padding: 12px 14px; max-height: 340px; overflow: auto;
+  background: var(--ad-sunk); border: 1px solid var(--ad-line); border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; line-height: 1.6; color: var(--ad-ink-2);
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+@media (min-width: 900px) {
+  .adm .adm-time__row { grid-template-columns: 148px 1fr; }
+  .adm .adm-time__when { padding-top: 2px; }
+}
+
 .adm .adm-share {
   display: flex;
   align-items: center;

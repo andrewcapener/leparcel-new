@@ -9,6 +9,7 @@ import {
 import { decide, saveScores } from '@/app/actions'
 import { usd, bpsLabel } from '@/lib/money'
 import { fmtDateTime } from '@/lib/dates'
+import { timelineFor } from '@/server/modules/history/timeline'
 import { PageHead } from '../../ui'
 
 export const dynamic = 'force-dynamic'
@@ -105,11 +106,12 @@ export default async function ApplicationDetail({
   const booking = await db.query.bookings.findFirst({
     where: and(eq(bookings.applicationId, app.id)),
   })
-  const trail = await db.query.auditLog.findMany({
-    where: and(eq(auditLog.entity, 'application'), eq(auditLog.entityId, app.id)),
-    orderBy: [desc(auditLog.at)],
-    limit: 20,
-  })
+  /* The whole relationship: the submission, every decision, every booking
+     change, and every email we sent this address, newest first. Assembled in
+     one place so this screen does not have to know which table holds what. */
+  const history = await timelineFor(db, {
+    applicationId: app.id, vendorId: vendor.id, email: vendor.email,
+  }).catch(() => [])
 
   const flags = [
     app.isMlm && 'MLM / direct sales',
@@ -312,37 +314,48 @@ export default async function ApplicationDetail({
             </tbody>
           </table>
 
-          {trail.length > 0 && (
-            <>
-              <div className="adm-sec">
-                <h2>History</h2>
-                <span className="c">{trail.length} {trail.length === 1 ? 'entry' : 'entries'}</span>
-              </div>
-              <table className="adm-tbl">
-                <caption className="adm-sr">
-                  Every recorded change to this application, newest first.
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">When</th>
-                    <th scope="col">Action</th>
-                    <th scope="col">Detail</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trail.map((t) => (
-                    <tr key={t.id}>
-                      <td><span className="mono">{fmtDateTime(t.at)}</span></td>
-                      <td>{t.action.replace('_', ' ')}</td>
-                      <td>
-                        {t.after ? JSON.parse(t.after).status ?? '' : ''}
-                        {t.reason && <span className="adm-sub2">{t.reason}</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
+          {/* ── the whole relationship, in one column ──
+              This was the audit log alone, three columns wide, which answered
+              "what did we change" and never "what have we actually said to
+              this person". Drew asked for the second one, and it is the
+              question somebody has when a maker replies to an email nobody
+              can find. Emails, decisions, bookings and the submission itself,
+              newest first, with the body of every message we sent. */}
+          <div className="adm-sec">
+            <h2>History</h2>
+            <span className="c">
+              {history.length} {history.length === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
+          {history.length === 0 ? (
+            <p className="adm-empty">Nothing recorded yet.</p>
+          ) : (
+            <ol className="adm-time">
+              {history.map((h, i) => (
+                <li key={`${h.at}-${i}`} className="adm-time__row" data-kind={h.kind}>
+                  <div className="adm-time__when mono">{fmtDateTime(h.at)}</div>
+                  <div className="adm-time__what">
+                    <div className="adm-time__title">
+                      {h.title}
+                      {h.status && h.status !== 'sent' && (
+                        <span className="adm-time__flag" data-status={h.status}>{h.status}</span>
+                      )}
+                    </div>
+                    {(h.detail || h.actor) && (
+                      <div className="adm-sub2">
+                        {[h.detail, h.actor && `by ${h.actor}`].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
+                    {h.body && (
+                      <details className="adm-time__body">
+                        <summary>Read what we sent</summary>
+                        <pre>{h.body}</pre>
+                      </details>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
           )}
         </div>
 
