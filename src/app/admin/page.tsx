@@ -5,6 +5,7 @@ import { activeShow } from '@/db/queries'
 import { applications, bookings, emailOutbox, vendors } from '@/db/schema'
 import { fmtDate, fmtDateTime, fmtRange, applicationWindow } from '@/lib/dates'
 import { bpsLabel, usd } from '@/lib/money'
+import { purgeRehearsals } from '@/app/actions'
 import { PageHead, Stats, Stat, ActionCard, Progress } from './ui'
 import { RehearsalLink } from './RehearsalLink'
 import { REHEARSAL_TTL_MS, rehearsalConfigured, signRehearsalToken } from '@/lib/rehearsal'
@@ -111,6 +112,16 @@ export default async function Dashboard() {
      the window opens, because afterwards the form is open to everybody and a
      link that grants what everybody already has is a loose end. */
   const opensAt = new Date(show.applicationsOpenAt).getTime()
+
+  /* Rehearsals: anything submitted before the window opened. Nobody outside
+     the building could reach the form then, so this count is exactly the
+     applications we made ourselves, and it stops being possible to have any
+     the moment applications open. */
+  const [rehearsals] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(applications)
+    .where(and(eq(applications.showId, show.id), sql`${applications.submittedAt} < ${show.applicationsOpenAt}`))
+  const rehearsalCount = num(rehearsals?.n)
   const rehearsal = state === 'before' && rehearsalConfigured()
     ? `${siteUrl()}/api/rehearse?t=${encodeURIComponent(
         await signRehearsalToken(Math.min(Date.now() + REHEARSAL_TTL_MS, opensAt)),
@@ -203,6 +214,29 @@ export default async function Dashboard() {
             delete the rehearsals before opening day.
           </p>
           <RehearsalLink url={rehearsal} />
+        </>
+      )}
+
+      {rehearsalCount > 0 && (
+        <>
+          <div className="adm-sec">
+            <h2>Rehearsals</h2>
+            <span className="c">{rehearsalCount} to clear</span>
+          </div>
+          <p className="adm-note">
+            {rehearsalCount} application{rehearsalCount === 1 ? '' : 's'} submitted before the
+            window opened, so {rehearsalCount === 1 ? 'it is' : 'they are'} ours: seeded demo
+            rows and anything the team sent through the rehearsal link. Deleting them is
+            permanent, it is written to the audit log first, and it cannot reach a real
+            application because a real one can only arrive after{' '}
+            {fmtDateTime(show.applicationsOpenAt)}.
+          </p>
+          <form action={purgeRehearsals}>
+            <button className="adm-btn" type="submit">
+              Delete {rehearsalCount} rehearsal{rehearsalCount === 1 ? '' : 's'}
+            </button>
+          </form>
+          <div style={{ height: 26 }} />
         </>
       )}
 

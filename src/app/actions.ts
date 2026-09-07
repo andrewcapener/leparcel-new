@@ -9,7 +9,7 @@ import { db } from '@/db'
 import { activeShow, activeAddOns, activeSpaceTypes, pgCode } from '@/db/queries'
 import {
   shows, vendors, applications, bookings, bookingAddons, spaceTypes, addOns,
-  auditLog, emailOutbox, subscribers, CATEGORIES, type ApplicationStatus,
+  auditLog, emailOutbox, sheetSyncs, subscribers, CATEGORIES, type ApplicationStatus,
 } from '@/db/schema'
 import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
 import { usd } from '@/lib/money'
@@ -826,6 +826,56 @@ export async function decide(fd: FormData): Promise<void> {
 }
 
 /** Simulates the maker paying the booth fee in the portal. */
+/**
+ * Delete every rehearsal application for the active show.
+ *
+ * "Rehearsal" is defined by the clock, not by a flag anybody has to set
+ * correctly: an application submitted before the window opened can only have
+ * come from staff with the preview cookie or from seeded demo data, because
+ * nobody else could reach the form. That makes this safe by construction. Once
+ * applications are open it deletes nothing, and it cannot ever take a real
+ * one, whatever anybody clicks.
+ *
+ * The rows really go. This is the one place in the app that deletes rather
+ * than voids, and it is allowed to because these rows are not a record of
+ * anything that happened: they are a record of us testing. Everything about
+ * them is written into the audit log first, so the deletion is itself
+ * evidence, and the log survives.
+ *
+ * Bookings and sheet-sync rows point at applications, so they go first.
+ * Vendors are left alone: a vendor row is a person, the unique index is on
+ * (show, vendor) rather than on the vendor, and a returning maker who
+ * rehearsed should find their own details waiting when they apply for real.
+ */
+export async function purgeRehearsals(): Promise<void> {
+  const show = await activeShow()
+  if (!show) return
+
+  const cutoff = show.applicationsOpenAt
+  const doomed = await db
+    .select({ id: applications.id, vendorId: applications.vendorId, submittedAt: applications.submittedAt })
+    .from(applications)
+    .where(and(eq(applications.showId, show.id), sql`${applications.submittedAt} < ${cutoff}`))
+
+  for (const a of doomed) {
+    // The whole row, before it stops existing.
+    const [full] = await db.select().from(applications).where(eq(applications.id, a.id))
+    await log('application', a.id, 'purged_rehearsal', full ?? null, null,
+      `submitted ${a.submittedAt}, before the window opened at ${cutoff}`)
+
+    const held = await db.select({ id: bookings.id }).from(bookings)
+      .where(eq(bookings.applicationId, a.id))
+    for (const b of held) await db.delete(bookingAddons).where(eq(bookingAddons.bookingId, b.id))
+    await db.delete(bookings).where(eq(bookings.applicationId, a.id))
+    await db.delete(sheetSyncs).where(eq(sheetSyncs.applicationId, a.id))
+    await db.delete(applications).where(eq(applications.id, a.id))
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/admin/jury')
+  revalidatePath('/admin/roster')
+}
+
 export async function markPaid(fd: FormData): Promise<void> {
   const bookingId = String(fd.get('bookingId'))
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
