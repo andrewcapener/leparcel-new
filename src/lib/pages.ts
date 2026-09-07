@@ -35,6 +35,7 @@ export const PAGES: Array<{ path: string; visibility: Visibility; note: string }
   { path: '/agreement',       visibility: 'nav',      note: 'The agreement every maker signs' },
   { path: '/terms',           visibility: 'nav',      note: 'Terms of use for the site' },
   { path: '/privacy',         visibility: 'nav',      note: 'What the site collects and where it goes' },
+  { path: '/brand',           visibility: 'unlisted', note: 'Logo files, with the direct link to each, for putting a mark in an email' },
 ]
 
 /** Spread into a page's `metadata` to keep it out of search results. */
