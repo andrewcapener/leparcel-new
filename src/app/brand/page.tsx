@@ -46,6 +46,16 @@ export default async function BrandPage() {
         </p>
       </header>
 
+      <nav className="brand-nav" aria-label="On this page">
+        <ol>
+          <li><a href="#marks-h">Marks</a></li>
+          <li><a href="#rules-h">Using the mark</a></li>
+          <li><a href="#colour-h">Colour</a></li>
+          <li><a href="#type-h">Type</a></li>
+        </ol>
+      </nav>
+
+      <div className="brand-body">
       <section aria-labelledby="marks-h">
         <div className="sec-hd"><h2 id="marks-h">Marks</h2></div>
         <ul className="grid">
@@ -129,7 +139,8 @@ export default async function BrandPage() {
         <ul className="faces">
           {typefaces.map((t) => (
             <li key={t.name}>
-              <p className="spec" style={{ fontFamily: `${t.name}, system-ui, sans-serif` }}>
+              <p className={t.name === 'Oswald' ? 'spec osw' : 'spec'}
+                 style={{ fontFamily: `${t.name}, system-ui, sans-serif` }}>
                 {t.name === 'Oswald' ? 'SHOP SMALL' : 'Made by the person selling it.'}
               </p>
               <h3>{t.name}</h3>
@@ -146,6 +157,8 @@ export default async function BrandPage() {
           free, so anyone making something for Mermade can match it exactly.
         </p>
       </section>
+
+      </div>
 
       <footer className="brand-ft">
         <p>

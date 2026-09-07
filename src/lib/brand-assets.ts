@@ -65,7 +65,8 @@ export const marks: Mark[] = [
     id: 'app-icon',
     name: 'App icon',
     use: 'Square contexts only: a favicon, a profile picture, an avatar. Not a logo, and never used in place of the wordmark.',
-    onDark: true,
+    /* Shown on LIGHT. It carries its own ink ground, so a dark plate behind it
+       turns the icon into a hole rather than an object. */
     preview: '/brand/mermade-app-icon.svg',
     formats: [
       { label: 'SVG', file: '/brand/mermade-app-icon.svg' },
