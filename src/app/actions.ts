@@ -919,7 +919,17 @@ export async function purgeRehearsals(): Promise<void> {
   const doomed = await db
     .select({ id: applications.id, vendorId: applications.vendorId, submittedAt: applications.submittedAt })
     .from(applications)
-    .where(and(eq(applications.showId, show.id), sql`${applications.submittedAt} < ${cutoff}`))
+    /* Cast BOTH sides. These are text columns holding two different shapes:
+       submitted_at is Postgres's own "2026-09-07 17:12:00.123+00" and the
+       Show record's dates are ISO "2026-09-07T09:00:00-07:00". Compared as
+       text, a space sorts before a T, so every application submitted TODAY
+       compared as EARLIER than this morning's opening time and this query
+       called real applications rehearsals. Compared as timestamps it is the
+       question we meant to ask. */
+    .where(and(
+      eq(applications.showId, show.id),
+      sql`${applications.submittedAt}::timestamptz < ${cutoff}::timestamptz`,
+    ))
 
   for (const a of doomed) {
     // The whole row, before it stops existing.

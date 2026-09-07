@@ -120,7 +120,12 @@ export default async function Dashboard() {
   const [rehearsals] = await db
     .select({ n: sql<number>`count(*)` })
     .from(applications)
-    .where(and(eq(applications.showId, show.id), sql`${applications.submittedAt} < ${show.applicationsOpenAt}`))
+    /* Cast both sides: see the note in purgeRehearsals. As text, a space
+       sorts before a T, so today's real applications counted as rehearsals. */
+    .where(and(
+      eq(applications.showId, show.id),
+      sql`${applications.submittedAt}::timestamptz < ${show.applicationsOpenAt}::timestamptz`,
+    ))
   const rehearsalCount = num(rehearsals?.n)
   const rehearsal = state === 'before' && rehearsalConfigured()
     ? `${siteUrl()}/api/rehearse?t=${encodeURIComponent(
