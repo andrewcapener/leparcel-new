@@ -25,9 +25,16 @@
  *   local storage                   src/components/theme/NewsletterPopup.tsx
  *   embedded video                  src/components/theme/BackgroundVideo.tsx
  *
- * There is no analytics script, no advertising pixel and no third-party
- * tag manager anywhere in this repo, the fonts are served from our own
- * origin (src/app/layout.tsx), and the map is an image and not an embed
+ * The advertising pixel is CONDITIONAL, and so is the copy about it. With no
+ * NEXT_PUBLIC_META_PIXEL_ID configured the site genuinely carries no pixel and
+ * this page says so; configure one and these sections change in the same
+ * deploy. That is deliberate: a privacy page whose promises are typed in by
+ * hand goes stale the moment somebody sets an environment variable, and
+ * nobody reads it again to notice. Here it cannot.
+ *
+ * Otherwise there is no analytics script and no third-party tag manager
+ * anywhere in this repo, the fonts are served from our own origin
+ * (src/app/layout.tsx), and the map is an image and not an embed
  * (src/components/theme/Sections.tsx). If any of that changes, so does the
  * cookies section.
  *
@@ -135,6 +142,20 @@ export const TERMS: LegalSection[] = [
   },
 ]
 
+/**
+ * Whether this deployment actually carries an advertising pixel.
+ *
+ * Read at render, so the page describes the site as it IS rather than as
+ * somebody remembered it. Switching the pixel on rewrites the privacy page in
+ * the same deploy, which is the only way a promise like this one stays true.
+ */
+function adTracking(): boolean {
+  return Boolean(
+    process.env.MERMADE_DATASET_ID?.trim()
+    || process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim(),
+  )
+}
+
 /* ─────────────────────────── privacy ─────────────────────────── */
 
 export const PRIVACY: LegalSection[] = [
@@ -142,7 +163,10 @@ export const PRIVACY: LegalSection[] = [
     id: 'short',
     title: 'The short version',
     body: [
-      'We collect what we need to run a market and nothing else: an email address if you join the list, a message if you write to us, and an application if you want to sell. There is no analytics script on this site, no advertising pixel, and no tracking cookie. We do not sell your information and we never will.',
+      'We collect what we need to run a market and nothing else: an email address if you join the list, a message if you write to us, and an application if you want to sell. We do not sell your information and we never will.',
+      adTracking()
+        ? 'We advertise this show on Facebook and Instagram, so there is a Meta advertising pixel on this site. It tells Meta which pages were visited and, if you apply, that an application happened, so we can tell which advertisements are worth paying for. Your email address is never sent to Meta in a readable form: it is scrambled first, and cannot be turned back. We ask Meta to handle it under California\u2019s limited data use rules.'
+        : 'There is no analytics script on this site, no advertising pixel, and no tracking cookie.',
       'One thing is worth knowing before you upload anything: the photographs you attach to an application are stored so that anyone with the link can open them. More on that below.',
     ],
   },
@@ -203,14 +227,18 @@ export const PRIVACY: LegalSection[] = [
         'YouTube, on the pages that carry a film.',
       ],
       'The Google Sheet gets less than the admin does, on purpose, because a spreadsheet link gets forwarded. It carries your shop, contact name, email, phone, Instagram, website, city, state, category, track, the spaces and add-ons you asked for, your price range, your three yes-or-no answers and your description. It does not carry your seller’s permit number, the name you signed with, or anything the jury wrote about you.',
-      'We do not sell personal information, we do not share it for anyone else’s advertising, and there is no third party on this site collecting anything of its own.',
+      adTracking()
+        ? 'We do not sell personal information and we do not share it for anyone else\u2019s advertising. Meta receives what the pixel collects, which is used to measure our own advertisements. Under California law that sharing can count as \u201csharing for cross-context behavioural advertising\u201d, so we ask Meta to apply its limited data use restrictions to every event we send. Write to us and we will stop sending yours.'
+        : 'We do not sell personal information, we do not share it for anyone else’s advertising, and there is no third party on this site collecting anything of its own.',
     ],
   },
   {
     id: 'cookies',
     title: 'Cookies and what is stored in your browser',
     body: [
-      'There is no analytics, no advertising and no tracking cookie on this site. The fonts and the images come from our own server, not from someone else’s.',
+      adTracking()
+        ? 'There is no analytics on this site. There IS a Meta advertising pixel, because we advertise the show on Facebook and Instagram, and it sets cookies of its own. The fonts and the images still come from our own server, not from someone else\u2019s.'
+        : 'There is no analytics, no advertising and no tracking cookie on this site. The fonts and the images come from our own server, not from someone else’s.',
       'What is actually stored:',
       [
         'two cookies for staff who are signed in to the admin, one for the session and one that turns on a launch preview. Neither is set for anyone else;',

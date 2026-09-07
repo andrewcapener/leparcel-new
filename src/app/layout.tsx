@@ -3,6 +3,7 @@ import { isCanonicalHost, siteUrl } from '@/lib/site-url'
 import { img } from '@/lib/theme-img'
 import { ThemeBoot } from '@/components/theme/ThemeBoot'
 import { NewsletterPopup } from '@/components/theme/NewsletterPopup'
+import { MetaPixel } from '@/components/MetaPixel'
 
 /**
  * The public site is mermademarket.com's own theme, vendored.
@@ -97,6 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Theirs, in their markup, writing to our subscribers table. It
             suppresses itself on /admin and /apply. */}
         <NewsletterPopup />
+        <MetaPixel />
         <ThemeBoot />
       </body>
     </html>

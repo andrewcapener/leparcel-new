@@ -3,7 +3,7 @@
 import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
@@ -33,6 +33,7 @@ import {
 } from '@/lib/makerAuth'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
+import { sendLead } from '@/server/modules/meta/capi'
 
 /* ═══════════════════════ helpers ═══════════════════════ */
 
@@ -677,6 +678,33 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   // `npx tsx scripts/sync-sheets.ts`, and with no Sheet configured it is a
   // silent no-op. src/server/modules/sheets/.
   await syncApplication(db, appId)
+
+  /* Tell Meta an application happened, from the server.
+     The browser pixel fires PageView and nothing else, because the one
+     conversion this business has is an application and a browser event for it
+     is lost to an ad blocker, to Safari, and to anybody who closes the tab on
+     the thank-you screen. An application Meta never hears about looks, to the
+     algorithm, exactly like somebody who bounced.
+     Inert until a pixel id and a CAPI token are configured, and it cannot
+     throw: a marketing signal must never cost a maker their application. */
+  try {
+    const h = await headers()
+    const r = await sendLead({
+      email,
+      phone: d.phone || undefined,
+      sourceUrl: `${siteUrl()}/apply`,
+      /* Meta's own click and browser cookies, when the browser set them.
+         Without fbc an ad click cannot be tied back to the ad that paid
+         for it, which is most of the reason to do this at all. */
+      fbp: (await cookies()).get('_fbp')?.value,
+      fbc: (await cookies()).get('_fbc')?.value,
+      clientIp: h.get('x-forwarded-for')?.split(',')[0]?.trim(),
+      userAgent: h.get('user-agent') ?? undefined,
+    })
+    if (r.outcome === 'failed') console.error(`[meta] lead not sent: ${r.detail}`)
+  } catch {
+    // Never the reason a submission reports a failure.
+  }
 
   revalidatePath('/admin/jury')
   return { ok: true, attempt, message: 'submitted' }
