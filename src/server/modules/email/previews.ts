@@ -113,12 +113,12 @@ export function previews(show: Show, siteUrl: string): Preview[] {
       who: 'The maker who applied',
       when: 'The moment they press submit',
       subject: `We have your ${show.name} application`,
-      text: `Your ${show.name} application is in.\n\n`
+      text: `This is a receipt, not a decision. Everyone who applies gets one.\n\nWe have your ${show.name} application.\n\n`
         + receiptFields.map((f) => `${f.label}: ${f.value}`).join('\n')
         + `\n\nWe read every application and answer either way. The roster is announced ${roster}.\n\nMermade Market`,
       html: applicationReceivedHtml({
         shopName: SHOP, contactName: 'Sarah Whitfield', showName: show.name, fields: receiptFields,
-        rosterDate: roster, contactEmail: CONTACT_EMAIL, siteUrl,
+        rosterDate: roster, contactEmail: CONTACT_EMAIL,
       }),
     },
     {

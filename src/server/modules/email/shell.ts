@@ -189,6 +189,21 @@ export function standfirst(label: string, value: string): string {
   </td></tr>`
 }
 
+/**
+ * The same action, at the weight of a link.
+ *
+ * The internal notice opens with somewhere to go and continues with the whole
+ * application, and a full-width black button at the top of it takes a screen's
+ * worth of attention from the thing the reader actually came to read. This is
+ * the same target, still comfortably tappable, sized like the line of text it
+ * sits among.
+ */
+export function quietButton(cta: { href: string; label: string }): string {
+  return `<tr><td class="mm-pad" style="padding:2px 32px 0;">
+    <a href="${esc(cta.href)}" style="display:inline-block;font-family:${HEAD_FONT};font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${GOLD};text-decoration:none;border-bottom:1px solid ${GOLD};padding:6px 0;">${esc(cta.label)} &rsaquo;</a>
+  </td></tr>`
+}
+
 export function button(cta: { href: string; label: string }): string {
   return `<tr><td class="mm-pad" style="padding:20px 32px 6px;">
     <a href="${esc(cta.href)}" style="display:inline-block;background:${INK};color:#ffffff;font-family:${HEAD_FONT};font-size:15px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none;padding:17px 34px;">${esc(cta.label)}</a>
@@ -286,8 +301,10 @@ export function shell({
          structure, which is what §4 asks for. -->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:${PAPER};">
 
-      <!-- Masthead. The mark, and the one heavy rule in the system. -->
-      <tr><td class="mm-pad" style="padding:24px 32px 20px;border-bottom:2px solid ${INK};">
+      <!-- Masthead. A hairline, not the system's 2px ink rule: at the very
+           top of an email that rule stops reading as structure and starts
+           reading as a black bar across the message. -->
+      <tr><td class="mm-pad" style="padding:24px 32px 20px;border-bottom:1px solid ${RULE};">
         <img src="${esc(origin)}/email/wordmark.png" width="${MARK_W}" height="${MARK_H}" alt="Mermade Market" style="display:block;width:${MARK_W}px;height:${MARK_H}px;border:0;outline:none;text-decoration:none;">
       </td></tr>
 

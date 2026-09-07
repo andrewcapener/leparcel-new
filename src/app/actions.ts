@@ -450,7 +450,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   if (existing) {
     return {
       ok: false, attempt, values: strings(raw),
-      message: 'We already have an application from this email for this show. If that was you just now, it is in and there is nothing else to do.',
+      message: 'We already have an application from this email for this show. If that was you just now, we have it and there is nothing else to do.',
     }
   }
 
@@ -574,10 +574,12 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   await mail(
     email,
     `We have your ${show.name} application`,
-    `Your ${show.name} application is in.\n\n`
+    `This is a receipt, not a decision. Everyone who applies gets one.\n\n`
+      + `We have your ${show.name} application. Nothing else is needed from you right now.\n\n`
       + receiptFields.map((f) => `${f.label}: ${f.value}`).join('\n')
-      + `\n\nWe read every application and answer either way. The roster is announced `
-      + `${fmtDate(show.rosterAnnouncedOn)}.\n\nMermade Market`,
+      + `\n\nWe read every application ourselves and we answer either way, whether the answer `
+      + `is yes or no. You will hear from us on ${fmtDate(show.rosterAnnouncedOn)}, when the `
+      + `roster goes out.\n\nMermade Market`,
     'application_received',
     undefined,
     applicationReceivedHtml({
@@ -587,7 +589,6 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
       fields: receiptFields,
       rosterDate: fmtDate(show.rosterAnnouncedOn),
       contactEmail: CONTACT_EMAIL,
-      siteUrl: siteUrl(),
     }),
   )
 

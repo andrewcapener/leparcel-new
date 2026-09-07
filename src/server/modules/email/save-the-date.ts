@@ -38,14 +38,22 @@ import {
  * load.
  */
 const PHOTOS = {
-  /** The room. Arched roof, balloons, an aisle with people in it. */
-  floor: { file: 'floor.jpg', alt: 'The floor at the Community House, balloons strung under the arched roof and shoppers along the aisle' },
+  /** The plate. A full aisle, warm, this year: two makers greeting each other
+   *  with the tent rows and a crowd behind them. It was floor.jpg, a room shot
+   *  from an older show, which is exactly what the photography audit was for. */
+  floor: { file: 'crowd.jpg', alt: 'Two shoppers greeting each other in a busy aisle at Mermade Market, white tents on both sides' },
   /** Inside: our staff tagging a maker’s piece for the register. Its own
    *  file, because the homepage slot this used to share moved to a warmer
    *  frame and this column needs the one that explains consignment. */
   indoor: { file: 'consign.jpg', alt: 'A Mermade staffer writing a price tag while a shopper holds up a jacket' },
   /** Outside: a maker under a Mermade tent, running her own table. */
   outdoor: { file: 'lot.jpg', alt: 'A maker at her own table under a white Mermade Market tent, with shoppers stopped in front of it' },
+  /** The room, above the timetable: everything under it is about turning up.
+   *  Landscape on purpose. A portrait file here renders 900px tall at the
+   *  paper's 600, which is a whole screen of one picture, and it has to be a
+   *  different scene from the plate at the top or the email reads as one
+   *  moment photographed twice. */
+  room: { file: 'room.jpg', alt: 'A shopper looking over a shelf of handmade goods under a string of warm bulbs' },
 } as const
 
 type Track = {
@@ -68,12 +76,12 @@ type Track = {
 function tracks(a: Track, b: Track, base: string): string {
   const cell = (t: Track, side: 'l' | 'r') => `
     <td width="50%" valign="top" style="${side === 'l' ? 'padding:0 8px 0 0;' : 'padding:0 0 0 8px;'}">
-      <img src="${esc(`${base}/photos/${t.photo.file}`)}" width="248" alt="${esc(t.photo.alt)}" style="display:block;width:100%;max-width:248px;height:auto;border:0;background:${SHELL};" />
+      <img src="${esc(`${base}/photos/${t.photo.file}`)}" width="268" alt="${esc(t.photo.alt)}" style="display:block;width:100%;max-width:268px;height:auto;border:0;background:${SHELL};" />
       <div style="font-family:${HEAD_FONT};font-size:13px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:${INK};padding:12px 0 5px;">${esc(t.label)}</div>
       <div style="font-family:${BODY_FONT};font-size:14px;line-height:1.55;color:${BODY};">${t.line}</div>
       <div style="padding-top:7px;"><a href="${esc(t.href)}" style="font-family:${BODY_FONT};font-size:14px;color:${GOLD};text-decoration:underline;">${esc(t.linkLabel)}</a></div>
     </td>`
-  return `<tr><td style="padding:6px 24px 0;">
+  return `<tr><td class="mm-pad" style="padding:6px 32px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${cell(a, 'l')}${cell(b, 'r')}</tr></table>
   </td></tr>`
 }
@@ -88,10 +96,10 @@ function tracks(a: Track, b: Track, base: string): string {
  * what she came for anyway.
  */
 function actions(applyHref: string, visitHref: string): string {
-  return `<tr><td style="padding:20px 24px 0;">
-    <a href="${esc(applyHref)}" style="display:block;background:${INK};color:#ffffff;font-family:${HEAD_FONT};font-size:14px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;text-align:center;padding:16px 20px;">Apply to sell</a>
+  return `<tr><td class="mm-pad" style="padding:22px 32px 0;">
+    <a href="${esc(applyHref)}" style="display:block;background:${INK};color:#ffffff;font-family:${HEAD_FONT};font-size:15px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;text-align:center;padding:18px 20px;">Apply to sell</a>
   </td></tr>
-  <tr><td align="center" style="padding:12px 24px 0;">
+  <tr><td align="center" class="mm-pad" style="padding:12px 32px 0;">
     <div style="font-family:${BODY_FONT};font-size:14px;line-height:1.5;color:${BODY};">Coming to shop instead? <a href="${esc(visitHref)}" style="color:${GOLD};text-decoration:underline;">Hours, parking and the map.</a></div>
   </td></tr>`
 }
@@ -111,7 +119,7 @@ function hours(hoursNote: string): string {
 
 /** Two facts, side by side, for the pair of deadlines that decide anything. */
 function deadlines(pairs: Array<[string, string]>): string {
-  return `<tr><td style="padding:20px 24px 0;">
+  return `<tr><td class="mm-pad" style="padding:22px 32px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ${RULE};"><tr>
       ${pairs.map(([label, value], i) => `<td width="50%" valign="top" style="${i === 0 ? 'padding:14px 10px 0 0;' : 'padding:14px 0 0 10px;'}">
         <div style="font-family:${HEAD_FONT};font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${MUTED};padding-bottom:3px;">${esc(label)}</div>
@@ -200,7 +208,14 @@ export function saveTheDateHtml({
         ['Roster announced', rosterDate],
       ])
 
-      + rule()
+      /* A second picture before the timetable. Drew read the first draft as
+         "very sort of text based, less graphical than we usually do", and he
+         was right: after the two track columns it ran three blocks of type to
+         the footer. The room earns its place here, because everything below
+         this line is about turning up to it. */
+      + `<tr><td style="height:30px;line-height:30px;font-size:0;">&nbsp;</td></tr>`
+      + plate(url(`/photos/${PHOTOS.room.file}`), PHOTOS.room.alt, 300)
+      + `<tr><td style="height:26px;line-height:26px;font-size:0;">&nbsp;</td></tr>`
       + sectionHead('The weekend')
       + hours(hoursNote)
       + paragraphs([

@@ -18,7 +18,7 @@
  * The chrome and the escaping are in shell.ts.
  */
 import {
-  type Field, button, compactRows, fieldRows, photoStrip, rule, sectionHead, shell,
+  type Field, quietButton, compactRows, fieldRows, photoStrip, rule, sectionHead, shell,
 } from './shell'
 
 /** The six that decide whether to read on, at full width and in bold. */
@@ -85,9 +85,12 @@ export function staffNoticeHtml({
     eyebrow: 'New application',
     heading,
     sub,
-    // The button sits above the record. A notification you have to scroll past
-    // its own contents to act on is one you act on later.
-    inner: (cta ? button(cta) : '') + rule()
+    // The action sits above the record, because a notification you have to
+    // scroll past its own contents to act on is one you act on later. It is a
+    // link rather than a button: the record underneath is what this message is
+    // for, and a full-width black slab at the top of it was taking a screen of
+    // attention away from the fields.
+    inner: (cta ? quietButton(cta) : '') + rule()
       + fieldRows(lead.map((f) => ({ ...f, strong: true })))
       // The work, before the paperwork. It is what the jury is actually
       // deciding on, and it answers the question faster than any field does.

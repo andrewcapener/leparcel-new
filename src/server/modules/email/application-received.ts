@@ -19,14 +19,9 @@
  * do anything: the next move is ours and the email says so.
  */
 import {
-  type Field, GOLD, INK, esc, fieldRows, paragraphs, plate, rule, sectionHead,
+  type Field, GOLD, INK, esc, fieldRows, paragraphs, rule, sectionHead,
   shell, standfirst,
 } from './shell'
-
-/* One constant, because these get swapped as the photography does. Landscape,
-   because a portrait plate at full bleed is most of a phone screen before a
-   word of the message. */
-const PLATE = { file: 'floor.jpg', alt: 'The room at Mermade Market, shelves and racks under the lights' }
 
 /**
  * The name to greet somebody by.
@@ -50,7 +45,7 @@ export function firstName(contactName: string, shopName: string): string {
 }
 
 export function applicationReceivedHtml({
-  shopName, contactName, showName, fields, rosterDate, contactEmail, siteUrl,
+  shopName, contactName, showName, fields, rosterDate, contactEmail,
 }: {
   shopName: string
   /** Their own name. The greeting uses the first word of it. */
@@ -61,8 +56,6 @@ export function applicationReceivedHtml({
   /** Already formatted in Pacific time by the caller. */
   rosterDate: string
   contactEmail: string
-  /** Absolute origin, for the photograph. */
-  siteUrl: string
 }): string {
   return shell({
     webFonts: true,
@@ -72,12 +65,11 @@ export function applicationReceivedHtml({
     // invoice greets you. The shop is on the next line and in the record.
     eyebrow: `Application received · ${showName}`,
     heading: `Thank you, ${firstName(contactName, shopName)}`,
-    sub: `${shopName} is in for ${showName}, and there is nothing else you need to do right now.`,
+    sub: `We have your ${showName} application for ${shopName}. Nothing else is needed from you right now.`,
     inner:
-      plate(`${siteUrl}/photos/${PLATE.file}`, PLATE.alt)
-      + `<tr><td style="height:30px;line-height:30px;font-size:0;">&nbsp;</td></tr>`
-      + paragraphs([
-        'We read every application ourselves, all the way through, and we answer either way.',
+      paragraphs([
+        'This is a receipt, not a decision. Everyone who applies gets one.',
+        'We read every application ourselves, all the way through, and we answer either way, whether the answer is yes or no.',
       ])
       + standfirst('You will hear from us on', rosterDate)
       + `<tr><td style="height:26px;line-height:26px;font-size:0;">&nbsp;</td></tr>`
