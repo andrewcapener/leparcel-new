@@ -325,12 +325,29 @@ export const sheetSyncs = pgTable('sheet_syncs', {
 }, (t) => [index('sheet_syncs_status').on(t.status)])
 
 /* ─────────────────────── newsletter ─────────────────────── */
+/**
+ * The mailing list, held here first and pushed to Drip second.
+ *
+ * That order is the whole point. Drip is where the list is sent from today
+ * and Drew wants off it; if an address only ever landed in Drip, leaving
+ * would mean an export and a prayer. Holding it ourselves makes the
+ * migration a deleted function.
+ *
+ * drip_status exists because of sheet_syncs, which failed silently from
+ * launch day because nothing recorded the failure. A push with no state
+ * cannot be audited, retried or counted.
+ */
 export const subscribers = pgTable('subscribers', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
   source: text('source').notNull().default('home'),
   createdAt: dbNow('created_at'),
-})
+  /** 'pending' | 'sent' | 'failed' | 'skipped' (no Drip configured). */
+  dripStatus: text('drip_status').notNull().default('pending'),
+  /** Redacted: never an address, never key material (CLAUDE.md rule 9). */
+  dripError: text('drip_error').notNull().default(''),
+  dripSyncedAt: text('drip_synced_at'),
+}, (t) => [index('subscribers_drip_status').on(t.dripStatus)])
 
 export type Show = typeof shows.$inferSelect
 export type SpaceType = typeof spaceTypes.$inferSelect

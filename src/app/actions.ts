@@ -32,6 +32,7 @@ import {
   LINK_TTL_MS, makerAuthConfigured, normalizeEmail, signLinkToken,
 } from '@/lib/makerAuth'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
+import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
 
 /* ═══════════════════════ helpers ═══════════════════════ */
 
@@ -154,10 +155,37 @@ export async function subscribe(_prev: FormState, fd: FormData): Promise<FormSta
   const parsed = z.string().email().safeParse(email)
   if (!parsed.success) return { ok: false, errors: { email: 'That doesn’t look like an email address.' } }
 
+  /* Ours first, Drip second, and that order is the point. Drip is where the
+     list is sent from today and Drew wants off it. If an address only ever
+     landed in Drip, leaving would mean an export and a prayer; holding it
+     here makes the migration a deleted function. */
+  const source = String(fd.get('source') ?? 'home').slice(0, 40) || 'home'
+  let id = ''
   try {
-    await db.insert(subscribers).values({ id: randomUUID(), email, source: 'home' })
+    id = randomUUID()
+    await db.insert(subscribers).values({ id, email, source })
   } catch {
-    // already subscribed — same success message, never leak list membership
+    // Already subscribed. Same success message either way: whether an address
+    // is on the list is not something a form should confirm to a stranger.
+    id = ''
+  }
+
+  /* Push to Drip, and RECORD the result. Nothing here throws and nothing here
+     changes what the person is told: joining the list must not fail because
+     Drip is down. The recording is the lesson from sheet_syncs, which failed
+     silently from launch day because nothing wrote down that it had. */
+  if (id && dripConfig()) {
+    const r = await pushSubscriber(email, { source, tags: ['site-signup'] })
+    await db.update(subscribers)
+      .set(
+        r.outcome === 'sent'
+          ? { dripStatus: 'sent', dripError: '', dripSyncedAt: new Date().toISOString() }
+          : r.outcome === 'failed'
+            ? { dripStatus: 'failed', dripError: r.detail }
+            : { dripStatus: 'skipped' },
+      )
+      .where(eq(subscribers.id, id))
+      .catch(() => { /* the address is saved; bookkeeping is not worth a throw */ })
   }
   // One form, two places. The footer's line is about the show; the apply
   // page's is about the application window opening. The confirmation has to

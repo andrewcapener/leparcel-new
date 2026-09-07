@@ -17,6 +17,8 @@ Environment variables:
 | `DATABASE_URL` | yes | Postgres. In production, Supabase's transaction pooler URL (port 6543). |
 | `ADMIN_PASSWORD` | in production | Gates every `/admin` page behind `/admin/login`. Unset in production, admin returns 503. |
 | `RESEND_API_KEY` | to send email | Without it, mail is only written to the outbox table. |
+| `DRIP_ACCOUNT_ID` | to sync the mailing list | The number in the Drip URL, `app.getdrip.com/<this>/...`. Mermade's is `4516610`. Not a secret. |
+| `DRIP_API_TOKEN` | to sync the mailing list | Drip → User Settings → API Token, at `getdrip.com/user/edit`. Generate it from an account that outlives any one person. Without both vars the push is a silent no-op and every signup is still saved here. |
 | `EMAIL_FROM` | with Resend | e.g. `Mermade Market <hello@mermademarket.com>` (a domain verified in Resend). |
 | `CONTACT_TO` | no | Where the contact and collaborate forms deliver. Defaults to `hello@mermademarket.com`. |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | to sync the Sheet | Service account address, e.g. `sheets@mermade-apps.iam.gserviceaccount.com`. |
