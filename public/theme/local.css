@@ -2422,7 +2422,26 @@ h3, .h3 { line-height: 1.15; }
 .ab__way-n { font-size: 13.5px; line-height: 1.5; color: #8A8A8A; margin: 0 }
 
 @media (max-width: 860px) {
-  .ab__in { grid-template-columns: minmax(0, 1fr); gap: 42px }
+  .ab__in { grid-template-columns: minmax(0, 1fr); gap: 34px }
   .ab__btn { width: 100% }
-  .ab__acts { gap: 14px }
+  /* The link under a full-width button was sitting tight against it and
+     reading as a second button that had lost its box. */
+  .ab__acts { display: block }
+  .ab__acts .ab__lk { display: inline-block; margin-top: 18px }
+
+  /* On a phone the two tracks stop being a column and become more
+     paragraphs, so nothing marks where the ask ends and the explanation
+     begins: the whole band reads as one long run of text. Two columns did
+     that job on a wide screen and there are no columns here.
+
+     One tinted panel around the pair, rather than a rule above each. It
+     separates the group from the ask, and separates the two tracks from
+     each other by giving them a shared ground to sit in, without putting
+     back the lines Drew asked to lose. */
+  .ab__ways {
+    gap: 32px;
+    background: #F6F7F7;
+    border-radius: 3px;
+    padding: 26px 22px;
+  }
 }
