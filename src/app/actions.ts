@@ -159,7 +159,14 @@ export async function subscribe(_prev: FormState, fd: FormData): Promise<FormSta
      list is sent from today and Drew wants off it. If an address only ever
      landed in Drip, leaving would mean an export and a prayer; holding it
      here makes the migration a deleted function. */
-  const source = String(fd.get('source') ?? 'home').slice(0, 40) || 'home'
+  /* Allowlisted, not just length-capped. It becomes a column here and a
+     custom field in Drip, and anything a form posts is a thing a stranger
+     can choose. An unknown value is simply 'home' rather than an error:
+     nobody's signup should fail over a label we use for our own segmenting. */
+  const posted = String(fd.get('source') ?? '')
+  const source = (['home', 'footer', 'apply', 'popup'] as const).includes(posted as never)
+    ? posted
+    : 'home'
   let id = ''
   try {
     id = randomUUID()

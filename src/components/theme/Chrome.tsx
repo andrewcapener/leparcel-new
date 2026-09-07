@@ -400,5 +400,5 @@ export function PageFooter({ show }: { show: Show }) {
 /* Split out so the footer stays a server component and only the form ships JS. */
 import { SignupForm } from './SignupForm'
 function FooterSignup() {
-  return <SignupForm />
+  return <SignupForm source="footer" />
 }

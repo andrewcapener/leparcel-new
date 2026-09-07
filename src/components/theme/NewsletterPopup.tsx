@@ -113,7 +113,7 @@ export function NewsletterPopup() {
               <p>We send show dates, and important VIP info to our subscribers.</p>
             </div>
             <div className="section__block form-width mx-auto">
-              <SignupForm />
+              <SignupForm source="popup" />
             </div>
           </div>
         </div>
