@@ -2395,25 +2395,31 @@ h3, .h3 { line-height: 1.15; }
 .ab__deadline { font-size: 14px; color: #767676; margin: 0 }
 .ab__days { color: #171717; font-weight: 600 }
 
-/* the two tracks, which the homepage never explained */
-.ab__ways { display: grid; gap: 30px }
-.ab__way { border-top: 2px solid #171717; padding-top: 16px }
+/* The two tracks, which the homepage never explained.
+
+   No rules. Each track used to sit under a 2px black line and Drew was right
+   that they were too loud: two heavy rules in a band whose whole job is to be
+   the quiet typographic thing between two walls of photography. Space
+   separates them now, which is what the rest of this site does anyway.
+
+   And the price stopped shouting. It was Oswald caps at the same weight as
+   the heading, so "SPACES FROM $60" read as the point of the block. It is a
+   footnote in Figtree grey now: still useful to somebody deciding whether to
+   bother, no longer the pitch. "Prices, dates and rules" on the left is where
+   the real numbers live. */
+.ab__ways { display: grid; gap: 40px }
 .ab__way-k {
   font-family: var(--heading-font-family); font-weight: 600;
-  font-size: 11.5px; letter-spacing: .2em; text-transform: uppercase;
-  color: #767676; margin: 0 0 8px;
+  font-size: 11px; letter-spacing: .2em; text-transform: uppercase;
+  color: #BC9658; margin: 0 0 8px;
 }
 .ab__way-h {
   font-family: var(--heading-font-family); font-weight: 600;
-  font-size: 21px; letter-spacing: .04em; text-transform: uppercase;
+  font-size: 20px; letter-spacing: .04em; text-transform: uppercase;
   color: #171717; margin: 0 0 10px;
 }
 .ab__way-p { font-size: 15px; line-height: 1.6; color: #5C5C5C; margin: 0 0 12px }
-.ab__way-n {
-  font-family: var(--heading-font-family); font-weight: 600;
-  font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase;
-  color: #171717; margin: 0;
-}
+.ab__way-n { font-size: 13.5px; line-height: 1.5; color: #8A8A8A; margin: 0 }
 
 @media (max-width: 860px) {
   .ab__in { grid-template-columns: minmax(0, 1fr); gap: 42px }
