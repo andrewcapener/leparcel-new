@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Mermade Market · Applications are open for November 13-15, 2026</title>
+
+<!--
+  ═══════════════════════════════════════════════════════════════════════
+  CONCEPT B · PRINTED POSTER
+  A letterpress broadside, mailed. Centred and symmetric, two inks, hairline
+  rules doing the structure, and a 52px margin on every side so the sheet
+  reads as paper rather than as a screen.
+
+  ── THE TWO INKS ──────────────────────────────────────────────────────
+  Ink      #171717  (--ink)      type
+  Gold     #BC9658  (--accent)   RULES, ornament, and reversed type only.
+  Gold is the second ink on the press, so it runs the rules the way a real
+  two-colour job does. It is never set as type on the paper: #BC9658 on an
+  off-white ground is 2.75:1, which fails even the 3:1 large-text floor. The
+  one place gold becomes a letterform is the dark band at the foot of the
+  sheet, where it runs 6.6:1 on #171717. That is the whole discipline of
+  "gold as ink and not as a highlight".
+
+  Paper    #FAFAF8  the sheet. Warm, not white. (globals.css --ad-bg)
+  Ground   #EBEFED  the table the sheet lies on. (--dune)
+  Body     #575651  6.7:1 on the paper
+  Muted    #6E6D67  4.9:1 on the paper. Nothing smaller than 12px uses it.
+  Hairline #DFE3E8  (--line), for interior structure the gold should not do
+
+  ── TYPE, PER ROLE, AND WHAT HAPPENS WHEN GMAIL STRIPS THE WEBFONT ─────
+  Gmail ignores the <link> below. Apple Mail, iOS Mail and Samsung Mail
+  honour it. So every decision here is made for the fallback first, and the
+  webfont is an improvement rather than a dependency.
+
+  DISPLAY + LABELS   Oswald, 'Arial Narrow', 'Helvetica Neue', Helvetica,
+                     Arial, sans-serif
+    Used for: the letter-spaced month, the day numerals, every tracked caps
+    label, and the buttons. NOT used for any headline sentence: Drew does
+    not want all-caps headers that are not in our faces, and a 42px caps
+    line becomes 42px of Helvetica capitals in Gmail. Caps here stops at
+    label size (11-13px, tracked) plus the date plate, where the content is
+    a month and three numerals, which are poster conventions in any face.
+
+  PROSE              Figtree, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                     Roboto, Helvetica, Arial, sans-serif
+    Every sentence, sentence case, including the one display line. Figtree's
+    fallbacks are ordinary grotesques, so the line degrades to something
+    close rather than to something else.
+
+  ── THE TYPOGRAPHIC RISK ──────────────────────────────────────────────
+  The month is set one letter per table cell, eight cells at 12.5% each, so
+  N O V E M B E R justifies to the exact measure of the sheet. The
+  composition is table metric, not font metric: Oswald 700 and Helvetica
+  Bold put different glyphs in the same eight slots and the line lands on
+  the same two edges either way. CSS letter-spacing could not do this, and
+  a letter-spaced line that loses its condensed face normally overruns the
+  measure. This one cannot.
+  It carries aria-hidden, and the same date is written out as a real
+  sentence directly beneath it, so nothing is lost to a screen reader.
+
+  ── EMAIL MECHANICS ───────────────────────────────────────────────────
+  Tables and inline styles only. Outlook renders through Word, so: no
+  flexbox, no grid, no float, no inline-block, percentage widths as
+  attributes, align attributes for centring, and width AND height on every
+  image. The <style> block below carries a phone media query only. It
+  adjusts padding and two font sizes and nothing depends on it: strip it
+  and the sheet still composes, because clients that ignore media queries
+  render the 600px table and scale it.
+  Backgrounds are painted on every cell that carries dark type, so a client
+  inverting for dark mode cannot leave ink floating on its own black.
+  ═══════════════════════════════════════════════════════════════════════
+-->
+
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Figtree:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+<style>
+  /* Phones only, and non-load-bearing. See the note above. */
+  @media only screen and (max-width:480px) {
+    .p-pad   { padding-left:26px !important; padding-right:26px !important; }
+    .p-month { font-size:34px !important; }
+    .p-num   { font-size:38px !important; }
+    .p-lede  { font-size:30px !important; }
+  }
+</style>
+</head>
+
+<body style="margin:0;padding:0;background:#EBEFED;">
+
+<!-- Inbox preview line, then blanks so the client does not read on into the sheet. -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Indoor is consignment at 20%. Outdoor is your own tent at 0%. Both close September 21 at 11:59pm PT.&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EBEFED;">
+<tr>
+<td align="center" style="padding:34px 12px 40px;">
+
+  <!-- ══ THE SHEET ══════════════════════════════════════════════════ -->
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center" style="width:100%;max-width:600px;background:#FAFAF8;">
+
+    <!-- Top of the sheet is paper. No bar, no band, no chrome. -->
+    <tr><td style="height:46px;line-height:46px;font-size:0;">&nbsp;</td></tr>
+
+    <!-- ── MASTHEAD ────────────────────────────────────────────────
+         The wordmark is an image, which is the one piece of display
+         typography here that is identical in Gmail and everywhere else.
+         On a type-led sheet that is worth the request. Real alt text, so a
+         client with images off still reads the name. -->
+    <tr>
+      <td align="center" class="p-pad" style="padding:0 52px;">
+        <img src="https://mermademarket.com/email/wordmark.png" width="210" height="104" alt="Mermade Market" style="display:block;width:210px;height:104px;border:0;outline:none;text-decoration:none;">
+      </td>
+    </tr>
+
+    <tr>
+      <td align="center" class="p-pad" style="padding:20px 52px 0;">
+        <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;color:#6E6D67;line-height:1.4;">A juried market of independent makers</div>
+      </td>
+    </tr>
+
+    <!-- The double rule. 2px ink over a 1px gold hairline, the way a
+         broadside separates the masthead from the notice. -->
+    <tr>
+      <td class="p-pad" style="padding:22px 52px 0;">
+        <div style="height:2px;background:#171717;font-size:0;line-height:0;">&nbsp;</div>
+        <div style="height:4px;font-size:0;line-height:0;">&nbsp;</div>
+        <div style="height:1px;background:#BC9658;font-size:0;line-height:0;">&nbsp;</div>
+      </td>
+    </tr>
+
+    <!-- ── THE NOTICE ──────────────────────────────────────────────
+         Sentence case, Figtree, centred. This is the only large sentence on
+         the sheet and it is deliberately not in caps. -->
+    <tr>
+      <td align="center" class="p-pad" style="padding:40px 52px 0;">
+        <div class="p-lede" style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:40px;line-height:1.06;font-weight:600;letter-spacing:-0.022em;color:#171717;">Applications are open.</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td align="center" class="p-pad" style="padding:16px 52px 0;">
+        <table role="presentation" width="420" cellpadding="0" cellspacing="0" border="0" align="center" style="width:100%;max-width:420px;">
+          <tr><td align="center" style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:17px;line-height:1.55;color:#575651;">A hundred makers is what fits in the room. We read every application and answer either way, by September 25.</td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ── THE DEADLINE STAMP ──────────────────────────────────────
+         A hairline gold box, shrink-wrapped around the one date a maker has
+         to act on. Centred, so it reads as a stamp on the sheet. -->
+    <tr>
+      <td align="center" class="p-pad" style="padding:28px 52px 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+          <tr>
+            <td align="center" style="border:1px solid #BC9658;padding:14px 26px 16px;background:#FAFAF8;">
+              <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#6E6D67;padding-bottom:7px;">Applications close</div>
+              <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:19px;line-height:1.25;font-weight:600;color:#171717;">Monday, September 21, 11:59pm PT</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ── PRIMARY CALL ────────────────────────────────────────────
+         Full measure, solid ink, tracked caps at label weight. The address
+         is printed under it in plain text, the way a poster prints the box
+         office line, so the action survives a client that strips the href
+         styling and so it can be read aloud. -->
+    <tr>
+      <td class="p-pad" style="padding:30px 52px 0;">
+        <a href="https://mermademarket.com/apply" style="display:block;background:#171717;color:#FFFFFF;font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;text-decoration:none;text-align:center;padding:19px 16px;">Apply to sell</a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" class="p-pad" style="padding:12px 52px 0;">
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#6E6D67;">mermademarket.com/apply</div>
+      </td>
+    </tr>
+
+    <!-- ── ORNAMENT ────────────────────────────────────────────────
+         Rule, printer's square, rule. Built from table cells and a
+         background colour, so there is no glyph to lose and no character a
+         client can turn into an emoji. -->
+    <tr>
+      <td class="p-pad" style="padding:36px 52px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td valign="middle" style="font-size:0;line-height:0;"><div style="height:1px;background:#BC9658;font-size:0;line-height:0;">&nbsp;</div></td>
+            <td width="30" valign="middle" align="center" style="font-size:0;line-height:0;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td width="7" height="7" style="width:7px;height:7px;background:#BC9658;font-size:0;line-height:0;">&nbsp;</td></tr></table>
+            </td>
+            <td valign="middle" style="font-size:0;line-height:0;"><div style="height:1px;background:#BC9658;font-size:0;line-height:0;">&nbsp;</div></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ── THE DATE PLATE ──────────────────────────────────────────
+         The risk. Eight cells at 12.5%, one letter each, so the month
+         justifies to the sheet in any typeface. aria-hidden, because the
+         same date is a real sentence four rows down. -->
+    <tr>
+      <td align="center" class="p-pad" style="padding:30px 52px 0;">
+        <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;color:#6E6D67;">The show</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td class="p-pad" style="padding:16px 52px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" aria-hidden="true" style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;">
+          <tr>
+            <td width="12.5%" align="center" class="p-month" style="font-size:50px;line-height:1;font-weight:700;color:#171717;">N</td>
+            <td width="12.5%" align="center" class="p-month" style="font-size:50px;line-height:1;font-weight:700;color:#171717;">O</td>
+            <td width="12.5%" align="center" class="p-month" style="font-size:50px;line-height:1;font-weight:700;color:#171717;">V</td>
+            <td width="12.5%" align="center" class="p-month" style="font-size:50px;line-height:1;font-weight:700;color:#171717;">E</td>
+            <td width="12.5%" align="center" class="p-month" style="font-size:50px;line-height:1;font-weight:700;color:#171717;">M</td>
+            <td width="12.5%" align="center" class="p-month" style="font-size:50px;line-height:1;font-weight:700;color:#171717;">B</td>
+            <td width="12.5%" align="center" class="p-month" style="font-size:50px;line-height:1;font-weight:700;color:#171717;">E</td>
+            <td width="12.5%" align="center" class="p-month" style="font-size:50px;line-height:1;font-weight:700;color:#171717;">R</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Three days, three columns, gold hairlines between them. Numerals
+         hold their shape in every fallback face, which is why the loudest
+         figures on the sheet are digits and not words. -->
+    <tr>
+      <td class="p-pad" style="padding:20px 52px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" aria-hidden="true" style="border-top:1px solid #BC9658;border-bottom:1px solid #BC9658;">
+          <tr>
+            <td width="33.33%" align="center" valign="middle" style="padding:16px 4px 14px;">
+              <div class="p-num" style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:50px;line-height:1;font-weight:700;color:#171717;">13</div>
+              <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#6E6D67;padding-top:9px;">Friday</div>
+            </td>
+            <td width="33.33%" align="center" valign="middle" style="padding:16px 4px 14px;border-left:1px solid #BC9658;border-right:1px solid #BC9658;">
+              <div class="p-num" style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:50px;line-height:1;font-weight:700;color:#171717;">14</div>
+              <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#6E6D67;padding-top:9px;">Saturday</div>
+            </td>
+            <td width="33.33%" align="center" valign="middle" style="padding:16px 4px 14px;">
+              <div class="p-num" style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:50px;line-height:1;font-weight:700;color:#171717;">15</div>
+              <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#6E6D67;padding-top:9px;">Sunday</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- The plate said in words. This is the row a screen reader gets, and
+         the row that carries the year and the address. -->
+    <tr>
+      <td align="center" class="p-pad" style="padding:18px 52px 0;">
+        <table role="presentation" width="440" cellpadding="0" cellspacing="0" border="0" align="center" style="width:100%;max-width:440px;">
+          <tr><td align="center" style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#575651;">Friday to Sunday, November 13-15, 2026. Dana Point Community House, 24642 San Juan Avenue. Free to attend.</td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ── THE ONE CUT ─────────────────────────────────────────────
+         A single small plate, gold hairline, centred. Photography is the
+         guest in this direction, not the host: at 240px it sits inside the
+         measure like a woodcut on a broadside rather than taking the sheet
+         over. Width and height are on the tag because Word ignores CSS
+         sizing on an image, and the ratio matches the file. -->
+    <tr>
+      <td align="center" class="p-pad" style="padding:34px 52px 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+          <tr>
+            <td style="padding:5px;border:1px solid #BC9658;background:#FAFAF8;font-size:0;line-height:0;">
+              <img src="https://mermademarket.com/photos/room.jpg" width="240" height="136" alt="A shopper looking over a shelf of handmade goods under a string of warm bulbs" style="display:block;width:240px;height:136px;border:0;outline:none;text-decoration:none;background:#EBEFED;">
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr>
+      <td align="center" class="p-pad" style="padding:14px 52px 0;">
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;font-style:italic;color:#6E6D67;">One register at the front means one bag at the end.</div>
+      </td>
+    </tr>
+
+    <!-- ── TWO WAYS IN ─────────────────────────────────────────────
+         The price-table shape from the design system, in a poster register:
+         the rate lives in its own right-aligned column so 20% and 0% stack
+         and compare, and the prose sits under the row rather than beside
+         it, because two 220px columns of 14px text is a pamphlet and this
+         is a sheet. -->
+    <tr>
+      <td class="p-pad" style="padding:38px 52px 0;">
+        <div style="height:2px;background:#171717;font-size:0;line-height:0;">&nbsp;</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td align="center" class="p-pad" style="padding:20px 52px 0;">
+        <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;color:#6E6D67;">Two ways in</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td class="p-pad" style="padding:22px 52px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+
+          <!-- INDOOR -->
+          <tr>
+            <td valign="bottom" style="padding:0 10px 0 0;">
+              <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:22px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#171717;line-height:1.1;">Indoor</div>
+              <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#6E6D67;padding-top:6px;">Consignment</div>
+            </td>
+            <td valign="bottom" align="right" width="120" style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:38px;line-height:1;font-weight:700;color:#171717;">20%</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="padding:12px 0 18px;border-bottom:1px solid #DFE3E8;">
+              <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#575651;">We merchandise your work and sell it at one register at the front. You do not need to be there. We pay out after the show.</div>
+            </td>
+          </tr>
+
+          <!-- OUTDOOR -->
+          <tr>
+            <td valign="bottom" style="padding:22px 10px 0 0;">
+              <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:22px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#171717;line-height:1.1;">Outdoor</div>
+              <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#6E6D67;padding-top:6px;">Your own tent</div>
+            </td>
+            <td valign="bottom" align="right" width="120" style="padding-top:22px;font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:38px;line-height:1;font-weight:700;color:#171717;">0%</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="padding:12px 0 0;">
+              <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#575651;">A tent you run yourself for the day. Your own register, your own table, nothing owed on what you sell.</div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+
+    <tr>
+      <td class="p-pad" style="padding:20px 52px 0;">
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;color:#6E6D67;">One form covers both. Tell us which you want, and apply for both if you cannot choose.</div>
+      </td>
+    </tr>
+
+    <!-- ── DATES THAT MATTER ───────────────────────────────────────
+         The timetable shape: the date in its own ruled column so the eye
+         runs down the dates and not through the sentences. -->
+    <tr>
+      <td class="p-pad" style="padding:36px 52px 0;">
+        <div style="height:1px;background:#BC9658;font-size:0;line-height:0;">&nbsp;</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td class="p-pad" style="padding:20px 52px 0;">
+        <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;color:#6E6D67;">Dates that matter</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td class="p-pad" style="padding:12px 52px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="128" valign="top" style="padding:12px 14px 12px 0;border-bottom:1px solid #DFE3E8;font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#171717;white-space:nowrap;">Sep 21</td>
+            <td valign="top" style="padding:12px 0;border-bottom:1px solid #DFE3E8;font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.45;color:#575651;">Applications close, 11:59pm PT</td>
+          </tr>
+          <tr>
+            <td width="128" valign="top" style="padding:12px 14px 12px 0;border-bottom:1px solid #DFE3E8;font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#171717;white-space:nowrap;">Sep 22-24</td>
+            <td valign="top" style="padding:12px 0;border-bottom:1px solid #DFE3E8;font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.45;color:#575651;">We read them and decide</td>
+          </tr>
+          <tr>
+            <td width="128" valign="top" style="padding:12px 14px 12px 0;border-bottom:1px solid #DFE3E8;font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#171717;white-space:nowrap;">Sep 25</td>
+            <td valign="top" style="padding:12px 0;border-bottom:1px solid #DFE3E8;font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.45;color:#575651;">The list goes out</td>
+          </tr>
+          <tr>
+            <td width="128" valign="top" style="padding:12px 14px 12px 0;font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#171717;white-space:nowrap;">Nov 13-15</td>
+            <td valign="top" style="padding:12px 0;font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.45;color:#575651;">The show, at the Community House</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td style="height:34px;line-height:34px;font-size:0;">&nbsp;</td></tr>
+
+    <!-- ── THE FOOT OF THE SHEET ───────────────────────────────────
+         The one ink block, and it is at the bottom, not the top: Drew asked
+         for the black bar off the header. Here it is the press's closing
+         panel, and it is the only place gold becomes a letterform, where it
+         runs 6.6:1 on #171717 instead of 2.75:1 on paper. -->
+    <tr>
+      <td class="p-pad" style="padding:0 52px;">
+        <div style="height:1px;background:#BC9658;font-size:0;line-height:0;">&nbsp;</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td align="center" class="p-pad" style="padding:34px 52px 38px;background:#171717;">
+        <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.24em;text-transform:uppercase;color:#BC9658;padding-bottom:20px;">Apply before September 21</div>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+          <tr>
+            <td align="center" style="background:#FAFAF8;">
+              <a href="https://mermademarket.com/apply" style="display:block;color:#171717;font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;text-decoration:none;padding:17px 34px;">Start your application</a>
+            </td>
+          </tr>
+        </table>
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#B7B5AE;padding-top:20px;">Have photographs of the work you would actually bring.</div>
+      </td>
+    </tr>
+
+  </table>
+  <!-- ══ END OF SHEET ═══════════════════════════════════════════════ -->
+
+  <!-- The mailing label, printed off the poster and on the ground it lies
+       on. #575651 runs 6.2:1 on #EBEFED. -->
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center" style="width:100%;max-width:600px;">
+    <tr>
+      <td align="center" style="padding:26px 30px 0;">
+        <div style="font-family:Oswald,'Arial Narrow','Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11.5px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#575651;line-height:1.6;">Mermade Market &middot; Dana Point, California</div>
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#575651;padding-top:10px;">You are on this list because you asked to hear when applications open. About six emails a year.</div>
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;padding-top:8px;"><a href="https://mermademarket.com/unsubscribe" style="color:#575651;text-decoration:underline;">Unsubscribe</a></div>
+      </td>
+    </tr>
+  </table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>

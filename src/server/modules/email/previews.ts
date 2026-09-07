@@ -18,6 +18,7 @@ import { SHEET_HEADERS } from '@/server/modules/sheets/row'
 import { staffNoticeHtml } from './staff-notice'
 import { applicationReceivedHtml } from './application-received'
 import { saveTheDateHtml, saveTheDateText, type SaveTheDateInput } from './save-the-date'
+import { emailConcepts } from './concepts.gen'
 
 export type Preview = {
   id: string
@@ -140,6 +141,26 @@ export function previews(show: Show, siteUrl: string): Preview[] {
         photos: [`${siteUrl}/photos/ceramics.jpg`, `${siteUrl}/photos/racks.jpg`],
       }),
     },
+    /* ── concepts, for choosing between ───────────────────────────────────
+       Three takes on the same announcement, so the choice is made by looking
+       rather than by reading a description of a design. They are NOT wired to
+       anything that sends: nothing here can go out until one is picked and
+       rebuilt against the Show record, which is the point at which its dates
+       stop being written down and start being read.
+
+       That is also the one thing to know while reading them: the dates in a
+       concept are FIXED TEXT. Every other preview on this page is generated
+       from /admin/show and follows an edit; these do not, and will quietly go
+       stale the moment somebody changes a date. */
+    ...emailConcepts.map((c) => ({
+      id: c.id,
+      name: `Concept: ${c.title}`,
+      who: 'Nobody yet. A design to choose from, not a live email',
+      when: 'Not wired to send. Dates inside are fixed text, not the Show record',
+      subject: c.title,
+      html: c.html.replaceAll('__SITE__', siteUrl),
+      text: 'A design concept. The text version gets written once one is chosen.',
+    })),
   ]
 }
 

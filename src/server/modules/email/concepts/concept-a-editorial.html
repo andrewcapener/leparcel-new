@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Many clients invert. Every text cell below carries its own bgcolor as well,
+     so nothing is dark ink on a transparent ground if a client ignores this. -->
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Mermade Market: applications are open for November</title>
+
+<!--
+  ══════════════════════════════════════════════════════════════════════
+  DIRECTION A · EDITORIAL
+  One photograph opens the page. The type stays quiet and precise around
+  it. One accent (the gold, #bc9658), one button style, used twice.
+
+  TOKENS, from docs/08-DESIGN-SYSTEM.md §2 and src/server/modules/email/shell.ts
+    GOLD  #bc9658   accent: eyebrows only
+    INK   #171717   headings, dates, the button ground
+    BODY  #5c5c5c   prose
+    RULE  #dfe3e8   hairlines
+    PAPER #ffffff   the paper
+    SHELL #f6f7f7   the ground the paper sits on, and the colophon
+    MUTED #767676   small print, 4.6:1 on white
+
+  TYPE, AND WHAT HAPPENS IN GMAIL
+  Oswald and Figtree load in Apple Mail, iOS Mail and Samsung Mail. Gmail
+  strips the <link> and falls back. So the sizes below are chosen to hold
+  in the fallback, and no role depends on the webfont arriving:
+
+    Display line  Figtree 600 · 36/1.06 · sentence case
+                  fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                  Roboto, Helvetica, Arial, sans-serif
+                  Deliberately NOT Oswald. Drew: "I do not like all caps
+                  headers unless they use our fonts." A 36px Oswald headline
+                  becomes 36px of Helvetica capitals in Gmail, which is not
+                  this brand at any size. Figtree's fallbacks are ordinary
+                  grotesques of a similar x-height, so the line degrades to
+                  something close instead of to something else.
+
+    Standfirst    Figtree 400 · 18/1.55 · same stack. Holds in Helvetica.
+    Prose         Figtree 400 · 16.5/1.68 at a 512px measure, ~60 characters.
+    Timetable     dates in Oswald 600 caps 13px; if Oswald is missing,
+                  'Arial Narrow' then Helvetica. The column is 118px wide,
+                  which fits "NOV 13-15" in Helvetica caps at 13px with room
+                  to spare, so the table never reflows.
+    Labels        Oswald 600 · 12px · .18em tracked caps. At 12px, tracked
+                  and short, a fallback grotesque still reads as a label.
+                  Nothing tracked goes below 12px (design system §1).
+    Button        Oswald 700 · 15px · .09em tracked caps, white on ink.
+                  In the fallback it is tracked Helvetica caps on black,
+                  which is still unmistakably a button.
+
+  IMAGES
+  Three photographs, all real files in public/photos, all with width
+  attributes, alt text and display:block. Nothing meaningful is a
+  background-image. If images are blocked the email still reads: the
+  masthead falls back to its alt text, and the facts are all live text.
+  ══════════════════════════════════════════════════════════════════════
+-->
+
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* Phones only, and only in clients that read a media query. Nothing here
+     is load-bearing: the layout is tables and widths, and it is correct
+     without a single one of these rules. This only stops the display line
+     from taking four lines on a 320px screen and pulls the generous
+     editorial margins in to something a thumb-width page can afford. */
+  @media only screen and (max-width:480px) {
+    .mm-display { font-size:29px !important; line-height:1.1 !important; }
+    .mm-stand   { font-size:17px !important; }
+    .mm-pad     { padding-left:24px !important; padding-right:24px !important; }
+    .mm-date    { font-size:12px !important; }
+  }
+</style>
+</head>
+
+<body style="margin:0;padding:0;background:#f6f7f7;">
+
+<!-- Preheader. The line the inbox shows next to the subject, then enough
+     blanks that it does not go on to read the masthead out loud. -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">Applications close September 21 at 11:59pm PT. One form covers both tracks, and we answer either way.&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f6f7f7" style="background:#f6f7f7;">
+<tr>
+<td align="center" style="padding:32px 0;">
+
+  <!-- The paper. 600px, white, no border and no card: the design system asks
+       for rules, not boxes, and a bordered card on grey is the shape every
+       transactional email has, which is exactly why it reads as one. -->
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;background:#ffffff;">
+
+    <!-- ── MASTHEAD ─────────────────────────────────────────────────────
+         No black bar. White paper, the wordmark centred like the top of a
+         printed page, one 12px tracked line of place under it, and a
+         hairline. The mark carries real alt text, so a client that blocks
+         images still reads "Mermade Market" where the mark would be. -->
+    <tr>
+      <td class="mm-pad" align="center" bgcolor="#ffffff" style="padding:34px 44px 22px;background:#ffffff;">
+        <img src="https://mermademarket.com/email/wordmark.png" width="128" height="64" alt="Mermade Market" style="display:block;width:128px;height:64px;border:0;outline:none;text-decoration:none;">
+        <div style="font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:#767676;padding-top:12px;">Dana Point, California</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:0 44px;background:#ffffff;">
+        <div style="height:1px;background:#dfe3e8;line-height:1px;font-size:0;">&nbsp;</div>
+      </td>
+    </tr>
+
+    <!-- ── THE OPENING PHOTOGRAPH ───────────────────────────────────────
+         Full bleed, edge to edge. §4: "Full-bleed imagery is encouraged;
+         text never is." The whole direction rests on this frame doing the
+         emotional work so the type does not have to. hero.jpg is 2000x1125,
+         drawn here at 600x338. Width as an attribute as well as a style,
+         because Outlook's Word renderer ignores CSS width on an image, and
+         a real height so the layout does not jump while it loads. -->
+    <tr>
+      <td bgcolor="#ffffff" style="padding:30px 0 0;font-size:0;line-height:0;background:#ffffff;">
+        <img src="https://mermademarket.com/photos/hero.jpg" width="600" height="338" alt="The Community House floor under a ceiling of pale balloons and string lights, a shopper walking the aisle past a wall of handmade goods." style="display:block;width:100%;max-width:600px;height:auto;border:0;outline:none;text-decoration:none;">
+      </td>
+    </tr>
+
+    <!-- ── EYEBROW, DISPLAY LINE, STANDFIRST ────────────────────────────
+         The gold is the one accent and it does one job here: naming the
+         section, the way it does on every page of the site. -->
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:40px 44px 0;background:#ffffff;">
+        <div style="font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.20em;text-transform:uppercase;color:#bc9658;padding-bottom:16px;">Fall 2026 · Applications open</div>
+
+        <div class="mm-display" style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:36px;line-height:1.06;font-weight:600;letter-spacing:-0.022em;color:#171717;">Applications are open for November.</div>
+
+        <div class="mm-stand" style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:18px;line-height:1.55;font-weight:400;color:#5c5c5c;padding-top:18px;">Three days at the Community House, about a hundred makers, free at the door. One form covers both tracks, there is no fee to apply, and we answer either way.</div>
+      </td>
+    </tr>
+
+    <!-- ── BODY, AT A COMFORTABLE MEASURE ───────────────────────────────
+         512px at 16.5px lands around sixty characters a line. -->
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:22px 44px 0;background:#ffffff;">
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16.5px;line-height:1.68;color:#5c5c5c;">Everything on the floor was made by the person who applied. No resellers, no drop-shipping. A hundred makers is what fits in the room, so we look at everything and we say no a lot. If you have been meaning to apply, this is the window.</div>
+      </td>
+    </tr>
+
+    <!-- ── THE ACTION, HIGH ─────────────────────────────────────────────
+         A table with a bgcolor rather than a padded inline-block, because
+         Outlook's Word renderer drops padding on an inline-block and the
+         button arrives as a naked line of white text. The deadline sits
+         directly under it, since that is the second thing the reader wants
+         and the reason to act now. -->
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:30px 44px 0;background:#ffffff;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td bgcolor="#171717" align="center" style="background:#171717;">
+              <a href="https://mermademarket.com/apply" style="display:block;padding:18px 40px;font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#ffffff;text-decoration:none;">Start your application</a>
+            </td>
+          </tr>
+        </table>
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#767676;padding-top:13px;">Closes September 21, 11:59pm PT.</div>
+      </td>
+    </tr>
+
+    <!-- ── TIMETABLE ────────────────────────────────────────────────────
+         Design system §8: dated things as a ruled list with the date in its
+         own column, so the eye runs down the dates rather than through the
+         sentences. The date column is 118px, which holds "NOV 13-15" in
+         Helvetica caps at 13px if Oswald never arrives. -->
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:44px 44px 0;background:#ffffff;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="1" style="padding-right:12px;white-space:nowrap;font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.20em;text-transform:uppercase;color:#bc9658;">Dates that matter</td>
+            <td style="width:100%;"><div style="height:1px;background:#dfe3e8;line-height:1px;font-size:0;">&nbsp;</div></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:14px 44px 0;background:#ffffff;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td class="mm-date" width="118" valign="top" style="width:118px;padding:12px 14px 12px 0;border-bottom:1px solid #dfe3e8;font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:#171717;white-space:nowrap;">Sep 21</td>
+            <td valign="top" style="padding:12px 0;border-bottom:1px solid #dfe3e8;font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.45;color:#5c5c5c;">Applications close, 11:59pm PT</td>
+          </tr>
+          <tr>
+            <td class="mm-date" valign="top" style="padding:12px 14px 12px 0;border-bottom:1px solid #dfe3e8;font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:#171717;white-space:nowrap;">Sep 22-24</td>
+            <td valign="top" style="padding:12px 0;border-bottom:1px solid #dfe3e8;font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.45;color:#5c5c5c;">Decisions go out, either way</td>
+          </tr>
+          <tr>
+            <td class="mm-date" valign="top" style="padding:12px 14px 12px 0;border-bottom:1px solid #dfe3e8;font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:#171717;white-space:nowrap;">Sep 25</td>
+            <td valign="top" style="padding:12px 0;border-bottom:1px solid #dfe3e8;font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.45;color:#5c5c5c;">The makers are announced</td>
+          </tr>
+          <tr>
+            <td class="mm-date" valign="top" style="padding:12px 14px 12px 0;font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:#171717;white-space:nowrap;">Nov 13-15</td>
+            <td valign="top" style="padding:12px 0;font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.45;color:#171717;font-weight:500;">The show, at the Community House</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ── THE TWO TRACKS ───────────────────────────────────────────────
+         Two plates of the same shape, side by side, the way a spread pairs
+         pictures. Both frames are 900x600 files drawn at 246x164, so the
+         pair reads as one decision rather than two crops.
+
+         246 + 20 gutter + 246 = 512, which is the paper minus its 44px
+         margins. A plain two-cell table, because Outlook's Word renderer
+         ignores inline-block on a cell. At 320px each column lands near
+         120px and the 14.5px text under it still sets three or four words
+         to a line, so this never needs to stack. -->
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:46px 44px 0;background:#ffffff;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="1" style="padding-right:12px;white-space:nowrap;font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.20em;text-transform:uppercase;color:#bc9658;">Two ways in</td>
+            <td style="width:100%;"><div style="height:1px;background:#dfe3e8;line-height:1px;font-size:0;">&nbsp;</div></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:20px 44px 0;background:#ffffff;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="246" valign="top" style="width:246px;padding:0 10px 0 0;">
+              <img src="https://mermademarket.com/photos/strip/mermade-23.jpg" width="246" height="164" alt="Handmade mugs and hanging clay ornaments arranged on a walnut shelf." style="display:block;width:100%;max-width:246px;height:auto;border:0;outline:none;text-decoration:none;">
+              <div style="font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#171717;padding:14px 0 7px;">Inside</div>
+              <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.6;color:#5c5c5c;">Consignment. Your work is on the floor all three days and you do not have to be. We merchandise it, sell it at one register, take 20%, and pay out after the show.</div>
+            </td>
+            <td width="246" valign="top" style="width:246px;padding:0 0 0 10px;">
+              <img src="https://mermademarket.com/photos/strip/mermade-183.jpg" width="246" height="164" alt="A maker fastening a necklace for a shopper at her Charm Bar table under a white Mermade tent." style="display:block;width:100%;max-width:246px;height:auto;border:0;outline:none;text-decoration:none;">
+              <div style="font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#171717;padding:14px 0 7px;">Outside</div>
+              <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.6;color:#5c5c5c;">A tent we set up for you, for the day. You take your own payments and keep everything you sell. 0% commission.</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ── THE CLOSE, AND THE ACTION AGAIN ──────────────────────────────
+         The same button, second time. Not a second style: the same one, at
+         the end, where a reader who scrolled the whole page arrives. -->
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:44px 44px 0;background:#ffffff;">
+        <div style="height:1px;background:#dfe3e8;line-height:1px;font-size:0;">&nbsp;</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:28px 44px 0;background:#ffffff;">
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16.5px;line-height:1.68;color:#5c5c5c;">The room is the Dana Point Community House, 24642 San Juan Avenue. Doors are free, all three days. Apply once and it covers both tracks.</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="mm-pad" bgcolor="#ffffff" style="padding:24px 44px 48px;background:#ffffff;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td bgcolor="#171717" align="center" style="background:#171717;">
+              <a href="https://mermademarket.com/apply" style="display:block;padding:18px 40px;font-family:Oswald,'Arial Narrow',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#ffffff;text-decoration:none;">Start your application</a>
+            </td>
+          </tr>
+        </table>
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#767676;padding-top:13px;">Or go to <a href="https://mermademarket.com/apply" style="color:#bc9658;text-decoration:underline;">mermademarket.com/apply</a></div>
+      </td>
+    </tr>
+
+    <!-- ── COLOPHON ─────────────────────────────────────────────────────
+         Quiet, on the shell grey, under a hairline. Explicit background and
+         colour so an inverting client does not leave grey on grey. -->
+    <tr>
+      <td class="mm-pad" bgcolor="#f6f7f7" style="padding:24px 44px 30px;border-top:1px solid #dfe3e8;background:#f6f7f7;">
+        <div style="font-family:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12.5px;line-height:1.7;color:#767676;">
+          Mermade Market · Dana Point Community House, 24642 San Juan Avenue, Dana Point, CA 92629<br>
+          You are on the maker list. About six emails a year.
+          <a href="https://mermademarket.com/unsubscribe" style="color:#767676;text-decoration:underline;">Unsubscribe</a>.
+        </div>
+      </td>
+    </tr>
+
+  </table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
