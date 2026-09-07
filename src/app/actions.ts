@@ -648,10 +648,33 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
  * Never throws. The application is already committed by the time this runs,
  * and a mail failure must not turn a saved application into an error on screen.
  */
-async function notifyStaff(applicationId: string, showName: string): Promise<void> {
-  const to = process.env.STAFF_NOTIFY_TO?.trim()
+/**
+ * Who gets told about a new application.
+ *
+ * More than one person, since 7 Sep 2026: Drew asked for Hillary on it, and
+ * she runs the outdoor half. STAFF_NOTIFY_TO takes a comma-separated list and
+ * overrides the default entirely, so adding somebody is one variable and no
+ * deploy of ours.
+ *
+ * One message each, rather than one message with several recipients. It costs
+ * an extra send and buys three things worth more: each person can reply to the
+ * maker without replying to the team, /admin/outbox shows plainly who was told
+ * and who was not, and one bad address cannot take the whole notification down
+ * with it.
+ */
+function staffNotifyList(): string[] {
+  const raw = process.env.STAFF_NOTIFY_TO?.trim()
     || process.env.CONTACT_TO?.trim()
-    || 'hello@mermademarket.com'
+    || 'hello@mermademarket.com, hillary@mermademarket.com'
+  const seen = new Set<string>()
+  return raw
+    .split(',')
+    .map((a) => a.trim().toLowerCase())
+    .filter((a) => a.includes('@') && !seen.has(a) && seen.add(a))
+}
+
+async function notifyStaff(applicationId: string, showName: string): Promise<void> {
+  const recipients = staffNotifyList()
   try {
     const row = await gatherRow(db, applicationId)
     if (!row) return
@@ -686,15 +709,17 @@ async function notifyStaff(applicationId: string, showName: string): Promise<voi
       photos,
     })
 
-    await mail(
-      to,
-      `New application: ${row.shopName || 'a maker'} (${row.category || 'uncategorised'})`,
-      `${row.shopName} applied for ${showName}.\n\n${body}\n\n`
-        + `This message is also the backup copy. Every field is above.`,
-      'application_staff_notice',
-      row.email || undefined,
-      html,
-    )
+    for (const to of recipients) {
+      await mail(
+        to,
+        `New application: ${row.shopName || 'a maker'} (${row.category || 'uncategorised'})`,
+        `${row.shopName} applied for ${showName}.\n\n${body}\n\n`
+          + `This message is also the backup copy. Every field is above.`,
+        'application_staff_notice',
+        row.email || undefined,
+        html,
+      )
+    }
   } catch {
     // Deliberately silent. The row is saved; this is the third copy, not the
     // first, and /admin/outbox shows what did and did not go out.
