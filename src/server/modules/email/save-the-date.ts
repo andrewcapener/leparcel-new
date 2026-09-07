@@ -40,8 +40,10 @@ import {
 const PHOTOS = {
   /** The room. Arched roof, balloons, an aisle with people in it. */
   floor: { file: 'floor.jpg', alt: 'The floor at the Community House, balloons strung under the arched roof and shoppers along the aisle' },
-  /** Inside: our staff tagging a maker’s piece for the register. */
-  indoor: { file: 'register.jpg', alt: 'A Mermade staffer writing a price tag while a shopper holds up a jacket' },
+  /** Inside: our staff tagging a maker’s piece for the register. Its own
+   *  file, because the homepage slot this used to share moved to a warmer
+   *  frame and this column needs the one that explains consignment. */
+  indoor: { file: 'consign.jpg', alt: 'A Mermade staffer writing a price tag while a shopper holds up a jacket' },
   /** Outside: a maker under a Mermade tent, running her own table. */
   outdoor: { file: 'lot.jpg', alt: 'A maker at her own table under a white Mermade Market tent, with shoppers stopped in front of it' },
 } as const
