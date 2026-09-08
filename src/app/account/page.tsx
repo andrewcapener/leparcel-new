@@ -11,6 +11,10 @@ import { POLICY } from '@/lib/agreement'
 import { bpsLabel } from '@/lib/money'
 import { MAKER_COOKIE, readSession } from '@/lib/makerAuth'
 import { SignInForm } from './SignInForm'
+import { BoothInvoice } from './BoothInvoice'
+import { boothInvoice } from '@/server/modules/payments/booth'
+import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
+import { bookings } from '@/db/schema'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +30,7 @@ const STATUS: Record<string, string> = {
   new: 'Received. We have it and the jury has not sat yet.',
   under_review: 'Received. We have it and the jury has not sat yet.',
   shortlist: 'Received. We have it and the jury has not sat yet.',
-  accepted: 'Accepted. Watch your email for your booth fee and your space.',
+  accepted: 'Accepted. Your booth fee is below, and your space is held until you pay it.',
   waitlist: 'On the waiting list. Spaces do come back, and we will write if one does.',
   declined: 'Not this show. We are sorry, and applying again next season is welcome.',
   withdrawn: 'Withdrawn at your request.',
@@ -35,7 +39,11 @@ const STATUS: Record<string, string> = {
 export default async function Account({
   searchParams,
 }: {
-  searchParams: Promise<{ expired?: string; signedout?: string }>
+  searchParams: Promise<{
+    expired?: string; signedout?: string
+    /** Set by the return from Stripe and by every failure path in payBoothFee. */
+    paid?: string; pay?: string
+  }>
 }) {
   const show = await activeShow()
   if (!show) throw new Error('No active show.')
@@ -93,15 +101,57 @@ export default async function Account({
         .filter((x): x is string => Boolean(x))
     : []
 
+  /* The booking, if they have one. It only exists once a jury decision made
+     one, so this is the difference between "we have your application" and
+     "your space is held and here is what it costs". */
+  const [booked] = await db
+    .select({ id: bookings.id })
+    .from(bookings)
+    .where(and(eq(bookings.vendorId, vendor.id), eq(bookings.showId, show.id)))
+    .limit(1)
+  const billing = booked ? await boothInvoice(db, booked.id) : undefined
+
+  const notice = sp.paid === '1'
+    ? ('paid' as const)
+    : sp.pay === 'unavailable' || sp.pay === 'missing' || sp.pay === 'failed'
+      ? (sp.pay as 'unavailable' | 'missing' | 'failed')
+      : undefined
+
   return (
     <SiteShell show={show} template="page template-suffix-account">
       <PageTitle title={vendor.shopName} />
+
+      {/* First on the page when there is money owed, because a maker who
+          signed in from an acceptance email came here to do exactly one
+          thing. */}
+      {billing && (
+        <BoothInvoice
+          invoice={billing.invoice}
+          status={billing.booking.status}
+          dueAt={billing.booking.paymentDueAt}
+          paidAt={billing.booking.paidAt}
+          vendorCode={billing.booking.vendorCode}
+          payable={paymentsConfigured()}
+          testMode={isTestMode()}
+          notice={notice}
+        />
+      )}
 
       <FactTable
         title={`Your ${show.name}`}
         rows={app
           ? [
-              { label: 'Where it stands', value: <strong>{STATUS[app.status] ?? app.status}</strong> },
+              {
+                label: 'Where it stands',
+                /* An accepted maker who has paid must not still be told their
+                   space is "held until you pay it". The booking, not the
+                   application, is what knows the difference. */
+                value: <strong>{
+                  app.status === 'accepted' && billing?.booking.status === 'confirmed'
+                    ? 'Accepted, and your space is paid for. See you in November.'
+                    : STATUS[app.status] ?? app.status
+                }</strong>,
+              },
               { label: 'Applied', value: fmtDateTime(String(app.submittedAt)) },
               { label: 'Track', value: app.track === 'indoor' ? 'Inside, consignment' : app.track === 'outdoor' ? 'Outside, your own tent day' : 'Either, whichever we can fit' },
               { label: 'Category', value: app.category },
@@ -133,15 +183,18 @@ export default async function Account({
           it is explained here rather than arriving as a surprise in an
           acceptance email.
 
-          Deliberately no "set up payouts" button yet: Stripe is not connected,
-          and a button that goes nowhere is worse than a sentence that says
-          when it will. */}
+          Still deliberately no "set up payouts" button. Stripe now takes booth
+          fees (money IN, above), but Connect onboarding for payouts (money
+          OUT) is not built, and a button that goes nowhere is worse than a
+          sentence that says when it will. */}
       <FactTable
         title={app?.status === 'accepted' ? 'Getting paid' : 'How the money will work'}
         rows={[
           {
             label: 'Your booth fee',
-            value: <>Your acceptance carries a payment link. Card or bank transfer, whichever suits you, due within {show.paymentWindowHours} hours.</>,
+            value: billing
+              ? <>Above, on this page. Card or bank transfer, whichever suits you, due within {show.paymentWindowHours} hours of being accepted.</>
+              : <>If you are accepted, it appears on this page and is due within {show.paymentWindowHours} hours. Card or bank transfer, whichever suits you.</>,
           },
           ...(app?.track === 'outdoor' ? [] : [{
             label: 'What you sell inside',

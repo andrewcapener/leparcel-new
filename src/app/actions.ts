@@ -31,10 +31,12 @@ import { previewingOpenWindow } from '@/lib/preview'
 import { siteUrl } from '@/lib/site-url'
 import { signInLinkHtml, signInLinkText } from '@/server/modules/email/sign-in-link'
 import {
-  LINK_TTL_MS, makerAuthConfigured, normalizeEmail, signLinkToken,
+  LINK_TTL_MS, MAKER_COOKIE, makerAuthConfigured, normalizeEmail, signLinkToken,
+  readSession as readMakerSession,
 } from '@/lib/makerAuth'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
+import { startBoothPayment } from '@/server/modules/payments/booth'
 import { sendLead, newEventId } from '@/server/modules/meta/capi'
 
 /* ═══════════════════════ helpers ═══════════════════════ */
@@ -927,7 +929,15 @@ export async function decide(fd: FormData): Promise<void> {
             + granted.map((a) => `${a.name}: ${usd(a.priceCents)}\n`).join('')
             + (granted.length > 0 ? `Total: ${usd(space.priceCents + addonsCents)}\n` : '')
             + `${app.track === 'indoor' ? `Commission: ${show.commissionBps / 100}% on indoor sales\n` : ''}`
-            + `\nPay to confirm within ${show.paymentWindowHours} hours. After that the space returns to the pool.\n`
+            /* The link. Until this line existed, this email told a maker to
+               pay within 48 hours and named no way to do it, and /account had
+               no invoice on it either. Sign-in is by emailed link from that
+               page, so this points at the page rather than carrying a token:
+               a payment url inside a forwardable email is somebody else's
+               space, bought by mistake. */
+            + `\nPay to confirm within ${show.paymentWindowHours} hours: ${siteUrl()}/account\n`
+            + `Sign in with this address and your fee, your space and your Mermade ID are on the page.\n`
+            + `After that the space returns to the pool.\n`
             // Outdoor makers sell for their own account, so the permit is ours
             // to collect and CDTFA Publication 111 fines us per seller we
             // cannot show a record for. The application no longer asks, so
@@ -1353,4 +1363,53 @@ export async function syncSheetBacklog(): Promise<void> {
      whose action is still in flight. That is exactly what turned the rehearsal
      purge into a blank page. */
   redirect('/admin')
+}
+
+/**
+ * Send an accepted maker to Stripe to pay their booth fee.
+ *
+ * Authorisation is the whole point of this being a server action rather than a
+ * link: the booking is looked up FROM the signed-in maker's own vendor row, so
+ * a booking id typed into a form by somebody else resolves to nothing. A maker
+ * can only ever pay their own space.
+ *
+ * The redirect goes to Stripe's hosted page. Nothing about payment state is
+ * decided here or on the way back: the booking is confirmed by the webhook and
+ * only by the webhook (CLAUDE.md rule 5).
+ */
+export async function payBoothFee(): Promise<void> {
+  const email = await readMakerSession((await cookies()).get(MAKER_COOKIE)?.value)
+  if (!email) redirect('/account')
+
+  const show = await activeShow()
+  if (!show) redirect('/account')
+
+  const vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
+  if (!vendor) redirect('/account')
+
+  const [booking] = await db
+    .select({ id: bookings.id })
+    .from(bookings)
+    .where(and(eq(bookings.vendorId, vendor.id), eq(bookings.showId, show.id)))
+    .limit(1)
+  if (!booking) redirect('/account')
+
+  const result = await startBoothPayment(db, booking.id, email)
+
+  /* Every failure lands back on /account with a reason in the url, because the
+     alternative is a maker staring at a Next.js error page hours before their
+     space returns to the pool. The page renders each of these as a sentence. */
+  switch (result.outcome) {
+    case 'ready':
+      redirect(result.url)
+    case 'already_paid':
+      redirect('/account?paid=1')
+    case 'unconfigured':
+      redirect('/account?pay=unavailable')
+    case 'missing':
+      redirect('/account?pay=missing')
+    default:
+      console.error(`[stripe] checkout failed for booking ${booking.id}: ${result.detail}`)
+      redirect('/account?pay=failed')
+  }
 }

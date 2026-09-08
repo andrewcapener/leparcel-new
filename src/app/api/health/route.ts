@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { NextResponse, type NextRequest } from 'next/server'
 import { transportDiagnostics } from '@/server/modules/sheets/transport'
+import { paymentsDiagnostics } from '@/server/modules/payments/config'
 import { lastUploadError, photoUploadDiagnostics } from '@/server/modules/uploads/config'
 import { applicationWindow } from '@/lib/dates'
 import { ADMIN_COOKIE, isValidSession, staffList } from '@/lib/adminAuth'
@@ -88,6 +89,11 @@ export async function GET(req: NextRequest) {
     // nearly always the forgotten step: the Sheet was never shared with
     // serviceAccountEmail as an Editor.
     sheets: transportDiagnostics(),
+    // Whether an accepted maker can actually pay. `canConfirmPayments` false
+    // with a live key is the dangerous middle state: makers can be charged and
+    // nothing will ever mark them confirmed, because only a verified webhook
+    // does that (rule 5).
+    payments: paymentsDiagnostics(),
     // Whether the application form can take a photograph at all, and which
     // variable is missing if it cannot. The bucket name and the project host
     // are not secrets; the service key never appears here in any form.

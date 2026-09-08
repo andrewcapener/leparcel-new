@@ -1,0 +1,141 @@
+import { usd } from '@/lib/money'
+import { fmtDateTime } from '@/lib/dates'
+import { payBoothFee } from '@/app/actions'
+import type { Invoice } from '@/server/modules/payments/invoice'
+
+/**
+ * The one screen an accepted maker actually needs.
+ *
+ * Until this existed, `decide()` emailed every accepted maker "Pay to confirm
+ * within 48 hours" and there was nowhere to pay: /account said their
+ * acceptance "carries a payment link" and no such link was ever built. With
+ * roughly a hundred acceptances going out between September 22 and 25, that
+ * was the gap worth closing before anything else.
+ *
+ * Every figure is the booking's own snapshot, so what a maker was quoted at
+ * acceptance is what they are charged, whatever the show settings say later
+ * (CLAUDE.md rule 6). The total is summed from the lines on screen rather than
+ * stored beside them, so the rows a maker adds up cannot disagree with the
+ * button.
+ */
+export function BoothInvoice({
+  invoice, status, dueAt, paidAt, vendorCode,
+  payable, testMode, notice,
+}: {
+  invoice: Invoice
+  status: string
+  dueAt: string
+  paidAt: string | null
+  vendorCode: string
+  /** False when Stripe has no key on this deployment. */
+  payable: boolean
+  testMode: boolean
+  notice?: 'paid' | 'unavailable' | 'missing' | 'failed'
+}) {
+  const paid = status === 'confirmed'
+  const lost = status === 'forfeited' || status === 'cancelled'
+
+  return (
+    <div className="shopify-section section-rich-text" id="booth-fee">
+      <div className="fully-spaced-row--medium" data-cc-animate="">
+        <div className="container container--reading-width">
+          <div className="subheading subheading--over lightish-spaced-row-above">
+            {paid ? 'Your space is confirmed' : 'Your booth fee'}
+          </div>
+
+          <dl className="fact-table">
+            {invoice.lines.map((l) => (
+              <div className="fact-table__row" key={l.label}>
+                <dt>{l.label}</dt>
+                <dd>{usd(l.amountCents)}</dd>
+              </div>
+            ))}
+            <div className="fact-table__row">
+              <dt><strong>Total</strong></dt>
+              <dd><strong>{usd(invoice.totalCents)}</strong></dd>
+            </div>
+            <div className="fact-table__row">
+              <dt>Your Mermade ID</dt>
+              <dd>{vendorCode}</dd>
+            </div>
+            {paid ? (
+              <div className="fact-table__row">
+                <dt>Paid</dt>
+                <dd>{paidAt ? fmtDateTime(paidAt) : 'Yes'}</dd>
+              </div>
+            ) : (
+              <div className="fact-table__row">
+                <dt>Due</dt>
+                <dd>{fmtDateTime(dueAt)}</dd>
+              </div>
+            )}
+          </dl>
+
+          {/* One sentence per state, and never more than one. A maker reading
+              this is often reading it on a phone with a deadline running. */}
+          {paid && (
+            <p className="rte">
+              That is everything. Your space is held and you will hear from us next about
+              load-in. Nothing else is due before the show.
+            </p>
+          )}
+
+          {lost && (
+            <p className="rte">
+              This space is no longer held. Write to us if you think that is wrong and we
+              will look at it the same day.
+            </p>
+          )}
+
+          {!paid && !lost && (
+            <>
+              {notice === 'failed' && (
+                <p className="rte"><strong>
+                  That did not go through, and nothing was charged. Try again, and if it
+                  happens twice write to us rather than trying a third time.
+                </strong></p>
+              )}
+              {notice === 'unavailable' && (
+                <p className="rte"><strong>
+                  Card payment is not switched on yet. Your space is still held and the
+                  deadline will not be held against you.
+                </strong></p>
+              )}
+              {notice === 'missing' && (
+                <p className="rte"><strong>
+                  We could not find the space to charge for. Write to us and we will sort it.
+                </strong></p>
+              )}
+
+              <p className="rte">
+                Pay to confirm. Card or bank transfer, whichever suits you. Bank transfer
+                costs us less, so it is the kinder one on a larger fee, and both confirm
+                the same way.
+              </p>
+
+              {payable ? (
+                <form action={payBoothFee}>
+                  <button className="btn btn--primary" type="submit">
+                    Pay {usd(invoice.totalCents)}
+                  </button>
+                </form>
+              ) : (
+                <p className="rte">
+                  The payment page is not live yet. It will be before your deadline, and we
+                  will email you the moment it is.
+                </p>
+              )}
+
+              {testMode && (
+                <p className="rte"><strong>
+                  Staff note: Stripe is in test mode on this deployment. Nothing here takes
+                  real money.
+                </strong></p>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

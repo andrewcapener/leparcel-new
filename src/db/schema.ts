@@ -256,6 +256,16 @@ export const bookings = pgTable('bookings', {
   paymentDueAt: text('payment_due_at').notNull(),
   paidAt: text('paid_at'),
 
+  /* Stripe. The session is where the maker was sent, the intent is what
+     actually charged, and amountPaidCents is what Stripe says arrived rather
+     than what we believe we asked for: keeping the received amount separate is
+     what turns a short or altered payment into a visible mismatch instead of a
+     booking that quietly reads as paid. Both ids are uniquely indexed so a
+     webhook naming one finds exactly one booking. */
+  stripeSessionId: text('stripe_session_id'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  amountPaidCents: integer('amount_paid_cents'),
+
   createdAt: dbNow('created_at'),
 }, (t) => [
   uniqueIndex('bookings_show_vendor_code').on(t.showId, t.vendorCode),
@@ -276,6 +286,31 @@ export const bookingAddons = pgTable('booking_addons', {
  * CLAUDE.md rule 3 — every state change that touches money or a
  * maker's standing is logged with actor, before, after, reason.
  */
+/**
+ * Every Stripe webhook we have seen, keyed on Stripe's own event id.
+ *
+ * Webhooks are the source of truth for payment state (CLAUDE.md rule 5) and
+ * Stripe delivers at least once, not exactly once: a slow response, a deploy
+ * mid-delivery, or a manual resend all replay the same event. The id is the
+ * primary key, so a replay conflicts and does nothing. Without this a retried
+ * webhook confirms a booking twice and writes two audit rows for one payment.
+ *
+ * `payload` is a trimmed summary, never the raw object and never anything
+ * card-shaped (rule 9). `processedAt` stays null on an event we recorded but
+ * could not finish, which is exactly the list a person needs to look at.
+ */
+export const stripeEvents = pgTable('stripe_events', {
+  id: text('id').primaryKey(),
+  type: text('type').notNull(),
+  bookingId: text('booking_id').references(() => bookings.id),
+  payload: text('payload').notNull().default(''),
+  receivedAt: dbNow('received_at'),
+  processedAt: timestamp('processed_at', { withTimezone: true, mode: 'string' }),
+  error: text('error'),
+}, (t) => [
+  index('stripe_events_booking').on(t.bookingId),
+])
+
 export const auditLog = pgTable('audit_log', {
   id: text('id').primaryKey(),
   entity: text('entity').notNull(),           // 'application' | 'booking'
