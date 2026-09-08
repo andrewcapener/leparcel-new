@@ -8,6 +8,7 @@ import { bpsLabel, usd } from '@/lib/money'
 import { purgeRehearsals } from '@/app/actions'
 import { PageHead, Stats, Stat, ActionCard, Progress } from './ui'
 import { RehearsalLink } from './RehearsalLink'
+import { attributionLabel } from '@/lib/attribution'
 import { REHEARSAL_TTL_MS, rehearsalConfigured, signRehearsalToken } from '@/lib/rehearsal'
 import { siteUrl } from '@/lib/site-url'
 import { Icon } from './Icon'
@@ -127,6 +128,20 @@ export default async function Dashboard() {
       sql`${applications.submittedAt}::timestamptz < ${show.applicationsOpenAt}::timestamptz`,
     ))
   const rehearsalCount = num(rehearsals?.n)
+
+  /* Where this show's applications came from, counted by us.
+     Meta reports the conversions it believes it caused; this is the url the
+     applicant actually arrived on. When the question is whether the ad spend
+     was worth it, the answer should not come from the company selling it. */
+  const sources = await db
+    .select({ attribution: applications.attribution, n: sql<number>`count(*)` })
+    .from(applications)
+    .where(eq(applications.showId, show.id))
+    .groupBy(applications.attribution)
+    .orderBy(sql`count(*) desc`)
+  const fromAds = sources
+    .filter((r) => r.attribution.startsWith('meta/'))
+    .reduce((a, r) => a + num(r.n), 0)
   const rehearsal = state === 'before' && rehearsalConfigured()
     ? `${siteUrl()}/api/rehearse?t=${encodeURIComponent(
         await signRehearsalToken(Math.min(Date.now() + REHEARSAL_TTL_MS, opensAt)),
@@ -182,6 +197,34 @@ export default async function Dashboard() {
           link={{ href: '/admin/roster', label: 'Roster' }}
         />
       </div>
+
+      {/* Only once something has been tagged. Before the first tagged click
+          this is a row of zeroes that says nothing. */}
+      {sources.some((r) => r.attribution !== '') && (
+        <>
+          <div className="adm-sec" id="sources"><h2>Where applications come from</h2>
+            <span className="c">{fromAds} from ads</span>
+          </div>
+          <table className="adm-tbl adm-tbl--tight">
+            <thead>
+              <tr><th scope="col">Source</th><th scope="col" className="n">Applications</th></tr>
+            </thead>
+            <tbody>
+              {sources.map((r) => (
+                <tr key={r.attribution || 'direct'}>
+                  <td>{attributionLabel(r.attribution)}</td>
+                  <td className="n">{num(r.n)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="adm-note">
+            Counted from the link each applicant arrived on, not from what the ad platform
+            reports. Meta counts a view a week earlier as its doing; this does not.
+          </p>
+          <div style={{ height: 26 }} />
+        </>
+      )}
 
       {rehearsalCount > 0 && (
         <>

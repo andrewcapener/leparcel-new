@@ -9,6 +9,7 @@ import { submitApplication, type FormState } from '@/app/actions'
 import { CATEGORIES, type AddOn, type Show, type SpaceType } from '@/db/schema'
 import { dayBefore, fmtWeekdayDate } from '@/lib/dates'
 import { bpsLabel, usd } from '@/lib/money'
+import { attributionFrom } from '@/lib/attribution'
 import { spaceAllowed } from '@/server/modules/spaces/eligibility'
 import { PhotoField } from './PhotoField'
 import type { PhotoItem } from './photo-upload'
@@ -202,6 +203,21 @@ export function ApplyForm({
    *  where the photo field explains itself and the form still submits. */
   uploads: boolean
 }) {
+  /* The applicant's own url, captured once on arrival. sessionStorage keeps
+     it if they wander off to read the rules and come back, which a maker
+     filling in forty six fields very often does. */
+  const attributionRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const KEY = 'mm_attribution'
+    let value = ''
+    try { value = sessionStorage.getItem(KEY) ?? '' } catch { /* private mode */ }
+    if (!value) {
+      value = attributionFrom(window.location.search, document.referrer)
+      try { if (value) sessionStorage.setItem(KEY, value) } catch { /* fine */ }
+    }
+    if (attributionRef.current) attributionRef.current.value = value
+  }, [])
+
   const [state, action, pending] = useActionState(submitApplication, initial)
   const e = state.errors ?? {}
   const v = state.values ?? {}
@@ -660,6 +676,11 @@ export function ApplyForm({
                     was ticked, so without this the server would rebuild the
                     same wrong order that the screen just stopped showing. */}
                 <input type="hidden" name="spaceOrder" value={chosen.map((s) => s.id).join(',')} />
+                {/* Where they came from, read off the url they arrived on.
+                    Populated by an effect rather than at render, because the
+                    server has no query string to render from and a mismatch
+                    between the two would be a hydration error. */}
+                <input type="hidden" name="attribution" ref={attributionRef} />
                 {visible.map((s) => {
                   const rank = chosen.indexOf(s)
                   /* Elise's curation rules, said at the option rather than

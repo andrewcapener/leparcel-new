@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { decide } from '@/app/actions'
 import { usd } from '@/lib/money'
+import { attributionLabel } from '@/lib/attribution'
 import { fmtDateTime } from '@/lib/dates'
 import { Icon } from '../Icon'
 import type { Application, ApplicationStatus, Vendor } from '@/db/schema'
@@ -185,6 +186,14 @@ export function ApplicationRow({
                   <tr>
                     <th scope="row">Submitted</th>
                     <td className="n">{fmtDateTime(app.submittedAt)}</td>
+                  </tr>
+                  {/* Counted by us, not by the ad platform. Meta reports the
+                      conversions it believes it caused and that number is
+                      generous by construction; this one is the url the
+                      applicant actually arrived on. */}
+                  <tr>
+                    <th scope="row">Came from</th>
+                    <td>{attributionLabel(app.attribution ?? '')}</td>
                   </tr>
                 </tbody>
               </table>

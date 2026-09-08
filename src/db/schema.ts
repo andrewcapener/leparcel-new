@@ -212,6 +212,9 @@ export const applications = pgTable('applications', {
 
   status: text('status').notNull().default('new'),
   submittedAt: dbNow('submitted_at'),
+  /** Where they came from: "meta/paid/fall26_applications/warm", or ''.
+   *  Attacker-controlled, so src/lib/attribution.ts strips it first. */
+  attribution: text('attribution').notNull().default(''),
 
   // jury record
   scoreQuality: integer('score_quality'),

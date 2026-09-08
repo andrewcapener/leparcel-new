@@ -24,6 +24,7 @@ import { CONTACT_EMAIL } from '@/lib/agreement'
 import { parsePhotoKeys } from '@/server/modules/uploads/photos'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
+import { cleanAttribution } from '@/lib/attribution'
 import { spaceAllowed } from '@/server/modules/spaces/eligibility'
 import { previewingOpenWindow } from '@/lib/preview'
 import { siteUrl } from '@/lib/site-url'
@@ -480,6 +481,12 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   // moved, or changed a handle was juried on last season's record while their
   // screen said "Thank you for applying". The application is the most recent
   // thing they have told us; it wins.
+  /* Where they came from. Re-cleaned here rather than trusted: the hidden
+     field is posted by a browser and a posted value is a posted value.
+     attributionFrom takes a query string, so the stored value is fed back
+     through as one. */
+  const attribution = cleanAttribution(String(fd.get('attribution') ?? ''))
+
   const email = d.email.trim().toLowerCase()
   const details = {
     shopName: d.shopName, contactName: d.contactName,
@@ -567,6 +574,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   const appId = randomUUID()
   const row = {
     id: appId, showId: show.id, vendorId: vendor!.id,
+    attribution,
     track: d.track, spaceTypeId: space.id,
     requestedSpaceIds: JSON.stringify(requestedIds),
     category: d.category, description: d.description,
