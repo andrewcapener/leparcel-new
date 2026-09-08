@@ -166,6 +166,29 @@ export async function queueMissing(db: DbHandle, showId?: string): Promise<numbe
 }
 
 /**
+ * How many applications have no sheet_syncs row at all.
+ *
+ * Distinct from `pending` and `failed`, which are rows the retry already
+ * knows about. An application with no row is invisible to every retry there
+ * is, which is what every application in production was while migration 0003
+ * sat unapplied. Counted so a person can see it, and cleared by queueMissing.
+ */
+export async function unqueuedCount(db: DbHandle): Promise<number> {
+  try {
+    const [row] = await db
+      .select({ n: sql<number>`count(*)` })
+      .from(applications)
+      .where(sql`not exists (
+        select 1 from ${sheetSyncs} where ${sheetSyncs.applicationId} = ${applications.id}
+      )`)
+    return Number(row?.n ?? 0)
+  } catch (err) {
+    if (!tolerable(err, 'unqueued')) throw err
+    return 0
+  }
+}
+
+/**
  * Counts by status and the last error, for /api/health. Counts and reasons
  * only: no shop names, no addresses, nothing a public endpoint should not
  * carry.

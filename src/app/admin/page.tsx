@@ -5,7 +5,9 @@ import { activeShow } from '@/db/queries'
 import { applications, bookings, emailOutbox, vendors } from '@/db/schema'
 import { fmtDate, fmtDateTime, fmtRange, applicationWindow } from '@/lib/dates'
 import { bpsLabel, usd } from '@/lib/money'
-import { purgeRehearsals } from '@/app/actions'
+import { purgeRehearsals, syncSheetBacklog } from '@/app/actions'
+import { sheetsConfigured } from '@/server/modules/sheets/sync'
+import { syncDiagnostics, unqueuedCount } from '@/server/modules/sheets/state'
 import { PageHead, Stats, Stat, ActionCard, Progress } from './ui'
 import { RehearsalLink } from './RehearsalLink'
 import { attributionLabel } from '@/lib/attribution'
@@ -142,6 +144,15 @@ export default async function Dashboard() {
   const fromAds = sources
     .filter((r) => r.attribution.startsWith('meta/'))
     .reduce((a, r) => a + num(r.n), 0)
+  /* What the Google Sheet is still missing.
+     Two different holes, and the difference matters. `unsent` is queued or
+     given up, and the retry knows about it. `unqueued` is an application with
+     no sheet_syncs row at all, which nothing would ever look at: that is what
+     the whole show's applications were while migration 0003 sat unapplied in
+     production. Both are fixed by the same button. */
+  const sheet = await syncDiagnostics(db)
+  const behind = sheet.pending + sheet.failed + (await unqueuedCount(db))
+
   const rehearsal = state === 'before' && rehearsalConfigured()
     ? `${siteUrl()}/api/rehearse?t=${encodeURIComponent(
         await signRehearsalToken(Math.min(Date.now() + REHEARSAL_TTL_MS, opensAt)),
@@ -247,6 +258,36 @@ export default async function Dashboard() {
           <form action={purgeRehearsals}>
             <button className="adm-btn" type="submit">
               Delete {rehearsalCount} test application{rehearsalCount === 1 ? '' : 's'}
+            </button>
+          </form>
+          <div style={{ height: 26 }} />
+        </>
+      )}
+
+      {sheetsConfigured() && behind > 0 && (
+        <>
+          <div className="adm-sec" id="sheet" style={{ scrollMarginTop: '24px' }}>
+            <h2>Google Sheet</h2>
+            <span className="c">{behind} not in the Sheet</span>
+          </div>
+          <p className="adm-note">
+            {behind} application{behind === 1 ? '' : 's'} {behind === 1 ? 'has' : 'have'} not
+            reached the Sheet
+            {sheet.failed > 0
+              ? `, ${sheet.failed} of them after giving up on retries`
+              : ''}. Sending is safe to repeat: each row is keyed on the application id, so a
+            re-send updates the row it already wrote rather than adding a second one. Nothing
+            in the queue is at risk either way, since the applications themselves live in this
+            database and the Sheet is a copy.
+          </p>
+          {sheet.lastFailure?.detail ? (
+            <p className="adm-note">
+              Last failure: <span className="mono">{sheet.lastFailure.detail}</span>
+            </p>
+          ) : null}
+          <form action={syncSheetBacklog}>
+            <button className="adm-btn" type="submit">
+              Send {behind} to the Sheet
             </button>
           </form>
           <div style={{ height: 26 }} />

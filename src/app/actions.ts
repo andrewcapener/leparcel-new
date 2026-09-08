@@ -15,7 +15,8 @@ import {
 import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
 import { usd } from '@/lib/money'
 import { plainDashes } from '@/lib/dashes'
-import { syncApplication } from '@/server/modules/sheets/sync'
+import { syncApplication, sheetsConfigured } from '@/server/modules/sheets/sync'
+import { queueMissing, unsentApplicationIds } from '@/server/modules/sheets/state'
 import { gatherRow } from '@/server/modules/sheets/gather'
 import { SHEET_HEADERS, sheetValues } from '@/server/modules/sheets/row'
 import { staffNoticeHtml } from '@/server/modules/email/staff-notice'
@@ -1292,4 +1293,51 @@ export async function updateAddOn(fd: FormData): Promise<void> {
   revalidatePath('/apply')
   revalidatePath('/makers/indoor')
   revalidatePath('/makers/outdoor')
+}
+
+/**
+ * Send every application the Google Sheet is still missing.
+ *
+ * There has been a way to do this since the sync was built: `npx tsx
+ * scripts/sync-sheets.ts`. Nobody who runs this business has a terminal with
+ * production's credentials in it, which made "the Sheet is behind" a thing
+ * only an engineer could fix. It happened for real: migration 0003 sat in the
+ * migrate runner's baseline list, so sheet_syncs never existed in production
+ * and not one application ever reached the Sheet. The migration is fixed, and
+ * this is the button that catches the Sheet up.
+ *
+ * Two steps, the same two the script does. `queueMissing` gives a sheet_syncs
+ * row to every application that never got one, which is what makes anything
+ * submitted during the outage visible to the retry at all. Then every row that
+ * is not `sent` is posted, oldest first.
+ *
+ * Safe to press twice. The Sheet is keyed on the application id, so a re-send
+ * updates the row it already wrote rather than appending a second one, and an
+ * application already marked sent is not in the list.
+ */
+export async function syncSheetBacklog(): Promise<void> {
+  if (!sheetsConfigured()) {
+    /* No transport, nothing to post to. The dashboard only renders the button
+       when one is configured, so this is the double-submit case, not a state
+       a person can navigate to. */
+    redirect('/admin')
+  }
+
+  await queueMissing(db)
+  const ids = await unsentApplicationIds(db)
+
+  /* One at a time with a breath between, same as the script: Apps Script is
+     rate limited and the Sheets API is not fast. 250ms x 100 applications is
+     inside every quota and finishes inside a request. */
+  for (const id of ids) {
+    await syncApplication(db, id)
+    await new Promise((r) => setTimeout(r, 250))
+  }
+
+  revalidatePath('/admin')
+  /* Leave rather than re-render: the button lives inside a block that only
+     exists while something is unsent, so a successful run unmounts the form
+     whose action is still in flight. That is exactly what turned the rehearsal
+     purge into a blank page. */
+  redirect('/admin')
 }
