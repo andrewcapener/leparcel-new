@@ -107,7 +107,7 @@ Under Stripe's current controller-properties model this means:
 | Stripe Reader M2 | $59 | Bluetooth, pairs to a tablet. Good cold spare. |
 | Tap to Pay on iPhone | $0 | No hardware. Good emergency backup on a staff phone. **Android has no offline mode** — iPhone only for this role. |
 
-**Buy: 2× S710 (two lanes) + 1× S700 (spare) + 1× M2 (emergency).** ≈ $900. Order by **early October** — Stripe publishes no shipping SLA, and you want three weeks of testing, not three days.
+**Buy: 3× S710 (two lanes + spare) + 1× M2 (emergency).** ≈ $900. All cellular, deliberately: with no offline mode available to a web POS (§4.2), the reader carrying its own connection is the resilience, and a wifi-only S700 spare would be a spare that cannot save you. Order by **early October** — Stripe publishes no shipping SLA, and you want three weeks of testing, not three days.
 
 ### 4.2 Network — take this seriously
 
@@ -116,19 +116,72 @@ Do not run the register on venue wifi. Bring:
 - A second carrier's hotspot as failover
 - Ethernet docks for the S700s where the physical layout allows — wired beats wireless every time
 
-Stripe Terminal's offline mode has hard constraints worth knowing before you rely on it:
+> **⚠️ Corrected September 8, 2026.** The offline design below was written for a
+> browser-based POS, and a browser-based POS **cannot use it**. Verified against
+> Stripe's docs, not recalled. See §4.3 for what replaces it.
+>
+> Offline payments on smart readers (S700/S710, WisePOS E) are listed as
+> supported on the **iOS SDK, Android SDK and React Native SDK**. The
+> JavaScript SDK is not on that list, and neither is the server-driven
+> integration. A tablet PWA at `/pos` therefore has **no offline card path at
+> all** — not a capped one, not a degraded one, none.
+>
+> This is the single most important constraint in the whole POS decision and it
+> was wrong in this document for three weeks. Everything that follows in this
+> section describes offline mode accurately, and none of it is reachable from
+> the architecture §4.3 originally specified.
+
+Stripe Terminal's offline mode has hard constraints worth knowing **if you ever
+move to a native or React Native POS** to get it:
 - Reader must have been **online within the last 24 hours**
 - Must be on the **same local network** it was online on — you cannot switch networks while offline
 - **$10,000 max per offline transaction**
 - **You own 100% of the decline risk.** The card isn't authorized until connectivity returns. If it declines, the goods are gone and Stripe explicitly says there's no recovery.
 
-→ Cap offline transactions in your POS logic (I'd set $300/txn and a $3,000 running accumulation before the register refuses card and demands cash), and surface `offlineStatus.reader.offlinePaymentsCount` on the admin live dashboard.
+→ If offline is ever built, cap it in POS logic (I'd set $300/txn and a $3,000
+running accumulation before the register refuses card and demands cash), and
+surface `offlineStatus.reader.offlinePaymentsCount` on the admin live dashboard.
+
+**What this means for November, since offline is off the table for a web POS:**
+the network is not a resilience layer, it is a hard dependency. Buy the
+**S710 (cellular)** rather than the S700 so the reader carries its own
+connection and does not depend on the venue at all, put the tablet on a
+dedicated cellular router, and make **cash the documented fallback** the moment
+the register cannot reach Stripe. Say that out loud in staff training rather
+than discovering it at the counter.
 
 ### 4.3 POS application design
 
-Tablet PWA at `/pos`. iPad or an Android tablet, doesn't matter.
+**Use the server-driven integration, not the Terminal JavaScript SDK.** This
+reverses what this section said originally, and it makes the build
+substantially smaller rather than larger.
 
-**Offline-first is the architecture, not a feature:**
+Stripe's own recommendation, verbatim from the smart-reader connection docs:
+
+> For smart readers, such as the BBPOS WisePOS E reader, Stripe Reader
+> S700/S710, and Verifone readers, we recommend using the server-driven
+> integration instead of the JavaScript SDK. The JavaScript SDK requires your
+> POS and reader on the same local network with working local DNS.
+
+Two things make the JS SDK a bad bet in a rented hall specifically. It needs the
+tablet and the reader on the **same local network with working local DNS**,
+which is exactly the thing a venue network is worst at. And since **Chrome 142**
+(October 2025) the browser requires an explicit local-network permission before
+a site may talk to a reader at all, which is one more prompt for a volunteer to
+get wrong on a Saturday morning.
+
+Server-driven has none of that. Our server creates the PaymentIntent and hands
+it to the reader through the Stripe API (`POST
+/v1/terminal/readers/{id}/process_payment_intent`); the reader talks to Stripe
+over its own internet connection. No SDK in the browser, no local network
+assumption, no discovery or pairing dance, no `onUnexpectedReaderDisconnect`
+handling. The register UI becomes an ordinary authenticated page in this app
+that posts to our own routes.
+
+The cost is stated plainly in §4.2: **no offline mode.** That is the trade, and
+it is the whole trade.
+
+**The catalog half is still local and still worth doing:**
 
 ```
 OPEN REGISTER
@@ -140,8 +193,11 @@ SCAN
      Barcode → local lookup → cart line. <200ms. NEVER hits the network.
 
 TENDER
-  ├─ ONLINE:  create PaymentIntent → Terminal collects → capture → confirm
-  └─ OFFLINE: Terminal offline flow (within caps) OR cash
+  ├─ CARD: our server creates the PaymentIntent, then POSTs it to the reader
+  │        (/v1/terminal/readers/{id}/process_payment_intent). The reader
+  │        prompts, takes the card, and talks to Stripe itself. Needs network.
+  └─ CASH: always available, and the ONLY fallback when the network is gone,
+           because a web POS has no offline card path. See §4.2.
      Either way: write the sale to IndexedDB with a client-minted UUID
 
 SYNC
