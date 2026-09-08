@@ -35,7 +35,7 @@ import {
 } from '@/lib/makerAuth'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
-import { sendLead } from '@/server/modules/meta/capi'
+import { sendLead, newEventId } from '@/server/modules/meta/capi'
 
 /* ═══════════════════════ helpers ═══════════════════════ */
 
@@ -149,6 +149,10 @@ export type FormState = {
   /** Increments per submission. The client keys the <form> on it so the
    *  uncontrolled inputs remount and pick up the echoed values. */
   attempt?: number
+  /** The Meta event id for a successful application, handed to the browser so
+   *  the pixel's Lead and the server's Lead carry the SAME id and Meta counts
+   *  one. Never set on a failure, and it identifies an event, not a person. */
+  metaEventId?: string
 }
 
 /* ═══════════════════════ newsletter ═══════════════════════ */
@@ -696,10 +700,19 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
      algorithm, exactly like somebody who bounced.
      Inert until a pixel id and a CAPI token are configured, and it cannot
      throw: a marketing signal must never cost a maker their application. */
+  /* Minted here rather than inside sendLead, because the browser needs the
+     same value: the pixel fires Lead on the thank-you screen with this id and
+     Meta keeps one of the two. Before this, the server event was the only
+     Lead, so there was nothing to deduplicate and, more to the point, nothing
+     a Custom Audience could exclude on. Retargeting people who opened the
+     form and did NOT finish it needs a browser-side signal for the ones who
+     did. */
+  const metaEventId = newEventId()
   try {
     const h = await headers()
     const r = await sendLead({
       email,
+      eventId: metaEventId,
       phone: d.phone || undefined,
       sourceUrl: `${siteUrl()}/apply`,
       /* Meta's own click and browser cookies, when the browser set them.
@@ -716,7 +729,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   }
 
   revalidatePath('/admin/jury')
-  return { ok: true, attempt, message: 'submitted' }
+  return { ok: true, attempt, message: 'submitted', metaEventId }
 }
 
 /**

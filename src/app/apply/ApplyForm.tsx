@@ -298,6 +298,25 @@ export function ApplyForm({
     })
   }, [])
 
+  /* Tell the pixel an application happened, once.
+     The server already sends this through the Conversions API, and both carry
+     the SAME event id, so Meta keeps one of the two rather than counting the
+     application twice. Both halves are worth having: the server event survives
+     an ad blocker and a closed tab, and the browser event is the one a Custom
+     Audience can be built on, which is what lets us retarget the people who
+     opened this form and never finished it without also chasing the people who
+     did.
+     The ref guards the double-invoke in development and any re-render of the
+     thank-you screen. It fires no personal data: the id identifies the event,
+     and the email reaches Meta only from the server, hashed. */
+  const leadSent = useRef(false)
+  useEffect(() => {
+    if (!state.ok || !state.metaEventId || leadSent.current) return
+    leadSent.current = true
+    const fbq = (window as unknown as { fbq?: (...a: unknown[]) => void }).fbq
+    fbq?.('track', 'Lead', {}, { eventID: state.metaEventId })
+  }, [state.ok, state.metaEventId])
+
   // A rejected submit has to land somewhere a screen reader and a thumb both
   // find. The summary is outside the keyed form so it survives the remount,
   // and the step underneath it is changed to the first one with a problem.
