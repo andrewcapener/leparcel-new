@@ -387,6 +387,18 @@ export function PageFooter({ show }: { show: Show }) {
               <div className="copyright">
                 <span className="copy">
                   &copy; {new Date().getFullYear()} <Link href="/">Mermade Market</Link>.
+                  {' '}
+                  {/* Studio credit. A plain external anchor rather than next/link,
+                      because it leaves the site; noopener because target _blank
+                      without it hands the new tab a reference back to this one. */}
+                  <a
+                    className="section-footer__credit"
+                    href="https://houseworkgroup.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Site by Housework
+                  </a>
                 </span>
               </div>
             </div>

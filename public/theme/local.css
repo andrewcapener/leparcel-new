@@ -373,6 +373,16 @@ h3, .h3 { line-height: 1.15; }
 .copyright a,
 .pagination-row a { display: inline-block; padding: 6px 0; }
 
+/* Studio credit. It sits after the copyright and reads as subordinate from
+   its position and its wording, NOT from being faded.
+   Measured before shipping: the footer is rgb(197,185,185) under
+   rgb(78,68,68) text, which is 4.93:1 at 12px. That clears WCAG 2.2 AA's
+   4.5:1 with almost nothing to spare, so there is no headroom to lighten
+   anything on this background. A first pass at opacity .62 took it to 2.51:1,
+   which is a diligence finding waiting to happen (CLAUDE.md). Spacing does
+   the job instead. */
+.section-footer__credit { margin-left: .35em; }
+
 /* The apply page outside the application window. Their `signup-form` is
    built for the footer's dark column and stretches to it; here it sits in a
    reading-width block on white, so it is held to the width of the sentence
