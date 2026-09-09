@@ -12,6 +12,11 @@ import { bpsLabel } from '@/lib/money'
 import { MAKER_COOKIE, readSession } from '@/lib/makerAuth'
 import { SignInForm } from './SignInForm'
 import { BoothInvoice } from './BoothInvoice'
+import { Checklist } from './Checklist'
+import { YourApplication } from './YourApplication'
+import { checklistFor, clearForLoadIn } from '@/server/modules/compliance/checklist'
+import { settlesInsideWindow, offersCard } from '@/server/modules/payments/methods'
+import { CONTACT_EMAIL } from '@/lib/agreement'
 import { boothInvoice } from '@/server/modules/payments/booth'
 import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
 import { bookings } from '@/db/schema'
@@ -80,15 +85,11 @@ export default async function Account({
   }
 
   /* ── signed in ───────────────────────────────────────────────────────── */
+  /* The whole row. This page now shows a maker everything they submitted, so
+     picking columns here would mean editing two places every time the form
+     grows a field. Nothing here is secret from the person who wrote it. */
   const [app] = await db
-    .select({
-      id: applications.id,
-      status: applications.status,
-      track: applications.track,
-      category: applications.category,
-      submittedAt: applications.submittedAt,
-      requestedSpaceIds: applications.requestedSpaceIds,
-    })
+    .select()
     .from(applications)
     .where(and(eq(applications.vendorId, vendor.id), eq(applications.showId, show.id)))
     .orderBy(desc(applications.submittedAt))
@@ -117,13 +118,43 @@ export default async function Account({
       ? (sp.pay as 'unavailable' | 'missing' | 'failed')
       : undefined
 
+  /* What we need from them, and where each thing stands. The rule for who
+     owes what lives in compliance/checklist.ts and is shared with the admin,
+     rather than being a condition written out twice and drifting. */
+  const checklist = app
+    ? checklistFor({
+        applicationStatus: app.status,
+        track: app.track,
+        booking: billing
+          ? { status: billing.booking.status, paymentDueAt: billing.booking.paymentDueAt }
+          : undefined,
+        sellerPermit: app.sellerPermit,
+        occasionalSeller: app.occasionalSeller,
+        hasCoi: app.hasCoi,
+        /* Load-in is the day before the show opens. Not a date we invent to
+           create urgency: it is the day the doors need everything in order. */
+        loadInAt: show.startsOn,
+        nowIso: new Date().toISOString(),
+        contactEmail: CONTACT_EMAIL,
+        startOnly: !settlesInsideWindow(show.paymentMethods),
+      })
+    : []
+
   return (
     <SiteShell show={show} template="page template-suffix-account">
       <PageTitle title={vendor.shopName} />
 
-      {/* First on the page when there is money owed, because a maker who
-          signed in from an acceptance email came here to do exactly one
-          thing. */}
+      {/* The checklist first, because it answers the question a maker
+          actually arrived with: what does Mermade need from me, and when.
+          The invoice below is one row of it. */}
+      {checklist.length > 0 && (
+        <Checklist
+          items={checklist}
+          clear={clearForLoadIn(checklist)}
+          feeDeadlineIsStart={!settlesInsideWindow(show.paymentMethods)}
+        />
+      )}
+
       {billing && (
         <BoothInvoice
           invoice={billing.invoice}
@@ -153,11 +184,9 @@ export default async function Account({
                     : STATUS[app.status] ?? app.status
                 }</strong>,
               },
-              { label: 'Applied', value: fmtDateTime(String(app.submittedAt)) },
-              { label: 'Track', value: app.track === 'indoor' ? 'Inside, consignment' : app.track === 'outdoor' ? 'Outside, your own tent day' : 'Either, whichever we can fit' },
-              { label: 'Category', value: app.category },
-              ...(asked.length > 0 ? [{ label: 'Spaces you asked for', value: asked.join(' · ') }] : []),
               { label: 'Roster announced', value: fmtDate(show.rosterAnnouncedOn) },
+              { label: 'The show', value: `${fmtDate(show.startsOn)} to ${fmtDate(show.endsOn)}, ${show.venueName}` },
+              ...(billing ? [{ label: 'Your Mermade ID', value: billing.booking.vendorCode }] : []),
             ]
           : [
               { label: 'Where it stands', value: <>No application to {show.name} yet from this address.</> },
@@ -166,16 +195,16 @@ export default async function Account({
         cta={app ? undefined : { href: '/apply', label: 'Apply to sell' }}
       />
 
-      <FactTable
-        title="Your details"
-        rows={[
-          { label: 'Shop', value: vendor.shopName },
-          { label: 'You', value: vendor.contactName },
-          { label: 'Email', value: vendor.email },
-          { label: 'Instagram', value: vendor.instagram || 'Not given' },
-          { label: 'Where you are', value: [vendor.city, vendor.state].filter(Boolean).join(', ') || 'Not given' },
-        ]}
-      />
+      {/* Everything they wrote, given back to them. An application is the
+          longest form this business asks anybody to fill in and it used to
+          vanish the moment it was sent. */}
+      {app && (
+        <YourApplication
+          app={app}
+          vendor={vendor}
+          spacesAsked={asked}
+        />
+      )}
 
       {/* How the money moves, both directions, on the one page a maker is
           signed into. Drew's call, 6 Sep 2026: payouts move off the Zelle and
@@ -193,9 +222,17 @@ export default async function Account({
         rows={[
           {
             label: 'Your booth fee',
-            value: billing
-              ? <>Above, on this page. Card or bank transfer, whichever suits you, due within {show.paymentWindowHours} hours of being accepted.</>
-              : <>If you are accepted, it appears on this page and is due within {show.paymentWindowHours} hours. Card or bank transfer, whichever suits you.</>,
+            /* Never offer a method the Show is not accepting. This row and
+               the invoice above it are on the same page, and disagreeing
+               about how somebody may pay is exactly what a maker writes in
+               about. */
+            value: offersCard(show.paymentMethods)
+              ? billing
+                ? <>Above, on this page. Card or bank transfer, whichever suits you, due within {show.paymentWindowHours} hours of being accepted.</>
+                : <>If you are accepted, it appears on this page and is due within {show.paymentWindowHours} hours. Card or bank transfer, whichever suits you.</>
+              : billing
+                ? <>Above, on this page, by bank transfer. Start it within {show.paymentWindowHours} hours of being accepted and your space is held while it clears.</>
+                : <>If you are accepted, it appears on this page. Bank transfer, started within {show.paymentWindowHours} hours of being accepted.</>,
           },
           ...(app?.track === 'outdoor' ? [] : [{
             label: 'What you sell inside',

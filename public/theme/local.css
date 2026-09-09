@@ -2455,3 +2455,53 @@ h3, .h3 { line-height: 1.15; }
     padding: 26px 22px;
   }
 }
+
+/* ── The maker's checklist ─────────────────────────────────────────────
+   Rows, not cards. Each one is a requirement with a state, and a card per
+   requirement would give five equal boxes on a page whose whole job is
+   saying which ONE thing needs you. The left rule carries the state, and
+   the word beside the title carries it again for anyone who cannot see
+   the rule (WCAG 2.2 AA, 1.4.1: never colour alone). */
+.mk-lede { margin-bottom: 1.4em; }
+
+.mk-check { list-style: none; margin: 0; padding: 0; }
+
+.mk-check__row {
+  border-left: 3px solid rgba(0, 0, 0, .16);
+  padding: .95em 0 .95em 1.1em;
+  margin: 0 0 .85em;
+}
+.mk-check__row[data-state="todo"]    { border-left-color: #BC9658; }
+.mk-check__row[data-state="overdue"] { border-left-color: #9B3B2F; }
+.mk-check__row[data-state="done"]    { border-left-color: rgba(0, 0, 0, .28); }
+.mk-check__row[data-state="waiting"] { border-left-color: rgba(0, 0, 0, .1); }
+
+.mk-check__head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 1em; margin-bottom: .3em;
+}
+.mk-check__title { font-weight: 700; }
+.mk-check__title a { text-decoration: underline; text-underline-offset: 2px; }
+
+.mk-check__state {
+  flex: none; font-size: .78em; letter-spacing: .06em; text-transform: uppercase;
+  white-space: nowrap;
+}
+/* Done and Not yet are quieter than the two that want something, but never
+   quiet enough to fail contrast: this is body-size text on a light ground. */
+.mk-check__row[data-state="done"] .mk-check__state,
+.mk-check__row[data-state="waiting"] .mk-check__state { color: #5F5A57; }
+.mk-check__row[data-state="overdue"] .mk-check__state { color: #9B3B2F; font-weight: 700; }
+
+.mk-check__detail { margin: 0; }
+.mk-check__due { margin: .35em 0 0; font-size: .9em; color: #5F5A57; }
+
+@media (max-width: 600px) {
+  /* The state word wraps under the title rather than squeezing it. */
+  .mk-check__head { display: block; }
+  .mk-check__state { display: block; margin-top: .2em; }
+}
+
+/* A quiet aside under a fact table. Not faded: this footer ground is already
+   close to the AA floor, so subordination is size and spacing, never opacity. */
+.mk-note { font-size: .92em; margin-top: 1.2em; }
