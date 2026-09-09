@@ -44,6 +44,8 @@ async function navCounts(showId: string | undefined, openAt: string | undefined)
       eq(bookings.showId, showId),
       or(
         and(eq(applications.sellerPermit, ''), eq(applications.occasionalSeller, false)),
+        /* Unpaid only. A bank transfer in flight is not a thing anybody
+           needs to act on: see booking-status.ts. */
         eq(bookings.status, 'awaiting_payment'),
         eq(applications.hasCoi, false),
       ),

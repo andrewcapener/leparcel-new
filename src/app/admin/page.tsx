@@ -6,6 +6,7 @@ import { applications, bookings, emailOutbox, vendors } from '@/db/schema'
 import { fmtDate, fmtDateTime, fmtRange, applicationWindow } from '@/lib/dates'
 import { bpsLabel, usd } from '@/lib/money'
 import { purgeRehearsals, syncSheetBacklog } from '@/app/actions'
+import { holdsSpace, isPaid, needsChasing } from '@/server/modules/payments/booking-status'
 import { sheetsConfigured } from '@/server/modules/sheets/sync'
 import { syncDiagnostics, unqueuedCount } from '@/server/modules/sheets/state'
 import { PageHead, Stats, Stat, ActionCard, Progress } from './ui'
@@ -65,15 +66,15 @@ export default async function Dashboard() {
     .innerJoin(applications, eq(bookings.applicationId, applications.id))
     .where(eq(bookings.showId, show.id))
 
-  const live = held.filter((r) => ['confirmed', 'awaiting_payment'].includes(r.booking.status))
-  const confirmed = held.filter((r) => r.booking.status === 'confirmed')
+  const live = held.filter((r) => holdsSpace(r.booking.status))
+  const confirmed = held.filter((r) => isPaid(r.booking.status))
   const collected = confirmed.reduce((a, r) => a + r.booking.priceCents, 0)
   const expected = live.reduce((a, r) => a + r.booking.priceCents, 0)
 
   const documented = (a: typeof held[number]['app']) =>
     Boolean(a.sellerPermit.trim()) || a.occasionalSeller
   const needsPerson = held.filter(
-    (r) => !documented(r.app) || r.booking.status === 'awaiting_payment' || !r.app.hasCoi,
+    (r) => !documented(r.app) || needsChasing(r.booking.status) || !r.app.hasCoi,
   ).length
 
   /* Spaces held per track. A `both` acceptance holds one on each side, so

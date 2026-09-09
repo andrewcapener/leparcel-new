@@ -34,13 +34,18 @@ export function BoothInvoice({
 }) {
   const paid = status === 'confirmed'
   const lost = status === 'forfeited' || status === 'cancelled'
+  /* Bank transfer authorised, money still moving. Stripe puts ACH settlement
+     at about four business days, which is longer than the payment window, so
+     this state exists to tell a maker the truth: you have done your part and
+     the space is yours while the transfer clears. */
+  const inFlight = status === 'payment_processing'
 
   return (
     <div className="shopify-section section-rich-text" id="booth-fee">
       <div className="fully-spaced-row--medium" data-cc-animate="">
         <div className="container container--reading-width">
           <div className="subheading subheading--over lightish-spaced-row-above">
-            {paid ? 'Your space is confirmed' : 'Your booth fee'}
+            {paid ? 'Your space is confirmed' : inFlight ? 'Your transfer is on its way' : 'Your booth fee'}
           </div>
 
           <dl className="fact-table">
@@ -63,6 +68,11 @@ export function BoothInvoice({
                 <dt>Paid</dt>
                 <dd>{paidAt ? fmtDateTime(paidAt) : 'Yes'}</dd>
               </div>
+            ) : inFlight ? (
+              <div className="fact-table__row">
+                <dt>Status</dt>
+                <dd>Bank transfer sent, clearing now</dd>
+              </div>
             ) : (
               <div className="fact-table__row">
                 <dt>Due</dt>
@@ -80,6 +90,14 @@ export function BoothInvoice({
             </p>
           )}
 
+          {inFlight && (
+            <p className="rte">
+              We have your bank transfer and your space is held. Transfers take about four
+              business days to arrive, so there is nothing more for you to do and the
+              deadline does not apply to you any more. We will email you when it lands.
+            </p>
+          )}
+
           {lost && (
             <p className="rte">
               This space is no longer held. Write to us if you think that is wrong and we
@@ -87,7 +105,7 @@ export function BoothInvoice({
             </p>
           )}
 
-          {!paid && !lost && (
+          {!paid && !lost && !inFlight && (
             <>
               {notice === 'failed' && (
                 <p className="rte"><strong>

@@ -49,11 +49,12 @@ function signed(body: unknown) {
 }
 
 const sessionEvent = (opts: {
-  eventId: string; bookingId: string; amountTotal: number; paymentStatus?: string
+  eventId: string; bookingId: string; amountTotal: number
+  paymentStatus?: string; type?: string
 }) => ({
   id: opts.eventId,
   object: 'event',
-  type: 'checkout.session.completed',
+  type: opts.type ?? 'checkout.session.completed',
   data: {
     object: {
       id: `cs_test_${opts.bookingId.slice(0, 8)}`,
@@ -114,15 +115,70 @@ async function main() {
     const [shortRow] = await db.select().from(stripeEvents).where(eq(stripeEvents.id, shortId))
     check('a short payment is recorded with its reason', Boolean(shortRow?.error))
 
-    /* 3 · payment_status that is not "paid" never confirms, whatever the total. */
-    const unpaidId = `evt_unpaid_${bookingId.slice(0, 8)}`
-    const unpaid = signed(sessionEvent({
-      eventId: unpaidId, bookingId, amountTotal: total, paymentStatus: 'unpaid',
+    /* 3 · A BANK TRANSFER. `completed` arrives with payment_status "unpaid"
+     *     because ACH settles days later. That must HOLD the space, not
+     *     confirm it and not reject it: a maker who authorised the debit
+     *     inside the window did everything asked of them, and Stripe puts
+     *     settlement at about four business days, which is longer than the
+     *     48 hour window itself. Getting this wrong would forfeit the space of
+     *     every maker who paid by bank. */
+    const achId = `evt_ach_${bookingId.slice(0, 8)}`
+    const ach = signed(sessionEvent({
+      eventId: achId, bookingId, amountTotal: total, paymentStatus: 'unpaid',
     }))
-    const unpaidResult = await handleStripeWebhook(db, unpaid.payload, unpaid.signature)
-    check('an unpaid session does not confirm', unpaidResult.outcome === 'mismatch')
+    const achResult = await handleStripeWebhook(db, ach.payload, ach.signature)
+    check('an authorised bank transfer is processing, not a mismatch', achResult.outcome === 'processing')
+    const [inFlight] = await db.select().from(bookings).where(eq(bookings.id, bookingId))
+    check('a transfer in flight holds the space', inFlight!.status === 'payment_processing')
+    check('a transfer in flight is not marked paid', inFlight!.paidAt === null)
 
-    /* 4 · The correct event confirms, exactly once. */
+    /* 3b · A bank transfer for the WRONG amount is still a mismatch. */
+    const achBadId = `evt_ach_bad_${bookingId.slice(0, 8)}`
+    const achBad = signed(sessionEvent({
+      eventId: achBadId, bookingId, amountTotal: total - 500, paymentStatus: 'unpaid',
+    }))
+    const achBadResult = await handleStripeWebhook(db, achBad.payload, achBad.signature)
+    check('a short bank transfer is still a mismatch', achBadResult.outcome === 'mismatch')
+
+    /* 3c · The transfer lands, days later, on its own event type. */
+    const settledId = `evt_settled_${bookingId.slice(0, 8)}`
+    const settled = signed(sessionEvent({
+      eventId: settledId, bookingId, amountTotal: total,
+      type: 'checkout.session.async_payment_succeeded',
+    }))
+    const settledResult = await handleStripeWebhook(db, settled.payload, settled.signature)
+    check('a settled bank transfer confirms', settledResult.outcome === 'confirmed')
+    const [settledRow] = await db.select().from(bookings).where(eq(bookings.id, bookingId))
+    check('the settled booking is confirmed', settledRow!.status === 'confirmed')
+    check('the settled amount is stored', settledRow!.amountPaidCents === total)
+
+    /* 3d · Put it back to unpaid so the card path below is tested from the
+     *      same starting point the real flow has. */
+    await db.update(bookings).set({
+      status: 'awaiting_payment', paidAt: null, amountPaidCents: null,
+    }).where(eq(bookings.id, bookingId))
+
+    /* 3e · A transfer that never clears returns the booking to unpaid and
+     *      clears the session, so the Pay button builds a fresh one. */
+    const failedId = `evt_failed_${bookingId.slice(0, 8)}`
+    await db.update(bookings).set({ status: 'payment_processing', stripeSessionId: 'cs_dead' })
+      .where(eq(bookings.id, bookingId))
+    const failed = signed(sessionEvent({
+      eventId: failedId, bookingId, amountTotal: total,
+      type: 'checkout.session.async_payment_failed',
+    }))
+    const failedResult = await handleStripeWebhook(db, failed.payload, failed.signature)
+    check('a failed transfer is reported', failedResult.outcome === 'payment_failed')
+    const [afterFail] = await db.select().from(bookings).where(eq(bookings.id, bookingId))
+    check('a failed transfer returns the booking to unpaid', afterFail!.status === 'awaiting_payment')
+    check('a failed transfer clears the dead session', afterFail!.stripeSessionId === null)
+
+    /* 4 · A card. The correct event confirms, exactly once.
+     *     Counted as a DELTA rather than an absolute, because the bank
+     *     transfer above legitimately confirmed this same booking once
+     *     already before it was reset. */
+    const confirmsBefore = (await db.select().from(auditLog).where(eq(auditLog.entityId, bookingId)))
+      .filter((a) => a.action === 'payment_confirmed').length
     const okId = `evt_ok_${bookingId.slice(0, 8)}`
     const good = signed(sessionEvent({ eventId: okId, bookingId, amountTotal: total }))
     const first = await handleStripeWebhook(db, good.payload, good.signature)
@@ -136,14 +192,14 @@ async function main() {
 
     const audits = await db.select().from(auditLog).where(eq(auditLog.entityId, bookingId))
     const confirms = audits.filter((a) => a.action === 'payment_confirmed')
-    check('exactly one audit row for the payment', confirms.length === 1)
+    check('the card payment wrote exactly one audit row', confirms.length === confirmsBefore + 1)
 
     /* 5 · Stripe redelivers. It must not confirm or audit a second time. */
     const replay = await handleStripeWebhook(db, good.payload, good.signature)
     check('a redelivered event is a duplicate', replay.outcome === 'duplicate')
     const auditsAfter = await db.select().from(auditLog).where(eq(auditLog.entityId, bookingId))
     const confirmsAfter = auditsAfter.filter((a) => a.action === 'payment_confirmed')
-    check('a redelivery writes no second audit row', confirmsAfter.length === 1)
+    check('a redelivery writes no second audit row', confirmsAfter.length === confirmsBefore + 1)
 
     /* 6 · A DIFFERENT event describing the same paid booking is not an error
      *     and still does not double-write. */
@@ -153,8 +209,8 @@ async function main() {
     check('a second event on a paid booking is fine', secondResult.outcome === 'confirmed')
     const auditsFinal = await db.select().from(auditLog).where(eq(auditLog.entityId, bookingId))
     check(
-      'still exactly one audit row for the payment',
-      auditsFinal.filter((a) => a.action === 'payment_confirmed').length === 1,
+      'a second event on a paid booking writes no further audit row',
+      auditsFinal.filter((a) => a.action === 'payment_confirmed').length === confirmsBefore + 1,
     )
   } finally {
     await db.delete(stripeEvents).where(eq(stripeEvents.bookingId, bookingId))
@@ -166,7 +222,7 @@ async function main() {
     console.error(`\n${failures} check(s) failed.`)
     process.exit(1)
   }
-  console.log('booth webhook: forgery rejected, short payments refused, redelivery confirms once')
+  console.log('booth webhook: forgery rejected, bank transfers held then settled, redelivery confirms once')
   process.exit(0)
 }
 

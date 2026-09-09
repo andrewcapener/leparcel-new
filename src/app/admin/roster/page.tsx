@@ -4,6 +4,7 @@ import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
 import { markPaid } from '@/app/actions'
 import { usd, splitCommission, bpsLabel } from '@/lib/money'
+import { holdsSpace, isPaid, needsChasing } from '@/server/modules/payments/booking-status'
 import { fmtDateTime, fmtRange } from '@/lib/dates'
 import { PageHead, Stats, Stat, Progress } from '../ui'
 
@@ -38,8 +39,11 @@ export default async function Roster() {
     .where(eq(bookings.showId, show.id))
     .orderBy(asc(bookings.vendorCode))
 
-  const confirmed = rows.filter((r) => r.booking.status === 'confirmed')
-  const awaiting = rows.filter((r) => r.booking.status === 'awaiting_payment')
+  const confirmed = rows.filter((r) => isPaid(r.booking.status))
+  const awaiting = rows.filter((r) => needsChasing(r.booking.status))
+  /* Authorised, money in transit. Not collected, not chased, and not a
+     problem: a bank transfer takes about four business days to land. */
+  const clearing = rows.filter((r) => r.booking.status === 'payment_processing')
   const collected = confirmed.reduce((a, r) => a + r.booking.priceCents, 0)
   const outstanding = awaiting.reduce((a, r) => a + r.booking.priceCents, 0)
 
@@ -62,7 +66,7 @@ export default async function Roster() {
   // The show's booth-fee picture: expected counts every live booking
   // (confirmed and awaiting); collected counts only the paid ones.
   const expected = rows
-    .filter((r) => ['confirmed', 'awaiting_payment'].includes(r.booking.status))
+    .filter((r) => holdsSpace(r.booking.status))
     .reduce((sum, r) => sum + r.booking.priceCents, 0)
 
   // What the register will do to a $100 indoor sale, at the rate each booking
@@ -76,7 +80,7 @@ export default async function Roster() {
      inside each band so a row stays where you last saw it. */
   const rank = (r: typeof rows[number]) => {
     if (!documented(r.app)) return 0
-    if (r.booking.status === 'awaiting_payment') return 1
+    if (needsChasing(r.booking.status)) return 1
     if (!r.app.hasCoi) return 2
     return 3
   }
@@ -176,7 +180,13 @@ export default async function Roster() {
         />
         <Stat
           label="Booth fee unpaid" icon="money" value={awaiting.length}
-          note={`${usd(outstanding)} still to come in, ${show.paymentWindowHours} hour window.`}
+          note={`${usd(outstanding)} still to come in, ${show.paymentWindowHours} hour window.`
+            /* Bank transfers in flight are counted separately and never as
+               unpaid: those makers already paid and Stripe takes about four
+               business days to settle. Chasing them would be wrong. */
+            + (clearing.length > 0
+              ? ` ${clearing.length} bank transfer${clearing.length === 1 ? '' : 's'} clearing, not counted here.`
+              : '')}
         />
         <Stat
           label="Certificate due" icon="roster" value={noCoi.length}

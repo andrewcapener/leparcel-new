@@ -146,7 +146,35 @@ export type WebhookResult =
   | { outcome: 'duplicate'; eventId: string }
   | { outcome: 'ignored'; eventId: string; type: string }
   | { outcome: 'confirmed'; eventId: string; bookingId: string }
+  | { outcome: 'processing'; eventId: string; bookingId: string }
+  | { outcome: 'payment_failed'; eventId: string; bookingId: string }
   | { outcome: 'mismatch'; eventId: string; bookingId: string; detail: string }
+
+/**
+ * The three events a Checkout payment can arrive on, and why all three matter.
+ *
+ * A CARD pays synchronously: `checkout.session.completed` arrives with
+ * payment_status "paid" and that is the whole story.
+ *
+ * A BANK TRANSFER does not. ACH Direct Debit is what Stripe calls a delayed
+ * notification method: `checkout.session.completed` fires when the maker
+ * authorises the debit, with payment_status "unpaid", and the money lands days
+ * later on `checkout.session.async_payment_succeeded`, or does not land at all
+ * on `checkout.session.async_payment_failed`. Stripe's docs put settlement at
+ * "typically 4 business days".
+ *
+ * Handling only `completed` and requiring "paid" would have been catastrophic
+ * in a quiet way: every maker who chose bank transfer would have authorised
+ * the payment, been recorded as a MISMATCH, never been confirmed, and had
+ * their space forfeited at hour 48 for paying on time. Bank transfer is the
+ * option this business should want people to take, because it is $5 instead
+ * of $13.35 on an outdoor booth.
+ */
+const HANDLED = new Set([
+  'checkout.session.completed',
+  'checkout.session.async_payment_succeeded',
+  'checkout.session.async_payment_failed',
+])
 
 /**
  * Handle one webhook. The ONLY thing in this codebase that marks a booking
@@ -191,8 +219,8 @@ export async function handleStripeWebhook(
     }).where(eq(stripeEvents.id, event.id))
   }
 
-  if (event.type !== 'checkout.session.completed') {
-    await finish({ payload: 'not a completed checkout' })
+  if (!HANDLED.has(event.type)) {
+    await finish({ payload: 'not a payment outcome' })
     return { outcome: 'ignored', eventId: event.id, type: event.type }
   }
 
@@ -217,16 +245,72 @@ export async function handleStripeWebhook(
     return { outcome: 'mismatch', eventId: event.id, bookingId, detail: 'no such booking' }
   }
   const { booking, invoice } = found
+  const intentId = typeof session.payment_intent === 'string' ? session.payment_intent : null
 
-  /* Already confirmed by an earlier event. Not an error: two different events
-     can describe the same successful payment. */
+  /** Rule 3: actor, timestamp, before and after, reason. Stripe is the actor,
+   *  because no person did this. */
+  const audit = async (action: string, before: unknown, after: unknown) => {
+    await db.insert(auditLog).values({
+      id: randomUUID(),
+      entity: 'booking',
+      entityId: booking.id,
+      action,
+      before: JSON.stringify(before),
+      after: JSON.stringify(after),
+      actor: 'stripe:webhook',
+      reason: `${event.type} ${event.id}`,
+    })
+  }
+
+  /* The transfer did not clear. Back to unpaid, and the session id is cleared
+     so the Pay button builds a fresh one rather than reusing a dead session.
+     A booking already confirmed is left alone: a late failure on a payment
+     that already landed is a dispute, not a reversal, and is a person's
+     problem rather than a status change. */
+  if (event.type === 'checkout.session.async_payment_failed') {
+    if (booking.status === 'confirmed') {
+      await finish({ bookingId, payload: 'failure after confirmation, left alone' })
+      return { outcome: 'confirmed', eventId: event.id, bookingId }
+    }
+    const before = { status: booking.status }
+    await db.update(bookings).set({
+      status: 'awaiting_payment',
+      stripeSessionId: null,
+    }).where(eq(bookings.id, booking.id))
+    await audit('payment_failed', before, { status: 'awaiting_payment' })
+    await finish({ bookingId, payload: 'bank transfer did not clear' })
+    return { outcome: 'payment_failed', eventId: event.id, bookingId }
+  }
+
+  /* Already confirmed by an earlier event. Not an error: `completed` and
+     `async_payment_succeeded` can both describe one successful payment. */
   if (booking.status === 'confirmed') {
     await finish({ bookingId, payload: 'already confirmed' })
     return { outcome: 'confirmed', eventId: event.id, bookingId }
   }
 
   const received = session.amount_total ?? 0
-  if (session.payment_status !== 'paid' || !paymentMatches(invoice.totalCents, received)) {
+
+  /* Authorised but not settled. This is every bank transfer, on the
+     `completed` event. The space is HELD: the maker did everything asked of
+     them inside the window and the money is simply in transit. */
+  if (session.payment_status !== 'paid') {
+    if (!paymentMatches(invoice.totalCents, received)) {
+      const detail = `expected ${invoice.totalCents}, stripe reported ${received} (${session.payment_status})`
+      await finish({ bookingId, error: detail })
+      return { outcome: 'mismatch', eventId: event.id, bookingId, detail }
+    }
+    const before = { status: booking.status }
+    await db.update(bookings).set({
+      status: 'payment_processing',
+      stripePaymentIntentId: intentId,
+    }).where(eq(bookings.id, booking.id))
+    await audit('payment_processing', before, { status: 'payment_processing', amountCents: received })
+    await finish({ bookingId, payload: `bank transfer initiated, ${received} cents in flight` })
+    return { outcome: 'processing', eventId: event.id, bookingId }
+  }
+
+  if (!paymentMatches(invoice.totalCents, received)) {
     const detail = `expected ${invoice.totalCents}, stripe reported ${received} (${session.payment_status})`
     await finish({ bookingId, error: detail })
     /* Deliberately NOT confirmed. A maker holding a space they did not fully
@@ -240,22 +324,9 @@ export async function handleStripeWebhook(
     status: 'confirmed',
     paidAt,
     amountPaidCents: received,
-    stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+    stripePaymentIntentId: intentId,
   }).where(eq(bookings.id, booking.id))
-
-  /* Rule 3: actor, timestamp, before and after, reason. The actor is Stripe,
-     because no person did this. */
-  await db.insert(auditLog).values({
-    id: randomUUID(),
-    entity: 'booking',
-    entityId: booking.id,
-    action: 'payment_confirmed',
-    before: JSON.stringify(before),
-    after: JSON.stringify({ status: 'confirmed', paidAt, amountPaidCents: received }),
-    actor: 'stripe:webhook',
-    reason: `checkout.session.completed ${event.id}`,
-  })
-
+  await audit('payment_confirmed', before, { status: 'confirmed', paidAt, amountPaidCents: received })
   await finish({ bookingId, payload: `confirmed ${received} cents` })
   return { outcome: 'confirmed', eventId: event.id, bookingId }
 }

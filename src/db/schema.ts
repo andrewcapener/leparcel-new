@@ -250,8 +250,15 @@ export const bookings = pgTable('bookings', {
   addonsCents: integer('addons_cents').notNull().default(0),
   commissionBps: integer('commission_bps').notNull(),   // immutable snapshot
 
+  /* `payment_processing` is ACH in flight. Bank transfer is a delayed
+     notification method: Stripe's own docs say a payment "typically takes 4
+     business days to arrive", which is longer than the 48 hour window a maker
+     is given. So a booking whose transfer has been initiated HOLDS the space
+     and is exempt from forfeit, and only moves to confirmed when the money
+     actually lands. Without this state, offering bank transfer at all would be
+     a trap: the maker pays on time and loses their space anyway. */
   status: text('status', {
-    enum: ['awaiting_payment', 'confirmed', 'forfeited', 'cancelled'],
+    enum: ['awaiting_payment', 'payment_processing', 'confirmed', 'forfeited', 'cancelled'],
   }).notNull().default('awaiting_payment'),
   paymentDueAt: text('payment_due_at').notNull(),
   paidAt: text('paid_at'),
