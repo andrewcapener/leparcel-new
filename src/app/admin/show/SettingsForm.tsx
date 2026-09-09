@@ -174,6 +174,18 @@ export function SettingsForm({ show }: { show: Show }) {
         </div>
         <div className="adm-row2">
           <Field
+            name="paymentMethods" label="How makers pay the booth fee" error={e.paymentMethods}
+            hint="Bank transfer costs us 0.8% capped at $5; card costs 2.9% + 30c, so on a $450 booth that is $5 against $13.35. Bank transfer takes about four business days to arrive, so with bank only the window above becomes a deadline to START a transfer, not to have paid. A maker who starts one keeps their space while it clears."
+          >
+            <select id="paymentMethods" name="paymentMethods" className="inp" required {...keep('paymentMethods', show.paymentMethods)}>
+              <option value="card_and_bank">Card or bank transfer</option>
+              <option value="bank_only">Bank transfer only (cheapest, slowest)</option>
+              <option value="card_only">Card only</option>
+            </select>
+          </Field>
+        </div>
+        <div className="adm-row2">
+          <Field
             name="indoorCapacity" label="Indoor capacity" error={e.indoorCapacity}
             hint="Spaces on the floor. The jury header counts committed bookings against this."
           >

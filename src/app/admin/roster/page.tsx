@@ -224,6 +224,9 @@ export default async function Roster() {
             email told them the space would go back into the pool. Releasing is written to the
             audit log and emails them, warmly, with an invitation to write back. Nobody whose bank
             transfer is still clearing can appear here, however far past the deadline they are.
+            Anyone marked <em>started a payment</em> opened Stripe and did not finish; that can be
+            an abandoned tab, or a bank still sending its verification deposits, so it is worth a
+            look before releasing.
           </p>
           <table className="adm-tbl adm-tbl--tight">
             <thead>
@@ -238,7 +241,15 @@ export default async function Roster() {
                 <tr key={r.booking.id}>
                   <td>
                     <span className="adm-nm">{r.vendor.shopName}</span>
-                    <span className="adm-sub2">{r.booking.vendorCode} · {r.vendor.email}</span>
+                    <span className="adm-sub2">
+                      {r.booking.vendorCode} · {r.vendor.email}
+                      {/* They opened a payment and it never completed. Could be
+                          an abandoned tab, could be a bank transfer stuck in
+                          microdeposit verification, which takes one to two
+                          business days before the transfer even starts. Worth
+                          a look before taking the space back. */}
+                      {r.booking.stripeSessionId ? ' · started a payment' : ''}
+                    </span>
                   </td>
                   <td><span className="mono">{fmtDateTime(r.booking.paymentDueAt)}</span></td>
                   <td className="r">{usd(r.booking.priceCents + r.booking.addonsCents)}</td>

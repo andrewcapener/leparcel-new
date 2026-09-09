@@ -2,6 +2,7 @@ import { usd } from '@/lib/money'
 import { fmtDateTime } from '@/lib/dates'
 import { payBoothFee } from '@/app/actions'
 import type { Invoice } from '@/server/modules/payments/invoice'
+import { deadlineMeans, offersCard, offersBank, type PaymentMethods } from '@/server/modules/payments/methods'
 
 /**
  * The one screen an accepted maker actually needs.
@@ -20,7 +21,7 @@ import type { Invoice } from '@/server/modules/payments/invoice'
  */
 export function BoothInvoice({
   invoice, status, dueAt, paidAt, vendorCode,
-  payable, testMode, notice,
+  payable, testMode, notice, methods,
 }: {
   invoice: Invoice
   status: string
@@ -31,6 +32,9 @@ export function BoothInvoice({
   payable: boolean
   testMode: boolean
   notice?: 'paid' | 'unavailable' | 'missing' | 'failed'
+  /** The Show's policy. Decides both what Stripe offers and, because ACH does
+   *  not settle inside the window, what the deadline is asking for. */
+  methods: PaymentMethods
 }) {
   const paid = status === 'confirmed'
   const lost = status === 'forfeited' || status === 'cancelled'
@@ -75,7 +79,11 @@ export function BoothInvoice({
               </div>
             ) : (
               <div className="fact-table__row">
-                <dt>Due</dt>
+                {/* "Start your transfer by" when bank is the only option: four
+                    business days does not fit in the payment window, so
+                    labelling it "due" would be asking for something
+                    impossible. */}
+                <dt>{deadlineMeans(methods) === 'be paid by' ? 'Due' : 'Start by'}</dt>
                 <dd>{fmtDateTime(dueAt)}</dd>
               </div>
             )}
@@ -125,11 +133,24 @@ export function BoothInvoice({
                 </strong></p>
               )}
 
-              <p className="rte">
-                Pay to confirm. Card or bank transfer, whichever suits you. Bank transfer
-                costs us less, so it is the kinder one on a larger fee, and both confirm
-                the same way.
-              </p>
+              {offersCard(methods) && offersBank(methods) && (
+                <p className="rte">
+                  Pay to confirm. Card or bank transfer, whichever suits you. Bank transfer
+                  costs us less, so it is the kinder one on a larger fee, and both confirm
+                  the same way.
+                </p>
+              )}
+              {!offersCard(methods) && (
+                <p className="rte">
+                  Pay by bank transfer to confirm. You will link your bank on the next
+                  screen. Transfers take about four business days to arrive, so start yours
+                  by {fmtDateTime(dueAt)} and your space is held from the moment you do. You
+                  do not have to wait for it to land.
+                </p>
+              )}
+              {!offersBank(methods) && (
+                <p className="rte">Pay by card to confirm. It takes a minute.</p>
+              )}
 
               {payable ? (
                 <form action={payBoothFee}>

@@ -1,0 +1,34 @@
+-- Which ways an accepted maker may pay their booth fee.
+--
+-- Drew, 9 Sept 2026: "I think we want to require bank transfer via stripe."
+-- The reason is the fee. Card is 2.9% + 30c; ACH is 0.8% capped at $5. On a
+-- $450 outdoor booth that is $13.35 against $5, and across a full roster it is
+-- several hundred dollars a show that currently goes to Stripe.
+--
+-- It lives on the Show record rather than in code because it is business
+-- policy, and CLAUDE.md rule 6 is explicit: no hardcoded prices, dates or
+-- rates anywhere, they live on the Show and are editable in the admin. This
+-- one earns that rule twice over, because the failure it guards against is
+-- specific and expensive: a maker whose bank will not connect to Financial
+-- Connections, two days before the roster closes, with no way to pay and no
+-- way for staff to open one without a deploy. It is a dropdown instead.
+--
+-- Values, deliberately only three:
+--   card_and_bank  both offered, Stripe orders them
+--   bank_only      ACH only. Cheapest, and slowest: see the note below.
+--   card_only      the escape hatch if ACH ever has to be switched off
+--
+-- The timing this implies is the important part. ACH is a delayed
+-- notification method: Stripe's own docs put settlement at "typically 4
+-- business days", which is longer than the payment window itself. Under
+-- bank_only NO booking can be confirmed inside the window, so the deadline
+-- stops meaning "be paid by" and starts meaning "start your transfer by".
+-- bookings.payment_processing already carries exactly that state and is
+-- already exempt from forfeit (0030, booking-status.ts).
+--
+-- Default is card_and_bank so that an existing show keeps behaving the way it
+-- did until somebody chooses otherwise on the settings screen.
+--
+-- Forward-only and idempotent (rule 11).
+
+ALTER TABLE shows ADD COLUMN IF NOT EXISTS payment_methods text NOT NULL DEFAULT 'card_and_bank';

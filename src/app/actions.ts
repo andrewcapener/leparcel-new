@@ -936,9 +936,17 @@ export async function decide(fd: FormData): Promise<void> {
                page, so this points at the page rather than carrying a token:
                a payment url inside a forwardable email is somebody else's
                space, bought by mistake. */
-            + `\nPay to confirm within ${show.paymentWindowHours} hours: ${siteUrl()}/account\n`
+            /* The wording follows the Show's payment policy. Under bank only
+               the window is a deadline to START a transfer, because ACH takes
+               about four business days and telling a maker to "pay within 48
+               hours" would be asking for something that cannot happen. */
+            + (show.paymentMethods === 'bank_only'
+              ? `\nStart your bank transfer within ${show.paymentWindowHours} hours: ${siteUrl()}/account\n`
+                + `Transfers take about four business days to arrive. Your space is held from `
+                + `the moment you start one, so you do not have to wait for it to land.\n`
+              : `\nPay to confirm within ${show.paymentWindowHours} hours: ${siteUrl()}/account\n`)
             + `Sign in with this address and your fee, your space and your Mermade ID are on the page.\n`
-            + `After that the space returns to the pool.\n`
+            + `If we hear nothing by then, the space returns to the pool.\n`
             // Outdoor makers sell for their own account, so the permit is ours
             // to collect and CDTFA Publication 111 fines us per seller we
             // cannot show a record for. The application no longer asks, so
@@ -1170,6 +1178,7 @@ const ShowSettingsSchema = z.object({
   rosterAnnouncedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   commissionPct: z.coerce.number().min(0, 'Not negative').max(50, 'That is over half'),
   paymentWindowHours: z.coerce.number().int('Whole hours').min(1).max(240, 'Ten days at most'),
+  paymentMethods: z.enum(['card_and_bank', 'bank_only', 'card_only']),
   indoorCapacity: z.coerce.number().int().min(0),
   outdoorCapacity: z.coerce.number().int().min(0),
 })
@@ -1219,6 +1228,7 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
     rosterAnnouncedOn: laWallToIso(d.rosterAnnouncedOn),
     commissionBps: Math.round(d.commissionPct * 100),
     paymentWindowHours: d.paymentWindowHours,
+    paymentMethods: d.paymentMethods,
     indoorCapacity: d.indoorCapacity,
     outdoorCapacity: d.outdoorCapacity,
   }
@@ -1395,7 +1405,7 @@ export async function payBoothFee(): Promise<void> {
     .limit(1)
   if (!booking) redirect('/account')
 
-  const result = await startBoothPayment(db, booking.id, email)
+  const result = await startBoothPayment(db, booking.id, email, show.paymentMethods)
 
   /* Every failure lands back on /account with a reason in the url, because the
      alternative is a maker staring at a Next.js error page hours before their

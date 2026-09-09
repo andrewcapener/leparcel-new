@@ -21,6 +21,7 @@ import type { db as Db } from '@/db'
 import { bookings, bookingAddons, addOns, spaceTypes, stripeEvents, auditLog, vendors } from '@/db/schema'
 import { stripe, webhookSecret } from './config'
 import { invoiceFor, paymentMatches, bookingPaymentKey, type Invoice } from './invoice'
+import { stripeMethods, type PaymentMethods } from './methods'
 import { siteUrl } from '@/lib/site-url'
 
 export type DbHandle = typeof Db
@@ -75,6 +76,9 @@ export type CheckoutResult =
  */
 export async function startBoothPayment(
   db: DbHandle, bookingId: string, email: string,
+  /* The Show's policy, passed in rather than read here so this stays a pure
+     function of its arguments and the caller owns the one database read. */
+  policy: PaymentMethods = 'card_and_bank',
 ): Promise<CheckoutResult> {
   const s = stripe()
   if (!s) return { outcome: 'unconfigured' }
@@ -103,8 +107,8 @@ export async function startBoothPayment(
     const session = await s.checkout.sessions.create({
       mode: 'payment',
       customer_email: email,
-      /* Card and bank. Both, from day one. */
-      payment_method_types: ['card', 'us_bank_account'],
+      /* Whatever the Show record says, and never an empty list. */
+      payment_method_types: stripeMethods(policy),
       line_items: invoice.lines.map((l) => ({
         quantity: 1,
         price_data: {

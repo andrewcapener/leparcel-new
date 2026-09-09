@@ -156,6 +156,10 @@ async function main() {
     rosterAnnouncedOn: '2026-09-25T12:00:00-07:00',
     commissionBps: 2000,
     paymentWindowHours: 48,   // moved from 36 to 48 per Drew, Sept 2026 (audit §2.3)
+    /* Bank transfer only, Drew's call 9 Sept 2026: it is 0.8% capped at $5
+       against card's 2.9% + 30c. The cost is speed, and the window above is
+       therefore a deadline to START a transfer. Changeable at /admin/show. */
+    paymentMethods: 'bank_only' as const,
     // The old maker rules pages say 45 shops inside and 25 tents a day
     // outside. The old shopper FAQ says 35-40 of each. Seeded to the
     // operational number; staff adjust per space type at /admin/show.

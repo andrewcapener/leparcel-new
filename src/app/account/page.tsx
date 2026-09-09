@@ -134,6 +134,7 @@ export default async function Account({
           payable={paymentsConfigured()}
           testMode={isTestMode()}
           notice={notice}
+          methods={show.paymentMethods}
         />
       )}
 

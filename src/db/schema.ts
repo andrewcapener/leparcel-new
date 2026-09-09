@@ -61,6 +61,13 @@ export const shows = pgTable('shows', {
   // money is integer cents, always
   commissionBps: integer('commission_bps').notNull().default(2000),   // 20.00%
   paymentWindowHours: integer('payment_window_hours').notNull().default(48),
+  /* How an accepted maker may pay. Policy, so it lives here and is edited at
+     /admin/show rather than hardcoded (rule 6). Under `bank_only` the payment
+     window means "start your transfer by", not "be paid by": ACH settles in
+     about four business days, which is longer than the window. */
+  paymentMethods: text('payment_methods', {
+    enum: ['card_and_bank', 'bank_only', 'card_only'],
+  }).notNull().default('card_and_bank'),
 
   indoorCapacity: integer('indoor_capacity').notNull().default(80),
   outdoorCapacity: integer('outdoor_capacity').notNull().default(30),
