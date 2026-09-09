@@ -46,6 +46,10 @@ const PREVIEWS: Array<{
   only?: keyof NavCounts
 }> = [
   { href: '/apply?preview=1', label: 'Application form', icon: 'external' },
+  /* The booth fee screen, in every state. It only exists for somebody with an
+     accepted application and a booking, so without this the only way to look
+     at it was to apply, accept yourself and sign in from the email. */
+  { href: '/admin/preview/account', label: "The maker's account", icon: 'external' },
   { href: '/api/preview?on=1&to=%2F', label: 'The site at launch', icon: 'external' },
   // The one thing here that is for somebody else to click. It lives on the
   // dashboard because it needs a copy button beside it, and it is listed here

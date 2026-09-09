@@ -21,7 +21,7 @@ import { deadlineMeans, offersCard, offersBank, type PaymentMethods } from '@/se
  */
 export function BoothInvoice({
   invoice, status, dueAt, paidAt, vendorCode,
-  payable, testMode, notice, methods,
+  payable, testMode, notice, methods, preview = false, id = 'booth-fee',
 }: {
   invoice: Invoice
   status: string
@@ -35,6 +35,14 @@ export function BoothInvoice({
   /** The Show's policy. Decides both what Stripe offers and, because ACH does
    *  not settle inside the window, what the deadline is asking for. */
   methods: PaymentMethods
+  /** Rendered inside the admin preview. Everything looks the same; the button
+   *  is inert, because pressing a real Pay button from a preview would start a
+   *  checkout against whatever booking the presser happens to own. */
+  preview?: boolean
+  /** Unique per instance. The admin preview renders four of these on one page
+   *  and four elements sharing an id is invalid HTML that quietly breaks
+   *  in-page anchors and confuses a screen reader's landmark list. */
+  id?: string
 }) {
   const paid = status === 'confirmed'
   const lost = status === 'forfeited' || status === 'cancelled'
@@ -45,11 +53,21 @@ export function BoothInvoice({
   const inFlight = status === 'payment_processing'
 
   return (
-    <div className="shopify-section section-rich-text" id="booth-fee">
-      <div className="fully-spaced-row--medium" data-cc-animate="">
+    <div className="shopify-section section-rich-text" id={id}>
+      {/* The theme reveals `data-cc-animate` rows on scroll, which is right on
+          a maker's own page and wrong on a preview whose whole job is showing
+          four states side by side: they would each start invisible and the
+          comparison would be a page of gaps. */}
+      <div className="fully-spaced-row--medium" {...(preview ? {} : { 'data-cc-animate': '' })}>
         <div className="container container--reading-width">
           <div className="subheading subheading--over lightish-spaced-row-above">
-            {paid ? 'Your space is confirmed' : inFlight ? 'Your transfer is on its way' : 'Your booth fee'}
+            {paid
+              ? 'Your space is confirmed'
+              : inFlight
+                ? 'Your transfer is on its way'
+                : lost
+                  ? 'This space was released'
+                  : 'Your booth fee'}
           </div>
 
           <dl className="fact-table">
@@ -76,6 +94,15 @@ export function BoothInvoice({
               <div className="fact-table__row">
                 <dt>Status</dt>
                 <dd>Bank transfer sent, clearing now</dd>
+              </div>
+            ) : lost ? (
+              /* No deadline row on a released space. The admin preview caught
+                 this: a forfeited booking was still showing a live-looking
+                 "Start by" date in the future, under a heading that said "Your
+                 booth fee", on a space that is gone. */
+              <div className="fact-table__row">
+                <dt>Status</dt>
+                <dd>Returned to the pool on {fmtDateTime(dueAt)}</dd>
               </div>
             ) : (
               <div className="fact-table__row">
@@ -152,7 +179,11 @@ export function BoothInvoice({
                 <p className="rte">Pay by card to confirm. It takes a minute.</p>
               )}
 
-              {payable ? (
+              {payable && preview ? (
+                <button className="btn btn--primary" type="button" disabled>
+                  Pay {usd(invoice.totalCents)}
+                </button>
+              ) : payable ? (
                 <form action={payBoothFee}>
                   <button className="btn btn--primary" type="submit">
                     Pay {usd(invoice.totalCents)}
