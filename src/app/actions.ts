@@ -12,7 +12,7 @@ import {
   shows, vendors, applications, bookings, bookingAddons, spaceTypes, addOns,
   auditLog, emailOutbox, sheetSyncs, subscribers, CATEGORIES, type ApplicationStatus,
 } from '@/db/schema'
-import { applicationWindow, fmtDate, fmtRange, laWallToIso } from '@/lib/dates'
+import { applicationWindow, fmtDate, fmtDateTime, fmtRange, laWallToIso } from '@/lib/dates'
 import { usd } from '@/lib/money'
 import { plainDashes } from '@/lib/dashes'
 import { syncApplication, sheetsConfigured } from '@/server/modules/sheets/sync'
@@ -37,6 +37,7 @@ import {
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
 import { startBoothPayment } from '@/server/modules/payments/booth'
+import { isForfeitable } from '@/server/modules/payments/booking-status'
 import { sendLead, newEventId } from '@/server/modules/meta/capi'
 
 /* ═══════════════════════ helpers ═══════════════════════ */
@@ -1412,4 +1413,68 @@ export async function payBoothFee(): Promise<void> {
       console.error(`[stripe] checkout failed for booking ${booking.id}: ${result.detail}`)
       redirect('/account?pay=failed')
   }
+}
+
+/**
+ * Release the spaces of makers who never paid.
+ *
+ * The acceptance email has always said "After that the space returns to the
+ * pool" and nothing ever did it. With roughly a hundred acceptances going out
+ * across three days, each with its own 48 hour clock, this cannot be a thing
+ * somebody remembers to check.
+ *
+ * Staff-triggered rather than automatic, deliberately. A space returning to
+ * the pool is a decision about a real person who applied months earlier, and
+ * it should be taken by somebody who can see the list first. The screen shows
+ * exactly who is about to be released before the button is pressed.
+ *
+ * `isForfeitable` decides, not this function, and it will not touch a booking
+ * whose bank transfer is still clearing however far past the deadline it is.
+ * A maker who paid on the last day by transfer must not lose their space
+ * because ACH takes four business days.
+ */
+export async function forfeitOverdueBookings(): Promise<void> {
+  const show = await activeShow()
+  if (!show) redirect('/admin/roster')
+
+  const now = new Date().toISOString()
+  const rows = await db
+    .select({ booking: bookings, vendor: vendors })
+    .from(bookings)
+    .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
+    .where(eq(bookings.showId, show.id))
+
+  const doomed = rows.filter(
+    (r) => isForfeitable(r.booking.status, r.booking.paymentDueAt, now),
+  )
+
+  for (const { booking, vendor } of doomed) {
+    const before = { status: booking.status, paymentDueAt: booking.paymentDueAt }
+    await db.update(bookings)
+      .set({ status: 'forfeited' })
+      .where(eq(bookings.id, booking.id))
+
+    await log('booking', booking.id, 'forfeited', before, { status: 'forfeited' },
+      `booth fee unpaid at ${booking.paymentDueAt}, released ${now}`)
+
+    /* Say it plainly and leave the door open. A maker who missed a deadline by
+       a few hours because they were at a craft fair is exactly the maker this
+       market wants, and the waiting list is real. */
+    await mail(
+      vendor.email,
+      `Your ${show.name} space`,
+      `${vendor.contactName}, we did not receive your booth fee by ${fmtDateTime(booking.paymentDueAt)}, `
+        + `so your space has gone back into the pool.\n\n`
+        + `If that is a mistake, or something got in the way, write back today. `
+        + `We would rather hear from you than fill it.\n\n`
+        + `Mermade Market`,
+      'forfeited',
+    )
+  }
+
+  revalidatePath('/admin/roster')
+  revalidatePath('/admin')
+  /* Leave rather than re-render: the button lives inside a block that only
+     exists while something is overdue, and a successful run empties it. */
+  redirect('/admin/roster')
 }

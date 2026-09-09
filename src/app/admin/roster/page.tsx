@@ -2,9 +2,9 @@ import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
-import { markPaid } from '@/app/actions'
+import { markPaid, forfeitOverdueBookings } from '@/app/actions'
 import { usd, splitCommission, bpsLabel } from '@/lib/money'
-import { holdsSpace, isPaid, needsChasing } from '@/server/modules/payments/booking-status'
+import { holdsSpace, isPaid, isForfeitable, needsChasing } from '@/server/modules/payments/booking-status'
 import { fmtDateTime, fmtRange } from '@/lib/dates'
 import { PageHead, Stats, Stat, Progress } from '../ui'
 
@@ -44,6 +44,11 @@ export default async function Roster() {
   /* Authorised, money in transit. Not collected, not chased, and not a
      problem: a bank transfer takes about four business days to land. */
   const clearing = rows.filter((r) => r.booking.status === 'payment_processing')
+  /* Past their window with nothing started. The acceptance email promised
+     these spaces go back into the pool, and until now nothing did it. */
+  const overdue = rows.filter(
+    (r) => isForfeitable(r.booking.status, r.booking.paymentDueAt, new Date().toISOString()),
+  )
   const collected = confirmed.reduce((a, r) => a + r.booking.priceCents, 0)
   const outstanding = awaiting.reduce((a, r) => a + r.booking.priceCents, 0)
 
@@ -206,6 +211,49 @@ export default async function Roster() {
           link={{ href: '/admin/show', label: 'Prices' }}
         />
       </div>
+
+      {overdue.length > 0 && (
+        <>
+          <div className="adm-sec" id="overdue" style={{ scrollMarginTop: '24px' }}>
+            <h2>Past the payment window</h2>
+            <span className="c">{overdue.length} to release</span>
+          </div>
+          <p className="adm-note">
+            {overdue.length === 1 ? 'This maker' : 'These makers'} passed the{' '}
+            {show.paymentWindowHours} hour window without starting a payment, and the acceptance
+            email told them the space would go back into the pool. Releasing is written to the
+            audit log and emails them, warmly, with an invitation to write back. Nobody whose bank
+            transfer is still clearing can appear here, however far past the deadline they are.
+          </p>
+          <table className="adm-tbl adm-tbl--tight">
+            <thead>
+              <tr>
+                <th scope="col">Maker</th>
+                <th scope="col">Was due</th>
+                <th scope="col" className="r">Fee</th>
+              </tr>
+            </thead>
+            <tbody>
+              {overdue.map((r) => (
+                <tr key={r.booking.id}>
+                  <td>
+                    <span className="adm-nm">{r.vendor.shopName}</span>
+                    <span className="adm-sub2">{r.booking.vendorCode} · {r.vendor.email}</span>
+                  </td>
+                  <td><span className="mono">{fmtDateTime(r.booking.paymentDueAt)}</span></td>
+                  <td className="r">{usd(r.booking.priceCents + r.booking.addonsCents)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <form action={forfeitOverdueBookings}>
+            <button className="adm-btn" type="submit">
+              Release {overdue.length} space{overdue.length === 1 ? '' : 's'}
+            </button>
+          </form>
+          <div style={{ height: 26 }} />
+        </>
+      )}
 
       <div className="adm-sec">
         <h2>The roster</h2>
