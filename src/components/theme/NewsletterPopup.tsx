@@ -32,9 +32,16 @@ export function NewsletterPopup() {
   const windowRef = useRef<HTMLDivElement>(null)
   const returnTo = useRef<Element | null>(null)
 
-  // Never over the application or the admin. Someone part-way through the
-  // thing we want them to do does not need to be asked for their email.
-  const suppressed = path.startsWith('/admin') || path.startsWith('/apply')
+  /* Never over the application, the admin, or a maker's own account.
+     Someone part-way through the thing we want them to do does not need to be
+     asked for their email, and /account is now the sharpest case of all: an
+     accepted maker signs in from their acceptance email to pay a booth fee
+     against a 48 hour deadline, and this window opened on top of the invoice
+     with the Pay button behind it. They are also, by definition, a person we
+     already have the address of. Caught in a screenshot, not by a test. */
+  const suppressed = path.startsWith('/admin')
+    || path.startsWith('/apply')
+    || path.startsWith('/account')
 
   const close = useCallback(() => {
     setClosing(true)
