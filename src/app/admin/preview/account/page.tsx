@@ -100,6 +100,13 @@ export default async function PreviewAccount() {
               change a setting on{' '}
               <Link href="/admin/show">show settings</Link>.
             </p>
+            {/* The way back, as a sentence. The admin sidebar is deliberately
+                not rendered here, because a preview of a maker's page should
+                look like a maker's page and not like one inside a frame with
+                the Mermade mark on screen twice. */}
+            <p className="rte">
+              <Link href="/admin">Back to the admin</Link>
+            </p>
             <p className="rte">
               {common.payable
                 ? common.testMode

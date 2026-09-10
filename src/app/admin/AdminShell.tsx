@@ -33,6 +33,14 @@ export function AdminShell({
   const path = usePathname()
   const [open, setOpen] = useState(false)
 
+  /* The preview screens render a maker's own page, which brings its own
+     Mermade header and footer with it. Wrapping that in the admin sidebar put
+     the mark on screen twice, which is confusing rather than merely untidy: a
+     preview should look like the thing it previews, not like the thing inside
+     a frame. So these routes get no admin chrome at all. They are still
+     behind the staff gate, which is in the proxy on /admin and not in here. */
+  const bare = path.startsWith('/admin/preview')
+
   useEffect(() => { setOpen(false) }, [path])
   useEffect(() => {
     if (!open) return
@@ -42,6 +50,8 @@ export function AdminShell({
   }, [open])
 
   if (path === '/admin/login') return <div className="adm">{children}</div>
+
+  if (bare) return <>{children}</>
 
   return (
     <div className="adm" data-nav={open ? 'open' : 'shut'}>
