@@ -14,6 +14,7 @@ const base: ChecklistInput = {
   booking: { status: 'awaiting_payment', paymentDueAt: SOON },
   sellerPermit: '',
   occasionalSeller: false,
+  permitStatus: null,
   hasCoi: false,
   loadInAt: LOAD_IN,
   nowIso: NOW,
@@ -52,10 +53,31 @@ check('a released space is not still nagging',
 
 /* Compliance items settle either way. */
 const outdoor = { ...base, track: 'outdoor' }
-check('a permit number settles the permit',
-  at({ ...outdoor, sellerPermit: '123456789' }, 'permit')!.state === 'done')
-check('an occasional seller claim settles the permit',
-  at({ ...outdoor, occasionalSeller: true }, 'permit')!.state === 'done')
+
+/* What they already told us on the application. The whole point: a maker who
+   answered this question must not be asked it again. */
+/* Answered questions leave the list entirely. They belong in the profile,
+   where the answer is read back. Only what is still theirs to do stays. */
+check('an occasional seller has no permit row at all',
+  !at({ ...outdoor, permitStatus: 'occasional' }, 'permit'))
+check('somebody who asked for help has no permit row',
+  !at({ ...outdoor, permitStatus: 'unsure' }, 'permit'))
+check('a permit already on file has no row',
+  !at({ ...outdoor, permitStatus: 'have', sellerPermit: '123456789' }, 'permit'))
+check('a signed 410-D has no row', !at({ ...outdoor, occasionalSeller: true }, 'permit'))
+
+const promised = at({ ...outdoor, permitStatus: 'have', sellerPermit: '' }, 'permit')!
+check('saying "I have one" without the number is still their turn', promised.state === 'todo')
+check('and it says we already know they have one', promised.detail.includes('You told us you have a permit'))
+
+const never = at({ ...outdoor, permitStatus: null }, 'permit')!
+check('never answered is a fresh ask', never.state === 'todo')
+
+/* When a permit row does appear, it explains itself. */
+for (const st of ['have', null]) {
+  const row = at({ ...outdoor, permitStatus: st, sellerPermit: '' }, 'permit')!
+  check(`permit ${st ?? 'unanswered'} explains itself`, row.detail.length > 15)
+}
 check('insurance on file settles insurance',
   at({ ...base, hasCoi: true }, 'coi')!.state === 'done')
 
@@ -67,6 +89,19 @@ check('nothing left means no next action', !nextAction(checklistFor(paidClear)))
 check('nothing blocking outstanding means clear for load-in',
   clearForLoadIn(checklistFor(paidClear)))
 check('an unpaid fee is not clear for load-in', !clearForLoadIn(checklistFor(base)))
+
+/* The list is deliberately not the whole truth, so clearance cannot be read
+   off it alone. An occasional seller with no signed 410-D shows no permit row
+   and is still not clear. */
+const declaredClear: ChecklistInput = {
+  ...paidClear, track: 'outdoor', permitStatus: 'occasional',
+}
+check('an occasional seller shows no permit row',
+  !checklistFor(declaredClear).some((i) => i.key === 'permit'))
+check('and the rows alone would wrongly say clear',
+  clearForLoadIn(checklistFor(declaredClear)))
+check('so the permit is asked directly, and they are not clear',
+  !clearForLoadIn(checklistFor(declaredClear), true))
 check('the item list never blocks load-in',
   checklistFor(paidClear).find((i) => i.key === 'items')!.blocksLoadIn === false)
 

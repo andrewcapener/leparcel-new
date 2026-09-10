@@ -5,6 +5,7 @@ import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
 import { markPaid, forfeitOverdueBookings } from '@/app/actions'
 import { usd, splitCommission, bpsLabel } from '@/lib/money'
 import { holdsSpace, isPaid, isForfeitable, needsChasing } from '@/server/modules/payments/booking-status'
+import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { fmtDateTime, fmtRange } from '@/lib/dates'
 import { PageHead, Stats, Stat, Progress } from '../ui'
 
@@ -64,7 +65,14 @@ export default async function Roster() {
      space, so their paperwork was never Mermade's problem. A confirmed booking
      without documentation is. Retain for four years. */
   const documented = (a: typeof rows[number]['app']) =>
-    Boolean(a.sellerPermit.trim()) || a.occasionalSeller
+    /* Was `Boolean(sellerPermit) || occasionalSeller`, which counted a maker
+       who answered "I am an occasional seller" as never asked, because
+       nothing in the application sets occasionalSeller. permitState reads
+       what they actually told us. */
+    permitCleared(permitState({
+      track: a.track, permitStatus: a.permitStatus,
+      sellerPermit: a.sellerPermit, occasionalSeller: a.occasionalSeller,
+    }))
   const undocumented = rows.filter((r) => !documented(r.app))
   const noCoi = rows.filter((r) => !r.app.hasCoi)
 
@@ -129,8 +137,22 @@ export default async function Roster() {
         <td className="c-1">
           <span className="adm-tags">
             {!documented(app) && <span className="adm-tag" data-warn="1">Blocks load-in</span>}
-            {app.occasionalSeller && !permit && <span className="adm-tag">410-D claimed</span>}
-            {permit && <span className="adm-tag">Permit on file</span>}
+            {/* What they told us, which until now was invisible here: the old
+                tag was keyed on occasionalSeller, a field the application
+                never sets, so it could not render for anybody. */}
+            {(() => {
+              const st = permitState({
+                track: app.track, permitStatus: app.permitStatus,
+                sellerPermit: app.sellerPermit, occasionalSeller: app.occasionalSeller,
+              })
+              if (st === 'on_file') return <span className="adm-tag">Permit on file</span>
+              if (st === 'occasional_documented') return <span className="adm-tag">410-D on file</span>
+              if (st === 'occasional_declared') return <span className="adm-tag" data-warn="1">Send the 410-D</span>
+              if (st === 'unsure') return <span className="adm-tag" data-warn="1">Asked for help</span>
+              if (st === 'promised') return <span className="adm-tag" data-warn="1">Number promised</span>
+              if (st === 'unanswered') return <span className="adm-tag" data-warn="1">Never asked</span>
+              return null
+            })()}
             {!app.hasCoi && <span className="adm-tag">COI due</span>}
           </span>
           {permit && (

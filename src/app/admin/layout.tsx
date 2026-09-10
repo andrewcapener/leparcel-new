@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers'
-import { and, eq, inArray, or, sql } from 'drizzle-orm'
+import { and, eq, inArray, ne, or, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { applications, bookings, emailOutbox } from '@/db/schema'
@@ -43,7 +43,16 @@ async function navCounts(showId: string | undefined, openAt: string | undefined)
     .where(and(
       eq(bookings.showId, showId),
       or(
-        and(eq(applications.sellerPermit, ''), eq(applications.occasionalSeller, false)),
+        /* No permit record AND nothing they told us that we can act on.
+           An indoor maker is never counted, because Mermade is the retailer
+           of record for their sales and nobody asks them. Mirrors
+           permitCleared in compliance/permit.ts; kept as SQL because this is
+           a badge count over every booking rather than a per row check. */
+        and(
+          ne(applications.track, 'indoor'),
+          eq(applications.sellerPermit, ''),
+          eq(applications.occasionalSeller, false),
+        ),
         /* Unpaid only. A bank transfer in flight is not a thing anybody
            needs to act on: see booking-status.ts. */
         eq(bookings.status, 'awaiting_payment'),

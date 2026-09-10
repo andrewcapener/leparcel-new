@@ -1,6 +1,7 @@
 import { usd } from '@/lib/money'
 import { fmtDateTime } from '@/lib/dates'
 import { FactTable } from '@/components/theme/Sections'
+import { permitState, permitProfileLine } from '@/server/modules/compliance/permit'
 
 /**
  * Everything the maker told us, given back to them.
@@ -31,6 +32,9 @@ const TRACK: Record<string, string> = {
 
 export type SubmittedApplication = {
   track: string
+  permitStatus: string | null
+  sellerPermit: string
+  occasionalSeller: boolean
   category: string
   secondaryCategories: string
   description: string
@@ -78,6 +82,19 @@ export function YourApplication({
   const photoCount = list(app.photos).length
   const where = [vendor.city, vendor.state, vendor.postalCode].filter(Boolean).join(', ')
 
+  /* The permit answer is a fact about them, like their address, not a task.
+     Everybody selling outside answers it on the application, so it reads back
+     here; the checklist only carries it when something is still theirs to do. */
+  const permit = permitProfileLine(
+    permitState({
+      track: app.track,
+      permitStatus: app.permitStatus,
+      sellerPermit: app.sellerPermit,
+      occasionalSeller: app.occasionalSeller,
+    }),
+    app.sellerPermit,
+  )
+
   return (
     <div id="your-application">
       <FactTable
@@ -121,6 +138,7 @@ export function YourApplication({
           { label: 'Instagram', value: vendor.instagram || 'Not given' },
           ...(vendor.website ? [{ label: 'Website', value: vendor.website }] : []),
           { label: 'Where you are', value: where || 'Not given' },
+          ...(permit ? [{ label: "Seller's permit", value: permit }] : []),
         ]}
       />
 

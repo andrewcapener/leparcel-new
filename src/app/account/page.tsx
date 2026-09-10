@@ -15,6 +15,7 @@ import { BoothInvoice } from './BoothInvoice'
 import { Checklist } from './Checklist'
 import { YourApplication } from './YourApplication'
 import { checklistFor, clearForLoadIn } from '@/server/modules/compliance/checklist'
+import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { settlesInsideWindow, offersCard } from '@/server/modules/payments/methods'
 import { CONTACT_EMAIL } from '@/lib/agreement'
 import { boothInvoice } from '@/server/modules/payments/booth'
@@ -130,6 +131,7 @@ export default async function Account({
           : undefined,
         sellerPermit: app.sellerPermit,
         occasionalSeller: app.occasionalSeller,
+        permitStatus: app.permitStatus,
         hasCoi: app.hasCoi,
         /* Load-in is the day before the show opens. Not a date we invent to
            create urgency: it is the day the doors need everything in order. */
@@ -139,6 +141,18 @@ export default async function Account({
         startOnly: !settlesInsideWindow(show.paymentMethods),
       })
     : []
+
+  /* The permit can block load-in without appearing on the list, because once
+     a maker has answered it is our move, not theirs. So clearance is asked of
+     the permit directly rather than inferred from the rows. */
+  const permitOutstanding = app
+    ? !permitCleared(permitState({
+        track: app.track,
+        permitStatus: app.permitStatus,
+        sellerPermit: app.sellerPermit,
+        occasionalSeller: app.occasionalSeller,
+      }))
+    : false
 
   return (
     <SiteShell show={show} template="page template-suffix-account">
@@ -150,7 +164,7 @@ export default async function Account({
       {checklist.length > 0 && (
         <Checklist
           items={checklist}
-          clear={clearForLoadIn(checklist)}
+          clear={clearForLoadIn(checklist, permitOutstanding)}
           feeDeadlineIsStart={!settlesInsideWindow(show.paymentMethods)}
         />
       )}

@@ -7,6 +7,7 @@ import { fmtDate, fmtDateTime, fmtRange, applicationWindow } from '@/lib/dates'
 import { bpsLabel, usd } from '@/lib/money'
 import { purgeRehearsals, syncSheetBacklog } from '@/app/actions'
 import { holdsSpace, isPaid, needsChasing } from '@/server/modules/payments/booking-status'
+import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { sheetsConfigured } from '@/server/modules/sheets/sync'
 import { syncDiagnostics, unqueuedCount } from '@/server/modules/sheets/state'
 import { PageHead, Stats, Stat, ActionCard, Progress } from './ui'
@@ -72,7 +73,10 @@ export default async function Dashboard() {
   const expected = live.reduce((a, r) => a + r.booking.priceCents, 0)
 
   const documented = (a: typeof held[number]['app']) =>
-    Boolean(a.sellerPermit.trim()) || a.occasionalSeller
+    permitCleared(permitState({
+      track: a.track, permitStatus: a.permitStatus,
+      sellerPermit: a.sellerPermit, occasionalSeller: a.occasionalSeller,
+    }))
   const needsPerson = held.filter(
     (r) => !documented(r.app) || needsChasing(r.booking.status) || !r.app.hasCoi,
   ).length

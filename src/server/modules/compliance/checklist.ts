@@ -19,7 +19,7 @@
  * they are not, and a bar invites them to feel finished while something that
  * blocks them is outstanding.
  */
-import { owesPermit, permitSettled } from './permit'
+import { owesPermit, permitState, permitNeedsMaker, type PermitState } from './permit'
 
 export type ItemState =
   /** Nothing to do: not yet asked, or does not apply to this maker. */
@@ -56,6 +56,9 @@ export type ChecklistInput = {
   }
   sellerPermit: string
   occasionalSeller: boolean
+  /** What the maker answered on the application: have, occasional, unsure.
+   *  Null for indoor, where nobody is asked. */
+  permitStatus: string | null
   hasCoi: boolean
   /** Show dates, for the deadlines that are not per booking. */
   loadInAt: string
@@ -120,18 +123,44 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
      load-in, which is why the date shown is load-in and not something
      invented earlier to create urgency. */
   if (owesPermit(input.track)) {
-    const settled = permitSettled(input.sellerPermit, input.occasionalSeller)
-    items.push({
-      key: 'permit',
-      title: "California seller's permit",
-      detail: settled
-        ? 'On file. Nothing more needed.'
-        : `You sell for your own account outside, so the state requires us to hold your permit number. Email it to ${input.contactEmail}, or tell us you have no permit and we will send the occasional seller form.`,
-      state: withDate(!accepted ? 'waiting' : settled ? 'done' : 'todo', input.loadInAt, input.nowIso),
-      dueAt: input.loadInAt,
-      href: '#seller-permit',
-      blocksLoadIn: true,
+    const permit = permitState({
+      track: input.track,
+      permitStatus: input.permitStatus,
+      sellerPermit: input.sellerPermit,
+      occasionalSeller: input.occasionalSeller,
     })
+    /* Only when it is still theirs to do. Everybody outdoor answered this on
+       the application, so once they have, it is a fact in their profile
+       rather than a task: Drew, 10 Sept, "permitting should almost just be
+       part of their profile info". A declaration we owe a form against, or a
+       request for help, is OUR homework and does not belong on their list. */
+    const mine = permitNeedsMaker(permit)
+    /* Say back what they already told us. They answered this on the
+       application, and a dashboard that asks again for something already
+       given is the fastest way to make a careful maker feel unheard. Only
+       `unanswered` is a fresh ask. */
+    const DETAIL: Record<PermitState, string> = {
+      not_required: '',
+      on_file: 'Your permit number is on file. Nothing more needed.',
+      promised: `You told us you have a permit and we do not have the number yet. Send it to ${input.contactEmail} and this is done.`,
+      occasional_declared: 'You told us you are an occasional seller, so we will send you the CDTFA-410-D to sign. Watch for it, and there is nothing to do until it arrives.',
+      occasional_documented: 'Your occasional seller form is on file. Nothing more needed.',
+      unsure: 'You asked us to help you work out whether you need one. We will be in touch before load-in, and this will not hold you up.',
+      unanswered: `You sell for your own account outside, so the state requires us to hold your permit number. Send it to ${input.contactEmail}, or tell us you have no permit and we will send the occasional seller form.`,
+    }
+    /* Waiting, not todo, when the ball is with us: they answered and we owe
+       them a form or a conversation. Chasing somebody for our own homework
+       is worse than saying nothing. */
+    if (mine) {
+      items.push({
+        key: 'permit',
+        title: "California seller's permit",
+        detail: DETAIL[permit],
+        state: withDate(!accepted ? 'waiting' : 'todo', input.loadInAt, input.nowIso),
+        dueAt: input.loadInAt,
+        blocksLoadIn: true,
+      })
+    }
   }
 
   /* 3 · Insurance. Everybody, both tracks. */
@@ -167,7 +196,15 @@ export function nextAction(items: ChecklistItem[]): ChecklistItem | undefined {
   return items.find((i) => i.state === 'overdue') ?? items.find((i) => i.state === 'todo')
 }
 
-/** Clear for load-in: nothing blocking is outstanding. */
-export function clearForLoadIn(items: ChecklistItem[]): boolean {
-  return items.every((i) => !i.blocksLoadIn || i.state === 'done')
+/**
+ * Clear for load-in: nothing blocking is outstanding.
+ *
+ * `alsoBlocked` exists because the visible list is deliberately not the whole
+ * truth. A maker who declared themselves an occasional seller has no permit
+ * row, since the next move is ours, but their 410-D is not signed and they are
+ * NOT clear. Reading clearance off the rows alone would have told them they
+ * were fine, which is the one thing this sentence must never get wrong.
+ */
+export function clearForLoadIn(items: ChecklistItem[], alsoBlocked = false): boolean {
+  return !alsoBlocked && items.every((i) => !i.blocksLoadIn || i.state === 'done')
 }
