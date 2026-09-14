@@ -52,15 +52,14 @@ export function BoothInvoice({
      the space is yours while the transfer clears. */
   const inFlight = status === 'payment_processing'
 
+  /* A card on the account's own ground, not one of the theme's full-bleed
+     marketing sections. The page is a dashboard; its sections are objects on
+     a surface, and the reveal-on-scroll the theme applies to a rich-text row
+     left half this page parked at opacity zero in anything but a human
+     scrolling it. */
   return (
-    <div className="shopify-section section-rich-text" id={id}>
-      {/* The theme reveals `data-cc-animate` rows on scroll, which is right on
-          a maker's own page and wrong on a preview whose whole job is showing
-          four states side by side: they would each start invisible and the
-          comparison would be a page of gaps. */}
-      <div className="fully-spaced-row--medium" {...(preview ? {} : { 'data-cc-animate': '' })}>
-        <div className="container container--reading-width">
-          <div className="subheading subheading--over lightish-spaced-row-above">
+    <section className="mk-card mk-grid__wide" id={id}>
+      <h2 className="mk-card__title">
             {paid
               ? 'Your space is confirmed'
               : inFlight
@@ -68,30 +67,30 @@ export function BoothInvoice({
                 : lost
                   ? 'This space was released'
                   : 'Your booth fee'}
-          </div>
+          </h2>
 
-          <dl className="fact-table">
+          <dl className="mk-dl">
             {invoice.lines.map((l) => (
-              <div className="fact-table__row" key={l.label}>
+              <div className="mk-dl__row" key={l.label}>
                 <dt>{l.label}</dt>
                 <dd>{usd(l.amountCents)}</dd>
               </div>
             ))}
-            <div className="fact-table__row">
+            <div className="mk-dl__row">
               <dt><strong>Total</strong></dt>
               <dd><strong>{usd(invoice.totalCents)}</strong></dd>
             </div>
-            <div className="fact-table__row">
+            <div className="mk-dl__row">
               <dt>Your Mermade ID</dt>
               <dd>{vendorCode}</dd>
             </div>
             {paid ? (
-              <div className="fact-table__row">
+              <div className="mk-dl__row">
                 <dt>Paid</dt>
                 <dd>{paidAt ? fmtDateTime(paidAt) : 'Yes'}</dd>
               </div>
             ) : inFlight ? (
-              <div className="fact-table__row">
+              <div className="mk-dl__row">
                 <dt>Status</dt>
                 <dd>Bank transfer sent, clearing now</dd>
               </div>
@@ -100,12 +99,12 @@ export function BoothInvoice({
                  this: a forfeited booking was still showing a live-looking
                  "Start by" date in the future, under a heading that said "Your
                  booth fee", on a space that is gone. */
-              <div className="fact-table__row">
+              <div className="mk-dl__row">
                 <dt>Status</dt>
                 <dd>Returned to the pool on {fmtDateTime(dueAt)}</dd>
               </div>
             ) : (
-              <div className="fact-table__row">
+              <div className="mk-dl__row">
                 {/* "Start your transfer by" when bank is the only option: four
                     business days does not fit in the payment window, so
                     labelling it "due" would be asking for something
@@ -204,8 +203,6 @@ export function BoothInvoice({
               )}
             </>
           )}
-        </div>
-      </div>
-    </div>
+    </section>
   )
 }

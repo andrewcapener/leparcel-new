@@ -2588,3 +2588,208 @@ h3, .h3 { line-height: 1.15; }
   .tx-rule__mark { width: 34px; height: 34px; }
   .tx-beside { grid-template-columns: 1fr; }
 }
+
+/* ── The maker account ────────────────────────────────────────────────────
+   Drew, 14 Sept: "it really should look like an account page ... right now it
+   just feels like a webpage." It did, and for a structural reason: the page
+   was a stack of the theme's full-bleed rich-text sections, each with the
+   generous vertical rhythm a marketing page wants, so a maker's own dashboard
+   read with the same pacing as the homepage.
+
+   So the account gets its own ground and its own furniture. Three things do
+   the work: a tinted page ground so the white cards read as objects sitting
+   on a surface, a header band that says whose account this is instead of a
+   centred marketing title, and a task list with real markers and real
+   buttons. Colours come from the theme's own variables wherever one exists,
+   so this follows the site rather than forking from it. */
+
+.mk-acct {
+  background: #F2F0EB;
+  padding: clamp(22px, 3.4vw, 40px) 0 clamp(34px, 5vw, 64px);
+}
+
+/* ── Header band ─────────────────────────────────────────────────────── */
+.mk-acct__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1em 1.6em;
+  padding-bottom: 1.1em;
+  margin-bottom: clamp(18px, 2.4vw, 28px);
+  border-bottom: 1px solid rgb(var(--text-color) / 0.16);
+}
+.mk-acct__eyebrow {
+  font-size: var(--t-cap, 11.5px);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+  margin: 0 0 .35em;
+}
+.mk-acct__name {
+  margin: 0;
+  line-height: 1.05;
+  font-size: clamp(26px, 3.6vw, 40px);
+}
+.mk-acct__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5em .9em;
+  margin: .7em 0 0;
+  font-size: .88em;
+  color: rgb(var(--text-color) / 0.78);
+}
+.mk-acct__meta > * { margin: 0; }
+/* A dot between meta items, so they read as one line rather than as a list. */
+.mk-acct__meta > * + *::before {
+  content: "·";
+  margin-right: .9em;
+  color: rgb(var(--text-color) / 0.45);
+}
+.mk-acct__id {
+  font-family: var(--font-m, ui-monospace, monospace);
+  letter-spacing: .04em;
+}
+.mk-acct__out { flex: none; }
+
+/* ── Cards ───────────────────────────────────────────────────────────── */
+.mk-grid {
+  display: grid;
+  /* Even halves. Every long-form card spans both tracks, so the only thing
+     this ratio decides is a row of two short cards, and two short cards of
+     different widths read as a mistake rather than as a hierarchy. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(14px, 1.8vw, 22px);
+}
+/* One column is not a narrow-screen fallback here: a card told to span both
+   tracks uses it at every width. */
+.mk-grid__wide { grid-column: 1 / -1; }
+
+.mk-card {
+  background: #FFFFFF;
+  border: 1px solid rgb(var(--text-color) / 0.12);
+  padding: clamp(18px, 2.2vw, 26px);
+}
+.mk-card + .mk-card { margin-top: clamp(14px, 1.8vw, 22px); }
+/* Inside the grid the gap already spaces them. */
+.mk-grid > .mk-card + .mk-card { margin-top: 0; }
+
+.mk-card__title {
+  font-size: var(--t-cap, 11.5px);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgb(var(--text-color) / 0.7);
+  margin: 0 0 1em;
+}
+.mk-card__lede { margin: 0 0 1.1em; }
+.mk-card__note {
+  margin: 1.1em 0 0;
+  padding-top: 1em;
+  border-top: 1px solid rgb(var(--text-color) / 0.12);
+  font-size: .9em;
+  color: #5F5A57;
+}
+
+/* ── Definition rows inside a card ───────────────────────────────────── */
+.mk-dl { margin: 0; }
+.mk-dl__row {
+  display: grid;
+  grid-template-columns: 11.5em minmax(0, 1fr);
+  gap: .4em 1.4em;
+  padding: .7em 0;
+  border-top: 1px solid rgb(var(--text-color) / 0.1);
+}
+.mk-dl__row:first-child { border-top: 0; padding-top: 0; }
+.mk-dl dt {
+  font-size: var(--t-cap, 11.5px);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #5F5A57;
+  line-height: 1.5;
+  margin: .15em 0 0;
+}
+.mk-dl dd { margin: 0; }
+
+/* ── The task list ───────────────────────────────────────────────────── */
+.mk-tasks { list-style: none; margin: 0; padding: 0; }
+
+.mk-task {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: .2em 0.9em;
+  padding: 1.1em 0;
+  border-top: 1px solid rgb(var(--text-color) / 0.1);
+}
+.mk-task:first-child { border-top: 0; padding-top: 0; }
+
+/* The marker. Shape carries the state as well as colour does, because colour
+   alone fails WCAG 2.2 1.4.1 and because these four states have to be told
+   apart at a glance on a phone in a car park. */
+.mk-task__mark {
+  grid-row: 1 / span 2;
+  width: 22px; height: 22px;
+  margin-top: .1em;
+  border-radius: 50%;
+  border: 2px solid rgb(var(--text-color) / 0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; line-height: 1; font-weight: 700;
+  color: #FFFFFF;
+}
+.mk-task[data-state="done"]    .mk-task__mark { background: #3F6B52; border-color: #3F6B52; }
+.mk-task[data-state="todo"]    .mk-task__mark { border-color: #BC9658; }
+.mk-task[data-state="overdue"] .mk-task__mark { background: #9B3B2F; border-color: #9B3B2F; }
+.mk-task[data-state="waiting"] .mk-task__mark { border-style: dashed; }
+
+.mk-task__head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: .6em 1em; flex-wrap: wrap;
+}
+.mk-task__title { font-weight: 700; }
+.mk-task__title a { text-decoration: underline; text-underline-offset: 2px; }
+
+/* The state as a word, always. */
+.mk-task__chip {
+  flex: none;
+  font-size: var(--t-cap-s, 10.5px);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: .3em .7em;
+  border: 1px solid currentColor;
+  color: #5F5A57;
+}
+.mk-task[data-state="todo"]    .mk-task__chip { color: #7A5E23; }
+.mk-task[data-state="overdue"] .mk-task__chip { color: #9B3B2F; font-weight: 700; }
+.mk-task[data-state="done"]    .mk-task__chip { color: #35573F; }
+
+.mk-task__body { grid-column: 2; }
+.mk-task__detail { margin: .35em 0 0; }
+.mk-task__due {
+  margin: .45em 0 0;
+  font-size: .88em;
+  color: #5F5A57;
+}
+.mk-task[data-state="overdue"] .mk-task__due { color: #9B3B2F; }
+.mk-task__do { margin-top: .85em; }
+
+/* A clear-to-load-in line, when nothing is outstanding. Never a progress bar:
+   three of five ticks is not "sixty percent ready". */
+.mk-clear {
+  margin: 0 0 1.1em;
+  padding: .75em .9em;
+  background: #EDF2EE;
+  border-left: 3px solid #3F6B52;
+  font-size: .95em;
+}
+
+@media (max-width: 900px) {
+  .mk-grid { grid-template-columns: minmax(0, 1fr); }
+  .mk-grid > .mk-card + .mk-card { margin-top: 0; }
+}
+@media (max-width: 560px) {
+  .mk-dl__row { grid-template-columns: minmax(0, 1fr); gap: .15em; }
+  .mk-dl dt { margin: 0; }
+  .mk-acct__head { align-items: flex-start; }
+}

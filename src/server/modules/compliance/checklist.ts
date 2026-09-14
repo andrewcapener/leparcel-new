@@ -41,6 +41,11 @@ export type ChecklistItem = {
   dueAt?: string
   /** Where on this page to do it, when it can be done here. */
   href?: string
+  /** The button on the row, when there is a real thing to press. A task list
+   *  whose rows only describe the task makes the maker go and find the place
+   *  to do it, which for two of these three is an email they have to compose
+   *  from scratch. Only set when the state is theirs to act on. */
+  action?: { label: string; href: string }
   /** True when not being done stops them selling. */
   blocksLoadIn: boolean
 }
@@ -70,6 +75,12 @@ export type ChecklistInput = {
    *  fee deadline a deadline to START rather than to have paid. */
   startOnly?: boolean
 }
+
+/* A pre-addressed, pre-titled draft. The address is already written out in
+   the row's detail, so this saves a copy and paste rather than hiding
+   anything: a maker who prefers their own client still has it in words. */
+const mailto = (email: string, subject: string) =>
+  `mailto:${email}?subject=${encodeURIComponent(subject)}`
 
 const past = (iso: string | undefined, nowIso: string) => {
   if (!iso) return false
@@ -115,6 +126,9 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
       state: withDate(feeState, booking?.paymentDueAt, input.nowIso),
       dueAt: booking?.paymentDueAt,
       href: '#booth-fee',
+      action: feeState === 'todo'
+        ? { label: input.startOnly ? 'Start your transfer' : 'Pay your booth fee', href: '#booth-fee' }
+        : undefined,
       blocksLoadIn: true,
     },
   ]
@@ -158,6 +172,15 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
         detail: DETAIL[permit],
         state: withDate(!accepted ? 'waiting' : 'todo', input.loadInAt, input.nowIso),
         dueAt: input.loadInAt,
+        /* Only where the maker has something to send. `unsure` is a request
+           for help we owe them, and a button labelled as if it were their
+           job to act would be the wrong instruction. */
+        action: accepted && permit !== 'unsure'
+          ? {
+              label: 'Email your permit number',
+              href: mailto(input.contactEmail, "Seller's permit"),
+            }
+          : undefined,
         blocksLoadIn: true,
       })
     }
@@ -172,6 +195,9 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
       : `Liability cover naming Mermade Market as additional insured. Email the certificate to ${input.contactEmail} any time before load-in.`,
     state: withDate(!accepted ? 'waiting' : input.hasCoi ? 'done' : 'todo', input.loadInAt, input.nowIso),
     dueAt: input.loadInAt,
+    action: accepted && !input.hasCoi
+      ? { label: 'Email your certificate', href: mailto(input.contactEmail, 'Certificate of insurance') }
+      : undefined,
     blocksLoadIn: true,
   })
 
