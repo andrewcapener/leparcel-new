@@ -80,12 +80,34 @@ measurement.
   lever is a prospecting rebuild once the freeze lifts, seeded with the
   margin-based CAC ceiling we still don't have.
 
+## Breakeven terms (margin supplied 2026-09-17: ~75% gross, via client Slack)
+
+With ~75% gross margin, every number above converts to true economics:
+
+- **Breakeven ROAS / MER = 1.33x** (1 ÷ 0.75). Anything above 1.33x
+  revenue-per-ad-dollar is gross-profit positive.
+- **Breakeven first-order CAC ≈ $1,437** (75% of the $1,916 era web AOV) —
+  before any repeat-purchase LTV. Blended era CAC is **$206**: the account
+  as a whole acquires at ~7x better than breakeven. There is real
+  headroom to scale — through the channels that actually convert.
+- **Google in gross-profit dollars:** $6,274 spend → $378 tracked revenue
+  → **≈ −$5,990 tracked gross profit** for the era. The cut
+  recommendation is now a P&L statement, not a hunch.
+- **tROAS floors:** any Google campaign kept alive needs tROAS ≥ 1.33 as
+  an absolute floor. Brand's current 1.2 is *below breakeven by
+  construction* — if the campaign is kept, raise to ≥ 1.5. The non-brand
+  2.5 recommendation ≈ 1.9x gross-profit multiple — comfortably
+  defensible.
+- **Meta:** even discounting the retargeting-flattered 18.5x by 5–10x for
+  attribution inflation, it clears 1.33x. Scale-with-caution stands.
+- **Klaviyo/email:** effectively no marginal media cost; its ~$38k
+  attributed era revenue is ~pure gross margin. Protect and expand.
+
 ## Open items / blockers
 
-- **Margin number: still not supplied** (client unresponsive since
-  onboarding). Without it: no true breakevens, no honest tROAS floors, no
-  defensible scale plan. Re-ask; escalate via the $297k mispriced-variant
-  finding if needed (that got flagged to Andrew 9/15, unknown if actioned).
+- ~~Margin number~~ **Resolved 9/17: ~75% gross** (client, via Slack).
+  Breakevens above; day-30 report should re-express weekly trends in
+  gross-profit terms.
 - Returning-customers proxy: era shows 0 returning orders across 40 web
   orders. Suspicious for a 180-year-old brand; the `orders_count <= 1`
   proxy needs validation against Shopify admin before the day-30 report
