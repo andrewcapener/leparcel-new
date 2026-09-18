@@ -63,3 +63,12 @@ paused). Day-14 clean-data report auto-fires 2026-09-17.
 - Meta API write freeze (manual UI only) until ~Sep 17–Oct 1.
 - No margin number from client → no honest tROAS floors, no scale math.
 - Recommendation: verify checkout health before any scale move.
+
+## 2026-09-18 (efficiency phase begins)
+
+- Executed via API (verified live): non-brand Shopping tROAS 1.5 → **2.5**;
+  brand Shopping tROAS 1.2 → **1.5** (margin-based breakeven floor is 1.33).
+- Awaiting Andrew UI-side: end 2 experiments (20534342865, 23295771342),
+  pause Branding Search 1012389985, brand budget $240 → ~$100/day.
+- Margin confirmed 75% (client Slack, 9/17). Mandate from Andrew:
+  "ultra efficient, then scale."
