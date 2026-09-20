@@ -54,7 +54,7 @@ export function boothFeeHtml({
         <div style="font-family:${BODY_FONT};font-size:12px;line-height:1.5;color:${MUTED};word-break:break-all;">${esc(url)}</div>
       </td></tr>`
       + paragraphs([
-        'We never ask for money by Zelle, Venmo, a wire, or any link that did not come from us.',
+        'We never send payment details by email. Every way to pay is on your page, on our own site, behind the button above.',
       ]),
     footer: 'Mermade Market · Dana Point, California',
   })
@@ -80,6 +80,6 @@ export function boothFeeText({
       ? `Pay by bank transfer. Start yours by ${deadline} and your space is held from the moment you do. Transfers take about four business days to arrive, so you do not have to wait for it to land.\n\n`
       : `Pay to confirm your space by ${deadline}.\n\n`)
     + `${url}\n\n`
-    + `We never ask for money by Zelle, Venmo, a wire, or any link that did not come from us.\n\n`
+    + `We never send payment details by email. Every way to pay is on your page, on our own site, behind the link above.\n\n`
     + `Mermade Market`
 }

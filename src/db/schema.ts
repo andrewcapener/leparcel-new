@@ -81,6 +81,11 @@ export const shows = pgTable('shows', {
      wants a Social Security number for it. Everything behind this is built;
      the switch is the date, not the decision. */
   payoutSetup: text('payout_setup', { enum: ['on', 'off'] }).notNull().default('off'),
+  /* Venmo and Zelle, shown on the booking's own page and never in an email.
+     Blank means the option is not offered, which is how it ships: no handle is
+     invented in code. These payments are manual, so staff press Mark paid. */
+  venmoHandle: text('venmo_handle').notNull().default(''),
+  zelleContact: text('zelle_contact').notNull().default(''),
 
   /* Onboarding call times, one option per line, per track. The two lists are
      independent because the times are: Hillary's outdoor slots exist and the

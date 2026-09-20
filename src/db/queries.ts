@@ -90,6 +90,9 @@ export async function activeShow(): Promise<Show | undefined> {
         decisionEmails: 'off' as const,
         paymentEmail: 'off' as const,
         payoutSetup: 'off' as const,
+        /* Blank, so a database behind the code offers no handle rather than a
+           wrong one. Nobody's money goes to an empty Venmo. */
+        venmoHandle: '', zelleContact: '',
         /* No slots and no date: a database behind the code asks no question
            it cannot offer an answer to. */
         onboardingSlotsIndoor: '', onboardingSlotsOutdoor: '', inventoryDueAt: null,

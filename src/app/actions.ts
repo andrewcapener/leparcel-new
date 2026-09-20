@@ -1334,6 +1334,8 @@ const ShowSettingsSchema = z.object({
   decisionEmails: z.enum(['on', 'off']),
   paymentEmail: z.enum(['on', 'off']),
   payoutSetup: z.enum(['on', 'off']),
+  venmoHandle: z.string().max(80).default(''),
+  zelleContact: z.string().max(120).default(''),
   onboardingSlotsIndoor: z.string().max(2000).default(''),
   onboardingSlotsOutdoor: z.string().max(2000).default(''),
   /* Optional: an empty date input posts an empty string, which is not a date
@@ -1392,6 +1394,8 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
     decisionEmails: d.decisionEmails,
     paymentEmail: d.paymentEmail,
     payoutSetup: d.payoutSetup,
+    venmoHandle: d.venmoHandle.trim(),
+    zelleContact: d.zelleContact.trim(),
     onboardingSlotsIndoor: d.onboardingSlotsIndoor,
     onboardingSlotsOutdoor: d.onboardingSlotsOutdoor,
     /* Noon Pacific, not midnight: a date rendered back in another timezone

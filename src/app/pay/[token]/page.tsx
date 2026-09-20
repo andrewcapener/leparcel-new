@@ -8,6 +8,8 @@ import { BoothInvoice } from '@/app/account/BoothInvoice'
 import { bookingByPayToken, boothInvoice } from '@/server/modules/payments/booth'
 import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
 import { PayoutSetup } from '@/app/account/PayoutSetup'
+import { ManualPay } from '@/app/account/ManualPay'
+import { manualOptions } from '@/server/modules/payments/manual'
 import { payByToken, startConnectOnboardingByToken } from '@/app/actions'
 import {
   connectState, owesPayoutSetup, requirementList, requirementsInPlainWords,
@@ -100,6 +102,16 @@ export default async function PayPage({
      page has exactly one job. Only for an indoor maker, because an outdoor
      maker takes their own money and is owed nothing. And only where Stripe is
      configured, because a button that cannot work is worse than no button. */
+  /* Venmo and Zelle, if the Show has handles set. Only while something is
+     still owed: offering a second way to pay a settled invoice is how a maker
+     pays twice. */
+  const manual = billing.booking.status === 'awaiting_payment'
+    ? manualOptions(
+        { venmoHandle: (its ?? show).venmoHandle, zelleContact: (its ?? show).zelleContact },
+        billing.invoice.totalCents, billing.booking.vendorCode, (its ?? show).name,
+      )
+    : []
+
   const settled = isPaid(billing.booking.status) || billing.booking.status === 'payment_processing'
   const payouts = (its ?? show).payoutSetup === 'on'
     && paymentsConfigured() && settled && owesPayoutSetup(found.track)
@@ -131,6 +143,12 @@ export default async function PayPage({
               action={payByToken}
               token={token}
             />
+            <ManualPay
+              options={manual}
+              vendorCode={billing.booking.vendorCode}
+              dueWords={`Send it by ${new Date(billing.booking.paymentDueAt).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'long', day: 'numeric' })} and your space is held.`}
+            />
+
             {payouts && (
               <PayoutSetup
                 state={payouts}
@@ -147,7 +165,7 @@ export default async function PayPage({
                 rows={[
                   { label: 'What this is', value: 'Your space at the show, and any extras you asked for.' },
                   { label: 'Who to ask', value: <>Reply to the email this link came in, or write to <a href="mailto:hello@mermademarket.com">hello@mermademarket.com</a>.</> },
-                  { label: 'What we never do', value: 'Ask you to send money by Zelle, Venmo, a wire, or any link that did not come from us.' },
+                  { label: 'What we never do', value: 'Send payment details by email. Every way to pay is on this page, on our own site. If a message asks you to send money somewhere else, it is not from us.' },
                 ]}
               />
             </Card>

@@ -242,7 +242,7 @@ export default async function PreviewAccount() {
                   },
                   {
                     label: 'What we never do',
-                    value: 'Ask you to send money by Zelle, Venmo, a wire, or any link that did not come from us. If someone does, it is not us.',
+                    value: 'Send payment details by email. Every way to pay lives on your own page here, on our site. If a message asks you to send money somewhere else, it is not from us.',
                   },
                 ]}
               />

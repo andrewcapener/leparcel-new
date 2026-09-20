@@ -168,9 +168,26 @@ const partOne: Part = {
         {
           /* ⟨COUNSEL⟩ Added 6 Sep 2026 on Drew's decision. The agreement said
              the fee was due and never said how it was paid, which is the one
-             question a maker has at the moment they read the acceptance. */
+             question a maker has at the moment they read the acceptance.
+
+             ⟨DECISION⟩ Rewritten 21 Sep 2026: Venmo and Zelle are accepted
+             after all, on the market's side. The old wording promised we would
+             never ask for them, which the payment page now contradicts, and a
+             maker could fairly have held us to it.
+
+             The protection it was carrying has been kept and reworded rather
+             than dropped, because it is the only thing standing between a
+             maker and somebody spoofing our email for a booth fee: the promise
+             is now about the CHANNEL, not the method. Payment details live on
+             the maker's own page on our own site and are never sent by email,
+             so a message carrying a handle is still self evidently not us.
+
+             The last sentence exists because these two do not confirm
+             themselves. A maker whose page still reads unpaid for a day after
+             they paid must be able to point at something that says that is
+             normal and their space is safe. */
           n: '3.3', lead: 'How you pay it.',
-          text: ['Your acceptance carries a payment link. Pay by card or by bank transfer, whichever suits you, and the space is held the moment it goes through. We do not take payment by any other route: nobody from Mermade will ever ask you to send money by Zelle, Venmo, a wire, or a link that did not come from us.'],
+          text: ['Your acceptance carries a payment link to your own page on our site. Pay there by card or bank transfer, and the space is held the moment it goes through. Venmo and Zelle are also accepted, and the details for both are shown on that same page: send the exact total with your Mermade ID in the note. We never send payment details by email, and nobody from Mermade will ever ask you to send money to a handle or a link that did not come from your own page on our site. Card and bank transfer confirm on their own; a Venmo or Zelle payment is matched by a person, so your page may still read unpaid for a day or so after you send it, and your space is held from the moment you do.'],
         },
         { n: '3.4', lead: 'Transfer.', text: ['Your fee is not transferable to another maker or another person. Section 4 and section B6 are the only places it moves to another show.'] },
         {

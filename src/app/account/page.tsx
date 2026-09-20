@@ -17,6 +17,8 @@ import { Checklist } from './Checklist'
 import { WhatYouTold, YourDetails } from './YourApplication'
 import { CallTimes } from './CallTimes'
 import { PayoutSetup } from './PayoutSetup'
+import { ManualPay } from './ManualPay'
+import { manualOptions } from '@/server/modules/payments/manual'
 import { checklistFor, clearForLoadIn, slotOptions } from '@/server/modules/compliance/checklist'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { settlesInsideWindow, offersCard } from '@/server/modules/payments/methods'
@@ -247,6 +249,17 @@ export default async function Account({
               </Card>
             )}
 
+            {billing && billing.booking.status === 'awaiting_payment' && (
+              <ManualPay
+                options={manualOptions(
+                  { venmoHandle: show.venmoHandle, zelleContact: show.zelleContact },
+                  billing.invoice.totalCents, billing.booking.vendorCode, show.name,
+                )}
+                vendorCode={billing.booking.vendorCode}
+                dueWords={`Send it by ${fmtDate(billing.booking.paymentDueAt)} and your space is held.`}
+              />
+            )}
+
             {billing && (
               <BoothInvoice
                 invoice={billing.invoice}
@@ -359,7 +372,7 @@ export default async function Account({
                   },
                   {
                     label: 'What we never do',
-                    value: 'Ask you to send money by Zelle, Venmo, a wire, or any link that did not come from us. If someone does, it is not us.',
+                    value: 'Send payment details by email. Every way to pay lives on your own page here, on our site. If a message asks you to send money somewhere else, it is not from us.',
                   },
                 ]}
               />

@@ -103,9 +103,9 @@ export function PayoutSetup({
       </div>
 
       <CardNote>
-        Stripe holds your bank details, not us. We never ask you to send or
-        receive money by Zelle, Venmo or a wire, and a link that did not come
-        from us is not from us.
+        Stripe holds your bank details, not us. We never send payment details
+        by email and we never ask for your bank login: if a message asks you
+        for either, it is not from us.
       </CardNote>
     </Card>
   )

@@ -213,6 +213,22 @@ export function SettingsForm({ show }: { show: Show }) {
         </div>
         <div className="adm-row2">
           <Field
+            name="venmoHandle" label="Venmo handle" error={e.venmoHandle}
+            hint="Shown on a maker's own payment page, never in an email, and that is the point: a handle in an email is the exact shape of the scam that takes a booth fee off forty makers. Leave empty and Venmo is not offered. These payments do not confirm themselves, so somebody has to press Mark paid on the roster. The maker's MM code is prefilled into the payment note so you are matching a code, not a name."
+          >
+            <input className="inp" id="venmoHandle" name="venmoHandle" type="text"
+              placeholder="@MermadeMarket" {...keep('venmoHandle', show.venmoHandle)} />
+          </Field>
+          <Field
+            name="zelleContact" label="Zelle email or phone" error={e.zelleContact}
+            hint="Same rules as Venmo, with one extra warning: Zelle is instant and cannot be reversed, and it has no dispute process. A maker who sends to the wrong contact has lost the money for good. Leave empty and Zelle is not offered."
+          >
+            <input className="inp" id="zelleContact" name="zelleContact" type="text"
+              placeholder="hello@mermademarket.com" {...keep('zelleContact', show.zelleContact)} />
+          </Field>
+        </div>
+        <div className="adm-row2">
+          <Field
             name="onboardingSlotsIndoor" label="Onboarding call times, indoor" error={e.onboardingSlotsIndoor}
             hint={'One option per line, exactly as a maker should read it. "Not needed" is a fine option and marks the row answered. Leave this empty and indoor makers are never asked, which is what you want until the times exist.'}
           >
