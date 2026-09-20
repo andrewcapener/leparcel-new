@@ -29,14 +29,25 @@ check('both is asked for a permit', Boolean(at({ ...base, track: 'both' }, 'perm
 check('indoor is asked for an item list', Boolean(at(base, 'items')))
 check('outdoor is not: they run their own register',
   !at({ ...base, track: 'outdoor' }, 'items'))
-check('everybody is asked for insurance',
-  Boolean(at(base, 'coi')) && Boolean(at({ ...base, track: 'outdoor' }, 'coi')))
+/* Nobody is asked for insurance. It is recommended and not required (Drew,
+   20 Sept), so it is not on a list headed "What we need from you", and an
+   uninsured maker is never held up by it. */
+check('nobody is asked for insurance',
+  !at(base, 'coi') && !at({ ...base, track: 'outdoor' }, 'coi'))
+check('and being uninsured never blocks load-in',
+  clearForLoadIn(checklistFor({
+    ...base, hasCoi: false,
+    booking: { status: 'confirmed', paymentDueAt: GONE },
+    sellerPermit: '110000133', permitStatus: 'have',
+  })))
 
 /* An applicant who has not been accepted is not chased for anything. */
 const applicant = checklistFor({ ...base, applicationStatus: 'new', booking: undefined })
 check('an undecided applicant has nothing to do',
   applicant.every((i) => i.state === 'waiting'))
-check('an undecided applicant is shown what is coming', applicant.length >= 3)
+/* Two now, not three: the booth fee and the item list. Insurance used to be
+   the third and is no longer asked for at all. */
+check('an undecided applicant is shown what is coming', applicant.length >= 2)
 
 /* The booth fee, through its whole life. */
 check('unpaid and in date is todo', at(base, 'fee')!.state === 'todo')
@@ -78,8 +89,8 @@ for (const st of ['have', null]) {
   const row = at({ ...outdoor, permitStatus: st, sellerPermit: '' }, 'permit')!
   check(`permit ${st ?? 'unanswered'} explains itself`, row.detail.length > 15)
 }
-check('insurance on file settles insurance',
-  at({ ...base, hasCoi: true }, 'coi')!.state === 'done')
+check('insurance on file adds no row either',
+  !at({ ...base, hasCoi: true }, 'coi'))
 
 /* What to do next, and whether they can load in. */
 const paidClear: ChecklistInput = {
@@ -126,8 +137,8 @@ for (const t of ['indoor', 'outdoor', 'both']) {
 }
 
 /* Every item a maker can act on says HOW. A row that says "your turn" with
-   no way to act is worse than no row: there is no upload for insurance yet,
-   so it has to name the address to send it to. */
+   no way to act is worse than no row: there is no upload for a seller's
+   permit yet, so it has to name the address to send it to. */
 for (const row of checklistFor({ ...base, track: 'outdoor' })) {
   if (row.state === 'todo' && !row.href) {
     check(`${row.key} says how to do it`, row.detail.includes('@'))

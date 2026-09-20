@@ -64,6 +64,9 @@ export type ChecklistInput = {
   /** What the maker answered on the application: have, occasional, unsure.
    *  Null for indoor, where nobody is asked. */
   permitStatus: string | null
+  /** Whether they carry their own liability cover. Recorded and shown to
+   *  staff, never asked for on the checklist: it is recommended, not
+   *  required, and this list is only what a maker must do. */
   hasCoi: boolean
   /** Show dates, for the deadlines that are not per booking. */
   loadInAt: string
@@ -199,20 +202,18 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
     }
   }
 
-  /* 3 · Insurance. Everybody, both tracks. */
-  items.push({
-    key: 'coi',
-    title: 'Certificate of insurance',
-    detail: input.hasCoi
-      ? 'On file. Nothing more needed.'
-      : `Liability cover naming Mermade Market as additional insured. Email the certificate to ${input.contactEmail} any time before load-in.`,
-    state: withDate(!accepted ? 'waiting' : input.hasCoi ? 'done' : 'todo', input.loadInAt, input.nowIso),
-    dueAt: input.loadInAt,
-    action: accepted && !input.hasCoi
-      ? { label: 'Email your certificate', href: mailto(input.contactEmail, 'Certificate of insurance') }
-      : undefined,
-    blocksLoadIn: true,
-  })
+  /* 3 · Insurance. NOT a row, deliberately.
+     Drew, 20 Sept 2026: "we don't require insurance. That is just
+     recommended so remove that."
+
+     The list is headed "What we need from you", and a recommendation is not
+     something we need. Leaving it on with a softer label would be worse than
+     removing it: every row here is something a maker has to act on, and one
+     that turns out to be optional teaches them the others might be too.
+
+     `hasCoi` is still collected on the application and still shown to staff,
+     because knowing who carries cover is useful. It just stops being a
+     reason anybody is chased, and stops blocking load-in. */
 
   /* 4 · The onboarding call. Only where times exist for this maker's track:
      Hillary's outdoor slots are set and the indoor ones are not, so the

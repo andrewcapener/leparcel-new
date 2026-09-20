@@ -33,9 +33,10 @@ async function navCounts(showId: string | undefined, openAt: string | undefined)
       eq(applications.showId, showId),
       inArray(applications.status, ['new', 'under_review', 'shortlist']),
     ))
-  /* The same test the roster sorts on: no documentation, no payment, or no
-     certificate of insurance. Kept in one expression so the badge and the
-     screen can never disagree. */
+  /* The same test the roster sorts on: no documentation, or no payment.
+     Kept in one expression so the badge and the screen can never disagree.
+     Insurance was a third clause here until 20 Sept; it is recommended and
+     not required, so a maker without it is not waiting on anybody. */
   const [needsPerson] = await db
     .select({ n: sql<number>`count(*)` })
     .from(bookings)
@@ -56,7 +57,6 @@ async function navCounts(showId: string | undefined, openAt: string | undefined)
         /* Unpaid only. A bank transfer in flight is not a thing anybody
            needs to act on: see booking-status.ts. */
         eq(bookings.status, 'awaiting_payment'),
-        eq(applications.hasCoi, false),
       ),
     ))
   /* Rehearsals: submitted before the window opened, so ours. Cast both sides

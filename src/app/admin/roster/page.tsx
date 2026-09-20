@@ -77,7 +77,15 @@ export default async function Roster() {
       sellerPermit: a.sellerPermit, occasionalSeller: a.occasionalSeller,
     }))
   const undocumented = rows.filter((r) => !documented(r.app))
-  const noCoi = rows.filter((r) => !r.app.hasCoi)
+  /* Accepted, holding a space, and nobody has ticked that they were told.
+     This replaced a "certificate due" count: insurance is recommended rather
+     than required, and the application form stopped asking, so that number
+     could only ever have been zero. This one is the real gap under manual
+     acceptance, where no email goes out on its own and a maker can be
+     accepted, never written to, and released for not paying. */
+  const notTold = rows.filter(
+    (r) => holdsSpace(r.booking.status) && r.booking.payToken && !r.booking.linkSentAt,
+  )
 
   // The show's booth-fee picture: expected counts every live booking
   // (confirmed and awaiting); collected counts only the paid ones.
@@ -92,19 +100,21 @@ export default async function Roster() {
     : null
 
   /* Sort order is the whole point of the screen. Blocked before unpaid,
-     unpaid before a missing COI, everything else last, and Mermade ID
-     inside each band so a row stays where you last saw it. */
+     everything else last, and Mermade ID inside each band so a row stays
+     where you last saw it. Insurance used to sit between them and no longer
+     ranks at all: nobody is chased for it. */
   const rank = (r: typeof rows[number]) => {
     if (!documented(r.app)) return 0
     if (needsChasing(r.booking.status)) return 1
-    if (!r.app.hasCoi) return 2
-    return 3
+    return 2
   }
   const ordered = [...rows].sort(
     (a, b) => rank(a) - rank(b) || a.booking.vendorCode.localeCompare(b.booking.vendorCode),
   )
-  const needsAction = ordered.filter((r) => rank(r) < 3)
-  const clear = ordered.filter((r) => rank(r) === 3)
+  /* 2 is the "nothing outstanding" band. It used to be 3, when a missing
+     certificate of insurance sat between unpaid and clear. */
+  const needsAction = ordered.filter((r) => rank(r) < 2)
+  const clear = ordered.filter((r) => rank(r) === 2)
 
   const row = ({ booking, vendor, app, space }: typeof rows[number]) => {
     const paid = booking.status === 'confirmed'
@@ -156,7 +166,9 @@ export default async function Roster() {
               if (st === 'unanswered') return <span className="adm-tag" data-warn="1">Never asked</span>
               return null
             })()}
-            {!app.hasCoi && <span className="adm-tag">COI due</span>}
+            {/* Shown when they have it, not when they lack it. A warning tag
+                for an optional thing sends somebody chasing it. */}
+            {app.hasCoi && <span className="adm-tag">Insured</span>}
           </span>
           {permit && (
             /* Revealed one row at a time, by an explicit click, and never
@@ -247,8 +259,10 @@ export default async function Roster() {
               : '')}
         />
         <Stat
-          label="Certificate due" icon="roster" value={noCoi.length}
-          note="Liability insurance not yet on file."
+          label="Not told yet" icon="roster" value={notTold.length}
+          note={notTold.length === 0
+            ? 'Everybody holding a space has been sent their link.'
+            : 'Accepted, holding a space, and nobody has marked their payment link as sent.'}
         />
       </Stats>
 

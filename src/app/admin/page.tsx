@@ -78,7 +78,9 @@ export default async function Dashboard() {
       sellerPermit: a.sellerPermit, occasionalSeller: a.occasionalSeller,
     }))
   const needsPerson = held.filter(
-    (r) => !documented(r.app) || needsChasing(r.booking.status) || !r.app.hasCoi,
+    /* Insurance is recommended, not required, so its absence is not
+       somebody's homework and never lands a row here. */
+    (r) => !documented(r.app) || needsChasing(r.booking.status),
   ).length
 
   /* Spaces held per track. A `both` acceptance holds one on each side, so

@@ -21,7 +21,8 @@ import { signOut } from './signOut'
 export type NavCounts = {
   /** Applications still to decide: new, under review, shortlisted. */
   undecided: number
-  /** Roster rows waiting on a person: undocumented, unpaid, or no COI. */
+  /** Roster rows waiting on a person: undocumented or unpaid. Insurance is
+   *  recommended, not required, so a missing certificate never counts. */
   needsPerson: number
   /** Applications submitted before the window opened, so ours to delete. */
   rehearsals: number
