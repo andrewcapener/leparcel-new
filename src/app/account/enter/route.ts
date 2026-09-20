@@ -20,8 +20,20 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token') ?? ''
   const email = await readLinkToken(token)
+
+  /* Where to land after signing in. Allowed values are a short fixed list, not
+     "any path that starts with a slash": a redirect target taken from a url is
+     an open redirect waiting to happen, and //evil.example is a valid path as
+     far as a naive startsWith('/') check is concerned. */
+  const want = req.nextUrl.searchParams.get('next') ?? ''
+  const dest = want === 'payment' ? '/account/payment' : '/account'
+
+  /* An expired link goes back to the page it was requested FROM, not to the
+     account: a maker who asked to pay and waited too long should land on the
+     payment page's own "here is a fresh one", with the same framing and the
+     same destination, rather than somewhere else entirely. */
   const to = req.nextUrl.clone()
-  to.pathname = '/account'
+  to.pathname = dest
   to.search = email ? '' : '?expired=1'
 
   const res = NextResponse.redirect(to)

@@ -13,7 +13,18 @@ const initial: FormState = { ok: false }
  * a screen that said "no account" would turn this box into a way of asking
  * whether any given shop applied.
  */
-export function SignInForm({ expired }: { expired?: boolean }) {
+export function SignInForm({
+  expired, next, title, note,
+}: {
+  expired?: boolean
+  /** Where to land after the emailed link is clicked. Only "payment" is
+   *  understood; anything else falls back to the account. */
+  next?: 'payment'
+  /** The payment page asks the same question for a narrower reason, so it
+   *  says so in its own words rather than welcoming somebody back. */
+  title?: string
+  note?: string
+}) {
   const [state, action, pending] = useActionState(requestSignInLink, initial)
   const e = state.errors ?? {}
   const v = state.values ?? {}
@@ -33,10 +44,9 @@ export function SignInForm({ expired }: { expired?: boolean }) {
 
   return (
     <div className="mm-signin">
-      <h2 className="mm-signin__title">Welcome back, maker</h2>
+      <h2 className="mm-signin__title">{title ?? 'Welcome back, maker'}</h2>
       <p className="mm-signin__note">
-        Use the email you applied with and we will send you a link. No password
-        to remember, and none to lose.
+        {note ?? 'Use the email you applied with and we will send you a link. No password to remember, and none to lose.'}
       </p>
 
       {expired && !state.attempt && (
@@ -46,6 +56,7 @@ export function SignInForm({ expired }: { expired?: boolean }) {
       )}
 
       <form key={state.attempt ?? 0} action={action} className="mm-signin__form" noValidate>
+        {next && <input type="hidden" name="next" value={next} />}
         <label htmlFor="maker_email">Your email</label>
         <input
           id="maker_email" name="email" type="email" required

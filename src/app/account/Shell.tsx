@@ -35,8 +35,7 @@ export function AccountHeader({
         <p className="mk-acct__eyebrow">{eyebrow}</p>
         <h1 className="mk-acct__name">{shopName}</h1>
         <div className="mk-acct__meta">
-          <p>{showName}</p>
-          {status && <p>{status}</p>}
+          {[showName, status].filter(Boolean).map((bit) => <p key={String(bit)}>{bit}</p>)}
           {vendorCode && <p className="mk-acct__id">{vendorCode}</p>}
         </div>
       </div>

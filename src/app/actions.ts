@@ -287,7 +287,10 @@ export async function requestSignInLink(prev: FormState, fd: FormData): Promise<
   const vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
   if (!vendor) return said
 
-  const url = `${siteUrl()}/account/enter?token=${encodeURIComponent(await signLinkToken(email))}`
+  /* Carried through the email so a maker who started on the payment page ends
+     up back on it. Only ever the literal "payment"; see the enter route. */
+  const next = String(fd.get('next') ?? '') === 'payment' ? '&next=payment' : ''
+  const url = `${siteUrl()}/account/enter?token=${encodeURIComponent(await signLinkToken(email))}${next}`
   const minutes = Math.round(LINK_TTL_MS / 60_000)
   await mail(
     email,
