@@ -14,7 +14,7 @@ const initial: FormState = { ok: false }
  * whether any given shop applied.
  */
 export function SignInForm({
-  expired, next, title, note,
+  expired, next, title, note, offerApply = true,
 }: {
   expired?: boolean
   /** Where to land after the emailed link is clicked. Only "payment" is
@@ -24,6 +24,12 @@ export function SignInForm({
    *  says so in its own words rather than welcoming somebody back. */
   title?: string
   note?: string
+  /** Whether to offer the application form underneath. True on the account,
+   *  where somebody may well have arrived without applying. False on the
+   *  payment door, which is only ever reached by a link we sent to a maker
+   *  who is already in: an invitation to apply there is an answer to a
+   *  question nobody asked. */
+  offerApply?: boolean
 }) {
   const [state, action, pending] = useActionState(requestSignInLink, initial)
   const e = state.errors ?? {}
@@ -74,9 +80,11 @@ export function SignInForm({
         </button>
       </form>
 
-      <p className="mm-signin__fine">
-        Not applied yet? <a href="/apply">Start an application</a>.
-      </p>
+      {offerApply && (
+        <p className="mm-signin__fine">
+          Not applied yet? <a href="/apply">Start an application</a>.
+        </p>
+      )}
     </div>
   )
 }

@@ -64,6 +64,7 @@ export default async function PayDoor({
               <SignInForm
                 expired={sp.expired === '1'}
                 next="payment"
+                offerApply={false}
                 title="Pay your booth fee"
                 note="Enter the email you applied with. We will send you a link that opens your own page, with your fee and everything else we need from you."
               />
