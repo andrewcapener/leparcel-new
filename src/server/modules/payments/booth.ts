@@ -17,11 +17,13 @@
  */
 import { randomUUID } from 'crypto'
 import { eq } from 'drizzle-orm'
+import type Stripe from 'stripe'
 import type { db as Db } from '@/db'
 import { bookings, bookingAddons, addOns, spaceTypes, stripeEvents, auditLog, vendors } from '@/db/schema'
 import { stripe, webhookSecret } from './config'
 import { invoiceFor, paymentMatches, bookingPaymentKey, type Invoice } from './invoice'
 import { stripeMethods, type PaymentMethods } from './methods'
+import { recordAccount } from './connect'
 import { siteUrl } from '@/lib/site-url'
 
 export type DbHandle = typeof Db
@@ -179,6 +181,9 @@ export type WebhookResult =
   | { outcome: 'processing'; eventId: string; bookingId: string }
   | { outcome: 'payment_failed'; eventId: string; bookingId: string }
   | { outcome: 'mismatch'; eventId: string; bookingId: string; detail: string }
+  /** A maker's Connect account changed. Nothing to do with a booking: this is
+   *  the money going the other way. */
+  | { outcome: 'account_updated'; eventId: string; accountId: string }
 
 /**
  * The three events a Checkout payment can arrive on, and why all three matter.
@@ -247,6 +252,20 @@ export async function handleStripeWebhook(
       payload: patch.payload ?? '',
       error: patch.error ?? null,
     }).where(eq(stripeEvents.id, event.id))
+  }
+
+  /* Money going OUT, not in. Stripe sends this whenever a maker finishes a
+     step of onboarding, uploads a document, or has a capability turned on or
+     off, and it is the only thing allowed to write payouts_enabled: the
+     account page reads our columns, so if this is not handled a maker who
+     finished onboarding is still shown a half-done checklist.
+
+     Handled before the booking lookup below, because there is no booking. */
+  if (event.type === 'account.updated') {
+    const account = event.data.object as Stripe.Account
+    await recordAccount(db, account)
+    await finish({ payload: `payouts_enabled=${Boolean(account.payouts_enabled)}` })
+    return { outcome: 'account_updated', eventId: event.id, accountId: account.id }
   }
 
   if (!HANDLED.has(event.type)) {

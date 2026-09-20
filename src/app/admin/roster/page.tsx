@@ -9,6 +9,7 @@ import { siteUrl } from '@/lib/site-url'
 import { usd, splitCommission, bpsLabel } from '@/lib/money'
 import { holdsSpace, isPaid, isForfeitable, needsChasing } from '@/server/modules/payments/booking-status'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
+import { connectState, owesPayoutSetup, type ConnectState } from '@/server/modules/payments/connect'
 import { fmtDateTime, fmtRange } from '@/lib/dates'
 import { PageHead, Stats, Stat, Progress } from '../ui'
 
@@ -86,6 +87,23 @@ export default async function Roster() {
   const notTold = rows.filter(
     (r) => holdsSpace(r.booking.status) && r.booking.payToken && !r.booking.linkSentAt,
   )
+
+  /* Who can actually be PAID when the show closes. The other direction from
+     everything else on this page, and the one with a quiet deadline: nothing
+     here blocks load-in, so a maker who never finishes Stripe sells happily in
+     November and is then owed money we cannot send. The count is here so that
+     is visible in October rather than discovered on statement day.
+
+     Indoor only. An outdoor maker takes their own money at their own tent and
+     is never owed a cent, so counting them would report a gap that is not one. */
+  const owedMoney = rows.filter((r) => holdsSpace(r.booking.status) && owesPayoutSetup(r.space.track))
+  const payoutOf = (v: typeof rows[number]['vendor']): ConnectState => connectState({
+    stripeAccountId: v.stripeAccountId,
+    payoutsEnabled: v.payoutsEnabled,
+    connectRequirements: v.connectRequirements,
+    connectDisabledReason: v.connectDisabledReason,
+  })
+  const payable = owedMoney.filter((r) => payoutOf(r.vendor) === 'ready')
 
   // The show's booth-fee picture: expected counts every live booking
   // (confirmed and awaiting); collected counts only the paid ones.
@@ -169,6 +187,18 @@ export default async function Roster() {
             {/* Shown when they have it, not when they lack it. A warning tag
                 for an optional thing sends somebody chasing it. */}
             {app.hasCoi && <span className="adm-tag">Insured</span>}
+            {/* Getting paid. Indoor only, and never a "blocks load-in" tag:
+                this holds up their money, not their table. It earns a warning
+                mark anyway, because the cost of noticing in November is a
+                maker who sold all weekend and cannot be sent their share. */}
+            {owesPayoutSetup(space.track) && (() => {
+              const st = payoutOf(vendor)
+              if (st === 'ready') return <span className="adm-tag">Payouts ready</span>
+              if (st === 'in_review') return <span className="adm-tag">Payouts in review</span>
+              if (st === 'disabled') return <span className="adm-tag" data-warn="1">Payouts on hold</span>
+              if (st === 'unfinished') return <span className="adm-tag" data-warn="1">Payouts unfinished</span>
+              return <span className="adm-tag" data-warn="1">No payout account</span>
+            })()}
           </span>
           {permit && (
             /* Revealed one row at a time, by an explicit click, and never
@@ -257,6 +287,15 @@ export default async function Roster() {
             + (clearing.length > 0
               ? ` ${clearing.length} bank transfer${clearing.length === 1 ? '' : 's'} clearing, not counted here.`
               : '')}
+        />
+        <Stat
+          label="Can be paid" icon="money" value={payable.length} unit={`of ${owedMoney.length}`}
+          warn={payable.length < owedMoney.length}
+          note={owedMoney.length === 0
+            ? 'No indoor spaces held yet, so nobody is owed anything.'
+            : payable.length === owedMoney.length
+              ? 'Every indoor maker has finished Stripe. Payouts can go out the day statements are approved.'
+              : 'Indoor makers with a Stripe payout account Stripe says is ready. The rest sell fine and cannot be paid until they finish.'}
         />
         <Stat
           label="Not told yet" icon="roster" value={notTold.length}

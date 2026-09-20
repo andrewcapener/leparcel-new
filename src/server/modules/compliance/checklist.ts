@@ -20,6 +20,9 @@
  * blocks them is outstanding.
  */
 import { owesPermit, permitState, permitNeedsMaker, type PermitState } from './permit'
+/* Type only, so this file stays pure: importing the Connect module for real
+   would drag the Stripe SDK into a unit test that decides nothing but words. */
+import type { ConnectState } from '../payments/connect'
 
 export type ItemState =
   /** Nothing to do: not yet asked, or does not apply to this maker. */
@@ -78,6 +81,11 @@ export type ChecklistInput = {
   onboardingSlot?: string | null
   /** When the item list is wanted. Indoor only. Null until somebody sets it. */
   inventoryDueAt?: string | null
+  /** Where this maker stands with Stripe on getting PAID, as opposed to
+   *  paying. Undefined when payouts are not configured on this deployment,
+   *  which is the one case where the row must not appear: a button that
+   *  cannot work is worse than no row. */
+  payoutState?: ConnectState
   nowIso: string
   /** Where to send a document there is no upload for yet. Passed in rather
    *  than imported so this file stays pure and testable. */
@@ -149,7 +157,66 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
     },
   ]
 
-  /* 2 · Seller's permit, outdoor only. Not a deadline of ours: it gates
+  /* 2 · Getting paid. Indoor only, because only an indoor maker is ever owed
+     anything: Mermade rings those sales and holds the money until the show
+     closes. An outdoor maker runs their own register and is never paid by us.
+
+     Drew, 21 Sept 2026: "this was the entire goal ... so that they only have
+     to set up stripe once and we can pay them automatically." Paying Mermade
+     by bank transfer does NOT do this. That debits an account once; this is
+     an account the maker owns, with its own identity check, and it is the
+     only way money moves the other way.
+
+     Never blocks load-in, and that is deliberate: a maker who has not set
+     this up still sells. It holds up their money, not their table, and the
+     money waits for them. Putting it second rather than last is a judgement
+     about attention, not about urgency: it is the second money question a
+     maker has, and it takes ten minutes they will not have in November.
+
+     Second: right after the fee, and never colliding with the permit row
+     below, which is outdoor only. */
+  if (input.track !== 'outdoor' && input.payoutState) {
+    const st = input.payoutState
+    const PAYOUT: Record<ConnectState, { detail: string; state: ItemState }> = {
+      not_started: {
+        detail: 'Tell Stripe who you are and where your money goes. About ten minutes, and you only do it once.',
+        state: 'todo',
+      },
+      unfinished: {
+        detail: 'You started this and Stripe still needs a little more. Pick up where you left off.',
+        state: 'todo',
+      },
+      in_review: {
+        detail: 'Stripe is checking what you sent. Nothing to do but wait, and we will tell you if they come back with anything.',
+        state: 'waiting',
+      },
+      disabled: {
+        detail: `Stripe has put a hold on your payout account. Open it below, and write to ${input.contactEmail} if it is not clear what they want.`,
+        state: 'todo',
+      },
+      ready: {
+        detail: 'Set up. Your share of what sells lands in your own account after the show.',
+        state: 'done',
+      },
+    }
+    const row = PAYOUT[st]
+    items.push({
+      key: 'payouts',
+      title: 'How you get paid',
+      detail: accepted ? row.detail : 'Set up once you are accepted, so your money has somewhere to go.',
+      state: accepted ? row.state : 'waiting',
+      href: '#payouts',
+      action: accepted && row.state === 'todo'
+        ? { label: st === 'not_started' ? 'Set up payouts' : 'Finish payout setup', href: '#payouts' }
+        : undefined,
+      /* Never. A maker with no payout account still sells; the money simply
+         waits for them. Holding somebody off the floor over it would cost
+         this business a table and them a weekend. */
+      blocksLoadIn: false,
+    })
+  }
+
+  /* 3 · Seller's permit, outdoor only. Not a deadline of ours: it gates
      load-in, which is why the date shown is load-in and not something
      invented earlier to create urgency. */
   if (owesPermit(input.track)) {
@@ -202,7 +269,7 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
     }
   }
 
-  /* 3 · Insurance. NOT a row, deliberately.
+  /* 4 · Insurance. NOT a row, deliberately.
      Drew, 20 Sept 2026: "we don't require insurance. That is just
      recommended so remove that."
 
@@ -215,7 +282,7 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
      because knowing who carries cover is useful. It just stops being a
      reason anybody is chased, and stops blocking load-in. */
 
-  /* 4 · The onboarding call. Only where times exist for this maker's track:
+  /* 5 · The onboarding call. Only where times exist for this maker's track:
      Hillary's outdoor slots are set and the indoor ones are not, so the
      outdoor half of the roster can be asked tonight and the indoor half is
      not shown an empty question.
@@ -240,7 +307,7 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
     })
   }
 
-  /* 5 · Item list. Indoor only: Mermade rings those sales, so Mermade needs
+  /* 6 · Item list. Indoor only: Mermade rings those sales, so Mermade needs
      the catalogue, and an outdoor maker runs their own register. Hillary,
      20 Sept: "don't do inventory for outside ppl... we'll get a million
      questions!"

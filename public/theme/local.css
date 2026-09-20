@@ -2830,3 +2830,20 @@ h3, .h3 { line-height: 1.15; }
   border: 0;
   padding: 0;
 }
+
+/* What Stripe is still waiting for, on the payout card. A list rather than a
+   sentence because a maker acts on it item by item, and because "Stripe still
+   needs: a photo of your ID and your Social Security number" in prose is the
+   shape people skim past. Marked with a rule rather than a bullet, to match
+   the maker rules list rather than introduce a third list idiom. */
+.mk-needs {
+  list-style: none;
+  margin: 0 0 1.1em;
+  padding: 0;
+}
+.mk-needs li {
+  padding: .5em 0 .5em .95em;
+  border-top: 1px solid rgb(var(--text-color) / 0.1);
+  border-left: 3px solid #BC9658;
+}
+.mk-needs li:first-child { border-top: 0; }

@@ -16,12 +16,14 @@ import { BoothInvoice } from './BoothInvoice'
 import { Checklist } from './Checklist'
 import { WhatYouTold, YourDetails } from './YourApplication'
 import { CallTimes } from './CallTimes'
+import { PayoutSetup } from './PayoutSetup'
 import { checklistFor, clearForLoadIn, slotOptions } from '@/server/modules/compliance/checklist'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { settlesInsideWindow, offersCard } from '@/server/modules/payments/methods'
 import { CONTACT_EMAIL } from '@/lib/agreement'
 import { boothInvoice } from '@/server/modules/payments/booth'
 import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
+import { connectState, owesPayoutSetup, requirementList, requirementsInPlainWords } from '@/server/modules/payments/connect'
 import { bookings } from '@/db/schema'
 
 export const dynamic = 'force-dynamic'
@@ -51,6 +53,8 @@ export default async function Account({
     expired?: string; signedout?: string
     /** Set by the return from Stripe and by every failure path in payBoothFee. */
     paid?: string; pay?: string
+    /** "back" when Stripe returned them from payout onboarding. */
+    payouts?: string
   }>
 }) {
   const show = await activeShow()
@@ -126,10 +130,11 @@ export default async function Account({
      rather than being a condition written out twice and drifting. */
   /* Where this maker will actually stand, which is not always what they
      applied for. An application can say `both`; a booked space is always one
-     or the other, and spaceTypes.track carries it. It decides three things
+     or the other, and spaceTypes.track carries it. It decides four things
      that were all keyed off the application until now: whether they are asked
-     for an item list, which call times they see, and whether the state
-     requires us to hold their seller's permit. A `both` applicant placed
+     for an item list, which call times they see, whether the state requires us
+     to hold their seller's permit, and whether they are ever owed a payout at
+     all. A `both` applicant placed
      outdoors used to be asked for a catalogue they do not owe and shown no
      call times at all. Before a booking exists there is nothing better to go
      on, so the application's answer stands and `both` keeps owing a permit,
@@ -140,6 +145,22 @@ export default async function Account({
       }))?.track
     : undefined
   const track = placed ?? app?.track ?? ''
+
+  /* Where this maker stands on getting PAID. Read from our own columns, which
+     only the webhook and an explicit refresh write, and only from what Stripe
+     said: `payouts_enabled` is Stripe's verdict and nothing here is allowed to
+     stand in for it.
+
+     Undefined when payouts are not configured on this deployment, which keeps
+     the row and the card off a preview where the button could not work. */
+  const payouts = paymentsConfigured() && owesPayoutSetup(track)
+    ? connectState({
+        stripeAccountId: vendor.stripeAccountId,
+        payoutsEnabled: vendor.payoutsEnabled,
+        connectRequirements: vendor.connectRequirements,
+        connectDisabledReason: vendor.connectDisabledReason,
+      })
+    : undefined
 
   const checklist = app
     ? checklistFor({
@@ -162,6 +183,7 @@ export default async function Account({
           : show.onboardingSlotsIndoor,
         onboardingSlot: billing?.booking.onboardingSlot,
         inventoryDueAt: show.inventoryDueAt,
+        payoutState: payouts,
         nowIso: new Date().toISOString(),
         contactEmail: CONTACT_EMAIL,
         startOnly: !settlesInsideWindow(show.paymentMethods),
@@ -235,6 +257,18 @@ export default async function Account({
                 testMode={isTestMode()}
                 notice={notice}
                 methods={show.paymentMethods}
+              />
+            )}
+
+            {/* Money the other way. Indoor only, because only an indoor maker
+                is ever owed anything, and only once accepted: onboarding
+                before there is a space to be paid for is an identity check
+                asked of somebody who may yet be declined. */}
+            {payouts && app?.status === 'accepted' && (
+              <PayoutSetup
+                state={payouts}
+                needs={requirementsInPlainWords(requirementList(vendor.connectRequirements))}
+                notice={sp.payouts === 'back' ? 'back' : sp.payouts === 'unavailable' ? 'unavailable' : undefined}
               />
             )}
 

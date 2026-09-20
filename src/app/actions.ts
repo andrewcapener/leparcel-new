@@ -37,6 +37,7 @@ import {
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
 import { startBoothPayment, bookingByPayToken } from '@/server/modules/payments/booth'
+import { ensureConnectAccount, onboardingLink, refreshAccount } from '@/server/modules/payments/connect'
 import { slotOptions } from '@/server/modules/compliance/checklist'
 import { boothFeeHtml, boothFeeText } from '@/server/modules/email/booth-fee'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
@@ -1563,6 +1564,74 @@ export async function chooseOnboardingSlot(fd: FormData): Promise<void> {
   revalidatePath('/account')
   revalidatePath('/admin/roster')
   redirect('/account#call')
+}
+
+/**
+ * Send a maker to Stripe to set up how they GET PAID.
+ *
+ * The other direction from payBoothFee, and the one Drew actually cares about:
+ * "this was the entire goal ... so that they only have to set up stripe once
+ * and we can pay them automatically." Paying us by bank transfer does not do
+ * this. That debits an account once and leaves no way for money to come back.
+ *
+ * Authorised exactly like payBoothFee, from the signed-in maker's own vendor
+ * row. Nothing is read from the form body at all, so there is no id anybody
+ * could substitute: this action can only ever act on the account of whoever
+ * holds the cookie.
+ *
+ * The account is made once and reused; the LINK is minted fresh every time,
+ * because Stripe's onboarding links are single use and expire in minutes. A
+ * stored one is a broken one.
+ */
+export async function startConnectOnboarding(): Promise<void> {
+  const email = await readMakerSession((await cookies()).get(MAKER_COOKIE)?.value)
+  if (!email) redirect('/account')
+
+  const vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
+  if (!vendor) redirect('/account')
+
+  const made = await ensureConnectAccount(db, vendor.id)
+  if ('error' in made) {
+    /* The reason is for us, not for them: Stripe puts request context in some
+       of these and the account page says one plain sentence instead. */
+    console.error(`[connect] account for ${vendor.id}: ${made.error}`)
+    redirect('/account?payouts=unavailable')
+  }
+
+  /* Only the first time: the row is written by ensureConnectAccount, and this
+     is the trail of who set it in motion (rule 3). */
+  if (!vendor.stripeAccountId) {
+    await log('vendor', vendor.id, 'connect_started',
+      { stripeAccountId: null }, { stripeAccountId: made.accountId },
+      'maker started payout setup', `maker:${vendor.id}`)
+  }
+
+  const link = await onboardingLink(made.accountId, '/account#payouts')
+  if ('error' in link) {
+    console.error(`[connect] link for ${vendor.id}: ${link.error}`)
+    redirect('/account?payouts=unavailable')
+  }
+  redirect(link.url)
+}
+
+/**
+ * Pull the account's state back from Stripe, on demand.
+ *
+ * The webhook is the reliable path and stays the one that matters. This is for
+ * the maker standing on the page ten seconds after finishing onboarding: the
+ * event may not have landed yet, and "we are still waiting" to somebody who
+ * just finished reads as a system that lost their work.
+ */
+export async function refreshPayoutStatus(): Promise<void> {
+  const email = await readMakerSession((await cookies()).get(MAKER_COOKIE)?.value)
+  if (!email) redirect('/account')
+  const vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
+  if (!vendor?.stripeAccountId) redirect('/account#payouts')
+
+  await refreshAccount(db, vendor.stripeAccountId)
+  revalidatePath('/account')
+  revalidatePath('/admin/roster')
+  redirect('/account#payouts')
 }
 
 /** Who is signed in, for the audit row. Falls back rather than throwing: the

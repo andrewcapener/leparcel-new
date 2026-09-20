@@ -158,6 +158,18 @@ export const vendors = pgTable('vendors', {
   postalCode: text('postal_code').notNull().default(''),
   state: text('state').notNull().default('CA'),
   vendorCode: text('vendor_code'),               // "MM07" — assigned at acceptance
+  /* Stripe Connect: how this maker gets paid, and Stripe's own verdict on
+     whether money can actually leave. On the vendor, not the booking: they
+     set it up once and it holds for every show after. */
+  stripeAccountId: text('stripe_account_id'),
+  payoutsEnabled: boolean('payouts_enabled').notNull().default(false),
+  chargesEnabled: boolean('charges_enabled').notNull().default(false),
+  /** What Stripe is still waiting for, as a JSON array of its own field
+   *  names, so a maker is told what to go and do rather than "restricted". */
+  connectRequirements: text('connect_requirements').notNull().default('[]'),
+  connectDisabledReason: text('connect_disabled_reason'),
+  connectUpdatedAt: text('connect_updated_at'),
+
   showsAttended: integer('shows_attended').notNull().default(0),
   isFlagged: boolean('is_flagged').notNull().default(false),
   flagReason: text('flag_reason'),

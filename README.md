@@ -216,18 +216,46 @@ tidying, everything for a season is under one prefix,
 
 ---
 
+## Stripe, in both directions
+
+Two separate things that are easy to confuse, and were:
+
+**Money IN** is the booth fee. Hosted Checkout, card and bank transfer, set
+per show at `/admin/show`. A booking is confirmed only by a signature-verified
+webhook (rule 5). A bank transfer settles in about four business days, so
+`completed` arrives unpaid and holds the space as `payment_processing`;
+`async_payment_succeeded` confirms it days later.
+
+**Money OUT** is the payout, and it is a different account entirely. Paying
+Mermade by bank transfer does **not** create one: that links a bank so Stripe
+can debit it once, and carries no identity check and no permission for money
+to go the other way. Getting paid is Stripe Connect Express, set up once by the
+maker at `/account#payouts` and reused for every show after. Indoor only, since
+an outdoor maker takes their own money. `payouts_enabled` is Stripe's verdict
+and the `account.updated` webhook is the only thing that writes it.
+
+To switch payouts on, in the Stripe dashboard:
+
+1. Enable **Connect** and complete the platform profile. `accounts.create`
+   fails until this is done, and it is the one step nobody but the account
+   owner can do.
+2. Add **`account.updated`** to the webhook endpoint's events, alongside the
+   three `checkout.session.*` ones. Without it a maker finishes onboarding and
+   their page still says they have not.
+3. Confirm the pricing model. The default one waives the $2/month active
+   account fee and 1099 e-filing.
+
+The 1099 form type (NEC or K) is a question for the accountant before January
+filing, not before onboarding.
+
 ## What's deliberately not here
 
-**POS, Stripe, payouts, statements, the vendor portal, and onboarding
-checklists.** None of them are needed until the November show. Applications
-open in weeks, so this slice is the one that has a date on it.
+**POS and statements.** Neither is needed until the November show.
 
-The vendor portal is the next piece of work and is designed but not built:
-magic-link login bound to the vendor row, booth-fee payment, and the
-compliance checklist. Two decisions block it — the payment window is 48h on
-the Show record and 36h in the vendor agreement, and payouts are manual
-(Venmo/Zelle/check) so Stripe Connect onboarding is probably spring work, not
-November's.
+Payout *transfers* are not built either: onboarding is, because it has a
+deadline (a maker has to be set up before statement day, and chasing forty
+people through an identity check in November is not a plan), but the transfer
+itself can follow once statements exist.
 
 Auth on `/admin` is a shared staff password (`ADMIN_PASSWORD`), interim until
 Supabase Auth (magic link for vendors, password + TOTP for staff) lands.

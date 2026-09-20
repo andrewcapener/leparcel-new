@@ -192,6 +192,59 @@ check('and there is no row at all without one', !itemRow('indoor'))
 check('the item list, when shown, never blocks load-in',
   itemRow('indoor', DUE)?.blocksLoadIn === false)
 
+/* ── how they get paid ──
+   Drew, 21 Sept 2026: "this was the entire goal ... so that they only have to
+   set up stripe once and we can pay them automatically." */
+const payRow = (i: Partial<ChecklistInput>) =>
+  checklistFor({ ...base, ...i }).find((r) => r.key === 'payouts')
+
+check('payouts are not mentioned where they are not configured', !payRow({}))
+check('an outdoor maker is never asked: they are never owed a cent',
+  !payRow({ track: 'outdoor', payoutState: 'not_started' }))
+check('an indoor maker is', payRow({ payoutState: 'not_started' })?.state === 'todo')
+check('so is a maker placed indoors off a both application',
+  Boolean(payRow({ track: 'both', payoutState: 'not_started' })))
+check('an undecided applicant is not sent through an identity check',
+  payRow({ applicationStatus: 'new', payoutState: 'not_started' })?.state === 'waiting')
+check('a half-finished account is still their turn',
+  payRow({ payoutState: 'unfinished' })?.state === 'todo')
+check('and the button says so rather than starting again',
+  payRow({ payoutState: 'unfinished' })?.action?.label === 'Finish payout setup')
+check('a hold needs them to open it', payRow({ payoutState: 'disabled' })?.state === 'todo')
+/* Nobody is chased while Stripe reads documents. */
+check('in review is not their turn', payRow({ payoutState: 'in_review' })?.state === 'waiting')
+check('and offers no button', !payRow({ payoutState: 'in_review' })?.action)
+check('ready is done', payRow({ payoutState: 'ready' })?.state === 'done')
+check('and done offers no button', !payRow({ payoutState: 'ready' })?.action)
+
+/* The one that would cost somebody their weekend. An unfinished payout
+   account holds up money, never a table: the maker sells and the money waits
+   for them. */
+for (const st of ['not_started', 'unfinished', 'in_review', 'disabled'] as const) {
+  check(`${st} payouts never block load-in`, payRow({ payoutState: st })?.blocksLoadIn === false)
+}
+check('an unpaid-out maker with everything else settled is still clear for load-in',
+  clearForLoadIn(checklistFor({
+    ...base, payoutState: 'not_started',
+    booking: { status: 'confirmed', paymentDueAt: GONE },
+  })))
+/* And it must never outrank the fee, which is the one that loses the space. */
+check('an unpaid booth fee is still the next action',
+  nextAction(checklistFor({ ...base, payoutState: 'not_started' }))!.key === 'fee')
+check('payouts come next once the fee is settled',
+  nextAction(checklistFor({
+    ...base, payoutState: 'not_started',
+    booking: { status: 'confirmed', paymentDueAt: GONE },
+  }))!.key === 'payouts')
+/* No invented date: the honest deadline is statement day, after the show. */
+check('payouts carry no deadline', !payRow({ payoutState: 'not_started' })?.dueAt)
+for (const st of ['not_started', 'unfinished', 'in_review', 'disabled', 'ready'] as const) {
+  const r = payRow({ payoutState: st })!
+  check(`payouts/${st} explains itself`, r.detail.length > 15)
+}
+/* A hold is the one state a maker cannot resolve alone, so it names us. */
+check('a hold says who to write to', payRow({ payoutState: 'disabled' })!.detail.includes('@'))
+
 if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('maker checklist: only the right makers are asked, and a transfer in flight never reads as late')
 export {}

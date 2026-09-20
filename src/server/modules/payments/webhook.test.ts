@@ -13,6 +13,8 @@
  *      confirmation would mean two audit rows for one payment.
  *   3. An amount that is not exactly right never confirms a booking.
  *   4. A correct event confirms, records the received amount, and writes audit.
+ *   5. `account.updated` is the only thing that writes payouts_enabled, and it
+ *      writes it to exactly one maker.
  */
 import Stripe from 'stripe'
 import { randomUUID } from 'crypto'
@@ -212,6 +214,67 @@ async function main() {
       'a second event on a paid booking writes no further audit row',
       auditsFinal.filter((a) => a.action === 'payment_confirmed').length === confirmsBefore + 1,
     )
+    /* 7 · The other direction: how a maker GETS PAID.
+     *
+     *     `account.updated` carries no booking at all, which is why it is
+     *     handled before the booking lookup. It is also the ONLY writer of
+     *     payouts_enabled: a statement must never be paid because our own
+     *     columns looked agreeable, so this is the one path that is allowed
+     *     to set them, and it sets them from Stripe's answer alone. */
+    const acctId = `acct_test_${bookingId.slice(0, 8)}`
+    await db.update(vendors).set({ stripeAccountId: acctId }).where(eq(vendors.id, vendor.id))
+    const acctEventId = `evt_acct_${bookingId.slice(0, 8)}`
+    const acctEvent = signed({
+      id: acctEventId,
+      object: 'event',
+      type: 'account.updated',
+      data: {
+        object: {
+          id: acctId,
+          object: 'account',
+          payouts_enabled: true,
+          charges_enabled: true,
+          requirements: {
+            currently_due: ['individual.id_number'],
+            past_due: ['individual.id_number', 'external_account'],
+            disabled_reason: null,
+          },
+        },
+      },
+    })
+    const acctResult = await handleStripeWebhook(db, acctEvent.payload, acctEvent.signature)
+    check('an account update is handled, not ignored', acctResult.outcome === 'account_updated')
+    const [payee] = await db.select().from(vendors).where(eq(vendors.id, vendor.id))
+    check('Stripe saying payouts are on is written down', payee!.payoutsEnabled === true)
+    check('and so is charges_enabled', payee!.chargesEnabled === true)
+    /* currently_due and past_due both matter and overlap. Deduplicated, or a
+       maker is told to send their ID twice. */
+    const due = JSON.parse(payee!.connectRequirements) as string[]
+    check('both requirement lists are kept', due.includes('external_account'))
+    check('and an entry on both lists is stored once',
+      due.filter((d) => d === 'individual.id_number').length === 1)
+    check('a null disabled reason stays null', payee!.connectDisabledReason === null)
+    check('and when it landed is recorded', Boolean(payee!.connectUpdatedAt))
+
+    /* 7b · An account we have never seen writes nothing at all, rather than
+     *      matching some other maker. */
+    const strayId = `evt_stray_${bookingId.slice(0, 8)}`
+    const stray = signed({
+      id: strayId, object: 'event', type: 'account.updated',
+      data: { object: { id: 'acct_belongs_to_nobody', object: 'account', payouts_enabled: false } },
+    })
+    const strayResult = await handleStripeWebhook(db, stray.payload, stray.signature)
+    check('an unknown account is still handled without error',
+      strayResult.outcome === 'account_updated')
+    const [untouched] = await db.select().from(vendors).where(eq(vendors.id, vendor.id))
+    check('and touches nobody else', untouched!.payoutsEnabled === true)
+
+    await db.delete(stripeEvents).where(eq(stripeEvents.id, acctEventId))
+    await db.delete(stripeEvents).where(eq(stripeEvents.id, strayId))
+    await db.update(vendors).set({
+      stripeAccountId: null, payoutsEnabled: false, chargesEnabled: false,
+      connectRequirements: '[]', connectDisabledReason: null, connectUpdatedAt: null,
+    }).where(eq(vendors.id, vendor.id))
   } finally {
     await db.delete(stripeEvents).where(eq(stripeEvents.bookingId, bookingId))
     await db.delete(auditLog).where(eq(auditLog.entityId, bookingId))
@@ -222,7 +285,7 @@ async function main() {
     console.error(`\n${failures} check(s) failed.`)
     process.exit(1)
   }
-  console.log('booth webhook: forgery rejected, bank transfers held then settled, redelivery confirms once')
+  console.log('booth webhook: forgery rejected, bank transfers held then settled, redelivery confirms once, and only Stripe sets payouts_enabled')
   process.exit(0)
 }
 
