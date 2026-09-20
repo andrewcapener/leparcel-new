@@ -61,12 +61,16 @@ export default async function PayDoor({
           />
           <div className="mk-grid">
             <Card wide>
+              {/* No heading and no blurb. The page title above already says
+                  "Pay your booth fee", and the field says "Your email": on a
+                  phone the card was repeating both before anybody reached the
+                  one thing to type into. */}
               <SignInForm
                 expired={sp.expired === '1'}
                 next="payment"
                 offerApply={false}
-                title="Pay your booth fee"
-                note="Enter the email you applied with. We will send you a link that opens your own page, with your fee and everything else we need from you."
+                title={null}
+                note={null}
               />
             </Card>
           </div>

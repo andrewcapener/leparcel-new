@@ -20,10 +20,12 @@ export function SignInForm({
   /** Where to land after the emailed link is clicked. Only "payment" is
    *  understood; anything else falls back to the account. */
   next?: 'payment'
-  /** The payment page asks the same question for a narrower reason, so it
-   *  says so in its own words rather than welcoming somebody back. */
-  title?: string
-  note?: string
+  /** The heading and the sentence under it. Pass null for either to render
+   *  nothing: the payment page already carries "Pay your booth fee" as its
+   *  page title, so the card repeating it said the same thing twice on a
+   *  screen the size of a phone. */
+  title?: string | null
+  note?: string | null
   /** Whether to offer the application form underneath. True on the account,
    *  where somebody may well have arrived without applying. False on the
    *  payment door, which is only ever reached by a link we sent to a maker
@@ -50,10 +52,12 @@ export function SignInForm({
 
   return (
     <div className="mm-signin">
-      <h2 className="mm-signin__title">{title ?? 'Welcome back, maker'}</h2>
-      <p className="mm-signin__note">
-        {note ?? 'Use the email you applied with and we will send you a link. No password to remember, and none to lose.'}
-      </p>
+      {title !== null && <h2 className="mm-signin__title">{title ?? 'Welcome back, maker'}</h2>}
+      {note !== null && (
+        <p className="mm-signin__note">
+          {note ?? 'Use the email you applied with and we will send you a link. No password to remember, and none to lose.'}
+        </p>
+      )}
 
       {expired && !state.attempt && (
         <p className="mm-signin__expired" role="status">
