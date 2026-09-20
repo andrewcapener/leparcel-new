@@ -247,14 +247,17 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
 
      The upload does not exist yet. The date does, so the row now names it
      rather than promising vaguely that we will be in touch. */
-  if (input.track !== 'outdoor') {
-    const due = input.inventoryDueAt ?? undefined
+  /* Only once a date exists, which is the same rule the call times follow: a
+     section appears when the setting behind it is filled in. Drew, 20 Sept:
+     tomorrow's link "really is just a link to submit payment", and a row that
+     names no date and asks for nothing is not worth the space. Set the date
+     on /admin/show and it appears for every indoor maker at once. */
+  if (input.track !== 'outdoor' && input.inventoryDueAt) {
+    const due = input.inventoryDueAt
     items.push({
       key: 'items',
       title: 'Your item list',
-      detail: due
-        ? 'What you are bringing, with prices, so the register knows your work. We will open the upload before the date below and write to you when it is ready.'
-        : 'What you are bringing, with prices, so the register knows your work. We will open this and write to you when it is ready.',
+      detail: 'What you are bringing, with prices, so the register knows your work. We will open the upload before the date below and write to you when it is ready.',
       /* Still `waiting`, even with a date on it: there is nothing for a maker
          to do until the upload opens, and a row that says "your turn" with no
          way to take it is the thing this list exists to avoid. */

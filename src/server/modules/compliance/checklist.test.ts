@@ -26,9 +26,12 @@ const at = (i: ChecklistInput, key: string) => checklistFor(i).find((x) => x.key
 check('indoor is never asked for a permit', !at(base, 'permit'))
 check('outdoor is asked for a permit', Boolean(at({ ...base, track: 'outdoor' }, 'permit')))
 check('both is asked for a permit', Boolean(at({ ...base, track: 'both' }, 'permit')))
-check('indoor is asked for an item list', Boolean(at(base, 'items')))
-check('outdoor is not: they run their own register',
-  !at({ ...base, track: 'outdoor' }, 'items'))
+const DUE = '2026-10-30T12:00:00-07:00'
+check('indoor is told about the item list once a date is set',
+  Boolean(at({ ...base, inventoryDueAt: DUE }, 'items')))
+check('and not before: no date means nothing to say', !at(base, 'items'))
+check('outdoor is never told: they run their own register',
+  !at({ ...base, track: 'outdoor', inventoryDueAt: DUE }, 'items'))
 /* Nobody is asked for insurance. It is recommended and not required (Drew,
    20 Sept), so it is not on a list headed "What we need from you", and an
    uninsured maker is never held up by it. */
@@ -45,9 +48,9 @@ check('and being uninsured never blocks load-in',
 const applicant = checklistFor({ ...base, applicationStatus: 'new', booking: undefined })
 check('an undecided applicant has nothing to do',
   applicant.every((i) => i.state === 'waiting'))
-/* Two now, not three: the booth fee and the item list. Insurance used to be
-   the third and is no longer asked for at all. */
-check('an undecided applicant is shown what is coming', applicant.length >= 2)
+/* Just the booth fee now. Insurance is no longer asked for at all, and the
+   item list waits on a date being set. */
+check('an undecided applicant is shown what is coming', applicant.length >= 1)
 
 /* The booth fee, through its whole life. */
 check('unpaid and in date is todo', at(base, 'fee')!.state === 'todo')
@@ -114,7 +117,7 @@ check('and the rows alone would wrongly say clear',
 check('so the permit is asked directly, and they are not clear',
   !clearForLoadIn(checklistFor(declaredClear), true))
 check('the item list never blocks load-in',
-  checklistFor(paidClear).find((i) => i.key === 'items')!.blocksLoadIn === false)
+  checklistFor({ ...paidClear, inventoryDueAt: DUE }).find((i) => i.key === 'items')!.blocksLoadIn === false)
 
 /* Overdue is surfaced ahead of merely due, because it is the thing about to
    cost them something. */
@@ -180,13 +183,14 @@ check('blank lines in the list are dropped',
 const itemRow = (track: string, due?: string) =>
   checklistFor({ ...base, applicationStatus: 'accepted', track, inventoryDueAt: due })
     .find((r) => r.key === 'items')
-check('outdoor is never asked for an item list', !itemRow('outdoor'))
-check('indoor is', Boolean(itemRow('indoor')))
-check('so is a maker placed indoors off a both application', Boolean(itemRow('both')))
+check('outdoor is never asked for an item list', !itemRow('outdoor', DUE))
+check('indoor is', Boolean(itemRow('indoor', DUE)))
+check('so is a maker placed indoors off a both application', Boolean(itemRow('both', DUE)))
 check('the due date is shown when one is set',
   itemRow('indoor', '2026-10-30T12:00:00-07:00')?.dueAt === '2026-10-30T12:00:00-07:00')
-check('and the row still appears without one', itemRow('indoor')?.state === 'waiting')
-check('the item list never blocks load-in', itemRow('indoor')?.blocksLoadIn === false)
+check('and there is no row at all without one', !itemRow('indoor'))
+check('the item list, when shown, never blocks load-in',
+  itemRow('indoor', DUE)?.blocksLoadIn === false)
 
 if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('maker checklist: only the right makers are asked, and a transfer in flight never reads as late')
