@@ -2847,3 +2847,10 @@ h3, .h3 { line-height: 1.15; }
   border-left: 3px solid #BC9658;
 }
 .mk-needs li:first-child { border-top: 0; }
+
+/* The booth-fee override on the roster. Behind a disclosure on purpose: a fee
+   is not something to change by leaning on a keyboard, and the row is read at
+   a table on load-in day with makers standing at it. */
+.adm-price form { display: grid; gap: 6px; margin-top: 8px; }
+.adm-price .inp { font-size: 13px; padding: 6px 8px; }
+.adm-price .adm-btn-q { justify-self: start; }

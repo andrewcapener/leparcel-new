@@ -36,7 +36,7 @@ import {
 } from '@/lib/makerAuth'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
-import { startBoothPayment, bookingByPayToken } from '@/server/modules/payments/booth'
+import { startBoothPayment, bookingByPayToken, dropLiveCheckout } from '@/server/modules/payments/booth'
 import {
   ensureConnectAccount, onboardingLink, refreshAccount, owesPayoutSetup,
 } from '@/server/modules/payments/connect'
@@ -1228,6 +1228,75 @@ export async function markPaid(fd: FormData): Promise<void> {
 
   revalidatePath('/admin/roster')
   revalidatePath('/')
+}
+
+/**
+ * Correct one booking's booth fee.
+ *
+ * Drew, 21 Sept 2026: most fees are standard, "if there's anything custom, it
+ * might be one or two people, and I can clarify that before we finalize all
+ * the payments." This is where that clarification lands. One or two is enough
+ * to need a control, because the alternative is SQL, and SQL writes no audit
+ * row (rule 3).
+ *
+ * The quiet failure it closes: a maker whose real deal is not the list price
+ * opens an invoice showing the list price and pays it. The webhook confirms,
+ * because the invoice and the payment agree with each other and both are
+ * wrong. Nothing notices until somebody reconciles by hand in December.
+ *
+ * Three things this is careful about.
+ *
+ * It refuses once money has moved. Changing the price of a fee somebody has
+ * already paid does not refund them or bill them; it just makes the record
+ * disagree with the bank. A paid booking that is genuinely wrong needs a
+ * person and a refund, not an edit.
+ *
+ * It kills any live Checkout Session. Line items are fixed when a Session is
+ * made, so an open one still charges the old amount, and the webhook would
+ * then read that payment as a mismatch against the new invoice: money taken,
+ * booking unconfirmed.
+ *
+ * And it bumps priceVersion, because Stripe rejects a reused idempotency key
+ * whose parameters have changed. Without that the next Pay click is a 400 on
+ * the one screen with a deadline on it.
+ */
+export async function setBoothPrice(fd: FormData): Promise<void> {
+  const bookingId = String(fd.get('bookingId') ?? '')
+  const reason = String(fd.get('reason') ?? '').trim()
+  /* Dollars in the box, cents in the column (rule 1). Parsed through a
+     rounding step rather than a float multiply, because 2.9 * 100 is 289.99999
+     in this language and a booth fee is not a place to find that out. */
+  const dollars = Number(String(fd.get('dollars') ?? '').replace(/[$,\s]/g, ''))
+  if (!Number.isFinite(dollars) || dollars < 0 || dollars > 100_000) {
+    redirect('/admin/roster?price=bad')
+  }
+  const priceCents = Math.round(dollars * 100)
+
+  const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
+  if (!b) redirect('/admin/roster?price=missing')
+  /* Confirmed, or a transfer already in flight. Both mean money has moved or
+     is moving against the old number. */
+  if (b.status === 'confirmed' || b.status === 'payment_processing') {
+    redirect('/admin/roster?price=paid')
+  }
+  if (priceCents === b.priceCents) redirect('/admin/roster')
+
+  await db.update(bookings).set({
+    priceCents,
+    priceVersion: b.priceVersion + 1,
+  }).where(eq(bookings.id, bookingId))
+
+  /* After the write, so a maker cannot slip through on the old session in the
+     moment between the two. */
+  await dropLiveCheckout(db, bookingId)
+
+  await log('booking', bookingId, 'price_changed',
+    { priceCents: b.priceCents }, { priceCents },
+    reason || 'no reason given', `staff:${await staffName()}`)
+
+  revalidatePath('/admin/roster')
+  revalidatePath('/account')
+  redirect('/admin/roster?price=set')
 }
 
 /** Saves jury scores without changing status. */

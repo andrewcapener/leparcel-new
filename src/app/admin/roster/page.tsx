@@ -3,7 +3,7 @@ import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
-import { markPaid, forfeitOverdueBookings, markLinkSent } from '@/app/actions'
+import { markPaid, forfeitOverdueBookings, markLinkSent, setBoothPrice } from '@/app/actions'
 import { PayLink } from './PayLink'
 import { siteUrl } from '@/lib/site-url'
 import { usd, splitCommission, bpsLabel } from '@/lib/money'
@@ -31,7 +31,12 @@ const maskPermit = (permit: string) => `•••• ${permit.trim().slice(-4)}`
 
 const COLS = 8
 
-export default async function Roster() {
+export default async function Roster({
+  searchParams,
+}: {
+  searchParams: Promise<{ price?: string }>
+}) {
+  const sp = await searchParams
   const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
@@ -160,6 +165,32 @@ export default async function Roster() {
           <span className="adm-sub2">
             {app.track === 'outdoor' ? 'no commission' : `${bpsLabel(booking.commissionBps)} commission`}
           </span>
+          {/* Most fees are the list price. This is for the one or two that are
+              not, and it is deliberately a disclosure rather than a field
+              sitting open: a booth fee is not something to change by leaning
+              on a keyboard. Gone once money has moved, because an edit then
+              only makes the record disagree with the bank. */}
+          {!paid && booking.status !== 'payment_processing' && (
+            <details className="adm-mask adm-price">
+              <summary>
+                <span className="mk">Change</span>
+                <span className="adm-sr"> the booth fee for {vendor.shopName}</span>
+              </summary>
+              <form action={setBoothPrice}>
+                <input type="hidden" name="bookingId" value={booking.id} />
+                <label className="adm-sr" htmlFor={`p-${booking.id}`}>New fee in dollars</label>
+                <input className="inp" id={`p-${booking.id}`} name="dollars" type="text"
+                  inputMode="decimal" defaultValue={(booking.priceCents / 100).toFixed(2)} />
+                <label className="adm-sr" htmlFor={`r-${booking.id}`}>Why</label>
+                <input className="inp" id={`r-${booking.id}`} name="reason" type="text"
+                  placeholder="Why (goes in the audit log)" />
+                <button className="adm-btn-q" type="submit">Save fee</button>
+              </form>
+              {booking.priceVersion > 1 && (
+                <span className="adm-sub2">Changed {booking.priceVersion - 1}x</span>
+              )}
+            </details>
+          )}
         </td>
 
         <td className="c-2">
@@ -268,6 +299,15 @@ export default async function Roster() {
         title="Roster"
         sub={`${rows.length} ${rows.length === 1 ? 'space held' : 'spaces held'} for ${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${show.venueName}`}
       />
+
+      {sp.price && (
+        <p className="adm-note" role="status">
+          {sp.price === 'set' ? 'Booth fee updated. The maker sees the new amount, any half-finished Stripe checkout of theirs was cancelled, and the change is in the audit log.'
+            : sp.price === 'paid' ? 'That fee is already paid or clearing, so it was left alone. Changing it would only make the record disagree with the bank: that one needs a refund, not an edit.'
+            : sp.price === 'bad' ? 'That did not look like an amount. Nothing was changed.'
+            : 'No such booking. Nothing was changed.'}
+        </p>
+      )}
 
       <Stats>
         <Stat

@@ -289,6 +289,11 @@ export const bookings = pgTable('bookings', {
 
   vendorCode: text('vendor_code').notNull(),      // "MM07"
   priceCents: integer('price_cents').notNull(),          // the space, before extras
+  /* Bumped whenever staff correct the price. Stripe rejects a reused
+     idempotency key whose parameters changed, and correcting a price changes
+     the line items, so this is what makes the next Checkout call new work
+     rather than a replay of the old answer. */
+  priceVersion: integer('price_version').notNull().default(1),
   addonsCents: integer('addons_cents').notNull().default(0),
   commissionBps: integer('commission_bps').notNull(),   // immutable snapshot
 

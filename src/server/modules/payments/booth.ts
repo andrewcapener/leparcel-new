@@ -196,7 +196,9 @@ export async function startBoothPayment(
       success_url: `${siteUrl()}${back}?paid=1`,
       cancel_url: `${siteUrl()}${back}`,
       expires_at: Math.floor(Date.now() / 1000) + 24 * 3600,
-    }, { idempotencyKey: bookingPaymentKey(booking.id, paymentDoor(back)) })
+    }, {
+      idempotencyKey: bookingPaymentKey(booking.id, paymentDoor(back), booking.priceVersion),
+    })
 
     if (!session.url) return { outcome: 'failed', detail: 'Stripe returned a session with no url' }
 
@@ -211,6 +213,29 @@ export async function startBoothPayment(
     const detail = err instanceof Error ? err.message.slice(0, 200) : 'unknown Stripe error'
     return { outcome: 'failed', detail }
   }
+}
+
+/**
+ * Kill any live Checkout Session for a booking.
+ *
+ * Called when the price changes, and the reason it must be is not obvious: a
+ * Session's line items are fixed at creation. Leave an old one open and the
+ * maker can still open the email they already have, pay the OLD amount, and be
+ * confirmed by a webhook that compares the payment against the NEW invoice and
+ * calls it a mismatch. The money is captured, the booking is not confirmed,
+ * and somebody has to unpick it by hand.
+ *
+ * Failures are swallowed. An already-expired or already-paid session throws,
+ * and neither is a reason to refuse a price correction.
+ */
+export async function dropLiveCheckout(db: DbHandle, bookingId: string): Promise<void> {
+  const s = stripe()
+  const [booking] = await db.select({ sid: bookings.stripeSessionId })
+    .from(bookings).where(eq(bookings.id, bookingId)).limit(1)
+  if (s && booking?.sid) {
+    try { await s.checkout.sessions.expire(booking.sid) } catch { /* already gone */ }
+  }
+  await db.update(bookings).set({ stripeSessionId: null }).where(eq(bookings.id, bookingId))
 }
 
 export type WebhookResult =
