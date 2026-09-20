@@ -79,35 +79,53 @@ Once labels are system-generated PDFs the vendor prints at home, non-compliance 
 ### 13. Application fee / booth fee refunds on rejection
 Patchwork Show collects the booth fee up front and refunds within 7 business days if you're rejected — which guarantees the accepted vendor has already paid. Yours collects after acceptance in a 36-hour panic. Worth considering the swap.
 
+### 14. Pass the card fee on to makers? ⟨COUNSEL⟩ — spring, not fall
+
+Drew, 21 Sept 2026: *"Wish we could pass fees on to the vendors if they want to pay by card."*
+
+The cost is real: card is 2.9% + $0.30 against ACH at 0.8% capped at $5, so between **$1.56 and $10.80 per booking** depending on the space, and roughly **$485 across a full show** if half choose card. Bank is now the preselected method in Checkout, which is the cheap half of this problem already solved.
+
+Three things to settle before building it, and the first is the one that usually kills it:
+
+- **You cannot surcharge debit cards.** Visa and Mastercard rules permit a credit-card surcharge but prohibit one on debit, and Stripe Checkout does not reliably tell you which a maker is holding before they pay. A flat "card costs more" surcharge would breach the network rules on every debit payment.
+- **Surcharging also requires registering with the card networks**, typically 30 days ahead, with disclosure rules on the page and the receipt.
+- **California.** Civil Code §1748.1 banned surcharges outright; *Italian Colors Restaurant v. Becerra* (9th Cir.) held it unconstitutional as applied to truthful disclosure, so surcharges are broadly workable in CA now. But SB 478 requires advertised prices to include mandatory fees, and whether a card surcharge counts as mandatory when bank transfer avoids it is exactly the kind of question to put to counsel rather than guess at.
+
+**The route that avoids all three: price the card in and discount the bank.** A discount for not paying by card is explicitly permitted under federal law and carries none of the network registration or debit problems, because it is the same price gap framed from the other end. Set the booth fee at the card-inclusive number and take, say, $8 off for bank transfer.
+
+It is not free to build. Checkout fixes the amount when the Session is created, so a per-method price means asking "how would you like to pay?" on our own page first and then opening a single-method Session at the matching total, rather than letting Stripe present both. That is a real change to the pay page, not a config flag.
+
+**Recommendation: not for fall.** The simpler version of the same outcome is to raise booth fees by about 2% next season and stop thinking about it: $8 on a $450 booth is 1.8%, and a price rise costs nothing to build, needs no lawyer, and no maker ever sees a fee line.
+
 ---
 
 ## 🟡 Product decisions — needed before Phase 2–4
 
-### 14. Outdoor vendor sales — do you ever want visibility?
+### 15. Outdoor vendor sales — do you ever want visibility?
 Today they run their own payments and you see nothing. Options if you ever want the data: require them to use a Mermade-issued reader (rejected by most vendors), ask them to self-report at close (soft, unreliable), or leave it alone. I'd leave it alone — but if you're ever thinking about moving outdoor to a commission model, the data is the prerequisite, and you'd want to start collecting self-reported numbers now.
 
-### 15. Returns policy at the register
+### 16. Returns policy at the register
 What happens today when a shopper wants to return something on Sunday? Is it "all sales final"? If returns exist, what's the window, and does the vendor eat it or does Mermade? This determines whether refunds hit statements or your P&L.
 
-### 16. Cash at the register
+### 17. Cash at the register
 What % of indoor sales are cash today? Affects drawer procedure, reconciliation, and whether cash-handling variance matters.
 
-### 17. Number of registers and staffing
+### 18. Number of registers and staffing
 One lane or two? Two lanes roughly halves peak queue and doubles hardware and staffing. At 4,000–5,000 attendees over three days, I'd plan two plus a spare.
 
-### 18. Junior Makers (14 & under)
+### 19. Junior Makers (14 & under)
 They can't legally hold a seller's permit or complete Stripe KYC. How do they get paid today — to a parent? The system needs a "paid via guardian" path with the guardian's Connect account and W-9.
 
-### 19. Shared spaces
+### 20. Shared spaces
 Two vendors sharing one booth — currently a $100 add-on. Whose SKUs? One statement or two? One payout or two? The clean answer is two vendor records, two statements, one shared space assignment. Confirm that matches how it actually works.
 
-### 20. Food and treat vendors
+### 21. Food and treat vendors
 Treats sell through the indoor register with a $10 item cap. Do they get SKU'd and labeled like everything else, or do they need a different flow (weighed items, made-to-order)? Food trucks presumably take their own payment — confirm.
 
-### 21. Restocking mid-show
+### 22. Restocking mid-show
 Current rules let vendors restock in slow afternoons. In the new system, does restocking mean adding quantity to existing SKUs (they bring pre-printed labels — easy) or adding new items mid-show (needs an on-site label printer — harder)? I'd require pre-printed labels only.
 
-### 22. Content editing scope
+### 23. Content editing scope
 `01-PRODUCT-SPEC.md` §9 gives Elise structured settings plus a constrained block editor, deliberately not a free-form page builder. Does she want to create genuinely *new* pages, or just edit the ones that exist? If the former, we add Payload CMS in Phase 2 — it's not hard, but I'd rather not add it speculatively.
 
 ---
@@ -131,19 +149,19 @@ Current rules let vendors restock in slow afternoons. In the new system, does re
 
 ## ⚫ Strategic — no rush, but worth thinking about
 
-### 23. The exit
+### 24. The exit
 You said a possible sale in a few years. That should shape what gets instrumented now, because a buyer pays for evidence. From `00-BUSINESS-AUDIT.md` §4, the things worth starting *this show*: revenue by segment, vendor retention cohorts, real attendance counts, signed agreements, and documented SOPs. Three years of that data is worth materially more than a nicer website. If a sale is real, tell me the rough horizon and I'll weight the roadmap toward diligence readiness.
 
-### 24. Year-round revenue
+### 25. Year-round revenue
 Two shows a year is ~6 revenue days out of 365. Once inventory is SKU'd, a post-show online storefront on the same 20% is close to free to build, and you already have 17k Instagram followers and 10k email subscribers to sell into. Is that interesting, or does it dilute the scarcity that makes the show work? Genuine question — scarcity is part of the product.
 
-### 25. A third show
+### 26. A third show
 Mid-November and May leaves a big gap. A smaller summer or holiday pop-up is the obvious lever, and a buyer values three shows more than two. Constraint is presumably venue and Elise's bandwidth — which is exactly what this platform is supposed to free up.
 
-### 26. Sponsorships
+### 27. Sponsorships
 `/pages/collaborate` cites the audience numbers but there's no rate card, no placement inventory, no past-sponsor proof. 4,000–5,000 affluent OC attendees over three days is a sellable audience and it's high-margin revenue that doesn't scale with vendor count. Worth a real program.
 
-### 27. Paid early access
+### 28. Paid early access
 Free entry is core and I wouldn't touch it. A capped, ticketed **Friday 8–9am early hour** at $25 is the standard way to monetize without breaking the free promise — and it's recurring revenue a buyer will price in. Worth one test.
 
 ---
@@ -196,7 +214,7 @@ The sync itself is built and needs no decisions: `src/server/modules/sheets/*`,
 either a service account or an Apps Script web app, queued and retried in
 `sheet_syncs`, one command to repair. What is genuinely undecided:
 
-### 28. Who can open that Sheet?
+### 29. Who can open that Sheet?
 The Sheet carries every applicant's email and phone number, because that is
 what makes it useful for chasing people. A Google Sheet gets shared with a
 link far more casually than an admin login does, and a link that reaches a
@@ -206,13 +224,13 @@ compliance data goes to the Sheet at all (no seller's permits, no signed
 agreement names, no jury notes), and that should stay true whatever is decided
 here.
 
-### 29. One tab, or one per show?
+### 30. One tab, or one per show?
 Today it writes one tab, `SHEETS_TAB`, defaulting to `Applications`. Two shows
 a year means the tab is 200 rows deep by next November with no show column to
 sort on. Either add a Show column to the row, or set `SHEETS_TAB` per show and
 change it each cycle. Cheap now, annoying later. Flag rather than guess.
 
-### 30. Who runs the retry when nobody is at a terminal?
+### 31. Who runs the retry when nobody is at a terminal?
 A submission tries once and, if Google is down, stays `pending` until someone
 runs `npx tsx scripts/sync-sheets.ts`. `/api/health` reports the backlog, so
 nothing is silent, but nothing is automatic either. The proper answer is the
