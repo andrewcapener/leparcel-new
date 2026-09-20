@@ -1,4 +1,4 @@
-import { checklistFor, nextAction, clearForLoadIn, type ChecklistInput } from './checklist'
+import { checklistFor, nextAction, clearForLoadIn, type ChecklistInput, slotOptions } from './checklist'
 
 let failures = 0
 const check = (n: string, ok: boolean) => { if (!ok) { failures++; console.error(`FAIL: ${n}`) } }
@@ -143,6 +143,39 @@ check('otherwise it just says pay',
 /* A missing or unreadable date never invents urgency. */
 check('an unreadable deadline is not overdue',
   at({ ...base, booking: { status: 'awaiting_payment', paymentDueAt: 'nope' } }, 'fee')!.state === 'todo')
+
+
+/* ── the onboarding call ──
+   Per track, because the outdoor times exist and the indoor ones may not. */
+const SLOTS = 'Not needed\nTues Oct 13 @ 6pm\nWed Oct 14 @ 9am'
+const callRow = (i: Partial<ChecklistInput>) =>
+  checklistFor({ ...base, applicationStatus: 'accepted', ...i }).find((r) => r.key === 'call')
+
+check('no times set means the question is never asked', !callRow({}))
+check('times set asks an accepted maker', callRow({ onboardingSlots: SLOTS })?.state === 'todo')
+check('an undecided maker is not asked yet',
+  checklistFor({ ...base, applicationStatus: 'new', onboardingSlots: SLOTS })
+    .find((r) => r.key === 'call')?.state === 'waiting')
+check('a chosen time reads as done',
+  callRow({ onboardingSlots: SLOTS, onboardingSlot: 'Wed Oct 14 @ 9am' })?.state === 'done')
+check('"Not needed" is an answer, not a skip',
+  callRow({ onboardingSlots: SLOTS, onboardingSlot: 'Not needed' })?.state === 'done')
+check('the call never blocks load-in', callRow({ onboardingSlots: SLOTS })?.blocksLoadIn === false)
+check('blank lines in the list are dropped',
+  slotOptions('a\n\n  \nb').join('|') === 'a|b')
+
+/* ── the item list ──
+   Hillary, 20 Sept: "don't do inventory for outside ppl". */
+const itemRow = (track: string, due?: string) =>
+  checklistFor({ ...base, applicationStatus: 'accepted', track, inventoryDueAt: due })
+    .find((r) => r.key === 'items')
+check('outdoor is never asked for an item list', !itemRow('outdoor'))
+check('indoor is', Boolean(itemRow('indoor')))
+check('so is a maker placed indoors off a both application', Boolean(itemRow('both')))
+check('the due date is shown when one is set',
+  itemRow('indoor', '2026-10-30T12:00:00-07:00')?.dueAt === '2026-10-30T12:00:00-07:00')
+check('and the row still appears without one', itemRow('indoor')?.state === 'waiting')
+check('the item list never blocks load-in', itemRow('indoor')?.blocksLoadIn === false)
 
 if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('maker checklist: only the right makers are asked, and a transfer in flight never reads as late')

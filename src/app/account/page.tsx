@@ -15,7 +15,8 @@ import { SignInForm } from './SignInForm'
 import { BoothInvoice } from './BoothInvoice'
 import { Checklist } from './Checklist'
 import { WhatYouTold, YourDetails } from './YourApplication'
-import { checklistFor, clearForLoadIn } from '@/server/modules/compliance/checklist'
+import { CallTimes } from './CallTimes'
+import { checklistFor, clearForLoadIn, slotOptions } from '@/server/modules/compliance/checklist'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { settlesInsideWindow, offersCard } from '@/server/modules/payments/methods'
 import { CONTACT_EMAIL } from '@/lib/agreement'
@@ -123,10 +124,27 @@ export default async function Account({
   /* What we need from them, and where each thing stands. The rule for who
      owes what lives in compliance/checklist.ts and is shared with the admin,
      rather than being a condition written out twice and drifting. */
+  /* Where this maker will actually stand, which is not always what they
+     applied for. An application can say `both`; a booked space is always one
+     or the other, and spaceTypes.track carries it. It decides three things
+     that were all keyed off the application until now: whether they are asked
+     for an item list, which call times they see, and whether the state
+     requires us to hold their seller's permit. A `both` applicant placed
+     outdoors used to be asked for a catalogue they do not owe and shown no
+     call times at all. Before a booking exists there is nothing better to go
+     on, so the application's answer stands and `both` keeps owing a permit,
+     which is the conservative way round. */
+  const placed = billing
+    ? (await db.query.spaceTypes.findFirst({
+        where: eq(spaceTypes.id, billing.booking.spaceTypeId),
+      }))?.track
+    : undefined
+  const track = placed ?? app?.track ?? ''
+
   const checklist = app
     ? checklistFor({
         applicationStatus: app.status,
-        track: app.track,
+        track,
         booking: billing
           ? { status: billing.booking.status, paymentDueAt: billing.booking.paymentDueAt }
           : undefined,
@@ -137,6 +155,13 @@ export default async function Account({
         /* Load-in is the day before the show opens. Not a date we invent to
            create urgency: it is the day the doors need everything in order. */
         loadInAt: show.startsOn,
+        /* Per track, because the times are: the outdoor slots exist and the
+           indoor ones may not yet. */
+        onboardingSlots: track === 'outdoor'
+          ? show.onboardingSlotsOutdoor
+          : show.onboardingSlotsIndoor,
+        onboardingSlot: billing?.booking.onboardingSlot,
+        inventoryDueAt: show.inventoryDueAt,
         nowIso: new Date().toISOString(),
         contactEmail: CONTACT_EMAIL,
         startOnly: !settlesInsideWindow(show.paymentMethods),
@@ -212,6 +237,17 @@ export default async function Account({
                 methods={show.paymentMethods}
               />
             )}
+
+            {/* Only for an accepted maker with times offered for their track.
+                The checklist row anchors here. */}
+            {billing && app && (() => {
+              const opts = slotOptions(
+                track === 'outdoor' ? show.onboardingSlotsOutdoor : show.onboardingSlotsIndoor,
+              )
+              return opts.length > 0
+                ? <CallTimes options={opts} chosen={billing.booking.onboardingSlot} />
+                : null
+            })()}
 
             <Card title={`Your ${show.name}`}>
               <Facts

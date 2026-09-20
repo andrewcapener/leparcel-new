@@ -2793,3 +2793,29 @@ h3, .h3 { line-height: 1.15; }
   .mk-dl dt { margin: 0; }
   .mk-acct__head { align-items: flex-start; }
 }
+
+/* ── Onboarding call times ────────────────────────────────────────────
+   Radios rather than a select: three options where all three matter, and a
+   maker choosing between two evenings should see both at once. It is also
+   the shape that works with no JavaScript, which a magic-link portal opened
+   inside a mail client's browser genuinely needs. */
+.mk-slots { list-style: none; margin: 0; padding: 0; display: grid; gap: .5em; }
+.mk-slot {
+  display: flex;
+  align-items: center;
+  gap: .7em;
+  padding: .75em .9em;
+  border: 1px solid rgb(var(--text-color) / 0.16);
+  cursor: pointer;
+}
+/* The whole row is the target, not just the dot: 24px minimum (WCAG 2.2
+   SC 2.5.8), comfortably exceeded by the padding above. */
+.mk-slot input { flex: none; width: 20px; height: 20px; margin: 0; }
+.mk-slot:hover { border-color: rgb(var(--text-color) / 0.38); }
+.mk-slot:has(input:checked) {
+  border-color: #BC9658;
+  box-shadow: inset 0 0 0 1px #BC9658;
+}
+/* Focus has to survive the :has() border above, so it is an outline and not
+   a border colour. */
+.mk-slot:has(input:focus-visible) { outline: 2px solid currentColor; outline-offset: 2px; }

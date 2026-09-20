@@ -82,15 +82,20 @@ export function Checklist({
             </div>
             <div className="mk-task__body">
               <p className="mk-task__detail">{i.detail}</p>
-              {i.dueAt && i.state !== 'done' && i.state !== 'waiting' && (
+              {i.dueAt && i.state !== 'done' && (
                 <p className="mk-task__due">
-                  {/* A booth fee is due at an hour; load-in is a day. Showing
-                      a time on a date nobody set would invent precision. */}
+                  {/* A booth fee is due at an hour; load-in and the item list
+                      are days. Showing a time on a date nobody set would
+                      invent precision. The item list carries a date while it
+                      is still `waiting`, because knowing when it lands is the
+                      whole point of showing the row before the upload opens. */}
                   {i.key === 'fee'
                     ? feeDeadlineIsStart
                       ? <>Start by {fmtDateTime(i.dueAt)}</>
                       : <>By {fmtDateTime(i.dueAt)}</>
-                    : <>Before load-in, {fmtDate(i.dueAt)}</>}
+                    : i.key === 'items'
+                      ? <>Due {fmtDate(i.dueAt)}</>
+                      : <>Before load-in, {fmtDate(i.dueAt)}</>}
                 </p>
               )}
               {i.action && (

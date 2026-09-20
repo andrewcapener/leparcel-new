@@ -88,6 +88,9 @@ export async function activeShow(): Promise<Show | undefined> {
            migration behind must never be the reason eighty makers get an
            email nobody chose to send. */
         decisionEmails: 'off' as const,
+        /* No slots and no date: a database behind the code asks no question
+           it cannot offer an answer to. */
+        onboardingSlotsIndoor: '', onboardingSlotsOutdoor: '', inventoryDueAt: null,
         // Same reasoning again: a database that predates these columns simply
         // makes no promise about when a maker will hear, which is what the
         // thank-you screen falls back to.

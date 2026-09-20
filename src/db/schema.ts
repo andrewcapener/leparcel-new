@@ -73,6 +73,16 @@ export const shows = pgTable('shows', {
      one forgotten checkbox would mail the whole roster. */
   decisionEmails: text('decision_emails', { enum: ['on', 'off'] }).notNull().default('off'),
 
+  /* Onboarding call times, one option per line, per track. The two lists are
+     independent because the times are: Hillary's outdoor slots exist and the
+     indoor ones do not yet. An empty list hides the question for that track
+     rather than asking it with nothing to choose. */
+  onboardingSlotsIndoor: text('onboarding_slots_indoor').notNull().default(''),
+  onboardingSlotsOutdoor: text('onboarding_slots_outdoor').notNull().default(''),
+  /* When the item list is wanted. Indoor only, because Mermade rings those
+     sales; an outdoor maker runs their own register and is never asked. */
+  inventoryDueAt: text('inventory_due_at'),
+
   indoorCapacity: integer('indoor_capacity').notNull().default(80),
   outdoorCapacity: integer('outdoor_capacity').notNull().default(30),
 
@@ -282,6 +292,8 @@ export const bookings = pgTable('bookings', {
      unpaid spaces whether or not they were. */
   linkSentAt: text('link_sent_at'),
   linkSentBy: text('link_sent_by'),
+  /** Which onboarding call time this maker chose, verbatim from the list. */
+  onboardingSlot: text('onboarding_slot'),
 
   /* Stripe. The session is where the maker was sent, the intent is what
      actually charged, and amountPaidCents is what Stripe says arrived rather

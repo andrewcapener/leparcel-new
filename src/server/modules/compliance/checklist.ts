@@ -67,6 +67,14 @@ export type ChecklistInput = {
   hasCoi: boolean
   /** Show dates, for the deadlines that are not per booking. */
   loadInAt: string
+  /** Onboarding call times for THIS maker's track, one per line. Empty means
+   *  the times are not set yet, and the row does not appear at all: asking
+   *  somebody to choose from nothing is worse than not asking. */
+  onboardingSlots?: string
+  /** What they already chose, if anything. */
+  onboardingSlot?: string | null
+  /** When the item list is wanted. Indoor only. Null until somebody sets it. */
+  inventoryDueAt?: string | null
   nowIso: string
   /** Where to send a document there is no upload for yet. Passed in rather
    *  than imported so this file stays pure and testable. */
@@ -81,6 +89,11 @@ export type ChecklistInput = {
    anything: a maker who prefers their own client still has it in words. */
 const mailto = (email: string, subject: string) =>
   `mailto:${email}?subject=${encodeURIComponent(subject)}`
+
+/** The options, in order, with blank lines and stray whitespace dropped. */
+export function slotOptions(raw: string | undefined): string[] {
+  return (raw ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
+}
 
 const past = (iso: string | undefined, nowIso: string) => {
   if (!iso) return false
@@ -201,15 +214,51 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
     blocksLoadIn: true,
   })
 
-  /* 4 · Item list. Not built yet, and saying so is better than leaving a
-     maker to discover it later. Indoor only: Mermade rings those sales, so
-     Mermade needs the catalogue. An outdoor maker runs their own register. */
+  /* 4 · The onboarding call. Only where times exist for this maker's track:
+     Hillary's outdoor slots are set and the indoor ones are not, so the
+     outdoor half of the roster can be asked tonight and the indoor half is
+     not shown an empty question.
+
+     "Not needed" is one of the options rather than a way of skipping the row,
+     because a maker who has decided they do not want a call has answered, and
+     a list that keeps asking is a list people stop reading. */
+  const slots = slotOptions(input.onboardingSlots)
+  if (slots.length > 0) {
+    const picked = (input.onboardingSlot ?? '').trim()
+    items.push({
+      key: 'call',
+      title: 'Your onboarding call',
+      detail: picked
+        ? `You chose: ${picked}. Change it here any time before the show.`
+        : 'Pick a time that suits you, or tell us you do not need one. It is a short call about how the day runs.',
+      state: !accepted ? 'waiting' : picked ? 'done' : 'todo',
+      href: '#call',
+      action: accepted && !picked ? { label: 'Pick a time', href: '#call' } : undefined,
+      /* Never a blocker. Somebody who skips the call still sells. */
+      blocksLoadIn: false,
+    })
+  }
+
+  /* 5 · Item list. Indoor only: Mermade rings those sales, so Mermade needs
+     the catalogue, and an outdoor maker runs their own register. Hillary,
+     20 Sept: "don't do inventory for outside ppl... we'll get a million
+     questions!"
+
+     The upload does not exist yet. The date does, so the row now names it
+     rather than promising vaguely that we will be in touch. */
   if (input.track !== 'outdoor') {
+    const due = input.inventoryDueAt ?? undefined
     items.push({
       key: 'items',
       title: 'Your item list',
-      detail: 'What you are bringing, with prices, so the register knows your work. We will open this and write to you when it is ready.',
+      detail: due
+        ? 'What you are bringing, with prices, so the register knows your work. We will open the upload before the date below and write to you when it is ready.'
+        : 'What you are bringing, with prices, so the register knows your work. We will open this and write to you when it is ready.',
+      /* Still `waiting`, even with a date on it: there is nothing for a maker
+         to do until the upload opens, and a row that says "your turn" with no
+         way to take it is the thing this list exists to avoid. */
       state: 'waiting',
+      dueAt: due,
       blocksLoadIn: false,
     })
   }

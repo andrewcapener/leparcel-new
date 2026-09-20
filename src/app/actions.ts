@@ -37,6 +37,7 @@ import {
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
 import { startBoothPayment, bookingByPayToken } from '@/server/modules/payments/booth'
+import { slotOptions } from '@/server/modules/compliance/checklist'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
 import { sendLead, newEventId } from '@/server/modules/meta/capi'
 
@@ -1216,6 +1217,11 @@ const ShowSettingsSchema = z.object({
   applicationsOpenAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   applicationsCloseAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   decisionEmails: z.enum(['on', 'off']),
+  onboardingSlotsIndoor: z.string().max(2000).default(''),
+  onboardingSlotsOutdoor: z.string().max(2000).default(''),
+  /* Optional: an empty date input posts an empty string, which is not a date
+     and must not become one. */
+  inventoryDueAt: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/, 'Use a date or leave it empty').default(''),
   rosterAnnouncedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   commissionPct: z.coerce.number().min(0, 'Not negative').max(50, 'That is over half'),
   paymentWindowHours: z.coerce.number().int('Whole hours').min(1).max(240, 'Ten days at most'),
@@ -1267,6 +1273,11 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
     applicationsOpenAt: laWallToIso(d.applicationsOpenAt),
     applicationsCloseAt: laWallToIso(d.applicationsCloseAt),
     decisionEmails: d.decisionEmails,
+    onboardingSlotsIndoor: d.onboardingSlotsIndoor,
+    onboardingSlotsOutdoor: d.onboardingSlotsOutdoor,
+    /* Noon Pacific, not midnight: a date rendered back in another timezone
+       slips to the day before from midnight and never does from noon. */
+    inventoryDueAt: d.inventoryDueAt ? laWallToIso(`${d.inventoryDueAt}T12:00`) : null,
     rosterAnnouncedOn: laWallToIso(d.rosterAnnouncedOn),
     commissionBps: Math.round(d.commissionPct * 100),
     paymentWindowHours: d.paymentWindowHours,
@@ -1465,6 +1476,48 @@ export async function payBoothFee(): Promise<void> {
       console.error(`[stripe] checkout failed for booking ${booking.id}: ${result.detail}`)
       redirect('/account?pay=failed')
   }
+}
+
+/**
+ * The maker's answer to the onboarding call question.
+ *
+ * Authorised the same way payBoothFee is, from the signed-in maker's own
+ * vendor row, so a booking id in a form body resolves to nothing. The value
+ * is checked against the list the Show actually offers rather than trusted:
+ * this string is rendered back to staff on the roster, and an unvalidated one
+ * would let a maker write whatever they liked into it.
+ */
+export async function chooseOnboardingSlot(fd: FormData): Promise<void> {
+  const email = await readMakerSession((await cookies()).get(MAKER_COOKIE)?.value)
+  if (!email) redirect('/account')
+  const show = await activeShow()
+  if (!show) redirect('/account')
+  const vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
+  if (!vendor) redirect('/account')
+
+  const [booking] = await db
+    .select()
+    .from(bookings)
+    .where(and(eq(bookings.vendorId, vendor.id), eq(bookings.showId, show.id)))
+    .limit(1)
+  if (!booking) redirect('/account')
+
+  const app = await db.query.applications.findFirst({
+    where: eq(applications.id, booking.applicationId),
+  })
+  const offered = slotOptions(
+    app?.track === 'outdoor' ? show.onboardingSlotsOutdoor : show.onboardingSlotsIndoor,
+  )
+  const slot = String(fd.get('slot') ?? '')
+  if (!offered.includes(slot)) redirect('/account#call')
+
+  const before = { onboardingSlot: booking.onboardingSlot }
+  await db.update(bookings).set({ onboardingSlot: slot }).where(eq(bookings.id, booking.id))
+  await log('booking', booking.id, 'onboarding_slot', before, { onboardingSlot: slot })
+
+  revalidatePath('/account')
+  revalidatePath('/admin/roster')
+  redirect('/account#call')
 }
 
 /** Who is signed in, for the audit row. Falls back rather than throwing: the

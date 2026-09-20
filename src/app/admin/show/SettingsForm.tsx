@@ -195,6 +195,31 @@ export function SettingsForm({ show }: { show: Show }) {
         </div>
         <div className="adm-row2">
           <Field
+            name="onboardingSlotsIndoor" label="Onboarding call times, indoor" error={e.onboardingSlotsIndoor}
+            hint={'One option per line, exactly as a maker should read it. "Not needed" is a fine option and marks the row answered. Leave this empty and indoor makers are never asked, which is what you want until the times exist.'}
+          >
+            <textarea className="inp" id="onboardingSlotsIndoor" name="onboardingSlotsIndoor"
+              style={{ minHeight: 96 }} {...keep('onboardingSlotsIndoor', show.onboardingSlotsIndoor)} />
+          </Field>
+          <Field
+            name="onboardingSlotsOutdoor" label="Onboarding call times, outdoor" error={e.onboardingSlotsOutdoor}
+            hint="The outdoor list is separate because the times are. Same rules: one per line, empty means nobody outdoor is asked."
+          >
+            <textarea className="inp" id="onboardingSlotsOutdoor" name="onboardingSlotsOutdoor"
+              style={{ minHeight: 96 }} {...keep('onboardingSlotsOutdoor', show.onboardingSlotsOutdoor)} />
+          </Field>
+        </div>
+        <div className="adm-row2">
+          <Field
+            name="inventoryDueAt" label="Item list due" error={e.inventoryDueAt}
+            hint="Indoor makers only: Mermade rings those sales, so Mermade needs the catalogue, and an outdoor maker runs their own register. Leave empty and the row still appears without a date. The upload itself is not built yet; this is the date it promises."
+          >
+            <input className="inp" id="inventoryDueAt" name="inventoryDueAt" type="date"
+              {...keep('inventoryDueAt', show.inventoryDueAt ? isoToLaWall(show.inventoryDueAt).slice(0, 10) : '')} />
+          </Field>
+        </div>
+        <div className="adm-row2">
+          <Field
             name="indoorCapacity" label="Indoor capacity" error={e.indoorCapacity}
             hint="Spaces on the floor. The jury header counts committed bookings against this."
           >
