@@ -89,13 +89,20 @@ export default async function PayPage({
      an email, a magic link, and somebody chasing forty people while running a
      show.
 
-     Only once the fee is settled or in flight, because until then this page
-     has exactly one job and a second ask would compete with it. Only for an
-     indoor maker, because an outdoor maker takes their own money and is owed
-     nothing. And only where Stripe is configured, because a button that
-     cannot work is worse than no button. */
+     Behind the Show's switch, which is OFF for the fee window. Drew, 21 Sept:
+     "Let's wait to send them this." Two good reasons, and they agree: Connect
+     is not live on the Stripe account yet, and Stripe asks for a Social
+     Security number during onboarding, which is not a question to put beside a
+     $280 invoice on a 48 hour clock. The fee has a deadline; the payout does
+     not bite until statements are approved.
+
+     Then only once the fee is settled or in flight, because until then this
+     page has exactly one job. Only for an indoor maker, because an outdoor
+     maker takes their own money and is owed nothing. And only where Stripe is
+     configured, because a button that cannot work is worse than no button. */
   const settled = isPaid(billing.booking.status) || billing.booking.status === 'payment_processing'
-  const payouts = paymentsConfigured() && settled && owesPayoutSetup(found.track)
+  const payouts = (its ?? show).payoutSetup === 'on'
+    && paymentsConfigured() && settled && owesPayoutSetup(found.track)
     ? connectState(found)
     : undefined
 

@@ -201,6 +201,15 @@ export function SettingsForm({ show }: { show: Show }) {
               <option value="on">On, send the fee automatically</option>
             </select>
           </Field>
+          <Field
+            name="payoutSetup" label="Ask indoor makers to set up payouts" error={e.payoutSetup}
+            hint="How a maker gets PAID, which is a different Stripe account from the one that takes their booth fee. Leave this off until Connect is enabled on the Stripe account and the fee window has closed: it cannot work before the first, and during the second it competes with the ask that has a deadline. Turning it on puts the setup on every indoor maker's account page. Outdoor makers are never asked, because they take their own money."
+          >
+            <select id="payoutSetup" name="payoutSetup" className="inp" required {...keep('payoutSetup', show.payoutSetup)}>
+              <option value="off">Off, not yet</option>
+              <option value="on">On, ask indoor makers</option>
+            </select>
+          </Field>
         </div>
         <div className="adm-row2">
           <Field

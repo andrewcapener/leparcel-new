@@ -89,6 +89,7 @@ export async function activeShow(): Promise<Show | undefined> {
            email nobody chose to send. */
         decisionEmails: 'off' as const,
         paymentEmail: 'off' as const,
+        payoutSetup: 'off' as const,
         /* No slots and no date: a database behind the code asks no question
            it cannot offer an answer to. */
         onboardingSlotsIndoor: '', onboardingSlotsOutdoor: '', inventoryDueAt: null,

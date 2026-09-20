@@ -151,9 +151,10 @@ export default async function Account({
      said: `payouts_enabled` is Stripe's verdict and nothing here is allowed to
      stand in for it.
 
-     Undefined when payouts are not configured on this deployment, which keeps
-     the row and the card off a preview where the button could not work. */
-  const payouts = paymentsConfigured() && owesPayoutSetup(track)
+     Undefined unless the Show says to ask and Stripe is configured here. Both
+     halves matter: the switch is off until Connect is live on the Stripe
+     account, and a button that cannot work is worse than no button. */
+  const payouts = show.payoutSetup === 'on' && paymentsConfigured() && owesPayoutSetup(track)
     ? connectState({
         stripeAccountId: vendor.stripeAccountId,
         payoutsEnabled: vendor.payoutsEnabled,

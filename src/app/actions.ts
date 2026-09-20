@@ -1264,6 +1264,7 @@ const ShowSettingsSchema = z.object({
   applicationsCloseAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   decisionEmails: z.enum(['on', 'off']),
   paymentEmail: z.enum(['on', 'off']),
+  payoutSetup: z.enum(['on', 'off']),
   onboardingSlotsIndoor: z.string().max(2000).default(''),
   onboardingSlotsOutdoor: z.string().max(2000).default(''),
   /* Optional: an empty date input posts an empty string, which is not a date
@@ -1321,6 +1322,7 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
     applicationsCloseAt: laWallToIso(d.applicationsCloseAt),
     decisionEmails: d.decisionEmails,
     paymentEmail: d.paymentEmail,
+    payoutSetup: d.payoutSetup,
     onboardingSlotsIndoor: d.onboardingSlotsIndoor,
     onboardingSlotsOutdoor: d.onboardingSlotsOutdoor,
     /* Noon Pacific, not midnight: a date rendered back in another timezone

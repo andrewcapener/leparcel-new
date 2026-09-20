@@ -75,6 +75,12 @@ export const shows = pgTable('shows', {
   /* The receipt, separate from the acceptance email. The team write the warm
      one; this is the space, the fee, the deadline and a button. */
   paymentEmail: text('payment_email', { enum: ['on', 'off'] }).notNull().default('off'),
+  /* Whether makers are asked to set up how they get PAID. Off until Connect is
+     live on the Stripe account and the booth fee window has closed: during the
+     fee window that ask competes with the one that has a deadline, and Stripe
+     wants a Social Security number for it. Everything behind this is built;
+     the switch is the date, not the decision. */
+  payoutSetup: text('payout_setup', { enum: ['on', 'off'] }).notNull().default('off'),
 
   /* Onboarding call times, one option per line, per track. The two lists are
      independent because the times are: Hillary's outdoor slots exist and the

@@ -104,6 +104,10 @@ export default async function Roster() {
     connectDisabledReason: v.connectDisabledReason,
   })
   const payable = owedMoney.filter((r) => payoutOf(r.vendor) === 'ready')
+  /* Only counted while makers are actually being asked. Off, this tile would
+     read "0 of 9" every day and teach staff to ignore a number that is going
+     to matter later. */
+  const asking = show.payoutSetup === 'on'
 
   // The show's booth-fee picture: expected counts every live booking
   // (confirmed and awaiting); collected counts only the paid ones.
@@ -191,7 +195,7 @@ export default async function Roster() {
                 this holds up their money, not their table. It earns a warning
                 mark anyway, because the cost of noticing in November is a
                 maker who sold all weekend and cannot be sent their share. */}
-            {owesPayoutSetup(space.track) && (() => {
+            {asking && owesPayoutSetup(space.track) && (() => {
               const st = payoutOf(vendor)
               if (st === 'ready') return <span className="adm-tag">Payouts ready</span>
               if (st === 'in_review') return <span className="adm-tag">Payouts in review</span>
@@ -288,7 +292,7 @@ export default async function Roster() {
               ? ` ${clearing.length} bank transfer${clearing.length === 1 ? '' : 's'} clearing, not counted here.`
               : '')}
         />
-        <Stat
+        {asking && <Stat
           label="Can be paid" icon="money" value={payable.length} unit={`of ${owedMoney.length}`}
           warn={payable.length < owedMoney.length}
           note={owedMoney.length === 0
@@ -296,7 +300,7 @@ export default async function Roster() {
             : payable.length === owedMoney.length
               ? 'Every indoor maker has finished Stripe. Payouts can go out the day statements are approved.'
               : 'Indoor makers with a Stripe payout account Stripe says is ready. The rest sell fine and cannot be paid until they finish.'}
-        />
+        />}
         <Stat
           label="Not told yet" icon="roster" value={notTold.length}
           note={notTold.length === 0
