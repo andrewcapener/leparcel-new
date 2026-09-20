@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
      an open redirect waiting to happen, and //evil.example is a valid path as
      far as a naive startsWith('/') check is concerned. */
   const want = req.nextUrl.searchParams.get('next') ?? ''
-  const dest = want === 'payment' ? '/account/payment' : '/account'
+  const dest = want === 'payment' ? '/pay' : '/account'
 
   /* An expired link goes back to the page it was requested FROM, not to the
      account: a maker who asked to pay and waited too long should land on the
