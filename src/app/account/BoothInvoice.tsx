@@ -166,11 +166,20 @@ export function BoothInvoice({
                 </strong></p>
               )}
 
+              {/* Both on the table. This has to say two true things at once:
+                  either method confirms the space, and only one of them is
+                  instant. Without the second sentence a maker who picks the
+                  bank reads "Due <date>" above, knows a transfer takes days,
+                  and either panics or reaches for a card we are paying 2.9%
+                  on. Saying it plainly is worth real money as well as being
+                  the honest version. */}
               {offersCard(methods) && offersBank(methods) && (
                 <p className="rte">
                   Pay to confirm. Card or bank transfer, whichever suits you. Bank transfer
                   costs us less, so it is the kinder one on a larger fee, and both confirm
-                  the same way.
+                  the same way. A transfer takes about four business days to arrive, and
+                  that is fine: start yours by {fmtDateTime(dueAt)} and your space is held
+                  from the moment you do, not from the day it lands.
                 </p>
               )}
               {!offersCard(methods) && (
