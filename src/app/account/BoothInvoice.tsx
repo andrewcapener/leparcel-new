@@ -22,6 +22,7 @@ import { deadlineMeans, offersCard, offersBank, type PaymentMethods } from '@/se
 export function BoothInvoice({
   invoice, status, dueAt, paidAt, vendorCode,
   payable, testMode, notice, methods, preview = false, id = 'booth-fee',
+  action, token,
 }: {
   invoice: Invoice
   status: string
@@ -43,6 +44,12 @@ export function BoothInvoice({
    *  and four elements sharing an id is invalid HTML that quietly breaks
    *  in-page anchors and confuses a screen reader's landmark list. */
   id?: string
+  /** Which door this invoice was opened through. The portal leaves this unset
+   *  and pays as the signed-in maker; /pay/<token> passes payByToken, because
+   *  under manual acceptance there is no email from us to sign in through and
+   *  the link has to work for whoever staff sent it to. */
+  action?: (fd: FormData) => Promise<void>
+  token?: string
 }) {
   const paid = status === 'confirmed'
   const lost = status === 'forfeited' || status === 'cancelled'
@@ -183,7 +190,8 @@ export function BoothInvoice({
                   Pay {usd(invoice.totalCents)}
                 </button>
               ) : payable ? (
-                <form action={payBoothFee}>
+                <form action={action ?? payBoothFee}>
+                  {token && <input type="hidden" name="token" value={token} />}
                   <button className="btn btn--primary" type="submit">
                     Pay {usd(invoice.totalCents)}
                   </button>
@@ -191,7 +199,7 @@ export function BoothInvoice({
               ) : (
                 <p className="rte">
                   The payment page is not live yet. It will be before your deadline, and we
-                  will email you the moment it is.
+                  will write to you the moment it is.
                 </p>
               )}
 

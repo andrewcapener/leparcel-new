@@ -1,8 +1,11 @@
+import Link from 'next/link'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
-import { markPaid, forfeitOverdueBookings } from '@/app/actions'
+import { markPaid, forfeitOverdueBookings, markLinkSent } from '@/app/actions'
+import { PayLink } from './PayLink'
+import { siteUrl } from '@/lib/site-url'
 import { usd, splitCommission, bpsLabel } from '@/lib/money'
 import { holdsSpace, isPaid, isForfeitable, needsChasing } from '@/server/modules/payments/booking-status'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
@@ -25,7 +28,7 @@ export const dynamic = 'force-dynamic'
    is a fixed four so the mask does not publish the length of the number. */
 const maskPermit = (permit: string) => `•••• ${permit.trim().slice(-4)}`
 
-const COLS = 7
+const COLS = 8
 
 export default async function Roster() {
   const show = await activeShow()
@@ -170,6 +173,34 @@ export default async function Roster() {
           )}
         </td>
 
+        <td className="c-2">
+          {booking.payToken ? (
+            <>
+              <PayLink
+                url={`${siteUrl()}/pay/${booking.payToken}`}
+                sent={Boolean(booking.linkSentAt)}
+              />
+              <form action={markLinkSent} style={{ marginTop: 6 }}>
+                <input type="hidden" name="bookingId" value={booking.id} />
+                {booking.linkSentAt && <input type="hidden" name="undo" value="1" />}
+                <button className="adm-btn-q" type="submit">
+                  {booking.linkSentAt ? 'Sent, undo' : 'Mark sent'}
+                  <span className="adm-sr"> for {vendor.shopName}</span>
+                </button>
+              </form>
+              <span className="adm-sub2">
+                {booking.linkSentAt
+                  ? `${fmtDateTime(booking.linkSentAt)}${booking.linkSentBy ? ` by ${booking.linkSentBy}` : ''}`
+                  : 'Not told yet'}
+              </span>
+            </>
+          ) : (
+            /* Booked before payment links existed. The portal still works for
+               them: they sign in at /account and the invoice is there. */
+            <span className="adm-sub2">Portal only</span>
+          )}
+        </td>
+
         <td className="r">
           {!paid && (
             <form action={markPaid}>
@@ -242,10 +273,12 @@ export default async function Roster() {
           </div>
           <p className="adm-note">
             {overdue.length === 1 ? 'This maker' : 'These makers'} passed the{' '}
-            {show.paymentWindowHours} hour window without starting a payment, and the acceptance
-            email told them the space would go back into the pool. Releasing is written to the
-            audit log and emails them, warmly, with an invitation to write back. Nobody whose bank
-            transfer is still clearing can appear here, however far past the deadline they are.
+            {show.paymentWindowHours} hour window without starting a payment. Releasing is always
+            written to the audit log; whether it also emails them depends on{' '}
+            <Link href="/admin/show">show settings</Link>, and with decision emails off it sends
+            nothing and the note is yours to write. Check <em>their link</em> in the roster first:
+            a maker who was never told is not really late. Nobody whose bank transfer is still
+            clearing can appear here, however far past the deadline they are.
             Anyone marked <em>started a payment</em> opened Stripe and did not finish; that can be
             an abandoned tab, or a bank still sending its verification deposits, so it is worth a
             look before releasing.
@@ -311,6 +344,7 @@ export default async function Roster() {
               <th scope="col" className="r">Booth fee</th>
               <th scope="col" className="c-2">Fee status</th>
               <th scope="col" className="c-1">Paperwork</th>
+              <th scope="col" className="c-2">Their link</th>
               <th scope="col" className="r"><span className="adm-sr">Action</span></th>
             </tr>
           </thead>

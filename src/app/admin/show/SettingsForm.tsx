@@ -183,6 +183,15 @@ export function SettingsForm({ show }: { show: Show }) {
               <option value="card_only">Card only</option>
             </select>
           </Field>
+          <Field
+            name="decisionEmails" label="Email makers when you decide" error={e.decisionEmails}
+            hint="Off means accepting, declining, waitlisting or releasing a space sends nothing: you write the email yourself and paste the maker's payment link from the roster. It does not affect the receipt a maker gets when they apply, or the sign-in link they ask for. Off is the safe default, because turning it on mails everybody you decide on from that moment."
+          >
+            <select id="decisionEmails" name="decisionEmails" className="inp" required {...keep('decisionEmails', show.decisionEmails)}>
+              <option value="off">Off, we send our own</option>
+              <option value="on">On, send automatically</option>
+            </select>
+          </Field>
         </div>
         <div className="adm-row2">
           <Field

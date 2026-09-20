@@ -94,6 +94,19 @@ export default async function ApplicationDetail({
       })
     : []
 
+  /* Everything bookable, with how many are already held, so the person
+     accepting can see what is actually left rather than guessing from the
+     maker's own first choice. */
+  const allSpaces = await db.query.spaceTypes.findMany({
+    orderBy: [asc(spaceTypes.sortOrder)],
+  })
+  const takenRows = await db
+    .select({ spaceTypeId: bookings.spaceTypeId })
+    .from(bookings)
+    .where(eq(bookings.showId, app.showId))
+  const taken = new Map<string, number>()
+  for (const t of takenRows) taken.set(t.spaceTypeId, (taken.get(t.spaceTypeId) ?? 0) + 1)
+
   let requestedAddonCodes: string[] = []
   try { requestedAddonCodes = JSON.parse(app.requestedAddons) } catch {}
   let loadInSlots: string[] = []
@@ -381,8 +394,42 @@ export default async function ApplicationDetail({
           <div className="adm-sec" style={{ margin: '24px 0 0', border: 0, paddingBottom: 0 }}>
             <h2>Move to</h2>
           </div>
+          {/* Accepting is its own form, because it is the one decision that
+              takes money. The space is chosen HERE rather than read off the
+              maker's first tick: a roster fills up, and moving somebody from
+              the 3x8 they wanted to the 3x4 that is left used to be impossible
+              without editing the database. The price shown is the price that
+              will be charged, snapshotted onto the booking the moment this is
+              pressed. */}
+          {app.status !== 'accepted' && (
+            <form action={decide} className="adm-accept">
+              <input type="hidden" name="applicationId" value={app.id} />
+              <input type="hidden" name="status" value="accepted" />
+              <label className="adm-field" htmlFor="spaceTypeId">
+                <span className="lb">Space to book</span>
+                <select className="inp" id="spaceTypeId" name="spaceTypeId" required
+                  defaultValue={app.spaceTypeId ?? ''}>
+                  <option value="" disabled>Pick a space</option>
+                  {allSpaces.map((sp) => (
+                    <option key={sp.id} value={sp.id}>
+                      {sp.label} · {usd(sp.priceCents)}
+                      {requestedIds.includes(sp.id) ? ' · asked for' : ''}
+                      {taken.get(sp.id) ? ` · ${taken.get(sp.id)} held` : ''}
+                    </option>
+                  ))}
+                </select>
+                <span className="hint">
+                  This is what they are billed. It cannot be changed after accepting.
+                </span>
+              </label>
+              <button className="adm-btn-q" type="submit">
+                Accept<span className="adm-sr"> {vendor.shopName}</span>
+              </button>
+            </form>
+          )}
+
           <div className="adm-moves">
-            {(['shortlist', 'accepted', 'waitlist', 'declined', 'under_review', 'new'] as const)
+            {(['shortlist', 'waitlist', 'declined', 'under_review', 'new'] as const)
               .filter((s) => s !== app.status)
               .filter((s) => s !== 'new' || app.status === 'declined')
               .map((s) => (
@@ -401,8 +448,9 @@ export default async function ApplicationDetail({
               ))}
           </div>
           <p className="adm-note" style={{ marginTop: 14 }}>
-            Accepting books the primary space and sends the invoice. Declining sends the reason
-            above it.
+            Accepting books the space above and holds it. Whether a decision emails the maker
+            is set on <Link href="/admin/show">show settings</Link>; with it off, nothing is
+            sent and the roster carries a payment link to paste into your own email.
           </p>
 
           {/* ── delete, last and folded away ──

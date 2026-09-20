@@ -15,7 +15,7 @@ import Link from 'next/link'
 
 /** The band that says whose account this is. Replaces the marketing title. */
 export function AccountHeader({
-  shopName, vendorCode, status, showName, signOut = true,
+  shopName, vendorCode, status, showName, signOut = true, eyebrow = 'Maker account',
 }: {
   shopName: string
   vendorCode?: string
@@ -24,11 +24,15 @@ export function AccountHeader({
   showName: string
   /** Off for the preview, where there is no session to end. */
   signOut?: boolean
+  /** What this page is. /pay/<token> is deliberately NOT the account, and a
+   *  header that says otherwise invites somebody to go looking for the rest
+   *  of it. */
+  eyebrow?: string
 }) {
   return (
     <div className="mk-acct__head">
       <div>
-        <p className="mk-acct__eyebrow">Maker account</p>
+        <p className="mk-acct__eyebrow">{eyebrow}</p>
         <h1 className="mk-acct__name">{shopName}</h1>
         <div className="mk-acct__meta">
           <p>{showName}</p>

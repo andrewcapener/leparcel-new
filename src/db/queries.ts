@@ -84,6 +84,10 @@ export async function activeShow(): Promise<Show | undefined> {
            migration behind can never be the reason somebody cannot pay their
            booth fee before a deadline. */
         paymentMethods: 'card_and_bank' as const,
+        /* Off, for the same reason the column defaults off: a database one
+           migration behind must never be the reason eighty makers get an
+           email nobody chose to send. */
+        decisionEmails: 'off' as const,
         // Same reasoning again: a database that predates these columns simply
         // makes no promise about when a maker will hear, which is what the
         // thank-you screen falls back to.

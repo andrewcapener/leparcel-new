@@ -68,6 +68,10 @@ export const shows = pgTable('shows', {
   paymentMethods: text('payment_methods', {
     enum: ['card_and_bank', 'bank_only', 'card_only'],
   }).notNull().default('card_and_bank'),
+  /* Whether a jury decision mails the maker. Off means staff write their own
+     acceptance and paste the payment link into it (0032). Never defaults on:
+     one forgotten checkbox would mail the whole roster. */
+  decisionEmails: text('decision_emails', { enum: ['on', 'off'] }).notNull().default('off'),
 
   indoorCapacity: integer('indoor_capacity').notNull().default(80),
   outdoorCapacity: integer('outdoor_capacity').notNull().default(30),
@@ -269,6 +273,15 @@ export const bookings = pgTable('bookings', {
   }).notNull().default('awaiting_payment'),
   paymentDueAt: text('payment_due_at').notNull(),
   paidAt: text('paid_at'),
+
+  /* The link staff paste into an email they wrote. Addresses one booking and
+     opens one page: the invoice and a Pay button, never the account. */
+  payToken: text('pay_token'),
+  /* Who told this maker, and when. With no automated acceptance email this is
+     the only record that anybody was contacted, and the forfeit path releases
+     unpaid spaces whether or not they were. */
+  linkSentAt: text('link_sent_at'),
+  linkSentBy: text('link_sent_by'),
 
   /* Stripe. The session is where the maker was sent, the intent is what
      actually charged, and amountPaidCents is what Stripe says arrived rather

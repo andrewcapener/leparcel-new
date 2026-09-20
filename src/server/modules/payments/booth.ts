@@ -52,6 +52,32 @@ export async function boothInvoice(
   }
 }
 
+/**
+ * The booking a pasted payment link points at.
+ *
+ * Token comparison is a plain equality check on a 64 character random value,
+ * which is not a secret worth timing-attacking: an attacker who can guess this
+ * can already pay somebody else's invoice, which costs them money and gains
+ * them nothing.
+ *
+ * Returns undefined for a token that is empty, unknown, or attached to a
+ * booking that no longer holds a space, so the page can say "this link is no
+ * longer live" without leaking whether the token was ever real.
+ */
+export async function bookingByPayToken(
+  db: DbHandle, token: string,
+): Promise<{ id: string; showId: string; email: string } | undefined> {
+  const t = token.trim()
+  if (t.length < 32) return undefined
+  const [row] = await db
+    .select({ id: bookings.id, showId: bookings.showId, email: vendors.email })
+    .from(bookings)
+    .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
+    .where(eq(bookings.payToken, t))
+    .limit(1)
+  return row
+}
+
 export type CheckoutResult =
   | { outcome: 'unconfigured' }
   | { outcome: 'missing' }

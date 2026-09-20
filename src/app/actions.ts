@@ -36,7 +36,7 @@ import {
 } from '@/lib/makerAuth'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
-import { startBoothPayment } from '@/server/modules/payments/booth'
+import { startBoothPayment, bookingByPayToken } from '@/server/modules/payments/booth'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
 import { sendLead, newEventId } from '@/server/modules/meta/capi'
 
@@ -844,6 +844,11 @@ export async function decide(fd: FormData): Promise<void> {
   const appId = String(fd.get('applicationId'))
   const next = String(fd.get('status')) as ApplicationStatus
   const reason = String(fd.get('reason') ?? '')
+  /* The space a person chose on the accept form. Until this existed, accepting
+     booked whatever the maker ticked first on their own application, at that
+     price, with no way to move somebody from a 3x8 to the 3x4 that is actually
+     left. Empty means "whatever they asked for", which is the old behaviour. */
+  const chosenSpaceId = String(fd.get('spaceTypeId') ?? '').trim()
 
   const app = await db.query.applications.findFirst({ where: eq(applications.id, appId) })
   if (!app) return
@@ -852,6 +857,17 @@ export async function decide(fd: FormData): Promise<void> {
   if (!show || !vendor) return
 
   const before = { status: app.status }
+
+  /* Whether a decision mails the maker at all. Drew, 20 Sept 2026, relaying
+     the team: "no automation yet on accepted/declined emails." Off by default
+     and set on /admin/show, so staff write and send their own and the roster
+     carries the payment link to paste into it.
+
+     This gate covers only what the DASHBOARD triggers. The application receipt
+     and the sign-in link are untouched: one answers a maker pressing Submit,
+     the other answers a maker asking to sign in, and switching either off
+     would break the portal the invoice lives on. */
+  const mailsDecisions = show.decisionEmails === 'on'
 
   await db.update(applications).set({
     status: next,
@@ -867,9 +883,21 @@ export async function decide(fd: FormData): Promise<void> {
     const already = await db.query.bookings.findFirst({
       where: eq(bookings.applicationId, appId),
     })
-    if (!already && app.spaceTypeId) {
-      const space = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, app.spaceTypeId) })
-      if (space) {
+    const bookSpaceId = chosenSpaceId || app.spaceTypeId
+    /* Loud, not silent. The old code wrapped the whole booking in
+       `if (app.spaceTypeId)`, so an application with no space marked the maker
+       accepted, created no booking and sent nothing, and the only way to find
+       out was a maker asking why they never got an invoice. */
+    if (!already && !bookSpaceId) {
+      throw new Error(
+        'Pick a space before accepting: this application does not carry one, '
+        + 'so there is nothing to bill.',
+      )
+    }
+    if (!already && bookSpaceId) {
+      const space = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, bookSpaceId) })
+      if (!space) throw new Error('That space no longer exists. Pick another and try again.')
+      {
         // Sequential per-show Mermade ID. Reused across shows if the maker has one.
         const [{ n }] = await db
           .select({ n: sql<number>`count(*)` })
@@ -905,6 +933,10 @@ export async function decide(fd: FormData): Promise<void> {
           addonsCents,
           commissionBps: show.commissionBps,   // immutable snapshot
           status: 'awaiting_payment', paymentDueAt: due,
+          /* The link staff paste into their own email. Minted here so it
+             exists the moment the booking does: a roster row with an Accept
+             but no link to copy would send somebody back to the database. */
+          payToken: randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, ''),
         })
         for (const a of granted) {
           await db.insert(bookingAddons).values({
@@ -912,6 +944,11 @@ export async function decide(fd: FormData): Promise<void> {
           })
         }
         await log('booking', bookingId, 'created', null, {
+          space: space.label,
+          /* Visible in the audit when staff moved somebody off their first
+             choice, which is the change most likely to be queried later. */
+          spaceAsked: app.spaceTypeId,
+          spaceBooked: space.id,
           priceCents: space.priceCents,
           addonsCents,
           addons: granted.map((a) => ({ code: a.code, priceCents: a.priceCents })),
@@ -920,7 +957,7 @@ export async function decide(fd: FormData): Promise<void> {
           code,
         })
 
-        await mail(
+        if (mailsDecisions) await mail(
           vendor.email,
           `You’re in: ${show.name}`,
           `${vendor.contactName}, you’re in.\n\n`
@@ -964,7 +1001,7 @@ export async function decide(fd: FormData): Promise<void> {
     }
   }
 
-  if (next === 'declined') {
+  if (next === 'declined' && mailsDecisions) {
     await mail(
       vendor.email,
       `Your ${show.name} application`,
@@ -977,7 +1014,7 @@ export async function decide(fd: FormData): Promise<void> {
     )
   }
 
-  if (next === 'waitlist') {
+  if (next === 'waitlist' && mailsDecisions) {
     await mail(
       vendor.email,
       `Waitlisted for ${show.name}`,
@@ -1175,6 +1212,7 @@ const ShowSettingsSchema = z.object({
   endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   applicationsOpenAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   applicationsCloseAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
+  decisionEmails: z.enum(['on', 'off']),
   rosterAnnouncedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   commissionPct: z.coerce.number().min(0, 'Not negative').max(50, 'That is over half'),
   paymentWindowHours: z.coerce.number().int('Whole hours').min(1).max(240, 'Ten days at most'),
@@ -1225,6 +1263,7 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
     endsOn: laWallToIso(d.endsOn),
     applicationsOpenAt: laWallToIso(d.applicationsOpenAt),
     applicationsCloseAt: laWallToIso(d.applicationsCloseAt),
+    decisionEmails: d.decisionEmails,
     rosterAnnouncedOn: laWallToIso(d.rosterAnnouncedOn),
     commissionBps: Math.round(d.commissionPct * 100),
     paymentWindowHours: d.paymentWindowHours,
@@ -1425,6 +1464,82 @@ export async function payBoothFee(): Promise<void> {
   }
 }
 
+/** Who is signed in, for the audit row. Falls back rather than throwing: the
+ *  point of the record is that somebody marked it, and losing the name is not
+ *  a reason to lose the timestamp. */
+async function staffName(): Promise<string> {
+  const who = await staffForSession((await cookies()).get(ADMIN_COOKIE)?.value)
+  return who?.name ?? 'staff'
+}
+
+/**
+ * Pay from a link staff pasted into an email they wrote themselves.
+ *
+ * The sibling of payBoothFee, and deliberately a separate door. payBoothFee
+ * authorises from the signed-in maker's own vendor row, which is the stronger
+ * check and stays the way the portal works. This one authorises from the token
+ * itself, because under manual acceptance there is no email from us for the
+ * maker to sign in through: staff send the link, and the link has to work for
+ * whoever opens it.
+ *
+ * What that costs is real and worth stating: anybody holding the link can pay
+ * that invoice. What it does NOT do is open the account, so a forwarded link
+ * never exposes an application, an address or a phone number. The money lands
+ * on the right booking either way, which makes "somebody else paid it" a
+ * curiosity rather than a loss.
+ */
+export async function payByToken(fd: FormData): Promise<void> {
+  const token = String(fd.get('token') ?? '')
+  const found = await bookingByPayToken(db, token)
+  if (!found) redirect('/pay/invalid')
+
+  const show = await db.query.shows.findFirst({ where: eq(shows.id, found.showId) })
+  const result = await startBoothPayment(
+    db, found.id, found.email, show?.paymentMethods ?? 'card_and_bank',
+  )
+
+  const back = `/pay/${encodeURIComponent(token)}`
+  switch (result.outcome) {
+    case 'ready':
+      redirect(result.url)
+    case 'already_paid':
+      redirect(`${back}?paid=1`)
+    case 'unconfigured':
+      redirect(`${back}?pay=unavailable`)
+    case 'missing':
+      redirect(`${back}?pay=missing`)
+    default:
+      console.error(`[stripe] token checkout failed for booking ${found.id}: ${result.detail}`)
+      redirect(`${back}?pay=failed`)
+  }
+}
+
+/**
+ * Record that a person sent this maker their link.
+ *
+ * Not a nicety. With no automated acceptance email, nothing else in the system
+ * knows whether a maker was ever told they are in, and the forfeit path
+ * releases unpaid spaces whether or not anybody wrote to them. This is the
+ * column the roster reads to show who is accepted and still in the dark.
+ */
+export async function markLinkSent(fd: FormData): Promise<void> {
+  const bookingId = String(fd.get('bookingId') ?? '')
+  const undo = String(fd.get('undo') ?? '') === '1'
+  const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1)
+  if (!booking) redirect('/admin/roster')
+
+  const before = { linkSentAt: booking.linkSentAt, linkSentBy: booking.linkSentBy }
+  const after = undo
+    ? { linkSentAt: null, linkSentBy: null }
+    : { linkSentAt: new Date().toISOString(), linkSentBy: await staffName() }
+
+  await db.update(bookings).set(after).where(eq(bookings.id, bookingId))
+  await log('booking', bookingId, undo ? 'link_unsent' : 'link_sent', before, after)
+
+  revalidatePath('/admin/roster')
+  redirect('/admin/roster')
+}
+
 /**
  * Release the spaces of makers who never paid.
  *
@@ -1458,6 +1573,11 @@ export async function forfeitOverdueBookings(): Promise<void> {
     (r) => isForfeitable(r.booking.status, r.booking.paymentDueAt, now),
   )
 
+  /* Same gate as a jury decision: releasing a space is a dashboard action, so
+     under manual mode staff tell the maker themselves. The release still
+     happens and is still audit-logged either way. */
+  const mailsDecisions = show.decisionEmails === 'on'
+
   for (const { booking, vendor } of doomed) {
     const before = { status: booking.status, paymentDueAt: booking.paymentDueAt }
     await db.update(bookings)
@@ -1470,7 +1590,7 @@ export async function forfeitOverdueBookings(): Promise<void> {
     /* Say it plainly and leave the door open. A maker who missed a deadline by
        a few hours because they were at a craft fair is exactly the maker this
        market wants, and the waiting list is real. */
-    await mail(
+    if (mailsDecisions) await mail(
       vendor.email,
       `Your ${show.name} space`,
       `${vendor.contactName}, we did not receive your booth fee by ${fmtDateTime(booking.paymentDueAt)}, `
