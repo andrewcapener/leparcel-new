@@ -37,7 +37,9 @@ import {
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
 import { startBoothPayment, bookingByPayToken } from '@/server/modules/payments/booth'
-import { ensureConnectAccount, onboardingLink, refreshAccount } from '@/server/modules/payments/connect'
+import {
+  ensureConnectAccount, onboardingLink, refreshAccount, owesPayoutSetup,
+} from '@/server/modules/payments/connect'
 import { slotOptions } from '@/server/modules/compliance/checklist'
 import { boothFeeHtml, boothFeeText } from '@/server/modules/email/booth-fee'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
@@ -1634,6 +1636,51 @@ export async function refreshPayoutStatus(): Promise<void> {
   redirect('/account#payouts')
 }
 
+/**
+ * Payout setup from a pasted link, with no sign-in.
+ *
+ * The sibling of startConnectOnboarding, and the one that actually gets used:
+ * the maker who just paid their booth fee from a staff-written email is on
+ * /pay/<token>, is not signed in, and has Stripe open in their head. Making
+ * them stop, request a magic link, wait for an email and come back is how a
+ * two-minute job becomes a November problem.
+ *
+ * The token already authorises money on this booking, so it authorises this.
+ * If anything it is the lesser power: paying moves real money, while this
+ * opens Stripe's own onboarding, where Stripe collects and holds everything.
+ * The worst a stranger with a forwarded link can do is create an empty payout
+ * account for a maker who was going to need one anyway. Nothing about the
+ * maker is revealed that the page was not already showing.
+ */
+export async function startConnectOnboardingByToken(fd: FormData): Promise<void> {
+  const token = String(fd.get('token') ?? '')
+  const found = await bookingByPayToken(db, token)
+  if (!found) redirect('/pay/invalid')
+
+  const back = `/pay/${encodeURIComponent(token)}`
+  /* Never for an outdoor maker. They take their own money at their own tent
+     and are owed nothing, so this would be an identity check for no reason. */
+  if (!owesPayoutSetup(found.track)) redirect(back)
+
+  const made = await ensureConnectAccount(db, found.vendorId)
+  if ('error' in made) {
+    console.error(`[connect] account for ${found.vendorId}: ${made.error}`)
+    redirect(`${back}?payouts=unavailable`)
+  }
+  if (!found.stripeAccountId) {
+    await log('vendor', found.vendorId, 'connect_started',
+      { stripeAccountId: null }, { stripeAccountId: made.accountId },
+      'maker started payout setup from their payment link', `maker:${found.vendorId}`)
+  }
+
+  const link = await onboardingLink(made.accountId, `${back}#payouts`)
+  if ('error' in link) {
+    console.error(`[connect] link for ${found.vendorId}: ${link.error}`)
+    redirect(`${back}?payouts=unavailable`)
+  }
+  redirect(link.url)
+}
+
 /** Who is signed in, for the audit row. Falls back rather than throwing: the
  *  point of the record is that somebody marked it, and losing the name is not
  *  a reason to lose the timestamp. */
@@ -1664,11 +1711,13 @@ export async function payByToken(fd: FormData): Promise<void> {
   if (!found) redirect('/pay/invalid')
 
   const show = await db.query.shows.findFirst({ where: eq(shows.id, found.showId) })
-  const result = await startBoothPayment(
-    db, found.id, found.email, show?.paymentMethods ?? 'card_and_bank',
-  )
-
+  /* Back to THIS page, not the account. A maker who opened a pasted link has
+     no session, so returning them to /account after a successful payment put
+     a sign-in box in front of somebody who had just given us money. */
   const back = `/pay/${encodeURIComponent(token)}`
+  const result = await startBoothPayment(
+    db, found.id, found.email, show?.paymentMethods ?? 'card_and_bank', back,
+  )
   switch (result.outcome) {
     case 'ready':
       redirect(result.url)

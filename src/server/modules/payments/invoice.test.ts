@@ -6,7 +6,7 @@
  * guards against is a rounding or accumulation bug that only shows up on
  * particular combinations of add-ons.
  */
-import { invoiceFor, paymentMatches, bookingPaymentKey } from './invoice'
+import { invoiceFor, paymentMatches, bookingPaymentKey, paymentDoor } from './invoice'
 
 let failures = 0
 const check = (name: string, ok: boolean) => {
@@ -61,8 +61,24 @@ check('a float expectation never matches', !paymentMatches(450.5 as number, 450.
 const a = bookingPaymentKey('bk_123')
 check('the key is stable for the same booking', a === bookingPaymentKey('bk_123'))
 check('a different booking gets a different key', a !== bookingPaymentKey('bk_124'))
-check('bumping the version gets a different key', a !== bookingPaymentKey('bk_123', 2))
+check('bumping the version gets a different key', a !== bookingPaymentKey('bk_123', 'portal', 2))
 check('the key names the booking', a.includes('bk_123'))
+
+/* 5b · The door is part of the key, because it is part of the request. Stripe
+ *      rejects a reused key whose parameters changed, and the two doors return
+ *      a maker to two different pages. What must never double-pay is a double
+ *      CLICK, and that is always the same door. */
+check('the two doors do not share a key',
+  bookingPaymentKey('bk_123', 'portal') !== bookingPaymentKey('bk_123', 'link'))
+check('a double click on one door is one key',
+  bookingPaymentKey('bk_123', 'link') === bookingPaymentKey('bk_123', 'link'))
+check('the portal is the default, so nothing already issued changes shape',
+  a === bookingPaymentKey('bk_123', 'portal'))
+check('a pasted link is the link door', paymentDoor('/pay/abc123') === 'link')
+check('the account is the portal', paymentDoor('/account') === 'portal')
+/* Anything unrecognised is treated as the portal rather than inventing a
+   third door, because a third door is a third live Checkout session. */
+check('anything else is the portal', paymentDoor('/somewhere/else') === 'portal')
 
 if (failures) {
   console.error(`\n${failures} check(s) failed.`)

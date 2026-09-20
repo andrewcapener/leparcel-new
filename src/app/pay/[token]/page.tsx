@@ -7,7 +7,12 @@ import { AccountHeader, Card, Facts } from '@/app/account/Shell'
 import { BoothInvoice } from '@/app/account/BoothInvoice'
 import { bookingByPayToken, boothInvoice } from '@/server/modules/payments/booth'
 import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
-import { payByToken } from '@/app/actions'
+import { PayoutSetup } from '@/app/account/PayoutSetup'
+import { payByToken, startConnectOnboardingByToken } from '@/app/actions'
+import {
+  connectState, owesPayoutSetup, requirementList, requirementsInPlainWords,
+} from '@/server/modules/payments/connect'
+import { isPaid } from '@/server/modules/payments/booking-status'
 
 export const dynamic = 'force-dynamic'
 export const metadata = {
@@ -34,7 +39,7 @@ export default async function PayPage({
   params, searchParams,
 }: {
   params: Promise<{ token: string }>
-  searchParams: Promise<{ paid?: string; pay?: string }>
+  searchParams: Promise<{ paid?: string; pay?: string; payouts?: string }>
 }) {
   const { token } = await params
   const sp = await searchParams
@@ -76,6 +81,24 @@ export default async function PayPage({
       ? (sp.pay as 'unavailable' | 'missing' | 'failed')
       : undefined
 
+  /* ── one more thing, at the only moment it is free ──
+     Drew, 21 Sept 2026: "I would hate to miss an opportunity here to set this
+     up now." This is the opportunity. The maker has just paid, they are on
+     this page because Stripe sent them back to it, and they have Stripe open
+     in their head. Asked here it is two more minutes. Asked in November it is
+     an email, a magic link, and somebody chasing forty people while running a
+     show.
+
+     Only once the fee is settled or in flight, because until then this page
+     has exactly one job and a second ask would compete with it. Only for an
+     indoor maker, because an outdoor maker takes their own money and is owed
+     nothing. And only where Stripe is configured, because a button that
+     cannot work is worse than no button. */
+  const settled = isPaid(billing.booking.status) || billing.booking.status === 'payment_processing'
+  const payouts = paymentsConfigured() && settled && owesPayoutSetup(found.track)
+    ? connectState(found)
+    : undefined
+
   return (
     <SiteShell show={show} template="page template-suffix-account">
       <div className="mk-acct">
@@ -101,6 +124,17 @@ export default async function PayPage({
               action={payByToken}
               token={token}
             />
+            {payouts && (
+              <PayoutSetup
+                state={payouts}
+                needs={requirementsInPlainWords(requirementList(found.connectRequirements))}
+                action={startConnectOnboardingByToken}
+                token={token}
+                notice={sp.payouts === 'unavailable' ? 'unavailable' : undefined}
+                lede="That is your space paid for. One more thing, and it is the last money question: so we can send you your share after the show, Stripe needs to know who you are and where that money goes. About ten minutes, once, and it carries over to every show after this one."
+              />
+            )}
+
             <Card title="Questions" wide>
               <Facts
                 rows={[

@@ -76,6 +76,22 @@ export function paymentMatches(expectedCents: number, receivedCents: number): bo
  * it and Stripe treats the next call as new work instead of replaying the old
  * answer.
  */
-export function bookingPaymentKey(bookingId: string, version = 1): string {
-  return `booth:${bookingId}:v${version}`
+export function bookingPaymentKey(bookingId: string, door = 'portal', version = 1): string {
+  /* The door is part of the key because it is part of the request. Stripe
+     rejects a reused idempotency key whose parameters have changed, and the
+     two doors send a maker back to two different pages: one key for both
+     would turn "this maker opened the portal and then used the pasted link"
+     into a 400 at the moment they tried to pay.
+
+     Rule 4 still holds. What must never double-pay is a double-CLICK, and a
+     double-click is always the same door, so it is always the same key. Only
+     one session is ever live for a booking: startBoothPayment expires the
+     other door's before it opens a new one. */
+  return `booth:${bookingId}:${door}:v${version}`
+}
+
+/** A short, stable name for where a maker is paying from. Anything that is
+ *  not the portal is a link staff pasted, and they all behave the same. */
+export function paymentDoor(back: string): string {
+  return back.startsWith('/pay/') ? 'link' : 'portal'
 }

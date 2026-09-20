@@ -21,7 +21,7 @@ import type Stripe from 'stripe'
 import type { db as Db } from '@/db'
 import { bookings, bookingAddons, addOns, spaceTypes, stripeEvents, auditLog, vendors } from '@/db/schema'
 import { stripe, webhookSecret } from './config'
-import { invoiceFor, paymentMatches, bookingPaymentKey, type Invoice } from './invoice'
+import { invoiceFor, paymentMatches, bookingPaymentKey, paymentDoor, type Invoice } from './invoice'
 import { stripeMethods, type PaymentMethods } from './methods'
 import { recordAccount } from './connect'
 import { siteUrl } from '@/lib/site-url'
@@ -68,13 +68,36 @@ export async function boothInvoice(
  */
 export async function bookingByPayToken(
   db: DbHandle, token: string,
-): Promise<{ id: string; showId: string; email: string } | undefined> {
+): Promise<{
+  id: string; showId: string; email: string
+  /* The maker behind the booking, and where they stand on getting paid. The
+     token authorises this booking, so it authorises both directions of money
+     on it: paying the fee, and setting up how the maker is paid back. */
+  vendorId: string
+  /* The booked space's track, not the application's. An application can say
+     "both"; only the space knows where they ended up, and only an indoor
+     maker is ever owed anything. */
+  track: string
+  stripeAccountId: string | null
+  payoutsEnabled: boolean
+  connectRequirements: string
+  connectDisabledReason: string | null
+} | undefined> {
   const t = token.trim()
   if (t.length < 32) return undefined
   const [row] = await db
-    .select({ id: bookings.id, showId: bookings.showId, email: vendors.email })
+    .select({
+      id: bookings.id, showId: bookings.showId, email: vendors.email,
+      vendorId: vendors.id,
+      track: spaceTypes.track,
+      stripeAccountId: vendors.stripeAccountId,
+      payoutsEnabled: vendors.payoutsEnabled,
+      connectRequirements: vendors.connectRequirements,
+      connectDisabledReason: vendors.connectDisabledReason,
+    })
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
+    .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
     .where(eq(bookings.payToken, t))
     .limit(1)
   return row
@@ -107,6 +130,13 @@ export async function startBoothPayment(
   /* The Show's policy, passed in rather than read here so this stays a pure
      function of its arguments and the caller owns the one database read. */
   policy: PaymentMethods = 'card_and_bank',
+  /* Where Stripe returns them. This used to be hardcoded to /account, which
+     was right when /account was the only door and wrong the moment staff
+     started pasting /pay/<token> links: that maker has no session, so paying
+     successfully dropped them on a sign-in box. Landing somebody on a login
+     screen at the exact moment they have just given you money is the worst
+     possible thank-you. */
+  back = '/account',
 ): Promise<CheckoutResult> {
   const s = stripe()
   if (!s) return { outcome: 'unconfigured' }
@@ -123,7 +153,18 @@ export async function startBoothPayment(
     try {
       const existing = await s.checkout.sessions.retrieve(booking.stripeSessionId)
       if (existing.status === 'open' && existing.url) {
-        return { outcome: 'ready', url: existing.url }
+        /* Reused only when it would return them to the same door. A maker who
+           opened the portal once and then used a pasted link would otherwise
+           be handed the portal's session and bounced to a sign-in box after
+           paying. */
+        if ((existing.success_url ?? '').startsWith(`${siteUrl()}${back}?`)) {
+          return { outcome: 'ready', url: existing.url }
+        }
+        /* The other door's, and still live. Expired rather than abandoned, so
+           exactly one session for this booking is ever payable: two open
+           checkouts is how a maker pays their booth fee twice and needs a
+           refund, and no amount of webhook care undoes a captured card. */
+        await s.checkout.sessions.expire(existing.id)
       }
     } catch {
       /* Gone or unreadable. Fall through and make a new one rather than
@@ -152,10 +193,10 @@ export async function startBoothPayment(
       payment_intent_data: {
         metadata: { bookingId: booking.id, vendorCode: booking.vendorCode },
       },
-      success_url: `${siteUrl()}/account?paid=1`,
-      cancel_url: `${siteUrl()}/account`,
+      success_url: `${siteUrl()}${back}?paid=1`,
+      cancel_url: `${siteUrl()}${back}`,
       expires_at: Math.floor(Date.now() / 1000) + 24 * 3600,
-    }, { idempotencyKey: bookingPaymentKey(booking.id) })
+    }, { idempotencyKey: bookingPaymentKey(booking.id, paymentDoor(back)) })
 
     if (!session.url) return { outcome: 'failed', detail: 'Stripe returned a session with no url' }
 

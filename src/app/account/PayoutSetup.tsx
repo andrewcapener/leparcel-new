@@ -22,15 +22,26 @@ import type { ConnectState } from '@/server/modules/payments/connect'
  * errand gets done.
  */
 export function PayoutSetup({
-  state, needs, notice,
+  state, needs, notice, action, token, lede,
 }: {
   state: ConnectState
   /** What Stripe is still waiting for, already in the maker's words. */
   needs: string[]
   /** Set when the maker has just come back from Stripe, or something failed. */
   notice?: 'back' | 'unavailable'
+  /** Which door this is. The account authorises from the signed-in maker's
+   *  own vendor row and needs nothing in the form; a pasted payment link
+   *  authorises from its token and passes it through. Same card either way,
+   *  because it is the same two minutes of the maker's life. */
+  action?: (fd: FormData) => Promise<void>
+  token?: string
+  /** An opening line for the moment this is shown in. On the account it is a
+   *  standing task; straight after paying it is "one more thing", and that is
+   *  a different sentence. */
+  lede?: string
 }) {
   const done = state === 'ready'
+  const doAction = action ?? startConnectOnboarding
 
   return (
     <Card title="How you get paid" id="payouts" wide>
@@ -42,7 +53,10 @@ export function PayoutSetup({
       )}
 
       <p className="mk-card__lede">
-        {done
+        {/* The lede only ever replaces the ordinary opening. A hold or a
+            review is news, and must not be papered over by a cheerful line
+            about how quick this is. */}
+        {lede && (state === 'not_started' || state === 'unfinished') ? lede : done
           ? 'You are set up. After the show closes we send your share straight to your own bank account, and there is nothing else for you to do.'
           : state === 'in_review'
             ? 'Stripe is checking what you sent. That is normal, it is usually quick, and there is nothing for you to do while they look.'
@@ -70,7 +84,8 @@ export function PayoutSetup({
              finished row invites somebody to go and break something. */
           <p>Nothing left to do here.</p>
         ) : (
-          <form action={startConnectOnboarding}>
+          <form action={doAction}>
+            {token && <input type="hidden" name="token" value={token} />}
             <button className="btn btn--primary" type="submit">
               {state === 'not_started' ? 'Set up payouts' : 'Continue with Stripe'}
             </button>
@@ -80,7 +95,7 @@ export function PayoutSetup({
         {/* Only after they have come back. The webhook usually beats them
             here, and a refresh button on a page nobody is waiting on is
             clutter. */}
-        {notice === 'back' && !done && (
+        {notice === 'back' && !done && !token && (
           <form action={refreshPayoutStatus} style={{ marginTop: 10 }}>
             <button className="btn btn--secondary" type="submit">Check my status again</button>
           </form>
