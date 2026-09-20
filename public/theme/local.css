@@ -2819,3 +2819,14 @@ h3, .h3 { line-height: 1.15; }
 /* Focus has to survive the :has() border above, so it is an outline and not
    a border colour. */
 .mk-slot:has(input:focus-visible) { outline: 2px solid currentColor; outline-offset: 2px; }
+
+/* The card with nothing above the field.
+   The heavy top rule, the border and the 2.5rem of padding are there to carry
+   a heading and make the box read as its own object. With no heading it sat
+   inside the page card as a second frame around one input, with a dark line
+   over an empty inch. So on this variant it is not a card at all: just the
+   field and the button, centred in the card that already holds them. */
+.mm-signin--bare {
+  border: 0;
+  padding: 0;
+}

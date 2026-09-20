@@ -36,6 +36,9 @@ export function SignInForm({
   const [state, action, pending] = useActionState(requestSignInLink, initial)
   const e = state.errors ?? {}
   const v = state.values ?? {}
+  /* Nothing above the field. The heavy top rule and the deep padding exist to
+     sit under a heading; with no heading they frame an empty inch. */
+  const bare = title === null && note === null
 
   if (state.ok) {
     return (
@@ -51,7 +54,7 @@ export function SignInForm({
   }
 
   return (
-    <div className="mm-signin">
+    <div className={`mm-signin${bare ? ' mm-signin--bare' : ''}`}>
       {title !== null && <h2 className="mm-signin__title">{title ?? 'Welcome back, maker'}</h2>}
       {note !== null && (
         <p className="mm-signin__note">
