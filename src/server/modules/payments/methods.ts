@@ -15,12 +15,26 @@
  */
 export type PaymentMethods = 'card_and_bank' | 'bank_only' | 'card_only'
 
-/** What Stripe is told to offer. Order is Stripe's to decide. */
+/**
+ * What Stripe is told to offer, and in what order.
+ *
+ * The order is not cosmetic and it is not Stripe's to decide: Checkout renders
+ * these in the order given and preselects the first. So this one line largely
+ * decides the mix between a method that costs 0.8% capped at $5 and one that
+ * costs 2.9% plus thirty cents.
+ *
+ * Bank first, deliberately. Card stays one tap away for anybody whose bank
+ * will not link or who simply prefers it, which is the whole reason to offer
+ * both, but the default should be the cheap one. On a full show the gap
+ * between everybody defaulting to bank and everybody defaulting to card is
+ * most of a thousand dollars, and nobody is worse off for the ordering: the
+ * maker who wants a card still gets one.
+ */
 export function stripeMethods(policy: PaymentMethods): ('card' | 'us_bank_account')[] {
   switch (policy) {
     case 'bank_only': return ['us_bank_account']
     case 'card_only': return ['card']
-    default: return ['card', 'us_bank_account']
+    default: return ['us_bank_account', 'card']
   }
 }
 
