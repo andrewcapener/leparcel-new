@@ -88,6 +88,7 @@ export async function activeShow(): Promise<Show | undefined> {
            migration behind must never be the reason eighty makers get an
            email nobody chose to send. */
         decisionEmails: 'off' as const,
+        paymentEmail: 'off' as const,
         /* No slots and no date: a database behind the code asks no question
            it cannot offer an answer to. */
         onboardingSlotsIndoor: '', onboardingSlotsOutdoor: '', inventoryDueAt: null,

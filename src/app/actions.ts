@@ -38,6 +38,7 @@ import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storag
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
 import { startBoothPayment, bookingByPayToken } from '@/server/modules/payments/booth'
 import { slotOptions } from '@/server/modules/compliance/checklist'
+import { boothFeeHtml, boothFeeText } from '@/server/modules/email/booth-fee'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
 import { sendLead, newEventId } from '@/server/modules/meta/capi'
 
@@ -930,6 +931,7 @@ export async function decide(fd: FormData): Promise<void> {
 
         const due = new Date(Date.now() + show.paymentWindowHours * 3600_000).toISOString()
         const bookingId = randomUUID()
+        const payToken = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '')
         await db.insert(bookings).values({
           id: bookingId, showId: show.id, vendorId: vendor.id, applicationId: appId,
           spaceTypeId: space.id, vendorCode: code,
@@ -937,10 +939,11 @@ export async function decide(fd: FormData): Promise<void> {
           addonsCents,
           commissionBps: show.commissionBps,   // immutable snapshot
           status: 'awaiting_payment', paymentDueAt: due,
-          /* The link staff paste into their own email. Minted here so it
-             exists the moment the booking does: a roster row with an Accept
-             but no link to copy would send somebody back to the database. */
-          payToken: randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, ''),
+          /* The link staff paste into their own email, and the one the fee
+             email carries. Minted here so it exists the moment the booking
+             does: a roster row with an Accept but no link to copy would send
+             somebody back to the database. */
+          payToken,
         })
         for (const a of granted) {
           await db.insert(bookingAddons).values({
@@ -960,6 +963,42 @@ export async function decide(fd: FormData): Promise<void> {
           commissionBps: show.commissionBps,
           code,
         })
+
+        /* The receipt, on its own switch. Separate from the acceptance email
+           because they are two different jobs: the team write the warm one in
+           their own voice, and this is the space, the fee, the deadline and a
+           button. Sending it takes nothing away from them, which is the whole
+           reason it can go automatically when the other cannot. */
+        if (show.paymentEmail === 'on') {
+          const lines = [
+            { label: space.label, value: usd(space.priceCents) },
+            ...granted.map((a) => ({ label: a.name, value: usd(a.priceCents) })),
+          ]
+          const startOnly = show.paymentMethods === 'bank_only'
+          const bits = {
+            url: `${siteUrl()}/pay/${payToken}`,
+            shopName: vendor.shopName,
+            showName: show.name,
+            lines,
+            totalLabel: usd(space.priceCents + addonsCents),
+            deadline: fmtDateTime(due),
+            startOnly,
+            vendorCode: code,
+          }
+          await mail(
+            vendor.email,
+            `Your booth fee: ${show.name}`,
+            boothFeeText(bits),
+            'booth_fee',
+            undefined,
+            boothFeeHtml(bits),
+          )
+          /* Recorded so a second Accept on the same application cannot send a
+             second one, and so the roster can show it went. */
+          await db.update(bookings)
+            .set({ feeEmailAt: new Date().toISOString() })
+            .where(eq(bookings.id, bookingId))
+        }
 
         if (mailsDecisions) await mail(
           vendor.email,
@@ -981,11 +1020,15 @@ export async function decide(fd: FormData): Promise<void> {
                the window is a deadline to START a transfer, because ACH takes
                about four business days and telling a maker to "pay within 48
                hours" would be asking for something that cannot happen. */
+            /* The booking's own link, not /account. Until tokens existed this
+               had to point at the portal and make the maker sign in; every
+               step between an email and a paid invoice is a step where
+               somebody gives up. */
             + (show.paymentMethods === 'bank_only'
-              ? `\nStart your bank transfer within ${show.paymentWindowHours} hours: ${siteUrl()}/account\n`
+              ? `\nStart your bank transfer within ${show.paymentWindowHours} hours: ${siteUrl()}/pay/${payToken}\n`
                 + `Transfers take about four business days to arrive. Your space is held from `
                 + `the moment you start one, so you do not have to wait for it to land.\n`
-              : `\nPay to confirm within ${show.paymentWindowHours} hours: ${siteUrl()}/account\n`)
+              : `\nPay to confirm within ${show.paymentWindowHours} hours: ${siteUrl()}/pay/${payToken}\n`)
             + `Sign in with this address and your fee, your space and your Mermade ID are on the page.\n`
             + `If we hear nothing by then, the space returns to the pool.\n`
             // Outdoor makers sell for their own account, so the permit is ours
@@ -1217,6 +1260,7 @@ const ShowSettingsSchema = z.object({
   applicationsOpenAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   applicationsCloseAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   decisionEmails: z.enum(['on', 'off']),
+  paymentEmail: z.enum(['on', 'off']),
   onboardingSlotsIndoor: z.string().max(2000).default(''),
   onboardingSlotsOutdoor: z.string().max(2000).default(''),
   /* Optional: an empty date input posts an empty string, which is not a date
@@ -1273,6 +1317,7 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
     applicationsOpenAt: laWallToIso(d.applicationsOpenAt),
     applicationsCloseAt: laWallToIso(d.applicationsCloseAt),
     decisionEmails: d.decisionEmails,
+    paymentEmail: d.paymentEmail,
     onboardingSlotsIndoor: d.onboardingSlotsIndoor,
     onboardingSlotsOutdoor: d.onboardingSlotsOutdoor,
     /* Noon Pacific, not midnight: a date rendered back in another timezone

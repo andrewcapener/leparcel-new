@@ -18,6 +18,7 @@ import { SHEET_HEADERS } from '@/server/modules/sheets/row'
 import { staffNoticeHtml } from './staff-notice'
 import { applicationReceivedHtml } from './application-received'
 import { saveTheDateHtml, saveTheDateText, type SaveTheDateInput } from './save-the-date'
+import { boothFeeHtml, boothFeeText } from './booth-fee'
 import { emailConcepts } from './concepts.gen'
 
 export type Preview = {
@@ -98,6 +99,24 @@ export function previews(show: Show, siteUrl: string): Preview[] {
     .filter((h) => h !== 'Open in admin')
     .map((h) => ({ label: h, value: SAMPLE_VALUES[h] ?? '' }))
 
+  /* The fee preview. A made-up token, obviously so: a real one would be a
+     working payment link sitting on an admin page. */
+  const boothFee = {
+    url: `${siteUrl}/pay/${'0'.repeat(64)}`,
+    shopName: SHOP,
+    showName: show.name,
+    lines: [
+      { label: '3x6', value: usd(28000) },
+      { label: 'Corner or endcap, inside', value: usd(4000) },
+    ],
+    totalLabel: usd(32000),
+    deadline: fmtDeadline(
+      new Date(Date.now() + show.paymentWindowHours * 3600_000).toISOString(),
+    ),
+    startOnly: show.paymentMethods === 'bank_only',
+    vendorCode: 'MM00',
+  }
+
   return [
     {
       id: 'save_the_date',
@@ -121,6 +140,20 @@ export function previews(show: Show, siteUrl: string): Preview[] {
         shopName: SHOP, contactName: 'Sarah Whitfield', showName: show.name, fields: receiptFields,
         rosterDate: roster, contactEmail: CONTACT_EMAIL,
       }),
+    },
+    {
+      id: 'booth_fee',
+      name: 'Booth fee',
+      who: 'A maker you just accepted',
+      when: show.paymentEmail === 'on'
+        ? 'Automatically, the moment you accept them'
+        : 'Not sent: switch it on at show settings',
+      subject: `Your booth fee: ${show.name}`,
+      /* Deliberately says nothing about the jury. The team write the welcome;
+         this is the receipt, and the two are meant to arrive together without
+         repeating each other. */
+      text: boothFeeText(boothFee),
+      html: boothFeeHtml(boothFee),
     },
     {
       id: 'application_staff_notice',

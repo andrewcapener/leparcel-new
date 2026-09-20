@@ -72,6 +72,9 @@ export const shows = pgTable('shows', {
      acceptance and paste the payment link into it (0032). Never defaults on:
      one forgotten checkbox would mail the whole roster. */
   decisionEmails: text('decision_emails', { enum: ['on', 'off'] }).notNull().default('off'),
+  /* The receipt, separate from the acceptance email. The team write the warm
+     one; this is the space, the fee, the deadline and a button. */
+  paymentEmail: text('payment_email', { enum: ['on', 'off'] }).notNull().default('off'),
 
   /* Onboarding call times, one option per line, per track. The two lists are
      independent because the times are: Hillary's outdoor slots exist and the
@@ -294,6 +297,8 @@ export const bookings = pgTable('bookings', {
   linkSentBy: text('link_sent_by'),
   /** Which onboarding call time this maker chose, verbatim from the list. */
   onboardingSlot: text('onboarding_slot'),
+  /** When the booth fee email went out. Stops a re-accept sending a second. */
+  feeEmailAt: text('fee_email_at'),
 
   /* Stripe. The session is where the maker was sent, the intent is what
      actually charged, and amountPaidCents is what Stripe says arrived rather

@@ -192,6 +192,15 @@ export function SettingsForm({ show }: { show: Show }) {
               <option value="on">On, send automatically</option>
             </select>
           </Field>
+          <Field
+            name="paymentEmail" label="Email the booth fee when you accept" error={e.paymentEmail}
+            hint="Separate from the acceptance email above, and safe to run alongside a welcome you write yourself. It says nothing about the jury: the space, the fee, the deadline and a button that opens their invoice with no sign-in. Sent once per booking."
+          >
+            <select id="paymentEmail" name="paymentEmail" className="inp" required {...keep('paymentEmail', show.paymentEmail)}>
+              <option value="off">Off</option>
+              <option value="on">On, send the fee automatically</option>
+            </select>
+          </Field>
         </div>
         <div className="adm-row2">
           <Field
