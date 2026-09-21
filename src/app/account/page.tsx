@@ -18,7 +18,7 @@ import { WhatYouTold, YourDetails } from './YourApplication'
 import { CallTimes } from './CallTimes'
 import { PayoutSetup } from './PayoutSetup'
 import { ManualPay } from './ManualPay'
-import { manualOptions } from '@/server/modules/payments/manual'
+import { manualOptions, venmoQrDataUri } from '@/server/modules/payments/manual'
 import { checklistFor, clearForLoadIn, slotOptions } from '@/server/modules/compliance/checklist'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { settlesInsideWindow, offersCard } from '@/server/modules/payments/methods'
@@ -165,6 +165,17 @@ export default async function Account({
       })
     : undefined
 
+  /* Venmo and Zelle, on the maker's own page. Only while something is owed:
+     a second way to pay a settled invoice is how somebody pays twice. */
+  const manualHere = billing && billing.booking.status === 'awaiting_payment'
+    ? manualOptions(
+        { venmoHandle: show.venmoHandle, zelleContact: show.zelleContact },
+        billing.invoice.totalCents, billing.booking.vendorCode, show.name,
+      )
+    : []
+  const venmoHere = manualHere.find((o) => o.kind === 'venmo')
+  const venmoQr = venmoHere?.kind === 'venmo' ? await venmoQrDataUri(venmoHere.url) : null
+
   const checklist = app
     ? checklistFor({
         applicationStatus: app.status,
@@ -251,11 +262,9 @@ export default async function Account({
 
             {billing && billing.booking.status === 'awaiting_payment' && (
               <ManualPay
-                options={manualOptions(
-                  { venmoHandle: show.venmoHandle, zelleContact: show.zelleContact },
-                  billing.invoice.totalCents, billing.booking.vendorCode, show.name,
-                )}
+                options={manualHere}
                 vendorCode={billing.booking.vendorCode}
+                venmoQr={venmoQr}
                 dueWords={`Send it by ${fmtDate(billing.booking.paymentDueAt)} and your space is held.`}
               />
             )}

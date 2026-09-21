@@ -21,12 +21,15 @@ import type { ManualOption } from '@/server/modules/payments/manual'
  * to go hunting for.
  */
 export function ManualPay({
-  options, vendorCode, dueWords,
+  options, vendorCode, dueWords, venmoQr,
 }: {
   options: ManualOption[]
   vendorCode: string
   /** What the deadline means here, in the words the rest of the page uses. */
   dueWords: string
+  /** The Venmo link as a scannable code, for somebody reading this on a
+   *  laptop. Hidden on a phone, where you cannot scan your own screen. */
+  venmoQr?: string | null
 }) {
   if (options.length === 0) return null
 
@@ -51,6 +54,16 @@ export function ManualPay({
                 <a className="btn btn--secondary" href={o.url} rel="noopener noreferrer">
                   Open Venmo
                 </a>
+                {venmoQr && (
+                  <span className="mk-pay__qr">
+                    {/* Our own generated code, not the market's profile QR:
+                        this one carries the amount and the MM note, and that
+                        profile one carries neither. */}
+                    <img src={venmoQr} width={132} height={132}
+                      alt={`Venmo payment code for ${vendorCode}. Scan it to open Venmo with the amount and note filled in.`} />
+                    <small>Or scan with your phone</small>
+                  </span>
+                )}
               </>
             ) : (
               <>

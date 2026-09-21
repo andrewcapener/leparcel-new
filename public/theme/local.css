@@ -2870,3 +2870,13 @@ h3, .h3 { line-height: 1.15; }
   padding: .15em .45em;
   word-break: break-word;
 }
+
+/* The Venmo code. Hidden on a phone on purpose: a maker reading this on the
+   device they would scan with cannot scan it, and the button above does the
+   same job in one tap. It earns its place on a laptop. */
+.mk-pay__qr { display: none; }
+@media (min-width: 720px) {
+  .mk-pay__qr { display: block; margin-top: 1em; }
+  .mk-pay__qr img { display: block; width: 132px; height: 132px; }
+  .mk-pay__qr small { display: block; margin-top: .4em; color: #5F5A57; }
+}

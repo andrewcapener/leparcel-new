@@ -9,7 +9,7 @@ import { bookingByPayToken, boothInvoice } from '@/server/modules/payments/booth
 import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
 import { PayoutSetup } from '@/app/account/PayoutSetup'
 import { ManualPay } from '@/app/account/ManualPay'
-import { manualOptions } from '@/server/modules/payments/manual'
+import { manualOptions, venmoQrDataUri } from '@/server/modules/payments/manual'
 import { payByToken, startConnectOnboardingByToken } from '@/app/actions'
 import {
   connectState, owesPayoutSetup, requirementList, requirementsInPlainWords,
@@ -112,6 +112,9 @@ export default async function PayPage({
       )
     : []
 
+  const venmoLink = manual.find((o) => o.kind === 'venmo')
+  const venmoQr = venmoLink?.kind === 'venmo' ? await venmoQrDataUri(venmoLink.url) : null
+
   const settled = isPaid(billing.booking.status) || billing.booking.status === 'payment_processing'
   const payouts = (its ?? show).payoutSetup === 'on'
     && paymentsConfigured() && settled && owesPayoutSetup(found.track)
@@ -146,6 +149,7 @@ export default async function PayPage({
             <ManualPay
               options={manual}
               vendorCode={billing.booking.vendorCode}
+              venmoQr={venmoQr}
               dueWords={`Send it by ${new Date(billing.booking.paymentDueAt).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'long', day: 'numeric' })} and your space is held.`}
             />
 

@@ -91,6 +91,32 @@ export function manualOptions(
   return out
 }
 
+/**
+ * The same link, as a scannable code.
+ *
+ * Worth generating rather than using the market's own Venmo QR, because that
+ * one encodes the PROFILE and nothing else: scanning it opens a blank payment
+ * with no amount and no MM code, which throws away the one thing that makes
+ * these reconcilable. This encodes the prefilled link instead.
+ *
+ * Returned as a data URI so the page renders one <img> and nothing is written
+ * to disk, fetched, or injected as raw markup.
+ *
+ * Only useful on a screen the maker is NOT holding: you cannot scan your own
+ * phone. The page hides it below tablet width and shows the button instead.
+ */
+export async function venmoQrDataUri(url: string): Promise<string | null> {
+  try {
+    const { toString } = await import('qrcode')
+    const svg = await toString(url, { type: 'svg', margin: 1, errorCorrectionLevel: 'M' })
+    return `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`
+  } catch {
+    /* A missing code is a missing convenience, never a missing payment: the
+       handle, the amount and the note are all written out beside it. */
+    return null
+  }
+}
+
 /** Whether to show the section at all. */
 export function offersManualPay(cfg: ManualPayConfig): boolean {
   return Boolean(venmoUser(cfg.venmoHandle) || cfg.zelleContact.trim())
