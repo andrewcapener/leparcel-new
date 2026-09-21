@@ -105,7 +105,7 @@ export default async function PayPage({
   /* Venmo and Zelle, if the Show has handles set. Only while something is
      still owed: offering a second way to pay a settled invoice is how a maker
      pays twice. */
-  const manual = billing.booking.status === 'awaiting_payment'
+  const manual = billing.booking.status === 'awaiting_payment' && billing.invoice.totalCents > 0
     ? manualOptions(
         {
           venmoHandle: (its ?? show).venmoHandle,

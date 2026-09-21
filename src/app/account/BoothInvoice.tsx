@@ -58,6 +58,12 @@ export function BoothInvoice({
      this state exists to tell a maker the truth: you have done your part and
      the space is yours while the transfer clears. */
   const inFlight = status === 'payment_processing'
+  /* A fee of nothing, which is a real case: Hillary carries credits from a
+     cancelled show, and one maker's covers the whole booth. Stripe will not
+     take a $0 payment (its minimum is fifty cents), so a Pay button here is a
+     button that can only fail. The maker is told there is nothing owed and
+     staff confirm the space from the roster. */
+  const nothingDue = invoice.totalCents === 0
 
   /* A card on the account's own ground, not one of the theme's full-bleed
      marketing sections. The page is a dashboard; its sections are objects on
@@ -73,7 +79,9 @@ export function BoothInvoice({
                 ? 'Your transfer is on its way'
                 : lost
                   ? 'This space was released'
-                  : 'Your booth fee'}
+                  : nothingDue
+                    ? 'Nothing to pay'
+                    : 'Your booth fee'}
           </h2>
 
           <dl className="mk-dl">
@@ -173,7 +181,18 @@ export function BoothInvoice({
                   and either panics or reaches for a card we are paying 2.9%
                   on. Saying it plainly is worth real money as well as being
                   the honest version. */}
-              {offersCard(methods) && offersBank(methods) && (
+              {/* Nothing owed. Said plainly, and with no control at all: a
+                  disabled button invites somebody to keep pressing it, and a
+                  live one would hand them a Stripe error. */}
+              {nothingDue && (
+                <p className="rte">
+                  Your fee is covered in full, so there is nothing to pay. We will
+                  confirm your space from our side and you will hear from us next
+                  about load-in. If that looks wrong to you, tell us before the show.
+                </p>
+              )}
+
+              {!nothingDue && offersCard(methods) && offersBank(methods) && (
                 <p className="rte">
                   Pay to confirm. Card or bank transfer, whichever suits you. Bank transfer
                   costs us less, so it is the kinder one on a larger fee, and both confirm
@@ -182,7 +201,7 @@ export function BoothInvoice({
                   from the moment you do, not from the day it lands.
                 </p>
               )}
-              {!offersCard(methods) && (
+              {!nothingDue && !offersCard(methods) && (
                 <p className="rte">
                   Pay by bank transfer to confirm. You will link your bank on the next
                   screen. Transfers take about four business days to arrive, so start yours
@@ -190,11 +209,11 @@ export function BoothInvoice({
                   do not have to wait for it to land.
                 </p>
               )}
-              {!offersBank(methods) && (
+              {!nothingDue && !offersBank(methods) && (
                 <p className="rte">Pay by card to confirm. It takes a minute.</p>
               )}
 
-              {payable && preview ? (
+              {nothingDue ? null : payable && preview ? (
                 <button className="btn btn--primary" type="button" disabled>
                   Pay {usd(invoice.totalCents)}
                 </button>

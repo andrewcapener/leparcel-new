@@ -167,7 +167,7 @@ export default async function Account({
 
   /* Venmo and Zelle, on the maker's own page. Only while something is owed:
      a second way to pay a settled invoice is how somebody pays twice. */
-  const manualHere = billing && billing.booking.status === 'awaiting_payment'
+  const manualHere = billing && billing.booking.status === 'awaiting_payment' && billing.invoice.totalCents > 0
     ? manualOptions(
         { venmoHandle: show.venmoHandle, zelleContact: show.zelleContact, zelleName: show.zelleName },
         billing.invoice.totalCents, billing.booking.vendorCode, show.name,
