@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { SignupForm } from './SignupForm'
 import { img } from '@/lib/theme-img'
+import { popupSuppressed } from '@/lib/popup-paths'
 
 /** Their own settings, read off the live page's <pop-up> element:
  *  data-trigger="delay" data-delay="2" data-dismiss-days="15" */
@@ -32,16 +33,12 @@ export function NewsletterPopup() {
   const windowRef = useRef<HTMLDivElement>(null)
   const returnTo = useRef<Element | null>(null)
 
-  /* Never over the application, the admin, or a maker's own account.
-     Someone part-way through the thing we want them to do does not need to be
-     asked for their email, and /account is now the sharpest case of all: an
-     accepted maker signs in from their acceptance email to pay a booth fee
-     against a 48 hour deadline, and this window opened on top of the invoice
-     with the Pay button behind it. They are also, by definition, a person we
-     already have the address of. Caught in a screenshot, not by a test. */
-  const suppressed = path.startsWith('/admin')
-    || path.startsWith('/apply')
-    || path.startsWith('/account')
+  /* Never in front of somebody part way through the thing we asked them to
+     do. The list lives in lib/popup-paths.ts and is tested there, because it
+     has been wrong twice and both times it was caught in a screenshot: first
+     over the maker's account with the Pay button behind it, then over
+     /pay/<token>, the link staff paste into acceptance emails. */
+  const suppressed = popupSuppressed(path)
 
   const close = useCallback(() => {
     setClosing(true)

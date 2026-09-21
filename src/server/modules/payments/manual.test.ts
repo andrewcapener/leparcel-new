@@ -1,5 +1,6 @@
 import {
   venmoUser, payNote, venmoUrl, manualOptions, offersManualPay,
+  zelleToken, zelleQrUrl,
 } from './manual'
 
 /**
@@ -74,6 +75,42 @@ check('only zelle configured offers only zelle',
 check('nothing configured offers nothing',
   manualOptions({ venmoHandle: '', zelleContact: '' }, 100, 'MM01', 'S').length === 0)
 
+/* ── Zelle ──
+   Their bank's own code decoded to a documented payload, so the code is
+   generated rather than stored as an uploaded picture. The assertion that
+   matters is that what we build is what their bank built. */
+const THEIRS = 'https://enroll.zellepay.com/qr-codes?data=eyJ0b2tlbiI6Ijk0OTY3MjgwMTkiLCJuYW1lIjoiTUVSTUFERSBNQVJLRVQgTExDIEFjY291bnRzIn0='
+check('the generated code matches the one the bank produced',
+  zelleQrUrl('949-672-8019', 'MERMADE MARKET LLC Accounts') === THEIRS)
+/* A person types a phone number with separators. Their bank's payload had
+   none, and a token with dashes in it is a payment that goes nowhere. */
+check('a typed phone number loses its separators', zelleToken('949-672-8019') === '9496728019')
+check('and its spaces and brackets', zelleToken('(949) 672 8019') === '9496728019')
+check('an email is left exactly alone', zelleToken('hello@mermademarket.com') === 'hello@mermademarket.com')
+check('the same number typed two ways makes one code',
+  zelleQrUrl('949-672-8019', 'X') === zelleQrUrl('(949) 672-8019', 'X'))
+
+/* No name, no code. A wrong recipient name on a payment screen is how a maker
+   decides the page is a scam, so a missing one draws nothing at all. */
+check('no registered name means no code', zelleQrUrl('949-672-8019', '') === null)
+check('and no contact means no code', zelleQrUrl('', 'Name') === null)
+check('whitespace is neither', zelleQrUrl('  ', '  ') === null)
+
+const z = manualOptions(
+  { venmoHandle: '', zelleContact: '949-672-8019', zelleName: 'MERMADE MARKET LLC Accounts' },
+  28000, 'MM07', 'Fall 2026',
+)[0]!
+check('the zelle option carries its code', z.kind === 'zelle' && z.url === THEIRS)
+check('the contact is shown as typed, not as tokenised',
+  z.kind === 'zelle' && z.contact === '949-672-8019')
+/* Zelle without a name still has to be payable: the number is the path that
+   always works, and the code is only a shortcut. */
+const noName = manualOptions(
+  { venmoHandle: '', zelleContact: '949-672-8019' }, 28000, 'MM07', 'Fall 2026',
+)[0]!
+check('zelle with no registered name is still offered', noName.kind === 'zelle')
+check('it just has no code to scan', noName.kind === 'zelle' && noName.url === null)
+
 if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
-console.log('manual pay: the MM code travels with the money, and nothing unconfigured is ever offered')
+console.log('manual pay: the MM code travels with the money, the Zelle code matches the bank\u2019s, and nothing unconfigured is ever offered')
 export {}

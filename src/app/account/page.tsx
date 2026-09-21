@@ -18,7 +18,7 @@ import { WhatYouTold, YourDetails } from './YourApplication'
 import { CallTimes } from './CallTimes'
 import { PayoutSetup } from './PayoutSetup'
 import { ManualPay } from './ManualPay'
-import { manualOptions, venmoQrDataUri } from '@/server/modules/payments/manual'
+import { manualOptions, qrDataUri } from '@/server/modules/payments/manual'
 import { checklistFor, clearForLoadIn, slotOptions } from '@/server/modules/compliance/checklist'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { settlesInsideWindow, offersCard } from '@/server/modules/payments/methods'
@@ -169,12 +169,16 @@ export default async function Account({
      a second way to pay a settled invoice is how somebody pays twice. */
   const manualHere = billing && billing.booking.status === 'awaiting_payment'
     ? manualOptions(
-        { venmoHandle: show.venmoHandle, zelleContact: show.zelleContact },
+        { venmoHandle: show.venmoHandle, zelleContact: show.zelleContact, zelleName: show.zelleName },
         billing.invoice.totalCents, billing.booking.vendorCode, show.name,
       )
     : []
-  const venmoHere = manualHere.find((o) => o.kind === 'venmo')
-  const venmoQr = venmoHere?.kind === 'venmo' ? await venmoQrDataUri(venmoHere.url) : null
+  /* One code per method that has a url to encode. Venmo's carries the amount
+     and the MM note; Zelle's carries only who to pay, because that is all the
+     format holds. */
+  const codes = Object.fromEntries(await Promise.all(
+    manualHere.map(async (o) => [o.kind, o.url ? await qrDataUri(o.url) : null] as const),
+  )) as Record<string, string | null>
 
   const checklist = app
     ? checklistFor({
@@ -264,7 +268,7 @@ export default async function Account({
               <ManualPay
                 options={manualHere}
                 vendorCode={billing.booking.vendorCode}
-                venmoQr={venmoQr}
+                codes={codes}
                 dueWords={`Send it by ${fmtDate(billing.booking.paymentDueAt)} and your space is held.`}
               />
             )}

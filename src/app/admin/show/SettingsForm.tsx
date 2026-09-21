@@ -224,7 +224,14 @@ export function SettingsForm({ show }: { show: Show }) {
             hint="Same rules as Venmo, with one extra warning: Zelle is instant and cannot be reversed, and it has no dispute process. A maker who sends to the wrong contact has lost the money for good. Leave empty and Zelle is not offered."
           >
             <input className="inp" id="zelleContact" name="zelleContact" type="text"
-              placeholder="hello@mermademarket.com" {...keep('zelleContact', show.zelleContact)} />
+              placeholder="949-672-8019" {...keep('zelleContact', show.zelleContact)} />
+          </Field>
+          <Field
+            name="zelleName" label="Zelle registered name" error={e.zelleName}
+            hint={'Exactly as your bank\u2019s own Zelle code shows it, which is not always the market\u2019s name: ours reads "MERMADE MARKET LLC Accounts". Only used to draw the scannable code, and a wrong one would show a maker a recipient that does not match us. Leave empty and the Zelle contact still shows without a code.'}
+          >
+            <input className="inp" id="zelleName" name="zelleName" type="text"
+              placeholder="MERMADE MARKET LLC Accounts" {...keep('zelleName', show.zelleName)} />
           </Field>
         </div>
         <div className="adm-row2">

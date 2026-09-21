@@ -9,7 +9,7 @@ import { bookingByPayToken, boothInvoice } from '@/server/modules/payments/booth
 import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
 import { PayoutSetup } from '@/app/account/PayoutSetup'
 import { ManualPay } from '@/app/account/ManualPay'
-import { manualOptions, venmoQrDataUri } from '@/server/modules/payments/manual'
+import { manualOptions, qrDataUri } from '@/server/modules/payments/manual'
 import { payByToken, startConnectOnboardingByToken } from '@/app/actions'
 import {
   connectState, owesPayoutSetup, requirementList, requirementsInPlainWords,
@@ -107,13 +107,21 @@ export default async function PayPage({
      pays twice. */
   const manual = billing.booking.status === 'awaiting_payment'
     ? manualOptions(
-        { venmoHandle: (its ?? show).venmoHandle, zelleContact: (its ?? show).zelleContact },
+        {
+          venmoHandle: (its ?? show).venmoHandle,
+          zelleContact: (its ?? show).zelleContact,
+          zelleName: (its ?? show).zelleName,
+        },
         billing.invoice.totalCents, billing.booking.vendorCode, (its ?? show).name,
       )
     : []
 
-  const venmoLink = manual.find((o) => o.kind === 'venmo')
-  const venmoQr = venmoLink?.kind === 'venmo' ? await venmoQrDataUri(venmoLink.url) : null
+  /* One code per method that has a url to encode. Venmo's carries the amount
+     and the MM note; Zelle's carries only who to pay, because that is all the
+     format holds. */
+  const codes = Object.fromEntries(await Promise.all(
+    manual.map(async (o) => [o.kind, o.url ? await qrDataUri(o.url) : null] as const),
+  )) as Record<string, string | null>
 
   const settled = isPaid(billing.booking.status) || billing.booking.status === 'payment_processing'
   const payouts = (its ?? show).payoutSetup === 'on'
@@ -149,7 +157,7 @@ export default async function PayPage({
             <ManualPay
               options={manual}
               vendorCode={billing.booking.vendorCode}
-              venmoQr={venmoQr}
+              codes={codes}
               dueWords={`Send it by ${new Date(billing.booking.paymentDueAt).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'long', day: 'numeric' })} and your space is held.`}
             />
 

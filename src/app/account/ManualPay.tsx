@@ -21,15 +21,15 @@ import type { ManualOption } from '@/server/modules/payments/manual'
  * to go hunting for.
  */
 export function ManualPay({
-  options, vendorCode, dueWords, venmoQr,
+  options, vendorCode, dueWords, codes,
 }: {
   options: ManualOption[]
   vendorCode: string
   /** What the deadline means here, in the words the rest of the page uses. */
   dueWords: string
-  /** The Venmo link as a scannable code, for somebody reading this on a
-   *  laptop. Hidden on a phone, where you cannot scan your own screen. */
-  venmoQr?: string | null
+  /** A scannable code per method, for somebody reading this on a laptop.
+   *  Hidden on a phone, where you cannot scan your own screen. */
+  codes?: Record<string, string | null>
 }) {
   if (options.length === 0) return null
 
@@ -54,26 +54,34 @@ export function ManualPay({
                 <a className="btn btn--secondary" href={o.url} rel="noopener noreferrer">
                   Open Venmo
                 </a>
-                {venmoQr && (
-                  <span className="mk-pay__qr">
-                    {/* Our own generated code, not the market's profile QR:
-                        this one carries the amount and the MM note, and that
-                        profile one carries neither. */}
-                    <img src={venmoQr} width={132} height={132}
-                      alt={`Venmo payment code for ${vendorCode}. Scan it to open Venmo with the amount and note filled in.`} />
-                    <small>Or scan with your phone</small>
-                  </span>
-                )}
+
               </>
             ) : (
               <>
                 <p className="mk-pay__who">Zelle to <strong>{o.contact}</strong></p>
-                {/* No link, and not an oversight: Zelle lives inside each
-                    bank's own app and has no shared web handoff. */}
+                {/* No button, and not an oversight: Zelle lives inside each
+                    bank's own app and has no web handoff to tap through to.
+                    The code below is the shortcut, and only on a screen the
+                    maker is not holding. */}
                 <p className="mk-pay__how">
-                  Send it from your own bank app, to the address above.
+                  Send it from your own bank app, to the number above. Type in
+                  the total yourself: a Zelle code carries who to pay and
+                  nothing else.
                 </p>
               </>
+            )}
+            {codes?.[o.kind] && (
+              <span className="mk-pay__qr">
+                {/* Generated, never the market's own profile or bank code.
+                    Venmo's carries the amount and the MM note, which a profile
+                    code does not; Zelle's is byte for byte what their bank
+                    produces, because that format holds only the recipient. */}
+                <img src={codes[o.kind]!} width={132} height={132}
+                  alt={o.kind === 'venmo'
+                    ? `Venmo code for ${vendorCode}. Scan it to open Venmo with the amount and note filled in.`
+                    : `Zelle code for Mermade Market. Scan it in your banking app, then type the total.`} />
+                <small>{o.kind === 'venmo' ? 'Or scan with your phone' : 'Or scan in your banking app'}</small>
+              </span>
             )}
             <p className="mk-pay__note">Note: <code>{o.note}</code></p>
           </li>

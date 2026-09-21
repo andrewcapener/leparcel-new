@@ -23,11 +23,15 @@
 export type ManualPayConfig = {
   venmoHandle: string
   zelleContact: string
+  /** The name Zelle has registered against that contact, which is not the
+   *  market's own name: theirs reads "MERMADE MARKET LLC Accounts". Only
+   *  needed to draw the code; without it the contact still shows. */
+  zelleName?: string
 }
 
 export type ManualOption =
   | { kind: 'venmo'; handle: string; url: string; note: string }
-  | { kind: 'zelle'; contact: string; note: string }
+  | { kind: 'zelle'; contact: string; note: string; url: string | null }
 
 /** The handle as Venmo wants it in a url: no leading @, no stray spaces. */
 export function venmoUser(raw: string): string {
@@ -87,8 +91,44 @@ export function manualOptions(
     out.push({ kind: 'venmo', handle: `@${venmo}`, url: venmoUrl(venmo, amountCents, note), note })
   }
   const zelle = cfg.zelleContact.trim()
-  if (zelle) out.push({ kind: 'zelle', contact: zelle, note })
+  if (zelle) {
+    out.push({
+      kind: 'zelle', contact: zelle, note,
+      url: zelleQrUrl(zelle, cfg.zelleName ?? ''),
+    })
+  }
   return out
+}
+
+/**
+ * The Zelle token, as their bank writes it.
+ *
+ * A phone number is digits only: the code their bank generated carried
+ * "9496728019", not "949-672-8019", and the separators a person types into an
+ * admin box must not end up in the payload. An email is left alone.
+ */
+export function zelleToken(contact: string): string {
+  const c = contact.trim()
+  return c.includes('@') ? c : c.replace(/\D/g, '')
+}
+
+/**
+ * The Zelle code's url.
+ *
+ * Decoded from the code Mermade's own bank produced, which turned out to be a
+ * documented format rather than anything bank specific: a base64 payload of
+ * exactly two fields behind enroll.zellepay.com.
+ *
+ * Exactly two, deliberately. Zelle carries no amount and no note the way Venmo
+ * does, and inventing a third field to try would risk a code that does not
+ * scan at all. The maker types the amount, which the page already asks for.
+ */
+export function zelleQrUrl(contact: string, name: string): string | null {
+  const token = zelleToken(contact)
+  const who = name.trim()
+  if (!token || !who) return null
+  const data = Buffer.from(JSON.stringify({ token, name: who }), 'utf8').toString('base64')
+  return `https://enroll.zellepay.com/qr-codes?data=${data}`
 }
 
 /**
@@ -105,7 +145,7 @@ export function manualOptions(
  * Only useful on a screen the maker is NOT holding: you cannot scan your own
  * phone. The page hides it below tablet width and shows the button instead.
  */
-export async function venmoQrDataUri(url: string): Promise<string | null> {
+export async function qrDataUri(url: string): Promise<string | null> {
   try {
     const { toString } = await import('qrcode')
     const svg = await toString(url, { type: 'svg', margin: 1, errorCorrectionLevel: 'M' })

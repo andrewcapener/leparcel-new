@@ -86,6 +86,9 @@ export const shows = pgTable('shows', {
      invented in code. These payments are manual, so staff press Mark paid. */
   venmoHandle: text('venmo_handle').notNull().default(''),
   zelleContact: text('zelle_contact').notNull().default(''),
+  /** The name Zelle has registered against that contact, needed only to draw
+   *  the code. Theirs is "MERMADE MARKET LLC Accounts", not the market name. */
+  zelleName: text('zelle_name').notNull().default(''),
 
   /* Onboarding call times, one option per line, per track. The two lists are
      independent because the times are: Hillary's outdoor slots exist and the
