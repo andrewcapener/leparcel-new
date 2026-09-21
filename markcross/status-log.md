@@ -72,3 +72,20 @@ paused). Day-14 clean-data report auto-fires 2026-09-17.
   pause Branding Search 1012389985, brand budget $240 → ~$100/day.
 - Margin confirmed 75% (client Slack, 9/17). Mandate from Andrew:
   "ultra efficient, then scale."
+
+## 2026-09-21 (delegated efficiency cuts executed)
+
+Andrew: "Can you run these for me if you feel extremely confident it will
+increase performance." Executed via API, both verified live:
+
+- **Branding Search 1012389985 → PAUSED** ($1,060+ since Sep 3, zero
+  tracked purchases; GA4 at 93% capture corroborates ~$0 paid-search rev).
+- **Brand Shopping 6963027077 budget $240 → $100/day** (zero clean-era
+  purchases; budget 6560440057 confirmed non-shared before mutate).
+- Weekend read: non-brand tROAS 2.5 is constraining spend as designed
+  (~$85/day vs $110 budget). Flows did $5.4k of the week's revenue.
+- Still Andrew-only (API cannot): end experiments 20534342865 ($10/day,
+  ENABLED) and 23295771342 ($55/day "Manual CPC", ENABLED); optional Meta
+  retargeting budget restore (manual UI per caution protocol; freeze lifts
+  ~Oct 1 with prospecting rebuild planned: ~$150/day, CAC ceiling ~$450).
+- Google run-rate now ~$195/day of intended spend (from ~$430 at takeover).
