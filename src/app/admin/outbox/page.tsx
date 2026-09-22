@@ -1,7 +1,10 @@
 import { desc } from 'drizzle-orm'
 import { db } from '@/db'
+import { activeShow } from '@/db/queries'
 import { emailOutbox } from '@/db/schema'
-import { fmtDate, fmtDateTime } from '@/lib/dates'
+import { applicationWindow, fmtDate, fmtDateTime } from '@/lib/dates'
+import { dripConfig } from '@/server/modules/drip/client'
+import { mailPaths, anythingBroadcasts } from '@/server/modules/email/can-send'
 import { PageHead, Stats, Stat } from '../ui'
 import { Icon } from '../Icon'
 
@@ -36,6 +39,21 @@ const timeOf = (iso: string) => {
 export default async function Outbox() {
   const mails = await db.select().from(emailOutbox).orderBy(desc(emailOutbox.sentAt)).limit(LIMIT)
 
+  /* What could go out, as opposed to what has. The record below is history;
+     this is the question somebody actually asks before a roster goes live,
+     and it was previously answerable only by reading actions.ts. */
+  const show = await activeShow()
+  const paths = mailPaths({
+    hasApiKey: Boolean(process.env.RESEND_API_KEY),
+    decisionEmails: show?.decisionEmails ?? 'off',
+    paymentEmail: show?.paymentEmail ?? 'off',
+    applicationsOpen: show
+      ? applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt) === 'open'
+      : false,
+    dripConfigured: Boolean(dripConfig()),
+  })
+  const broadcasts = anythingBroadcasts(paths)
+
   const count = (s: string) => mails.filter((m) => m.deliveryStatus === s).length
   const failed = count('failed')
 
@@ -58,6 +76,74 @@ export default async function Outbox() {
         Resend when RESEND_API_KEY is set. &ldquo;Logged&rdquo; means the message was recorded but
         sending is not configured. Open a row to read the body.
       </p>
+
+      {/* The answer to "can this thing email anybody right now", built from
+          the same values the sending code reads, so it cannot drift from the
+          truth the way a written assurance does. */}
+      <div className="adm-sec" id="can-send">
+        <h2>What can send an email right now</h2>
+        <span className="c">{broadcasts.length} can reach a maker unasked</span>
+      </div>
+
+      <p className="adm-note" role="status">
+        {broadcasts.length === 0
+          ? <>Nothing reaches a maker unless they ask for it themselves. Accepting, declining,
+            releasing a space and the whole roster import all send nothing, so every word a maker
+            reads tomorrow is one somebody wrote and sent by hand. The one exception is deliberate
+            and has to stay: a maker who asks for a sign-in link gets one, because that is the
+            door they walk through to pay.</>
+          : <><strong>{broadcasts.length} {broadcasts.length === 1 ? 'path' : 'paths'} can mail a
+            maker</strong> without anybody choosing it for them. Turn the matching switch off on
+            Show settings if that is not what you want.</>}
+      </p>
+
+      <table className="adm-tbl">
+        <caption className="adm-sr">
+          Every message this system can send, who receives it, what sets it off, and whether it
+          can go out right now.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Message</th>
+            <th scope="col">Goes to</th>
+            <th scope="col">What sets it off</th>
+            <th scope="col">Right now</th>
+          </tr>
+        </thead>
+        <tbody>
+          {paths.map((p) => (
+            <tr key={p.what}>
+              <td><span className="adm-nm">{p.what}</span></td>
+              <td>{p.to}</td>
+              <td>
+                {p.trigger}
+                <span className="adm-sub2">
+                  {p.sets === 'on its own' ? 'Sends on its own'
+                    : p.sets === 'staff press a button' ? 'Only when staff press a button'
+                      : 'Only when the person asks for it'}
+                </span>
+              </td>
+              <td>
+                {/* In words, never by colour alone (WCAG 2.2 AA). */}
+                <span className="adm-st" data-warn={p.armed && p.to === 'the maker' && p.sets !== 'they ask for it' ? '1' : undefined}>
+                  {p.armed ? 'Can send' : 'Cannot send'}
+                </span>
+                <span className="adm-sub2">{p.because}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {dripConfig() && (
+        <p className="adm-note">
+          <strong>One thing outside this list.</strong> A Drip account is connected, so joining the
+          waiting list pushes that address to Drip. Whether Drip then writes to them is set in Drip,
+          not here, and nothing on this page can see it.
+        </p>
+      )}
+
+      <div className="adm-sec"><h2>What has been sent</h2></div>
 
       {mails.length === 0 ? (
         <p className="adm-empty">
