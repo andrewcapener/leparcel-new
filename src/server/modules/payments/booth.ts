@@ -70,6 +70,10 @@ export async function bookingByPayToken(
   db: DbHandle, token: string,
 ): Promise<{
   id: string; showId: string; email: string
+  /* Whose booking it is, in their own words. The page used to head itself
+     with the MM code, which is a poor name for a page and, outdoors, reads
+     as a booth number. */
+  shopName: string
   /* The maker behind the booking, and where they stand on getting paid. The
      token authorises this booking, so it authorises both directions of money
      on it: paying the fee, and setting up how the maker is paid back. */
@@ -88,6 +92,7 @@ export async function bookingByPayToken(
   const [row] = await db
     .select({
       id: bookings.id, showId: bookings.showId, email: vendors.email,
+      shopName: vendors.shopName,
       vendorId: vendors.id,
       track: spaceTypes.track,
       stripeAccountId: vendors.stripeAccountId,

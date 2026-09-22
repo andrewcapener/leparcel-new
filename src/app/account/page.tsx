@@ -23,6 +23,7 @@ import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { settlesInsideWindow, offersCard } from '@/server/modules/payments/methods'
 import { CONTACT_EMAIL } from '@/lib/agreement'
 import { boothInvoice } from '@/server/modules/payments/booth'
+import { vendorCodeWords } from '@/server/modules/payments/vendor-code'
 import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
 import { connectState, owesPayoutSetup, requirementList, requirementsInPlainWords } from '@/server/modules/payments/connect'
 import { bookings } from '@/db/schema'
@@ -245,6 +246,7 @@ export default async function Account({
           <AccountHeader
             shopName={vendor.shopName}
             vendorCode={billing?.booking.vendorCode}
+            codeLabel={vendorCodeWords(track).headerLabel}
             status={headline}
             showName={show.name}
           />
@@ -271,6 +273,7 @@ export default async function Account({
                 dueAt={billing.booking.paymentDueAt}
                 paidAt={billing.booking.paidAt}
                 vendorCode={billing.booking.vendorCode}
+                track={track}
                 payable={paymentsConfigured()}
                 testMode={isTestMode()}
                 notice={notice}
@@ -320,7 +323,12 @@ export default async function Account({
                       { label: 'Roster announced', value: fmtDate(show.rosterAnnouncedOn) },
                       { label: 'The show', value: `${fmtDate(show.startsOn)} to ${fmtDate(show.endsOn)}` },
                       { label: 'Where', value: show.venueName },
-                      ...(billing ? [{ label: 'Your Mermade ID', value: billing.booking.vendorCode }] : []),
+                      /* Named per track. Outdoor makers get their booth
+                         number from a separate list, so calling this one an
+                         "ID" sends them looking for space MM91. The words
+                         live in payments/vendor-code.ts, with the line under
+                         the code on the invoice above. */
+                      ...(billing ? [{ label: vendorCodeWords(track).label, value: billing.booking.vendorCode }] : []),
                     ]
                   : [
                       { label: 'Where it stands', value: <>No application to {show.name} yet from this address.</> },

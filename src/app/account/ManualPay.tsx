@@ -21,10 +21,9 @@ import { sayManualSent } from '@/app/actions'
  * to go hunting for.
  */
 export function ManualPay({
-  options, vendorCode, codes, token, saidVia, saidAt,
+  options, codes, token, saidVia, saidAt,
 }: {
   options: ManualOption[]
-  vendorCode: string
   /** Present only on the pasted-link door, which is the one that can
    *  authorise "I have sent it" without a sign-in. */
   token?: string
@@ -73,9 +72,14 @@ export function ManualPay({
                     Venmo's carries the amount and the MM note, which a profile
                     code does not; Zelle's is byte for byte what their bank
                     produces, because that format holds only the recipient. */}
+                {/* The alt text says what the code DOES, not who it belongs
+                    to. It used to read "Venmo code for MM91", which is the
+                    one reading an outdoor maker must not be given: their
+                    booth number comes from somewhere else entirely. The code
+                    itself is still written out below, in the note. */}
                 <img src={codes[o.kind]!} width={132} height={132}
                   alt={o.kind === 'venmo'
-                    ? `Venmo code for ${vendorCode}. Scan it to open Venmo with the amount and note filled in.`
+                    ? `Venmo code for your booth fee. Scan it to open Venmo with the amount and the note ${o.note} filled in.`
                     : `Zelle code for Mermade Market. Scan it in your banking app, then type the total.`} />
                 <small>{o.kind === 'venmo' ? 'Or scan with your phone' : 'Or scan in your banking app'}</small>
               </span>

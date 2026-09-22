@@ -15,10 +15,17 @@ import Link from 'next/link'
 
 /** The band that says whose account this is. Replaces the marketing title. */
 export function AccountHeader({
-  shopName, vendorCode, status, showName, signOut = true, eyebrow = 'Maker account',
+  shopName, vendorCode, codeLabel, status, showName, signOut = true,
+  eyebrow = 'Maker account',
 }: {
   shopName: string
   vendorCode?: string
+  /** What to call the code here, where there is no label column to put it in.
+   *  Null or absent leaves the code standing on its own, which is right for
+   *  an indoor maker: MM91 is their Mermade ID and they know it. An outdoor
+   *  maker needs the word in front of it, because a bare MM91 in a header
+   *  reads as the booth number they were promised by somebody else. */
+  codeLabel?: string | null
   /** One short phrase, already decided by the caller. */
   status?: string
   showName: string
@@ -36,7 +43,9 @@ export function AccountHeader({
         <h1 className="mk-acct__name">{shopName}</h1>
         <div className="mk-acct__meta">
           {[showName, status].filter(Boolean).map((bit) => <p key={String(bit)}>{bit}</p>)}
-          {vendorCode && <p className="mk-acct__id">{vendorCode}</p>}
+          {vendorCode && (codeLabel
+            ? <p>{codeLabel} <span className="mk-acct__id">{vendorCode}</span></p>
+            : <p className="mk-acct__id">{vendorCode}</p>)}
         </div>
       </div>
       {signOut && (

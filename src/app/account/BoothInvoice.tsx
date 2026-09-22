@@ -4,6 +4,7 @@ import { payBoothFee } from '@/app/actions'
 import type { Invoice } from '@/server/modules/payments/invoice'
 import { deadlineMeans, offersCard, offersBank, type PaymentMethods } from '@/server/modules/payments/methods'
 import type { ManualOption } from '@/server/modules/payments/manual'
+import { vendorCodeWords, vendorCodeLine } from '@/server/modules/payments/vendor-code'
 import { ManualPay } from './ManualPay'
 
 /**
@@ -22,7 +23,7 @@ import { ManualPay } from './ManualPay'
  * button.
  */
 export function BoothInvoice({
-  invoice, status, dueAt, paidAt, vendorCode,
+  invoice, status, dueAt, paidAt, vendorCode, track,
   payable, testMode, notice, methods, preview = false, id = 'booth-fee',
   action, token, manual = [], codes, manualToken, saidVia, saidAt,
 }: {
@@ -31,6 +32,11 @@ export function BoothInvoice({
   dueAt: string
   paidAt: string | null
   vendorCode: string
+  /** The BOOKED space's track, not the application's. It decides what the MM
+   *  code is called: an indoor maker's Mermade ID is an outdoor maker's
+   *  payment reference, and calling it an ID outdoors reads as a booth
+   *  number. See payments/vendor-code.ts. */
+  track?: string
   /** False when Stripe has no key on this deployment. */
   payable: boolean
   testMode: boolean
@@ -77,6 +83,13 @@ export function BoothInvoice({
      staff confirm the space from the roster. */
   const nothingDue = invoice.totalCents === 0
 
+  /* What to call the code, and the one line under it. Indoor keeps "Your
+     Mermade ID"; outdoor is told it is a payment reference and not a booth
+     number, because outdoor booths are numbered by a separate hand and an
+     "ID" of MM91 reads as space 91. */
+  const code = vendorCodeWords(track)
+  const codeLine = vendorCodeLine(code, !paid && !lost && !inFlight && !nothingDue)
+
   /* A card on the account's own ground, not one of the theme's full-bleed
      marketing sections. The page is a dashboard; its sections are objects on
      a surface, and the reveal-on-scroll the theme applies to a rich-text row
@@ -108,7 +121,7 @@ export function BoothInvoice({
               <dd><strong>{usd(invoice.totalCents)}</strong></dd>
             </div>
             <div className="mk-dl__row">
-              <dt>Your Mermade ID</dt>
+              <dt>{code.label}</dt>
               <dd>{vendorCode}</dd>
             </div>
             {paid ? (
@@ -141,6 +154,11 @@ export function BoothInvoice({
               </div>
             )}
           </dl>
+
+          {/* The one line under the code. Outdoor makers are given a booth
+              number by a different person and on a different list, so this is
+              where they are told this is not it. */}
+          {codeLine && <p className="mk-card__note">{codeLine}</p>}
 
           {/* One sentence per state, and never more than one. A maker reading
               this is often reading it on a phone with a deadline running. */}
@@ -254,7 +272,7 @@ export function BoothInvoice({
                     )}
                     <p className="mk-pay__note">Confirms your space straight away.</p>
                   </li>
-                  <ManualPay options={manual} vendorCode={vendorCode} codes={codes}
+                  <ManualPay options={manual} codes={codes}
                     token={manualToken} saidVia={saidVia} saidAt={saidAt} />
                 </ul>
               )}

@@ -14,6 +14,7 @@ import {
   connectState, owesPayoutSetup, requirementList, requirementsInPlainWords,
 } from '@/server/modules/payments/connect'
 import { isPaid } from '@/server/modules/payments/booking-status'
+import { vendorCodeWords } from '@/server/modules/payments/vendor-code'
 
 export const dynamic = 'force-dynamic'
 export const metadata = {
@@ -132,9 +133,16 @@ export default async function PayPage({
     <SiteShell show={show} template="page template-suffix-account">
       <div className="mk-acct">
         <div className="container">
+          {/* The shop's name heads the page, not the MM code. The code used
+              to be the h1, which read to an outdoor maker as the number of
+              the booth they had been given, since that is the only numbered
+              thing they are waiting on. It is still here, under the name and
+              labelled for their track. */}
           <AccountHeader
             eyebrow="Booth fee"
-            shopName={billing.booking.vendorCode}
+            shopName={found.shopName || billing.booking.vendorCode}
+            vendorCode={billing.booking.vendorCode}
+            codeLabel={vendorCodeWords(found.track).headerLabel}
             status={`Due ${new Date(billing.booking.paymentDueAt).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric' })}`}
             showName={its?.name ?? show.name}
             signOut={false}
@@ -146,6 +154,7 @@ export default async function PayPage({
               dueAt={billing.booking.paymentDueAt}
               paidAt={billing.booking.paidAt}
               vendorCode={billing.booking.vendorCode}
+              track={found.track}
               payable={paymentsConfigured()}
               testMode={isTestMode()}
               notice={notice}

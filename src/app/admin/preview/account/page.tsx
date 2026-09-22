@@ -13,6 +13,7 @@ import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { CONTACT_EMAIL, POLICY } from '@/lib/agreement'
 import { bpsLabel } from '@/lib/money'
 import { fmtDate } from '@/lib/dates'
+import { vendorCodeWords } from '@/server/modules/payments/vendor-code'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Preview: the maker account', robots: { index: false, follow: false } }
@@ -105,6 +106,9 @@ export default async function PreviewAccount() {
     invoice: INVOICE,
     dueAt,
     vendorCode: 'MM00',
+    /* The invented maker stands on an indoor shelf, so the MM code is their
+       Mermade ID here. The outdoor wording is previewed on its own below. */
+    track: 'indoor',
     payable: paymentsConfigured(),
     testMode: isTestMode(),
     methods: show.paymentMethods,
@@ -134,9 +138,22 @@ export default async function PreviewAccount() {
     }),
   )
 
-  /* The three states the first pass does not show. Awaiting payment is the
-     one rendered in place above, inside the whole page. */
-  const otherStates: { key: string; caption: string; status: string; paidAt: string | null }[] = [
+  /* The outdoor wording, then the three states the first pass does not show.
+     Awaiting payment, indoor, is the one rendered in place above inside the
+     whole page. */
+  const otherStates: {
+    key: string; caption: string; status: string; paidAt: string | null
+    /* Only the outdoor row sets this. Everything above is the indoor maker. */
+    track?: string
+  }[] = [
+    {
+      key: 'outdoor',
+      status: 'awaiting_payment',
+      paidAt: null,
+      track: 'outdoor',
+      caption:
+        'The same card for an OUTDOOR maker. Outdoor booth numbers are kept on their own list, so the MM code is never called an ID out there: it is a payment reference, and the line under it says so. The code itself is unchanged, and still what goes in the Venmo or Zelle note.',
+    },
     {
       key: 'processing',
       status: 'payment_processing',
@@ -212,7 +229,7 @@ export default async function PreviewAccount() {
                   { label: 'Roster announced', value: fmtDate(show.rosterAnnouncedOn) },
                   { label: 'The show', value: `${fmtDate(show.startsOn)} to ${fmtDate(show.endsOn)}` },
                   { label: 'Where', value: show.venueName },
-                  { label: 'Your Mermade ID', value: common.vendorCode },
+                  { label: vendorCodeWords(common.track).label, value: common.vendorCode },
                 ]}
               />
             </Card>
@@ -250,9 +267,10 @@ export default async function PreviewAccount() {
 
             <WhatYouTold app={APP} spacesAsked={['3x4 indoor shelf']} />
 
-            <Card title="The booth fee in its other states" wide>
+            <Card title="The booth fee, everywhere else it lands" wide>
               <p style={{ margin: 0 }}>
-                The three the page above does not show. Each one is the same card a maker sees.
+                The outdoor wording, then the three states the page above does not show. Each
+                one is the same card a maker sees.
               </p>
             </Card>
 
@@ -261,7 +279,8 @@ export default async function PreviewAccount() {
                 <Card>
                   <p style={{ margin: 0 }}><strong>{s.status}</strong> &middot; {s.caption}</p>
                 </Card>
-                <BoothInvoice {...common} id={`booth-fee-${s.key}`} status={s.status} paidAt={s.paidAt} />
+                <BoothInvoice {...common} id={`booth-fee-${s.key}`} status={s.status}
+                  paidAt={s.paidAt} track={s.track ?? common.track} />
               </div>
             ))}
           </div>
