@@ -240,15 +240,15 @@ export default async function Apply({
                 whether to apply next time came here for. So the page keeps
                 its whole prospectus and only the ask changes. */}
             <h1 className="majortitle in-content h1 ap-head__title">
-              {win === 'closed' ? 'Selling at Mermade' : 'Maker Application'}
+              {win === 'closed' ? 'Join the waitlist' : 'Maker Application'}
             </h1>
             <p className="ap-head__lede">
               {win === 'closed'
-                ? <>Two tracks. Inside is consignment: we showcase your shop for
-                  all three days and sell it at one register. Outside is a tent we
-                  set up for you, for the day, and you keep everything you sell.
-                  Applications for this one are closed, and the prices and dates
-                  below are the ones it ran on.</>
+                ? <>Applications closed and the roster is set. Spaces still come free,
+                  usually when an accepted maker does not pay their booth fee in time,
+                  and when one does we go to this list first. It is the same form and
+                  the same questions: inside is consignment, sold at one register;
+                  outside is a tent for the day and you keep everything you sell.</>
                 : <>One form covers both tracks. Inside is consignment: we showcase
                   your shop for all three days and sell it at one register. Outside
                   is a tent we set up for you, for the day, and you keep everything
@@ -288,7 +288,7 @@ export default async function Apply({
                 down a 390px screen: a swipe of empty page between the button
                 they pressed and the thing it was for. */}
             <div id="apply" className="ap-anchor" />
-            {showForm ? (
+            {showForm || win === 'closed' ? (
               <>
                 {win !== 'open' && (
                   <p className="ap-preview" role="status">
@@ -303,9 +303,10 @@ export default async function Apply({
                          date is in the past and naming it reads as a promise
                          the window is about to reopen. */
                       : win === 'closed'
-                        ? <>Preview. Applications closed{' '}
-                          {fmtDate(show.applicationsCloseAt)} and submissions are
-                          disabled. Everyone else sees the waiting list.</>
+                        ? <>Applications closed {fmtDate(show.applicationsCloseAt)}.
+                          This form is the waiting list now: it still takes a whole
+                          application, and what comes in lands as a waitlist entry
+                          rather than in the review queue.</>
                         : <>Preview. Applications are not open, and submissions are
                           disabled until {fmtDate(show.applicationsOpenAt)}.</>}
                   </p>
@@ -313,6 +314,9 @@ export default async function Apply({
                 <ApplyForm
                   show={show} spaces={spaces} extras={extras}
                   uploads={photoUploadsEnabled()}
+                  /* Staff rehearsing before launch submit real applications on
+                     purpose, so only a genuinely closed window is the list. */
+                  waitlist={win === 'closed' && !previewingLaunch}
                 />
               </>
             ) : win === 'before' ? (

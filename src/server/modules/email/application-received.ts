@@ -45,7 +45,7 @@ export function firstName(contactName: string, shopName: string): string {
 }
 
 export function applicationReceivedHtml({
-  shopName, contactName, showName, fields, rosterDate, contactEmail,
+  shopName, contactName, showName, fields, rosterDate, contactEmail, waitlist = false,
 }: {
   shopName: string
   /** Their own name. The greeting uses the first word of it. */
@@ -53,9 +53,12 @@ export function applicationReceivedHtml({
   showName: string
   /** What they asked for, short: category, track, spaces. */
   fields: Field[]
-  /** Already formatted in Pacific time by the caller. */
+  /** Already formatted in Pacific time by the caller. Ignored on a waitlist
+   *  entry, which is not part of that roster and must not be promised it. */
   rosterDate: string
   contactEmail: string
+  /** They applied after the window closed. Same receipt, honest promise. */
+  waitlist?: boolean
 }): string {
   return shell({
     webFonts: true,
@@ -63,15 +66,27 @@ export function applicationReceivedHtml({
     // as cold and which described our side of the desk at the moment somebody
     // is nervous about theirs; then it was the shop name, which is how an
     // invoice greets you. The shop is on the next line and in the record.
-    eyebrow: `Application received · ${showName}`,
+    eyebrow: waitlist ? `Waitlist · ${showName}` : `Application received · ${showName}`,
     heading: `Thank you, ${firstName(contactName, shopName)}`,
-    sub: `We have your ${showName} application for ${shopName}. Nothing else is needed from you right now.`,
+    sub: waitlist
+      ? `You are on the ${showName} waiting list for ${shopName}. Nothing else is needed from you right now.`
+      : `We have your ${showName} application for ${shopName}. Nothing else is needed from you right now.`,
     inner:
-      paragraphs([
-        'This is a receipt, not a decision. Everyone who applies gets one.',
-        'We read every application ourselves, all the way through, and we answer either way, whether the answer is yes or no.',
-      ])
-      + standfirst('You will hear from us on', rosterDate)
+      paragraphs(waitlist
+        /* The roster for this show is already set, so the only honest thing
+           to say is what would have to happen for a space to exist, and that
+           we cannot say whether it will. Naming a date here would be naming
+           somebody else's missed deadline. */
+        ? [
+          'This is a receipt, not a decision. Applications for this show have closed and the roster is set.',
+          'Spaces do come free, usually when an accepted maker does not pay their booth fee in time. When one does, we go to this list first and we read every entry on it ourselves.',
+          'We cannot promise a space and we will not leave you wondering: if nothing opens up, we will say so.',
+        ]
+        : [
+          'This is a receipt, not a decision. Everyone who applies gets one.',
+          'We read every application ourselves, all the way through, and we answer either way, whether the answer is yes or no.',
+        ])
+      + (waitlist ? '' : standfirst('You will hear from us on', rosterDate))
       + `<tr><td style="height:26px;line-height:26px;font-size:0;">&nbsp;</td></tr>`
       + sectionHead('What we have')
       + fieldRows(fields)

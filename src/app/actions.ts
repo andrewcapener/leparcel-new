@@ -45,6 +45,9 @@ import { boothFeeHtml, boothFeeText } from '@/server/modules/email/booth-fee'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
 import { viaFromManual, viaLabel } from '@/server/modules/payments/paid-via'
 import { paymentDueAt } from '@/server/modules/payments/deadline'
+import {
+  intakeAccepts, intakeMode, intakeStatus,
+} from '@/server/modules/applications/intake'
 import { sendLead, newEventId } from '@/server/modules/meta/capi'
 
 /* ═══════════════════════ helpers ═══════════════════════ */
@@ -398,10 +401,17 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
    * exercised too; delete it from the admin when you are done.
    */
   const staffRehearsal = await previewingOpenWindow()
-  if (applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt) !== 'open'
-      && !staffRehearsal) {
+  /* Three modes, not two. Once the window closes the form keeps taking
+     entries as WAITLIST rows, because booth fees fall due on the 23rd and
+     the spaces of whoever does not pay come back into the pool that week.
+     Before a window opens there is still nothing to apply to. */
+  const intake = intakeMode(
+    applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt), staffRehearsal,
+  )
+  if (!intakeAccepts(intake)) {
     return { ok: false, attempt, message: 'Applications are not open for this show.' }
   }
+  const onWaitlist = intake === 'waitlist'
 
   const raw = Object.fromEntries(fd.entries())
   const strings = (o: Record<string, FormDataEntryValue>) =>
@@ -615,7 +625,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     // column holds a URL and not a key (src/server/modules/uploads/config.ts
     // has the public-bucket reasoning).
     photos: JSON.stringify(photoUrls),
-    status: 'new',
+    status: intakeStatus(intake),
     signedName: d.signedName,
     termsVersion: '2026.1',
   }
@@ -659,7 +669,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
     // anything identifying in it. A dropped photograph is the one thing about
     // this row that somebody may have to explain later.
     {
-      status: 'new',
+      status: intakeStatus(intake),
       photos: photoUrls.length,
       ...(droppedPhotos.length > 0 ? { photosDropped: droppedPhotos } : {}),
     },
@@ -675,14 +685,29 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
   ]
   await mail(
     email,
-    `We have your ${show.name} application`,
-    `This is a receipt, not a decision. Everyone who applies gets one.\n\n`
-      + `We have your ${show.name} application. Nothing else is needed from you right now.\n\n`
-      + receiptFields.map((f) => `${f.label}: ${f.value}`).join('\n')
-      + `\n\nWe read every application ourselves and we answer either way, whether the answer `
-      + `is yes or no. You will hear from us on ${fmtDate(show.rosterAnnouncedOn)}, when the `
-      + `roster goes out.\n\nMermade Market`,
-    'application_received',
+    onWaitlist
+      ? `You are on the ${show.name} waiting list`
+      : `We have your ${show.name} application`,
+    onWaitlist
+      /* The roster for this show is already set. The only honest thing to
+         say is what would have to happen for a space to exist, and that we
+         cannot say whether it will. The roster date belongs to people who
+         applied before the window shut and naming it here would be naming
+         somebody else's missed deadline. */
+      ? `This is a receipt, not a decision. Applications for ${show.name} have closed and the `
+        + `roster is set.\n\n`
+        + receiptFields.map((f) => `${f.label}: ${f.value}`).join('\n')
+        + `\n\nSpaces do come free, usually when an accepted maker does not pay their booth fee `
+        + `in time. When one does we go to this list first, and we read every entry on it `
+        + `ourselves. We cannot promise a space and we will not leave you wondering: if nothing `
+        + `opens up, we will say so.\n\nMermade Market`
+      : `This is a receipt, not a decision. Everyone who applies gets one.\n\n`
+        + `We have your ${show.name} application. Nothing else is needed from you right now.\n\n`
+        + receiptFields.map((f) => `${f.label}: ${f.value}`).join('\n')
+        + `\n\nWe read every application ourselves and we answer either way, whether the answer `
+        + `is yes or no. You will hear from us on ${fmtDate(show.rosterAnnouncedOn)}, when the `
+        + `roster goes out.\n\nMermade Market`,
+    onWaitlist ? 'waitlist_received' : 'application_received',
     undefined,
     applicationReceivedHtml({
       shopName: d.shopName,
@@ -691,6 +716,7 @@ export async function submitApplication(prev: FormState, fd: FormData): Promise<
       fields: receiptFields,
       rosterDate: fmtDate(show.rosterAnnouncedOn),
       contactEmail: CONTACT_EMAIL,
+      waitlist: onWaitlist,
     }),
   )
 

@@ -196,9 +196,13 @@ function StepHead({ step }: { step: Step }) {
 }
 
 export function ApplyForm({
-  show, spaces, extras, uploads,
+  show, spaces, extras, uploads, waitlist = false,
 }: {
   show: Show; spaces: SpaceType[]; extras: AddOn[]
+  /** The window has closed and this is the waiting list for it. Same form,
+   *  same fields, different promise: the roster is set, and the only reason
+   *  a space appears is somebody else missing the booth fee deadline. */
+  waitlist?: boolean
   /** Whether this deployment has Supabase Storage configured. False locally,
    *  where the photo field explains itself and the form still submits. */
   uploads: boolean
@@ -387,13 +391,22 @@ export function ApplyForm({
     // Their /pages/thank-you, in their words.
     return (
       <div className="reading-width account-form rte ap-thanks" ref={doneRef} tabIndex={-1}>
-        <h2>Thank You For Applying!</h2>
+        <h2>{waitlist ? 'You are on the waitlist' : 'Thank You For Applying!'}</h2>
         <p>
-          Yeeew! You took the time and we appreciate it! We know it wasn&rsquo;t
-          easy.. A member of our team will be in touch. If we have questions you
-          will hear from us sooner than later.
+          {waitlist
+            /* No date, and no "we will be in touch", because whether anybody
+               is in touch depends on a booth fee somebody else has not paid
+               yet. Say what would have to happen instead. */
+            ? <>Thank you for taking the time, we know it wasn&rsquo;t easy. Spaces
+              come free when an accepted maker does not pay their booth fee in time,
+              and when one does we go to this list first. We cannot promise a space
+              and we won&rsquo;t leave you wondering: if nothing opens up, we will
+              say so.</>
+            : <>Yeeew! You took the time and we appreciate it! We know it wasn&rsquo;t
+              easy.. A member of our team will be in touch. If we have questions you
+              will hear from us sooner than later.</>}
         </p>
-        {show.decisionsFromOn && show.decisionsToOn ? (
+        {!waitlist && show.decisionsFromOn && show.decisionsToOn ? (
           <p>
             You may hear from us as early as{' '}
             <strong>{fmtWeekdayDate(show.decisionsFromOn)}</strong> or as late as{' '}
@@ -1073,7 +1086,7 @@ export function ApplyForm({
               </button>
             ) : (
               <button key="submit" className="btn ap-nav__next" type="submit" disabled={pending}>
-                {pending ? 'Sending…' : 'Submit application'}
+                {pending ? 'Sending…' : waitlist ? 'Join the waitlist' : 'Submit application'}
               </button>
             )}
           </div>
