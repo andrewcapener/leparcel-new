@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { usd } from '@/lib/money'
 import { runImport } from './actions'
 import { emptyImport, type ImportState } from './state'
@@ -19,6 +19,16 @@ export function ImportForm({ spaces }: { spaces: { label: string; priceCents: nu
   /* The textarea is uncontrolled so typing stays fast, which means the server
      cannot know it has been edited until the next submit. This can. */
   const [edited, setEdited] = useState(false)
+  /* And this clears it when a result comes back, which the first version did
+     not: pasting the sheet set the flag, the dry run never unset it, and the
+     screen then told Drew his sheet had changed and hid the Accept button on
+     a paste he had not touched. Re-running could not help, because the paste
+     that set the flag was the same paste being run. Every result is a fresh
+     object from the server, so this fires once per run and means exactly
+     "what is in the box now is what was just read". The real guard is the
+     fingerprint the server checks; this flag is only the courtesy that saves
+     a pointless round trip. */
+  useEffect(() => { setEdited(false) }, [state])
   const s = state.summary
   const ran = state.done !== null
   const stale = edited && !ran
