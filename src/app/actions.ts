@@ -1758,6 +1758,52 @@ export async function startConnectOnboardingByToken(fd: FormData): Promise<void>
   redirect(link.url)
 }
 
+/**
+ * "I have sent it", from the maker, about a Venmo or Zelle.
+ *
+ * Drew, 22 Sept 2026, working out how the girls reconcile these. A Venmo
+ * reaches us as a notification on somebody's phone and nothing else, so until
+ * a person matches it the roster cannot tell a maker who paid on Tuesday from
+ * a maker who has not paid at all. Both read awaiting_payment.
+ *
+ * This is the maker supplying the one fact only she has, at the only moment
+ * she is willing to: she just sent it. It turns searching an inbox for an
+ * unknown payment into confirming one somebody said to expect.
+ *
+ * It is NOT a payment and it marks nothing paid (rule 5). A button on a web
+ * page is not evidence that money moved. All it does is keep the space off the
+ * release list and flag the row, and a person still checks Venmo and presses
+ * Mark paid.
+ *
+ * Authorised by the pay token, exactly as paying is, and deliberately
+ * reversible: pressing it again with a different method just moves the claim,
+ * and staff can clear it from the roster.
+ */
+export async function sayManualSent(fd: FormData): Promise<void> {
+  const token = String(fd.get('token') ?? '')
+  const via = String(fd.get('via') ?? '')
+  const back = `/pay/${encodeURIComponent(token)}`
+  if (via !== 'venmo' && via !== 'zelle') redirect(back)
+
+  const found = await bookingByPayToken(db, token)
+  if (!found) redirect('/pay/invalid')
+
+  const [b] = await db.select().from(bookings).where(eq(bookings.id, found.id)).limit(1)
+  /* Nothing to claim on a booking that is already settled, and a claim on one
+     that is would only muddle the roster. */
+  if (!b || b.status !== 'awaiting_payment') redirect(back)
+
+  const when = new Date().toISOString()
+  await db.update(bookings).set({ saidSentAt: when, saidSentVia: via })
+    .where(eq(bookings.id, b.id))
+  await log('booking', b.id, 'said_sent',
+    { saidSentAt: b.saidSentAt, saidSentVia: b.saidSentVia }, { saidSentAt: when, saidSentVia: via },
+    `maker says they sent a ${via} payment`, `maker:${found.vendorId}`)
+
+  revalidatePath('/admin/roster')
+  redirect(`${back}?sent=${via}`)
+}
+
 /** Who is signed in, for the audit row. Falls back rather than throwing: the
  *  point of the record is that somebody marked it, and losing the name is not
  *  a reason to lose the timestamp. */
@@ -1866,7 +1912,7 @@ export async function forfeitOverdueBookings(): Promise<void> {
     .where(eq(bookings.showId, show.id))
 
   const doomed = rows.filter(
-    (r) => isForfeitable(r.booking.status, r.booking.paymentDueAt, now),
+    (r) => isForfeitable(r.booking.status, r.booking.paymentDueAt, now, r.booking.saidSentAt),
   )
 
   /* Same gate as a jury decision: releasing a space is a dashboard action, so

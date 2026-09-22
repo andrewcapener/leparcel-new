@@ -57,7 +57,8 @@ export default async function Roster({
   /* Past their window with nothing started. The acceptance email promised
      these spaces go back into the pool, and until now nothing did it. */
   const overdue = rows.filter(
-    (r) => isForfeitable(r.booking.status, r.booking.paymentDueAt, new Date().toISOString()),
+    (r) => isForfeitable(r.booking.status, r.booking.paymentDueAt, new Date().toISOString(),
+      r.booking.saidSentAt),
   )
   const collected = confirmed.reduce((a, r) => a + r.booking.priceCents, 0)
   const outstanding = awaiting.reduce((a, r) => a + r.booking.priceCents, 0)
@@ -113,6 +114,10 @@ export default async function Roster({
      read "0 of 9" every day and teach staff to ignore a number that is going
      to matter later. */
   const asking = show.payoutSetup === 'on'
+  /* Makers who say they sent a Venmo or Zelle and have not been matched yet.
+     This is the queue the girls actually work: open the app, find the MM code
+     in the note, press Mark paid. */
+  const toMatch = rows.filter((r) => r.booking.saidSentAt && !isPaid(r.booking.status))
 
   // The show's booth-fee picture: expected counts every live booking
   // (confirmed and awaiting); collected counts only the paid ones.
@@ -222,6 +227,17 @@ export default async function Roster({
             {/* Shown when they have it, not when they lack it. A warning tag
                 for an optional thing sends somebody chasing it. */}
             {app.hasCoi && <span className="adm-tag">Insured</span>}
+            {/* The maker's own word that a Venmo or Zelle is on its way. It
+                confirms nothing, so it is a prompt to go and look rather than
+                a status: check the app, then Mark paid. It also keeps the row
+                off the release list, because releasing somebody who really did
+                pay is the one mistake here that no apology undoes. */}
+            {booking.saidSentAt && !paid && (
+              <span className="adm-tag" data-warn="1">
+                Says {booking.saidSentVia === 'zelle' ? 'Zelle' : 'Venmo'} sent
+                {` ${fmtDateTime(booking.saidSentAt)}`}
+              </span>
+            )}
             {/* Getting paid. Indoor only, and never a "blocks load-in" tag:
                 this holds up their money, not their table. It earns a warning
                 mark anyway, because the cost of noticing in November is a
@@ -341,6 +357,11 @@ export default async function Roster({
               ? 'Every indoor maker has finished Stripe. Payouts can go out the day statements are approved.'
               : 'Indoor makers with a Stripe payout account Stripe says is ready. The rest sell fine and cannot be paid until they finish.'}
         />}
+        {toMatch.length > 0 && <Stat
+          label="Say they sent it" icon="money" value={toMatch.length}
+          warn
+          note="Venmo or Zelle the maker says is on its way. Find the MM code in the payment note, then Mark paid. These are held off the release list until you do."
+        />}
         <Stat
           label="Not told yet" icon="roster" value={notTold.length}
           note={notTold.length === 0
@@ -378,7 +399,9 @@ export default async function Roster({
             clearing can appear here, however far past the deadline they are.
             Anyone marked <em>started a payment</em> opened Stripe and did not finish; that can be
             an abandoned tab, or a bank still sending its verification deposits, so it is worth a
-            look before releasing.
+            look before releasing. Nobody who pressed <em>I have sent it</em> on a Venmo or
+            Zelle appears here either: that is a claim rather than a payment, so it holds the
+            space and waits for one of you to match it instead of releasing it.
           </p>
           <table className="adm-tbl adm-tbl--tight">
             <thead>

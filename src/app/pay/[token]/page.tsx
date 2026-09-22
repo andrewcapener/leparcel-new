@@ -154,6 +154,9 @@ export default async function PayPage({
               token={token}
               manual={manual}
               codes={codes}
+              manualToken={token}
+              saidVia={billing.booking.saidSentVia}
+              saidAt={billing.booking.saidSentAt}
             />
 
             {payouts && (

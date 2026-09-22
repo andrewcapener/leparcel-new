@@ -302,6 +302,11 @@ export const bookings = pgTable('bookings', {
      the line items, so this is what makes the next Checkout call new work
      rather than a replay of the old answer. */
   priceVersion: integer('price_version').notNull().default(1),
+  /* The maker's own word that they sent a Venmo or Zelle. Never a payment and
+     never marks anything paid: it holds the space off the release list and
+     tells staff which one to go looking for. */
+  saidSentAt: text('said_sent_at'),
+  saidSentVia: text('said_sent_via'),
   addonsCents: integer('addons_cents').notNull().default(0),
   commissionBps: integer('commission_bps').notNull(),   // immutable snapshot
 

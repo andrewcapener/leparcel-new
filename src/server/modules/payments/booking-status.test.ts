@@ -35,6 +35,23 @@ check('an unreadable now is not forfeitable', !isForfeitable('awaiting_payment',
 /* Exactly at the deadline is still inside it. */
 check('the deadline instant itself has not passed', !isForfeitable('awaiting_payment', now, now))
 
+/* ── "I have sent it" ──
+   A maker who says a Venmo is on its way is not evidence of payment, and
+   nothing here marks her paid. But her space must not be released out from
+   under her while somebody goes looking for it: chasing a maker who paid is
+   embarrassing, releasing one is not recoverable. */
+check('a maker who says they sent it is never forfeitable',
+  !isForfeitable('awaiting_payment', past, now, '2026-09-22T01:00:00Z'))
+check('and the claim does not otherwise change the answer',
+  isForfeitable('awaiting_payment', past, now, null)
+  && isForfeitable('awaiting_payment', past, now, undefined))
+check('an empty claim is not a claim',
+  isForfeitable('awaiting_payment', past, now, ''))
+/* It holds the space; it does not confirm it. Everything else still decides
+   the same way it did. */
+check('saying so does not make a booking paid', !isPaid('awaiting_payment'))
+check('and it still counts as holding a space', holdsSpace('awaiting_payment'))
+
 if (failures) {
   console.error(`\n${failures} check(s) failed.`)
   process.exit(1)

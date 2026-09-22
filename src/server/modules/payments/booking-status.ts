@@ -54,8 +54,17 @@ export function needsChasing(status: string): boolean {
  * forfeiting a maker who paid by bank on the last day, because the money had
  * not landed yet, would be taking a space from somebody who did it right.
  */
-export function isForfeitable(status: string, dueAtIso: string, nowIso: string): boolean {
+export function isForfeitable(
+  status: string, dueAtIso: string, nowIso: string,
+  /* The maker pressed "I have sent it" on their Venmo or Zelle. Not a
+     payment, and it never confirms anything, but it is a claim that money is
+     on its way and releasing the space of somebody who really did pay is the
+     one mistake here that cannot be undone with a click. So it holds the
+     space and hands the row to a person instead. */
+  saidSentAt?: string | null,
+): boolean {
   if (status !== 'awaiting_payment') return false
+  if (saidSentAt) return false
   const due = Date.parse(dueAtIso)
   const now = Date.parse(nowIso)
   if (!Number.isFinite(due) || !Number.isFinite(now)) return false

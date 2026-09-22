@@ -24,7 +24,7 @@ import { ManualPay } from './ManualPay'
 export function BoothInvoice({
   invoice, status, dueAt, paidAt, vendorCode,
   payable, testMode, notice, methods, preview = false, id = 'booth-fee',
-  action, token, manual = [], codes,
+  action, token, manual = [], codes, manualToken, saidVia, saidAt,
 }: {
   invoice: Invoice
   status: string
@@ -44,6 +44,10 @@ export function BoothInvoice({
    *  with three answers, so they belong in one row. */
   manual?: ManualOption[]
   codes?: Record<string, string | null>
+  /** Only the pasted-link door can take "I have sent it" without a sign-in. */
+  manualToken?: string
+  saidVia?: string | null
+  saidAt?: string | null
   /** Rendered inside the admin preview. Everything looks the same; the button
    *  is inert, because pressing a real Pay button from a preview would start a
    *  checkout against whatever booking the presser happens to own. */
@@ -250,7 +254,8 @@ export function BoothInvoice({
                     )}
                     <p className="mk-pay__note">Confirms your space straight away.</p>
                   </li>
-                  <ManualPay options={manual} vendorCode={vendorCode} codes={codes} />
+                  <ManualPay options={manual} vendorCode={vendorCode} codes={codes}
+                    token={manualToken} saidVia={saidVia} saidAt={saidAt} />
                 </ul>
               )}
 

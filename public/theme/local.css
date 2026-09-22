@@ -2893,3 +2893,18 @@ h3, .h3 { line-height: 1.15; }
 .mk-ways .mk-pay { margin: 0; }
 /* The one that confirms itself reads as the primary answer. */
 .mk-pay--now { border-color: rgb(var(--text-color) / 0.34); }
+
+/* "I have sent it" on a Venmo or Zelle tile. A quiet control on purpose: it is
+   not the payment, it is the maker telling us one is on its way. */
+.mk-pay__sent {
+  margin-top: .9em; background: none; cursor: pointer;
+  font: inherit; font-size: .92em;
+  padding: .45em .8em; min-height: 24px;
+  border: 1px solid rgb(var(--text-color) / 0.34);
+  color: inherit;
+}
+.mk-pay__sent:hover { background: rgb(var(--text-color) / 0.06); }
+.mk-pay__said {
+  margin: .9em 0 0; font-size: .92em;
+  padding: .55em .7em; background: #EDF2EE; border-left: 3px solid #3F6B52;
+}

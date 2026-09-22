@@ -1,4 +1,5 @@
 import type { ManualOption } from '@/server/modules/payments/manual'
+import { sayManualSent } from '@/app/actions'
 
 /**
  * Venmo and Zelle, on the booking's own page.
@@ -20,10 +21,16 @@ import type { ManualOption } from '@/server/modules/payments/manual'
  * to go hunting for.
  */
 export function ManualPay({
-  options, vendorCode, codes,
+  options, vendorCode, codes, token, saidVia, saidAt,
 }: {
   options: ManualOption[]
   vendorCode: string
+  /** Present only on the pasted-link door, which is the one that can
+   *  authorise "I have sent it" without a sign-in. */
+  token?: string
+  /** What they already told us, so the tile stops asking. */
+  saidVia?: string | null
+  saidAt?: string | null
   /** A scannable code per method, for somebody reading this on a laptop.
    *  Hidden on a phone, where you cannot scan your own screen. */
   codes?: Record<string, string | null>
@@ -74,6 +81,26 @@ export function ManualPay({
               </span>
             )}
             <p className="mk-pay__note">Note: <code>{o.note}</code></p>
+            {/* The one fact only the maker has, at the only moment she will
+                give it. Without it a maker who paid on Tuesday and a maker who
+                has not paid look identical on the roster, and the girls either
+                chase her or release her space. It confirms nothing on its own:
+                a person still checks Venmo and presses Mark paid. */}
+            {token && (saidVia === o.kind ? (
+              <p className="mk-pay__said">
+                Thank you. You told us you sent this
+                {saidAt ? ` on ${new Date(saidAt).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'long', day: 'numeric' })}` : ''}.
+                We will match it and your space is held meanwhile.
+              </p>
+            ) : (
+              <form action={sayManualSent}>
+                <input type="hidden" name="token" value={token} />
+                <input type="hidden" name="via" value={o.kind} />
+                <button className="mk-pay__sent" type="submit">
+                  I have sent it
+                </button>
+              </form>
+            ))}
           </li>
         ))}
     </>
