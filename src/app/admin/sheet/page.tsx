@@ -28,10 +28,12 @@ export default async function SheetPush() {
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
   const sa = serviceAccount()
-  const configured = process.env.PAYMENT_SHEET_URL?.trim()
-    ?? (process.env.SHEETS_SPREADSHEET_ID?.trim()
-      ? `https://docs.google.com/spreadsheets/d/${process.env.SHEETS_SPREADSHEET_ID.trim()}/edit`
-      : '')
+  /* Only ever a sheet somebody named for THIS job. It used to fall back to
+     SHEETS_SPREADSHEET_ID, which is the applications sync sheet: a default
+     that is confidently wrong, and pressing the button without reading the
+     field would have written the payment tabs into the wrong document. An
+     empty field asks a question; a wrong one answers it. */
+  const configured = process.env.PAYMENT_SHEET_URL?.trim() ?? ''
 
   return (
     <div className="adm-narrow">
