@@ -6,6 +6,7 @@ import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { CollapsibleTabs, PriceTable, type Tab } from '@/components/theme/Sections'
 import { ApplyForm } from './ApplyForm'
+import { WaitlistForm } from './WaitlistForm'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { applyFaq, fill } from '@/lib/page-html'
 import { applicationWindow, fmtDate, fmtRange } from '@/lib/dates'
@@ -197,7 +198,11 @@ export default async function Apply({
      table; four figures is a strip you read in one pass. */
   const glance: Array<{ label: string; value: string }> = [
     {
-      label: win === 'before' ? 'Applications open' : 'Applications close',
+      label: win === 'before'
+        ? 'Applications open'
+        // Past tense once they have. The value under it is the same
+        // timestamp either way; only the verb moves.
+        : win === 'closed' ? 'Applications closed' : 'Applications close',
       value: win === 'before'
         ? fmtDate(show.applicationsOpenAt, { year: undefined })
         : `${fmtDate(show.applicationsCloseAt, { year: undefined })}, 11:59pm PT`,
@@ -229,12 +234,25 @@ export default async function Apply({
             <p className="ap-head__eyebrow">
               {show.name} · {fmtRange(show.startsOn, show.endsOn)} · {show.venueName}
             </p>
-            <h1 className="majortitle in-content h1 ap-head__title">Maker Application</h1>
+            {/* Once the window shuts, the head has to stop being an
+                invitation. Everything below it is still worth reading: the
+                prices, the dates and the rules are what somebody deciding
+                whether to apply next time came here for. So the page keeps
+                its whole prospectus and only the ask changes. */}
+            <h1 className="majortitle in-content h1 ap-head__title">
+              {win === 'closed' ? 'Selling at Mermade' : 'Maker Application'}
+            </h1>
             <p className="ap-head__lede">
-              One form covers both tracks. Inside is consignment: we showcase
-              your shop for all three days and sell it at one register. Outside
-              is a tent we set up for you, for the day, and you keep everything
-              you sell. No fee to apply, and we answer either way.
+              {win === 'closed'
+                ? <>Two tracks. Inside is consignment: we showcase your shop for
+                  all three days and sell it at one register. Outside is a tent we
+                  set up for you, for the day, and you keep everything you sell.
+                  Applications for this one are closed, and the prices and dates
+                  below are the ones it ran on.</>
+                : <>One form covers both tracks. Inside is consignment: we showcase
+                  your shop for all three days and sell it at one register. Outside
+                  is a tent we set up for you, for the day, and you keep everything
+                  you sell. No fee to apply, and we answer either way.</>}
             </p>
 
             <dl className="ap-glance">
@@ -279,8 +297,17 @@ export default async function Apply({
                         {fmtDate(show.applicationsOpenAt)}, and anything you submit
                         here before then is a real application. Delete it from the
                         admin when you are done.</>
-                      : <>Preview. Applications are not open, and submissions are
-                        disabled until {fmtDate(show.applicationsOpenAt)}.</>}
+                      /* Two different reasons the form is shut, and the same
+                         sentence cannot cover both: before the window opens
+                         the date to name is the opening, after it closes that
+                         date is in the past and naming it reads as a promise
+                         the window is about to reopen. */
+                      : win === 'closed'
+                        ? <>Preview. Applications closed{' '}
+                          {fmtDate(show.applicationsCloseAt)} and submissions are
+                          disabled. Everyone else sees the waiting list.</>
+                        : <>Preview. Applications are not open, and submissions are
+                          disabled until {fmtDate(show.applicationsOpenAt)}.</>}
                   </p>
                 )}
                 <ApplyForm
@@ -288,23 +315,32 @@ export default async function Apply({
                   uploads={photoUploadsEnabled()}
                 />
               </>
-            ) : (
+            ) : win === 'before' ? (
               /* Outside the window this is the whole page's ask, so the
                  invitation needs the field that answers it. */
               <div className="reading-width account-form rte align-center ap-closed">
-                <h2>
-                  {win === 'before'
-                    ? `Applications open ${fmtDate(show.applicationsOpenAt)}.`
-                    : `Applications for ${show.name} closed ${fmtDate(show.applicationsCloseAt)}.`}
-                </h2>
-                <p>
-                  {win === 'before'
-                    ? 'Join the list and we’ll email you the morning they open.'
-                    : 'Join the list and we’ll email you the morning the next window opens.'}
-                </p>
+                <h2>{`Applications open ${fmtDate(show.applicationsOpenAt)}.`}</h2>
+                <p>Join the list and we’ll email you the morning they open.</p>
                 <div className="apply-signup">
                   <SignupForm source="apply" />
                 </div>
+              </div>
+            ) : (
+              /* Closed. The page stops being an application and becomes the
+                 waiting list for the next one.
+
+                 The one thing not to do here is imply a reopening date. The
+                 next show is not on the Show record yet, and a maker who
+                 reads a date into this sentence will stop checking. So the
+                 copy says what is true: nothing is scheduled, and the list
+                 is how you hear first. */
+              <div className="reading-width account-form rte align-center ap-closed">
+                <h2>{`Applications for ${show.name} closed ${fmtDate(show.applicationsCloseAt)}.`}</h2>
+                <p>
+                  The next show is not scheduled yet. Leave your email and
+                  we’ll write to you the day applications open.
+                </p>
+                <WaitlistForm />
               </div>
             )}
           </div>

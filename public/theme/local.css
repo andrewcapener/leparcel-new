@@ -391,6 +391,16 @@ h3, .h3 { line-height: 1.15; }
 .apply-signup .signup-form { max-width: 420px; margin-inline: auto; }
 .apply-signup .signup-form__email { width: 100%; }
 
+/* The waiting-list note under that form once the window has closed
+   (src/app/apply/WaitlistForm.tsx). One live region, on the page whether or
+   not it has anything in it yet, so a confirmation lands somewhere a screen
+   reader is already watching. Empty, it has no line box and so no height;
+   only the margin needs clearing. display:none would take it out of the
+   accessibility tree and stop it being announced at all, which is the whole
+   reason it is mounted early. */
+.apply-signup .wl-note { margin-top: 1em; }
+.apply-signup .wl-note:empty { margin: 0; }
+
 /* ───────────────────────────────────────────────────────────────────────────
    /apply — the prospectus head and the merchant application form
    (src/app/apply/page.tsx, src/app/apply/ApplyForm.tsx). Every class here is
