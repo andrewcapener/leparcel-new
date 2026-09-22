@@ -43,6 +43,7 @@ import {
 import { slotOptions } from '@/server/modules/compliance/checklist'
 import { boothFeeHtml, boothFeeText } from '@/server/modules/email/booth-fee'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
+import { viaFromManual, viaLabel } from '@/server/modules/payments/paid-via'
 import { paymentDueAt } from '@/server/modules/payments/deadline'
 import { sendLead, newEventId } from '@/server/modules/meta/capi'
 
@@ -1220,20 +1221,42 @@ export async function deleteApplication(fd: FormData): Promise<void> {
   redirect('/admin/jury')
 }
 
+/**
+ * Staff matched a payment that no webhook will ever tell us about.
+ *
+ * A Venmo or a Zelle lands as a notification on somebody's phone, so a person
+ * finds the MM code in the payment note and presses this. That is the whole
+ * reconciliation, and until now it recorded only that the fee was in: the
+ * route it came by was lost, which made "who paid what and where" a question
+ * the database could not answer on the one day it gets asked all day.
+ *
+ * `via` defaults to what the maker said when they pressed "I have sent it",
+ * and falls to 'other' when neither the maker nor the staff member said.
+ * Never to a guess: an unrecorded route prints as unrecorded.
+ *
+ * Deliberately not a door for Stripe's two routes. A card or a bank transfer
+ * is confirmed by a verified webhook and nothing else (rule 5); this exists
+ * for the money Stripe never sees.
+ */
 export async function markPaid(fd: FormData): Promise<void> {
   const bookingId = String(fd.get('bookingId'))
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
   if (!b || b.status !== 'awaiting_payment') return
 
+  const via = viaFromManual(String(fd.get('via') ?? ''), b.saidSentVia)
+  const paidAt = new Date().toISOString()
+
   await db.update(bookings)
-    .set({ status: 'confirmed', paidAt: new Date().toISOString() })
+    .set({ status: 'confirmed', paidAt, paidVia: via })
     .where(eq(bookings.id, bookingId))
   await db.update(vendors)
     .set({ showsAttended: sql`${vendors.showsAttended} + 1` })
     .where(eq(vendors.id, b.vendorId))
 
   await log('booking', bookingId, 'paid',
-    { status: 'awaiting_payment' }, { status: 'confirmed' }, 'booth fee received')
+    { status: 'awaiting_payment', paidVia: b.paidVia },
+    { status: 'confirmed', paidAt, paidVia: via },
+    `booth fee received, matched by hand: ${viaLabel(via).toLowerCase()}`)
 
   revalidatePath('/admin/roster')
   revalidatePath('/')

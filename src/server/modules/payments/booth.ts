@@ -23,6 +23,7 @@ import { bookings, bookingAddons, addOns, spaceTypes, stripeEvents, auditLog, ve
 import { stripe, webhookSecret } from './config'
 import { invoiceFor, paymentMatches, bookingPaymentKey, paymentDoor, type Invoice } from './invoice'
 import { stripeMethods, type PaymentMethods } from './methods'
+import { viaFromEvent } from './paid-via'
 import { recordAccount } from './connect'
 import { siteUrl } from '@/lib/site-url'
 
@@ -350,8 +351,20 @@ export async function handleStripeWebhook(
     payment_intent?: string | null
     amount_total?: number | null
     payment_status?: string | null
+    /* What Checkout OFFERED, not what the maker chose. `viaFromEvent` is
+       what turns it into a route, and it leans on the event type rather
+       than on this list. */
+    payment_method_types?: string[] | null
     metadata?: Record<string, string> | null
   }
+
+  /* Card or bank transfer, decided from the event and written alongside the
+     status. Stripe is the only thing allowed to write these two (rule 5), and
+     this is the only place it happens. Null when the event does not settle
+     it, in which case the column is left exactly as it was. */
+  const via = viaFromEvent(
+    event.type, session.payment_status, session.payment_method_types ?? [],
+  )
 
   const bookingId = session.client_reference_id || session.metadata?.bookingId
   if (!bookingId) {
@@ -392,12 +405,16 @@ export async function handleStripeWebhook(
       await finish({ bookingId, payload: 'failure after confirmation, left alone' })
       return { outcome: 'confirmed', eventId: event.id, bookingId }
     }
-    const before = { status: booking.status }
+    const before = { status: booking.status, paidVia: booking.paidVia }
     await db.update(bookings).set({
       status: 'awaiting_payment',
       stripeSessionId: null,
+      /* The transfer is the route that did not happen, so it stops being
+         this booking's route. Leaving 'bank' on an unpaid row would count
+         it in tomorrow's bank column against money that never arrived. */
+      paidVia: null,
     }).where(eq(bookings.id, booking.id))
-    await audit('payment_failed', before, { status: 'awaiting_payment' })
+    await audit('payment_failed', before, { status: 'awaiting_payment', paidVia: null })
     await finish({ bookingId, payload: 'bank transfer did not clear' })
     return { outcome: 'payment_failed', eventId: event.id, bookingId }
   }
@@ -420,12 +437,14 @@ export async function handleStripeWebhook(
       await finish({ bookingId, error: detail })
       return { outcome: 'mismatch', eventId: event.id, bookingId, detail }
     }
-    const before = { status: booking.status }
+    const before = { status: booking.status, paidVia: booking.paidVia }
     await db.update(bookings).set({
       status: 'payment_processing',
       stripePaymentIntentId: intentId,
+      ...(via ? { paidVia: via } : {}),
     }).where(eq(bookings.id, booking.id))
-    await audit('payment_processing', before, { status: 'payment_processing', amountCents: received })
+    await audit('payment_processing', before,
+      { status: 'payment_processing', amountCents: received, paidVia: via })
     await finish({ bookingId, payload: `bank transfer initiated, ${received} cents in flight` })
     return { outcome: 'processing', eventId: event.id, bookingId }
   }
@@ -438,15 +457,23 @@ export async function handleStripeWebhook(
     return { outcome: 'mismatch', eventId: event.id, bookingId, detail }
   }
 
-  const before = { status: booking.status, paidAt: booking.paidAt, amountPaidCents: booking.amountPaidCents }
+  const before = {
+    status: booking.status, paidAt: booking.paidAt,
+    amountPaidCents: booking.amountPaidCents, paidVia: booking.paidVia,
+  }
   const paidAt = new Date().toISOString()
   await db.update(bookings).set({
     status: 'confirmed',
     paidAt,
     amountPaidCents: received,
     stripePaymentIntentId: intentId,
+    /* Left alone when the event does not settle the route, which keeps the
+       'bank' written days earlier at authorisation rather than replacing a
+       known answer with a blank one. */
+    ...(via ? { paidVia: via } : {}),
   }).where(eq(bookings.id, booking.id))
-  await audit('payment_confirmed', before, { status: 'confirmed', paidAt, amountPaidCents: received })
+  await audit('payment_confirmed', before,
+    { status: 'confirmed', paidAt, amountPaidCents: received, paidVia: via ?? booking.paidVia })
   await finish({ bookingId, payload: `confirmed ${received} cents` })
   return { outcome: 'confirmed', eventId: event.id, bookingId }
 }

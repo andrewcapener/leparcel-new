@@ -325,6 +325,14 @@ export const bookings = pgTable('bookings', {
   }).notNull().default('awaiting_payment'),
   paymentDueAt: text('payment_due_at').notNull(),
   paidAt: text('paid_at'),
+  /* Which of the four routes the money took: 'card' | 'bank' | 'venmo' |
+     'zelle' | 'other'. Stripe's two are written only by the verified webhook
+     (rule 5); the manual two by staff pressing Mark paid, defaulting to what
+     the maker said when they pressed "I have sent it". Null means the route
+     was never recorded, which is every booking paid before this column, and
+     the roster prints that rather than guessing.
+     See src/server/modules/payments/paid-via.ts. */
+  paidVia: text('paid_via'),
 
   /* The link staff paste into an email they wrote. Addresses one booking and
      opens one page: the invoice and a Pay button, never the account. */

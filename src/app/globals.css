@@ -803,6 +803,13 @@
 .adm textarea.inp { min-height: 120px; line-height: 1.55; resize: vertical }
 .adm .adm-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px }
 
+/* Mark paid, with the route it came by. Two places use it, the Venmo/Zelle
+   match queue and the roster's action column, so the shape lives here rather
+   than inline in one of them. Values are the ones the admin forms already
+   use: the compact 8px/10px, 14px control from .adm-rows below. */
+.adm .adm-paid { display: grid; gap: 6px; min-width: 150px }
+.adm .adm-paid select.inp { padding: 8px 10px; font-size: 14px }
+
 .adm .adm-fs { border: 0; padding: 0; margin: 0 0 36px; min-width: 0 }
 .adm .adm-fs > legend { padding: 0; margin: 0; float: left; width: 100%; color: var(--ad-ink); letter-spacing: .15em }
 .adm .adm-fs .why {

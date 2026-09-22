@@ -133,6 +133,10 @@ async function main() {
     const [inFlight] = await db.select().from(bookings).where(eq(bookings.id, bookingId))
     check('a transfer in flight holds the space', inFlight!.status === 'payment_processing')
     check('a transfer in flight is not marked paid', inFlight!.paidAt === null)
+    /* The route is written at AUTHORISATION, not when the money lands, so the
+       bank column on the roster is right for the four days in between. */
+    check('the route is recorded as soon as the transfer is authorised',
+      inFlight!.paidVia === 'bank')
 
     /* 3b · A bank transfer for the WRONG amount is still a mismatch. */
     const achBadId = `evt_ach_bad_${bookingId.slice(0, 8)}`
@@ -153,11 +157,12 @@ async function main() {
     const [settledRow] = await db.select().from(bookings).where(eq(bookings.id, bookingId))
     check('the settled booking is confirmed', settledRow!.status === 'confirmed')
     check('the settled amount is stored', settledRow!.amountPaidCents === total)
+    check('and it is still a bank transfer when it lands', settledRow!.paidVia === 'bank')
 
     /* 3d · Put it back to unpaid so the card path below is tested from the
      *      same starting point the real flow has. */
     await db.update(bookings).set({
-      status: 'awaiting_payment', paidAt: null, amountPaidCents: null,
+      status: 'awaiting_payment', paidAt: null, amountPaidCents: null, paidVia: null,
     }).where(eq(bookings.id, bookingId))
 
     /* 3e · A transfer that never clears returns the booking to unpaid and
@@ -174,6 +179,8 @@ async function main() {
     const [afterFail] = await db.select().from(bookings).where(eq(bookings.id, bookingId))
     check('a failed transfer returns the booking to unpaid', afterFail!.status === 'awaiting_payment')
     check('a failed transfer clears the dead session', afterFail!.stripeSessionId === null)
+    /* And stops counting toward the bank total, because that money never came. */
+    check('a failed transfer is no longer a bank payment', afterFail!.paidVia === null)
 
     /* 4 · A card. The correct event confirms, exactly once.
      *     Counted as a DELTA rather than an absolute, because the bank
@@ -190,6 +197,9 @@ async function main() {
     check('the booking is confirmed', paid!.status === 'confirmed')
     check('the received amount is stored', paid!.amountPaidCents === total)
     check('paid_at is set', Boolean(paid!.paidAt))
+    /* Settled on `completed`, so it is a card and not the transfer that was
+       also offered. Reading this one wrong would report every card as ACH. */
+    check('a card records itself as a card', paid!.paidVia === 'card')
     check('the payment intent is stored', Boolean(paid!.stripePaymentIntentId))
 
     const audits = await db.select().from(auditLog).where(eq(auditLog.entityId, bookingId))

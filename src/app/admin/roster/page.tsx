@@ -8,6 +8,7 @@ import { PayLink } from './PayLink'
 import { siteUrl } from '@/lib/site-url'
 import { usd, splitCommission, bpsLabel } from '@/lib/money'
 import { holdsSpace, isPaid, isForfeitable, needsChasing } from '@/server/modules/payments/booking-status'
+import { viaLabel, makerSignal, type MakerSignal } from '@/server/modules/payments/paid-via'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { connectState, owesPayoutSetup, type ConnectState } from '@/server/modules/payments/connect'
 import { fmtDateTime, fmtRange } from '@/lib/dates'
@@ -30,6 +31,66 @@ export const dynamic = 'force-dynamic'
 const maskPermit = (permit: string) => `•••• ${permit.trim().slice(-4)}`
 
 const COLS = 8
+
+/**
+ * What the maker has done, in the words the screen can honestly use.
+ *
+ * "Opened" is not among them. Nothing in this codebase writes a row when a
+ * maker views their pay page or signs in, so the only evidence of a maker is
+ * a write they caused: a Checkout Session, an "I have sent it", or money. A
+ * quiet row may mean the email never arrived and may mean they read it on the
+ * bus and forgot. The screen says which of those it cannot tell.
+ *
+ * Empty once the money is in. The fee column has already said so, and the
+ * route it came by is not always the link: a Venmo is paid in an app.
+ */
+function signalWords(sig: MakerSignal): string {
+  switch (sig) {
+    case 'said': return 'Used it, says they sent the money'
+    case 'started': return 'Opened Stripe, did not finish'
+    case 'nothing': return 'Nothing back from them yet'
+    default: return ''
+  }
+}
+
+/**
+ * Mark paid, with the route it came by.
+ *
+ * One component in two places, the match queue and the roster row, because
+ * two copies of a money form is how the two drift apart. The route defaults
+ * to whatever the maker said when they pressed "I have sent it", so matching
+ * a Venmo against an MM code stays one click.
+ *
+ * Stripe's two routes are not offered here. A card or a transfer is confirmed
+ * by a verified webhook and never by a person (rule 5).
+ */
+function MarkPaid({
+  slot, bookingId, shopName, said,
+}: {
+  /** Which of the two places this is, so the ids stay unique on the page. */
+  slot: 'row' | 'queue'
+  bookingId: string
+  shopName: string
+  said: string | null
+}) {
+  const id = `via-${slot}-${bookingId}`
+  return (
+    <form action={markPaid} className="adm-paid">
+      <input type="hidden" name="bookingId" value={bookingId} />
+      <label className="adm-sr" htmlFor={id}>How {shopName} paid</label>
+      <select className="inp" id={id} name="via" defaultValue={said ?? ''} required>
+        <option value="">Paid how?</option>
+        <option value="venmo">Venmo</option>
+        <option value="zelle">Zelle</option>
+        <option value="other">Cash, check, other</option>
+      </select>
+      <button className="adm-btn-q" type="submit">
+        Mark paid
+        <span className="adm-sr"> for {shopName}</span>
+      </button>
+    </form>
+  )
+}
 
 export default async function Roster({
   searchParams,
@@ -117,7 +178,49 @@ export default async function Roster({
   /* Makers who say they sent a Venmo or Zelle and have not been matched yet.
      This is the queue the girls actually work: open the app, find the MM code
      in the note, press Mark paid. */
-  const toMatch = rows.filter((r) => r.booking.saidSentAt && !isPaid(r.booking.status))
+  const toMatch = rows
+    .filter((r) => r.booking.saidSentAt && !isPaid(r.booking.status))
+    /* Oldest claim first. A maker who said she sent it on Monday has been
+       waiting longest to stop being on a chase list. */
+    .sort((a, b) => (a.booking.saidSentAt ?? '').localeCompare(b.booking.saidSentAt ?? ''))
+
+  /* ── who has actually done something ──
+     The question Drew asks on payment morning: has anyone clicked through?
+     Nothing in this codebase records a page view or a maker sign-in, so
+     nobody can be shown as having "opened" their link. What can be shown is
+     what a maker DID, each one a write only they could have caused: a Stripe
+     Checkout they started, a Venmo they say they sent, or money that landed.
+     `notTold` above is the other half and is the opposite fact: a person
+     ticking a box to say they wrote an email.
+
+     Counted only against makers who WERE told. A maker nobody has written to
+     has no link to have used, and putting them here would read as "ignoring
+     us" when nothing was ever sent. */
+  const silent = rows.filter(
+    (r) => needsChasing(r.booking.status) && r.booking.linkSentAt
+      && makerSignal(r.booking) === 'nothing',
+  )
+
+  /* ── where the money came in ──
+     Four routes and four different places they land: Stripe for a card and a
+     transfer, somebody's phone for a Venmo, the bank for a Zelle. The booking
+     is the only record that sees all four, so this is the only place the split
+     can be read at a glance.
+
+     Summed on priceCents, the same basis as `collected` above, so these add up
+     to the figure on the bar rather than quietly disagreeing with it. Rows
+     paid before the route was recorded are their own group and say so: a
+     guessed route here is a wrong number somebody reconciles against. */
+  const byRoute = ['card', 'bank', 'venmo', 'zelle', 'other', null]
+    .map((via) => {
+      const hit = confirmed.filter((r) => (r.booking.paidVia ?? null) === via)
+      return {
+        via, n: hit.length,
+        cents: hit.reduce((a, r) => a + r.booking.priceCents, 0),
+      }
+    })
+    .filter((g) => g.n > 0)
+  const clearingCents = clearing.reduce((a, r) => a + r.booking.priceCents, 0)
 
   // The show's booth-fee picture: expected counts every live booking
   // (confirmed and awaiting); collected counts only the paid ones.
@@ -150,6 +253,11 @@ export default async function Roster({
 
   const row = ({ booking, vendor, app, space }: typeof rows[number]) => {
     const paid = booking.status === 'confirmed'
+    /* Authorised and on its way. Not paid, and emphatically not "awaiting":
+       this maker did everything asked of them and Stripe is taking its four
+       business days. The cell used to read Awaiting with a warning mark on
+       it, which sent somebody chasing a maker who had already paid. */
+    const inFlight = booking.status === 'payment_processing'
     const permit = app.sellerPermit.trim()
     return (
       <tr key={booking.id}>
@@ -199,9 +307,21 @@ export default async function Roster({
         </td>
 
         <td className="c-2">
-          <span className="adm-st" data-warn={paid ? undefined : '1'}>{paid ? 'Paid' : 'Awaiting'}</span>
+          {/* Three states, in words, never by colour alone (WCAG 2.2 AA). */}
+          <span className="adm-st" data-warn={paid || inFlight ? undefined : '1'}>
+            {paid ? 'Paid' : inFlight ? 'Clearing' : 'Awaiting'}
+          </span>
           <span className="adm-sub2">
-            {booking.paidAt ? fmtDateTime(booking.paidAt) : `due ${fmtDateTime(booking.paymentDueAt)}`}
+            {paid
+              /* How it arrived, beside when. The four routes land in four
+                 different places and this is the only record that has all
+                 of them. A booking paid before the route was recorded says
+                 so rather than being assigned one. */
+              ? [booking.paidAt && fmtDateTime(booking.paidAt), viaLabel(booking.paidVia)]
+                .filter(Boolean).join(' · ')
+              : inFlight
+                ? `${viaLabel(booking.paidVia ?? 'bank')}, about 4 business days`
+                : `due ${fmtDateTime(booking.paymentDueAt)}`}
           </span>
         </td>
 
@@ -286,6 +406,13 @@ export default async function Roster({
                   ? `${fmtDateTime(booking.linkSentAt)}${booking.linkSentBy ? ` by ${booking.linkSentBy}` : ''}`
                   : 'Not told yet'}
               </span>
+              {/* The line above is staff saying they wrote. This one is the
+                  maker doing something, which is a different fact and the one
+                  Drew is asking for. Nothing here records a page view, so it
+                  never claims they opened anything. */}
+              {signalWords(makerSignal(booking)) && (
+                <span className="adm-sub2">{signalWords(makerSignal(booking))}</span>
+              )}
             </>
           ) : (
             /* Booked before payment links existed. The portal still works for
@@ -295,14 +422,12 @@ export default async function Roster({
         </td>
 
         <td className="r">
-          {!paid && (
-            <form action={markPaid}>
-              <input type="hidden" name="bookingId" value={booking.id} />
-              <button className="adm-btn-q" type="submit">
-                Mark paid
-                <span className="adm-sr"> for {vendor.shopName}</span>
-              </button>
-            </form>
+          {/* Nothing to press on a transfer in flight. Mark paid refuses a
+              booking that is not awaiting_payment, so the button was already
+              doing nothing there, silently, next to a maker who had paid. */}
+          {!paid && !inFlight && (
+            <MarkPaid slot="row" bookingId={booking.id} shopName={vendor.shopName}
+              said={booking.saidSentVia} />
           )}
         </td>
       </tr>
@@ -360,8 +485,14 @@ export default async function Roster({
         {toMatch.length > 0 && <Stat
           label="Say they sent it" icon="money" value={toMatch.length}
           warn
-          note="Venmo or Zelle the maker says is on its way. Find the MM code in the payment note, then Mark paid. These are held off the release list until you do."
+          note="Venmo or Zelle the maker says is on its way. Find the MM code in the payment note, then Mark paid. These are held off the release list until you do. Worked in the queue below."
         />}
+        <Stat
+          label="Nothing back yet" icon="clock" value={silent.length}
+          note={silent.length === 0
+            ? 'Every maker who has their link has done something with it.'
+            : 'Sent their link, and nothing since: no Stripe checkout started, no Venmo or Zelle claimed, no money in. Nothing here records whether they opened the page, so this counts what they did, not what they read.'}
+        />
         <Stat
           label="Not told yet" icon="roster" value={notTold.length}
           note={notTold.length === 0
@@ -381,6 +512,31 @@ export default async function Roster({
             : `${confirmed.length} of ${rows.length} spaces confirmed.`}
           link={{ href: '/admin/show', label: 'Prices' }}
         />
+      </div>
+
+      {/* Where it came in. Four routes land in four different places and this
+          is the only record that sees all four. The groups sum to the figure
+          on the bar above, because both count the booth fee on the booking. */}
+      <div className="adm-strip" style={{ marginTop: 14 }}>
+        <span className="g">
+          <span className="k">Where it came in</span>
+          {byRoute.length === 0
+            ? <span className="mono">nothing in yet</span>
+            : byRoute.map((g) => (
+                <span key={g.via ?? 'unrecorded'} className="adm-tag"
+                  data-warn={g.via === null ? '1' : undefined}>
+                  {viaLabel(g.via)} {g.n} · {usd(g.cents)}
+                </span>
+              ))}
+        </span>
+        {clearing.length > 0 && (
+          <span className="g">
+            <span className="k">Still clearing</span>
+            <span className="adm-tag">
+              Bank transfer {clearing.length} · {usd(clearingCents)}
+            </span>
+          </span>
+        )}
       </div>
 
       {overdue.length > 0 && (
@@ -437,6 +593,70 @@ export default async function Roster({
               Release {overdue.length} space{overdue.length === 1 ? '' : 's'}
             </button>
           </form>
+          <div style={{ height: 26 }} />
+        </>
+      )}
+
+      {toMatch.length > 0 && (
+        <>
+          <div className="adm-sec" id="to-match" style={{ scrollMarginTop: '24px' }}>
+            <h2>Say they sent it</h2>
+            <span className="c">{toMatch.length} to match</span>
+          </div>
+          <p className="adm-note">
+            A Venmo or a Zelle reaches nobody here. It lands as a notification on a phone, so
+            this is the one queue a person has to work: open the app the maker named, find the
+            MM code in the payment note, then Mark paid on that row. The route is already
+            picked from what they told us, so it is one press. Pressing it is what records
+            which app the money came by, which is the only way the Venmo and Zelle columns
+            above are ever right. Nobody here can be released for missing the deadline.
+          </p>
+          <table className="adm-tbl adm-tbl--tight">
+            <caption className="adm-sr">
+              Makers who pressed &ldquo;I have sent it&rdquo; and have not been matched to a
+              payment yet, oldest claim first.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Maker</th>
+                <th scope="col">Says they sent</th>
+                <th scope="col" className="r">Fee</th>
+                <th scope="col" className="r"><span className="adm-sr">Action</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {toMatch.map((r) => (
+                <tr key={r.booking.id}>
+                  <td>
+                    <span className="adm-nm">{r.vendor.shopName}</span>
+                    <span className="adm-sub2">
+                      {r.booking.vendorCode} · {r.vendor.email}
+                    </span>
+                  </td>
+                  <td>
+                    {/* Which app to open, and the note to read in it. */}
+                    <span className="adm-st">
+                      {r.booking.saidSentVia === 'zelle' ? 'Zelle' : 'Venmo'}
+                    </span>
+                    <span className="adm-sub2">
+                      {r.booking.saidSentAt ? fmtDateTime(r.booking.saidSentAt) : ''}
+                      {' · note reads '}
+                      {r.booking.vendorCode}
+                    </span>
+                  </td>
+                  <td className="r">
+                    <span className="adm-money">
+                      {usd(r.booking.priceCents + r.booking.addonsCents)}
+                    </span>
+                  </td>
+                  <td className="r">
+                    <MarkPaid slot="queue" bookingId={r.booking.id}
+                      shopName={r.vendor.shopName} said={r.booking.saidSentVia} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
           <div style={{ height: 26 }} />
         </>
       )}
@@ -506,9 +726,25 @@ export default async function Roster({
           against a document. Reveal one when you need the whole number.
         </p>
         <p className="adm-note">
-          <strong>Mark paid</strong> stands in for the maker paying in the portal. In production
-          this is a Stripe Checkout webhook; payment state is only ever set from a verified webhook,
-          never a client callback (CLAUDE.md rule 5).
+          <strong>Mark paid</strong> is for money Stripe never sees: a Venmo, a Zelle, a check.
+          It asks which, because that is the only way the route gets recorded for those. A card
+          or a bank transfer is confirmed by a verified Stripe webhook and never by a person
+          (CLAUDE.md rule 5), and those two write their own route. A fee paid before the route
+          was recorded reads <em>Route not recorded</em> rather than being assigned one.
+        </p>
+        <p className="adm-note">
+          <strong>Nothing here knows who opened their link.</strong> No page view and no maker
+          sign-in is recorded anywhere in this system, so no row can claim a maker read anything.
+          <em> Their link</em> shows two separate facts: the top line is a person here ticking
+          that they wrote, and the bottom line is what the maker did, which is only ever a
+          Stripe checkout they started, an <em>I have sent it</em> they pressed, or money that
+          arrived. A maker with nothing back may never have got the email or may have read it
+          and closed the tab, and the screen does not pretend to tell the difference.
+        </p>
+        <p className="adm-note">
+          <strong>Clearing</strong> is a bank transfer Stripe has taken and not yet settled,
+          which runs about four business days. Those makers have paid. They are not chased,
+          not counted as unpaid, and cannot be released.
         </p>
         <p className="adm-note">
           <strong>Commission is snapshotted per booking</strong> and immutable. Changing the show

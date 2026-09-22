@@ -1,0 +1,43 @@
+-- How the booth fee actually arrived.
+--
+-- Drew, 22 Sept 2026: "who paid what and where."
+--
+-- Money can land four ways tomorrow: a Stripe card, a Stripe bank transfer, a
+-- Venmo, or a Zelle. Until now the database recorded only that a booking was
+-- paid. `amount_paid_cents` says how much, `paid_at` says when, and nothing at
+-- all said which route, so the one question staff will be asked all day had no
+-- answer in the system: the card total, the ACH total and the cash-app total
+-- could only be reassembled by hand from three separate apps in December.
+--
+-- One column rather than two, because the route is one fact. A boolean
+-- "was this Stripe" plus a nullable method would let a row say Stripe and
+-- Venmo at once, and that row would then be somebody's afternoon.
+--
+-- Values, and who writes them:
+--
+--   card   Stripe, settled at once on checkout.session.completed
+--   bank   Stripe ACH. Written when the transfer is INITIATED, while the
+--          booking sits in payment_processing, and left alone when it lands
+--          about four business days later
+--   venmo  staff matched a Venmo and pressed Mark paid
+--   zelle  staff matched a Zelle and pressed Mark paid
+--   other  staff marked it paid by some other route (cash, a check)
+--
+-- Stripe writes its own two from the verified webhook and nowhere else
+-- (rule 5). The manual two default to what the maker told us when they
+-- pressed "I have sent it", which is the only reason said_sent_via exists.
+--
+-- Deliberately nullable, with no backfill. Bookings paid before this column
+-- existed were paid by SOME route and nobody wrote it down; guessing one now
+-- would turn a known gap into a wrong number on a screen people trust. Those
+-- rows read "not recorded" and say so.
+--
+-- Not a check constraint. The values above are enforced in the one pure
+-- function that produces them (src/server/modules/payments/paid-via.ts), and
+-- a constraint here would only turn a future route into a failed write on the
+-- one screen with a deadline on it.
+--
+-- Forward-only and idempotent (rule 11).
+
+ALTER TABLE bookings
+  ADD COLUMN IF NOT EXISTS paid_via text;
