@@ -1,6 +1,6 @@
 import {
-  parseCsv, parseAcceptSheet, centsFrom, sameLabel, planImport, summarise, sniffSeparator,
-  type Lookups,
+  parseCsv, parseAcceptSheet, centsFrom, sameLabel, asideLabel, planImport, summarise,
+  sniffSeparator, type Lookups,
 } from './import'
 
 /**
@@ -157,6 +157,24 @@ const tabbedComma = parseAcceptSheet([
 ].join('\n'))
 check('a comma in a tabbed shop name is just a comma',
   tabbedComma.rows[0]!.shop === 'Brighton Awad (Melissa, mom)')
+
+/* The girls annotate a space when the fee is unusual: "3x6 (half off)" is on
+   the real sheet. The space is named; only the reason is in the bracket. */
+check('a trailing note on the label still finds the space', asideLabel('3x6 (half off)', '3x6'))
+check('spacing inside the bracket does not matter', asideLabel('3x6(half off)', '3x6'))
+check('a bracket in the middle is not a trailing note',
+  asideLabel('3x6 (half) off', '3x6') === false)
+check('it never matches a different space', asideLabel('3x8 (half off)', '3x6') === false)
+check('and it is not a substring match', asideLabel('3x6 half off', '3x6') === false)
+const annotated = planImport(parseAcceptSheet([
+  'Shop,Sign-in email,Book this space,CHARGE',
+  'Trophy Goods,shea@crabandcleek.com,3x8 (half off),170.00',
+].join('\n')).rows, look)[0]!
+check('an annotated row books', annotated.kind === 'book')
+check('at the space it resolved to, printed plainly',
+  annotated.kind === 'book' && annotated.spaceLabel === '3x8')
+check('and at the fee the sheet typed, not half the list',
+  annotated.kind === 'book' && annotated.priceCents === 17000)
 
 if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('roster import: the sheet is read by heading, and a fee never drifts through a float')

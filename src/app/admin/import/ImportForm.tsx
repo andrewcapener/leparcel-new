@@ -76,7 +76,18 @@ export function ImportForm({ spaces }: { spaces: { label: string; priceCents: nu
             <div><dt>Fees, total</dt><dd className="mono">{usd(s.totalCents)}</dd></div>
             <div>
               <dt>Not the list price</dt>
-              <dd>{s.overridden}<span className="adm-sub2">The number the girls signed off on. If it has moved, the sheet has.</span></dd>
+              <dd>
+                {s.overridden}
+                {/* Against the bare space price, so a corner, a second day or
+                    a 10x10 counts here as much as a credit does. It is a
+                    larger number than the count of fees the girls changed,
+                    and it is meant to be: this is every row where the sheet
+                    is deciding the fee rather than the show. */}
+                <span className="adm-sub2">
+                  Every row where the sheet sets the fee rather than the space does. Add-ons
+                  count, so this is larger than the number of fees anybody changed by hand.
+                </span>
+              </dd>
             </div>
           </dl>
         </>

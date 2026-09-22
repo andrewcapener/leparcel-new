@@ -141,9 +141,23 @@ export function centsFrom(amount: string): number | null {
   return Math.round(n * 100)
 }
 
+const flat = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ')
+
 /** Space labels differ in case and spacing between the sheet and the show. */
-export const sameLabel = (a: string, b: string) =>
-  a.trim().toLowerCase().replace(/\s+/g, ' ') === b.trim().toLowerCase().replace(/\s+/g, ' ')
+export const sameLabel = (a: string, b: string) => flat(a) === flat(b)
+
+/**
+ * A label the sheet has annotated: "3x6 (half off)" is a 3x6.
+ *
+ * The girls write the reason for an unusual fee beside the space rather than
+ * in the Note column, and rejecting that row would be pedantry: the space is
+ * named, and the fee is in CHARGE where it always was, not in the bracket.
+ * Only a trailing bracket is dropped, only after the exact label has failed,
+ * and the review screen prints the space it resolved to, so nothing is
+ * matched quietly.
+ */
+export const asideLabel = (a: string, b: string) =>
+  flat(a.replace(/\s*\([^()]*\)\s*$/, '')) === flat(b)
 
 /* ───────────────────────── resolving against the show ───────────────────── */
 
@@ -186,6 +200,7 @@ export function planImport(rows: SheetRow[], look: Lookups): Planned[] {
         detail: 'Already has a booking. Left exactly as it is.' }
     }
     const space = look.spaces.find((s) => sameLabel(s.label, r.spaceLabel))
+      ?? look.spaces.find((s) => asideLabel(r.spaceLabel, s.label))
     if (!space) {
       return { kind: 'problem', line: r.line, shop, email: r.email,
         detail: `No space called "${r.spaceLabel}". Use the label exactly as /admin/show writes it.` }
