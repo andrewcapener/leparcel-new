@@ -122,6 +122,27 @@ export async function GET(req: NextRequest) {
     // here means the next drift is one request away instead of a hunt.
     const { activeShow } = await import('@/db/queries')
     const active = await activeShow()
+    /* The Show's own money settings, beside the deployment's. Which methods a
+       maker is offered lives on the Show and nowhere else visible: it is not
+       on any public page and it was not here, so the only way to answer "can
+       they pay by card?" was to open a real booking's pay link. It sits in
+       the staff-gated half of this route, with the rest of the operator view.
+
+       The three switches below it are the ones that decide whether a maker is
+       written to or asked for anything at all, and all three default off, so
+       "why did nobody get an email" is answered here rather than guessed at. */
+    diag.showSettings = active
+      ? {
+          paymentMethods: active.paymentMethods,
+          paymentWindowHours: active.paymentWindowHours,
+          decisionEmails: active.decisionEmails,
+          paymentEmail: active.paymentEmail,
+          payoutSetup: active.payoutSetup,
+          venmo: active.venmoHandle ? 'set' : 'not set',
+          zelle: active.zelleContact ? 'set' : 'not set',
+          zelleQr: active.zelleName ? 'set' : 'not set',
+        }
+      : null
     diag.show = active
       ? {
           name: active.name,
