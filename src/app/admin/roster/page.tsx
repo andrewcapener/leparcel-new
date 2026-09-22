@@ -465,7 +465,14 @@ export default async function Roster({
         />
         <Stat
           label="Booth fee unpaid" icon="money" value={awaiting.length}
-          note={`${usd(outstanding)} still to come in, ${show.paymentWindowHours} hour window.`
+          /* The fixed date when the show has one, which it does for Fall 26,
+             and the rolling window only as the fallback. The tile read "48
+             hour window" the night all seventy eight were accepted against a
+             deadline of 23 Sept, which is a different answer to the same
+             question on the screen staff work from. */
+          note={`${usd(outstanding)} still to come in, ${
+            show.paymentDueAt ? `due ${fmtDateTime(show.paymentDueAt)}` : `${show.paymentWindowHours} hour window`
+          }.`
             /* Bank transfers in flight are counted separately and never as
                unpaid: those makers already paid and Stripe takes about four
                business days to settle. Chasing them would be wrong. */
@@ -546,8 +553,11 @@ export default async function Roster({
             <span className="c">{overdue.length} to release</span>
           </div>
           <p className="adm-note">
-            {overdue.length === 1 ? 'This maker' : 'These makers'} passed the{' '}
-            {show.paymentWindowHours} hour window without starting a payment. Releasing is always
+            {overdue.length === 1 ? 'This maker' : 'These makers'} passed{' '}
+            {show.paymentDueAt
+              ? fmtDateTime(show.paymentDueAt)
+              : `the ${show.paymentWindowHours} hour window`}{' '}
+            without starting a payment. Releasing is always
             written to the audit log; whether it also emails them depends on{' '}
             <Link href="/admin/show">show settings</Link>, and with decision emails off it sends
             nothing and the note is yours to write. Check <em>their link</em> in the roster first:
