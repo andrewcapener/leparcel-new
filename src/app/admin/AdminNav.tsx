@@ -36,6 +36,7 @@ const MAIN: Array<{
   { href: '/admin', label: 'Dashboard', icon: 'grid' },
   { href: '/admin/jury', label: 'Review queue', icon: 'queue', count: 'undecided', owns: '/admin/applications' },
   { href: '/admin/roster', label: 'Roster', icon: 'roster', count: 'needsPerson' },
+  { href: '/admin/import', label: 'Accept from the sheet', icon: 'queue' },
   { href: '/admin/show', label: 'Show settings', icon: 'settings' },
   { href: '/admin/outbox', label: 'Outbox', icon: 'mail' },
   { href: '/admin/emails', label: 'Emails', icon: 'bell' },
