@@ -6,8 +6,9 @@ import { revalidatePath } from 'next/cache'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
-import { parseAcceptSheet, type Planned } from '@/server/modules/roster/import'
+import { parseAcceptSheet } from '@/server/modules/roster/import'
 import { applyPlan, planFor } from '@/server/modules/roster/apply'
+import { emptyImport, type ImportState } from './state'
 
 /**
  * The two buttons behind /admin/import: look at what would happen, then do it.
@@ -16,34 +17,6 @@ import { applyPlan, planFor } from '@/server/modules/roster/apply'
  * approved and the run that follows cannot describe different things. The
  * only difference between them is whether anything is written.
  */
-
-export type ImportSummary = {
-  willBook: number
-  already: number
-  problems: number
-  totalCents: number
-  overridden: number
-}
-
-export type ImportState = {
-  /** Echoed back so a rejected paste is not lost. */
-  text: string
-  /** Something to say above the results, or ''. */
-  message: string
-  /** Rows that could not even be read: no email, a duplicate, no heading. */
-  problems: { line: number; detail: string }[]
-  plan: Planned[]
-  summary: ImportSummary | null
-  /** Fingerprint of the text this plan was made from. The Accept button
-   *  carries it back, so an edited textarea cannot be run on an old review. */
-  digest: string
-  /** Filled in only after a real run. */
-  done: { booked: number; skipped: number; failed: { shop: string; detail: string }[] } | null
-}
-
-export const emptyImport: ImportState = {
-  text: '', message: '', problems: [], plan: [], summary: null, digest: '', done: null,
-}
 
 /* Whitespace at the ends of lines changes nothing about what will be booked,
    so it must not invalidate a review the girls already read. */

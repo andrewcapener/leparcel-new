@@ -2,7 +2,8 @@
 
 import { useActionState, useState } from 'react'
 import { usd } from '@/lib/money'
-import { runImport, emptyImport, type ImportState } from './actions'
+import { runImport } from './actions'
+import { emptyImport, type ImportState } from './state'
 
 /**
  * Paste the sheet, read what would happen, then do it.
