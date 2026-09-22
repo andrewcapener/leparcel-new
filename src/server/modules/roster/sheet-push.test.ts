@@ -36,9 +36,12 @@ check('and the one after it', colLetter(28) === 'AB')
 check('a full second round', colLetter(52) === 'AZ')
 check('and over again', colLetter(53) === 'BA')
 
+/* Read through String so this is a value comparison rather than a comparison
+   of two const literal types, which the compiler rejects as pointless. The
+   names are what a person looks for on the tab strip, so a rename is a thing
+   to notice. */
 check('the tabs are named for what they hold',
-  LINKS_TAB === 'Pay links' && PAYMENTS_TAB === 'Payments')
-check('the two tabs are not the same tab', LINKS_TAB !== PAYMENTS_TAB)
+  String(LINKS_TAB) === 'Pay links' && String(PAYMENTS_TAB) === 'Payments')
 
 if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('sheet push: the id out of any link somebody pastes, and a column letter past Z')
