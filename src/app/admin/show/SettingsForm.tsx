@@ -171,6 +171,13 @@ export function SettingsForm({ show }: { show: Show }) {
           >
             <input className="inp num" id="paymentWindowHours" name="paymentWindowHours" type="number" min="1" max="240" required {...keep('paymentWindowHours', String(show.paymentWindowHours))} />
           </Field>
+          <Field
+            name="paymentDueOn" label="Booth fees due by" error={e.paymentDueOn}
+            hint={'One date for every maker, however long the accepting takes. Stored as 11:59pm Pacific on the day you pick. Leave it empty and each maker instead gets the window above counted from the moment they were accepted, which means a maker accepted on Monday night and emailed on Tuesday morning has already lost most of it. The window stays on as a floor either way: nobody accepted close to this date gets less than it.'}
+          >
+            <input className="inp" id="paymentDueOn" name="paymentDueOn" type="date"
+              {...keep('paymentDueOn', show.paymentDueAt ? show.paymentDueAt.slice(0, 10) : '')} />
+          </Field>
         </div>
         <div className="adm-row2">
           <Field

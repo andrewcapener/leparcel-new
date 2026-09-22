@@ -60,6 +60,9 @@ export const shows = pgTable('shows', {
 
   // money is integer cents, always
   commissionBps: integer('commission_bps').notNull().default(2000),   // 20.00%
+  /* One deadline for every maker, whenever they were accepted. Null keeps the
+     old rolling behaviour. paymentWindowHours stays on as the floor. */
+  paymentDueAt: text('payment_due_at'),
   paymentWindowHours: integer('payment_window_hours').notNull().default(48),
   /* How an accepted maker may pay. Policy, so it lives here and is edited at
      /admin/show rather than hardcoded (rule 6). Under `bank_only` the payment

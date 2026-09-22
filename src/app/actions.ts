@@ -43,6 +43,7 @@ import {
 import { slotOptions } from '@/server/modules/compliance/checklist'
 import { boothFeeHtml, boothFeeText } from '@/server/modules/email/booth-fee'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
+import { paymentDueAt } from '@/server/modules/payments/deadline'
 import { sendLead, newEventId } from '@/server/modules/meta/capi'
 
 /* ═══════════════════════ helpers ═══════════════════════ */
@@ -932,7 +933,15 @@ export async function decide(fd: FormData): Promise<void> {
         const dropped = wanted.filter((c) => !granted.some((a) => a.code === c))
         const addonsCents = granted.reduce((sum, a) => sum + a.priceCents, 0)
 
-        const due = new Date(Date.now() + show.paymentWindowHours * 3600_000).toISOString()
+        /* The later of the Show's fixed date and this maker's own window, so
+           accepting eighty people over an evening gives them all the same
+           deadline and the last one off the waitlist is still treated fairly.
+           See payments/deadline.ts. */
+        const due = paymentDueAt({
+          fixedAt: show.paymentDueAt,
+          windowHours: show.paymentWindowHours,
+          acceptedAtIso: new Date().toISOString(),
+        })
         const bookingId = randomUUID()
         const payToken = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '')
         await db.insert(bookings).values({
@@ -1344,6 +1353,7 @@ const ShowSettingsSchema = z.object({
   inventoryDueAt: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/, 'Use a date or leave it empty').default(''),
   rosterAnnouncedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Required'),
   commissionPct: z.coerce.number().min(0, 'Not negative').max(50, 'That is over half'),
+  paymentDueOn: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/, 'Use a date or leave it empty').default(''),
   paymentWindowHours: z.coerce.number().int('Whole hours').min(1).max(240, 'Ten days at most'),
   paymentMethods: z.enum(['card_and_bank', 'bank_only', 'card_only']),
   indoorCapacity: z.coerce.number().int().min(0),
@@ -1406,6 +1416,10 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
     rosterAnnouncedOn: laWallToIso(d.rosterAnnouncedOn),
     commissionBps: Math.round(d.commissionPct * 100),
     paymentWindowHours: d.paymentWindowHours,
+    /* Stored as 11:59pm Pacific on the day chosen, the same convention the
+       application deadline uses, so "due by 9/23" means the whole of the
+       23rd rather than midnight at its start. */
+    paymentDueAt: d.paymentDueOn ? laWallToIso(`${d.paymentDueOn}T23:59`) : null,
     paymentMethods: d.paymentMethods,
     indoorCapacity: d.indoorCapacity,
     outdoorCapacity: d.outdoorCapacity,

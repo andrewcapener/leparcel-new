@@ -134,6 +134,7 @@ export async function GET(req: NextRequest) {
     diag.showSettings = active
       ? {
           paymentMethods: active.paymentMethods,
+          paymentDueAt: active.paymentDueAt ?? '(rolling from acceptance)',
           paymentWindowHours: active.paymentWindowHours,
           decisionEmails: active.decisionEmails,
           paymentEmail: active.paymentEmail,
