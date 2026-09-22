@@ -1,0 +1,79 @@
+import { db } from '@/db'
+import { activeShow } from '@/db/queries'
+import { serviceAccount } from '@/server/modules/sheets/google-auth'
+import { LINKS_TAB, PAYMENTS_TAB } from '@/server/modules/roster/sheet-push'
+import { PageHead } from '../ui'
+import { PushForm } from './PushForm'
+
+export const dynamic = 'force-dynamic'
+/* Two tabs, a clear and a write each, against Google. Comfortably inside a
+   minute, but not inside the platform's default. */
+export const maxDuration = 60
+
+/**
+ * Put the payment tabs in the team's own sheet.
+ *
+ * The girls work from a Google Sheet, not from this admin, so the roster has
+ * to reach them where they already are. This writes two tabs into a sheet
+ * they already have open: the pay links to mail merge from, and the payment
+ * tracking to watch.
+ *
+ * The one step nobody guesses is the sharing. A service account is a user
+ * with an email address, and a sheet it has never been shared with answers
+ * 403 with a message about permissions that sends people to IAM. So the
+ * address is on this page, in front of the button that needs it.
+ */
+export default async function SheetPush() {
+  const show = await activeShow()
+  if (!show) throw new Error('No active show. Run `npm run db:seed`.')
+
+  const sa = serviceAccount()
+  const configured = process.env.PAYMENT_SHEET_URL?.trim()
+    ?? (process.env.SHEETS_SPREADSHEET_ID?.trim()
+      ? `https://docs.google.com/spreadsheets/d/${process.env.SHEETS_SPREADSHEET_ID.trim()}/edit`
+      : '')
+
+  return (
+    <div className="adm-narrow">
+      <PageHead
+        title="Send to Google Sheet"
+        sub={`${show.numeral} · ${show.name} · two tabs, replaced each time`}
+      />
+
+      <p className="adm-note">
+        Writes <strong>{LINKS_TAB}</strong>, every accepted maker with their own payment link, and{' '}
+        <strong>{PAYMENTS_TAB}</strong>, the same makers with what they owe and what has arrived.
+        Both are replaced on every send, so they are never out of date and never doubled up.
+        Anything typed in a column to the right of either table is left alone.
+      </p>
+
+      {sa ? (
+        <>
+          <div className="adm-sec"><h2>Before the first send</h2></div>
+          <p className="adm-note">
+            Open the sheet, press <strong>Share</strong>, and give this address the{' '}
+            <strong>Editor</strong> role. It is the account this site already uses to write
+            applications to a sheet, and it is the one step that is not obvious: a sheet it has
+            never been shared with answers with a permissions error that reads like a broken key.
+          </p>
+          <p className="adm-code" style={{ userSelect: 'all' }}>{sa.email}</p>
+        </>
+      ) : (
+        <p className="adm-note">
+          <strong>No Google service account on this deployment.</strong> Nothing can be written
+          to a sheet until GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY are set. Until
+          then, the two downloads in the sidebar are the same data as files.
+        </p>
+      )}
+
+      <div className="adm-sec"><h2>Send</h2></div>
+      <PushForm defaultLink={configured} />
+
+      <p className="adm-note">
+        A pay link lets whoever holds it open that maker&rsquo;s invoice and pay it. That is what
+        makes it worth emailing, and what makes this sheet worth keeping to the people sending
+        the emails.
+      </p>
+    </div>
+  )
+}
