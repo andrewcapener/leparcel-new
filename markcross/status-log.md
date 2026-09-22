@@ -113,3 +113,17 @@ source/medium, first-touch channel, session channel). Findings:
 - Brand Shopping $100/day budget + tROAS floors: CONFIRMED correct by the
   same lens (0.80x). Sep 3 BC-demotion bidding-signal change may also
   explain part of the era's Paid Shopping zero — watch, don't revert.
+
+## 2026-09-22 pt 2 (bidding signal restored — Andrew-approved)
+
+- **Begin Checkout re-promoted to primary** (verified: primaryForGoal=true)
+  **at honest fixed value $55** (alwaysUseDefaultValue) — calibrated from
+  118 BCs → 5 purchases / $6,313 last 30d (~$53/BC expected). Old tag
+  values averaged $3,175/BC; the phantom stays dead, the signal returns.
+- **Dashboard/report Google conversions now Purchase-only** (split GAQL
+  queries; verified live: BC no longer pollutes client-facing numbers).
+- Rationale: era showed Shopping conversion collapse post-demotion =
+  smart-bidding signal starvation (organic/email/direct all improved in
+  the same window; Shopping zeroed even during promo week).
+- Watch items: BC accrual at $55/fire (check ~Sep 29), Shopping delivery
+  recovery over 7–14 days, tROAS held at 2.5/1.5 through the transition.
