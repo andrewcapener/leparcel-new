@@ -89,3 +89,27 @@ increase performance." Executed via API, both verified live:
   retargeting budget restore (manual UI per caution protocol; freeze lifts
   ~Oct 1 with prospecting rebuild planned: ~$150/day, CAC ceiling ~$450).
 - Google run-rate now ~$195/day of intended spend (from ~$430 at takeover).
+
+## 2026-09-22 (attribution cross-check → brand search pause REVERSED)
+
+Andrew challenged the brand-search pause ("what if it's just not reporting
+the sales?"). Built GA4 multi-lens attribution read (ga4_attrib: session
+source/medium, first-touch channel, session channel). Findings:
+
+- **90d truth: google/cpc last-click = 31 txn / $42,271 on $42,074 spend
+  (1.00x blended).** Not zero — my era-based "produces nothing" was a
+  19-day small-sample artifact from the September trough.
+- **Split flips the verdict per campaign:** Branding Search 90d ≈ $13,225
+  last-click rev on $5,894 spend = **2.24x, ABOVE the 1.33 breakeven** —
+  the one profitable Google campaign. Paid Shopping 90d = $29,046 on
+  ~$36,180 = **0.80x, below breakeven** — shopping cuts stand.
+- A $2,910 google/cpc order landed Sep 21 (the pause day) — first-touch
+  AND last-click paid search.
+- **Action: 1012389985 re-enabled via API, verified ENABLED.** Total
+  paused time ~24h.
+- Lesson captured: no kill decisions on sub-$100/day campaigns from a
+  sub-30-day window at this order volume; 90d multi-lens GA4 check is now
+  mandatory before any campaign pause.
+- Brand Shopping $100/day budget + tROAS floors: CONFIRMED correct by the
+  same lens (0.80x). Sep 3 BC-demotion bidding-signal change may also
+  explain part of the era's Paid Shopping zero — watch, don't revert.
