@@ -7,6 +7,17 @@ import { PageHead } from '../ui'
 import { ImportForm } from './ImportForm'
 
 export const dynamic = 'force-dynamic'
+/* Seventy eight makers are booked one at a time, because the Mermade ID is a
+   running count and two inserted at once would claim the same number. That is
+   several hundred sequential round trips to Supabase, which is comfortably
+   past the platform's default function timeout: the first real run against
+   the production database hit it. Sixty seconds is the ceiling on every plan,
+   so it is the safe number to ask for.
+
+   The run survives being cut off either way, since each maker is committed on
+   its own and a maker who already has a booking is skipped. This only saves
+   somebody having to press the button twice. */
+export const maxDuration = 60
 
 /**
  * Accepting the whole roster from the sheet the fees were agreed in.
