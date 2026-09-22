@@ -123,8 +123,8 @@ export default async function Account({
 
   const notice = sp.paid === '1'
     ? ('paid' as const)
-    : sp.pay === 'unavailable' || sp.pay === 'missing' || sp.pay === 'failed'
-      ? (sp.pay as 'unavailable' | 'missing' | 'failed')
+    : sp.pay === 'unavailable' || sp.pay === 'missing' || sp.pay === 'failed' || sp.pay === 'released'
+      ? (sp.pay as 'unavailable' | 'missing' | 'failed' | 'released')
       : undefined
 
   /* What we need from them, and where each thing stands. The rule for who

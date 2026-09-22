@@ -23,6 +23,7 @@ import { bookings, bookingAddons, addOns, spaceTypes, stripeEvents, auditLog, ve
 import { stripe, webhookSecret } from './config'
 import { invoiceFor, paymentMatches, bookingPaymentKey, paymentDoor, type Invoice } from './invoice'
 import { stripeMethods, type PaymentMethods } from './methods'
+import { canStartPayment } from './booking-status'
 import { viaFromEvent } from './paid-via'
 import { recordAccount } from './connect'
 import { siteUrl } from '@/lib/site-url'
@@ -113,6 +114,9 @@ export type CheckoutResult =
   | { outcome: 'unconfigured' }
   | { outcome: 'missing' }
   | { outcome: 'already_paid' }
+  /** The space was released or cancelled. The link still exists; the booking
+   *  does not. */
+  | { outcome: 'released' }
   | { outcome: 'ready'; url: string }
   | { outcome: 'failed'; detail: string }
 
@@ -151,6 +155,9 @@ export async function startBoothPayment(
   if (!found) return { outcome: 'missing' }
   const { booking, invoice } = found
   if (booking.status === 'confirmed') return { outcome: 'already_paid' }
+  /* Anything else that is not waiting for money: a released space, or a
+     transfer already in flight that a second charge would double. */
+  if (!canStartPayment(booking.status)) return { outcome: 'released' }
 
   /* An existing session is reused while it is still open. Stripe expires a
      session after 24 hours, and the payment window is 48, so a maker who

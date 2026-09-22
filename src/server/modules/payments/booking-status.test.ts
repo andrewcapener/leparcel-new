@@ -1,4 +1,6 @@
-import { isPaid, holdsSpace, needsChasing, isForfeitable } from './booking-status'
+import {
+  isPaid, holdsSpace, needsChasing, isForfeitable, canStartPayment,
+} from './booking-status'
 
 let failures = 0
 const check = (name: string, ok: boolean) => {
@@ -51,6 +53,24 @@ check('an empty claim is not a claim',
    the same way it did. */
 check('saying so does not make a booking paid', !isPaid('awaiting_payment'))
 check('and it still counts as holding a space', holdsSpace('awaiting_payment'))
+
+
+/* Who may still be charged. The pay link is a capability that lives in an
+   inbox forever, so this is the only thing standing between a released space
+   and a payment against it. */
+check('a booking waiting for money can be paid', canStartPayment('awaiting_payment'))
+check('one already paid cannot be paid again', !canStartPayment('confirmed'))
+/* A second charge on a transfer in flight would take the fee twice. */
+check('a transfer in flight cannot be charged again', !canStartPayment('payment_processing'))
+/* The two that matter: these no longer hold a space at all, and money against
+   one is a refund, an apology and a space promised to somebody else. */
+check('a forfeited space cannot be paid for', !canStartPayment('forfeited'))
+check('a released space cannot be paid for', !canStartPayment('cancelled'))
+check('and nor can nonsense', !canStartPayment('') && !canStartPayment('banana'))
+/* Payable is a strict subset of holding a space, never the other way round. */
+for (const st of ['awaiting_payment', 'payment_processing', 'confirmed', 'forfeited', 'cancelled']) {
+  if (canStartPayment(st)) check(`${st} holds a space if it can be paid`, holdsSpace(st))
+}
 
 if (failures) {
   console.error(`\n${failures} check(s) failed.`)

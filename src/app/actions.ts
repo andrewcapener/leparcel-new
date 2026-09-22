@@ -1357,6 +1357,57 @@ export async function setBoothPrice(fd: FormData): Promise<void> {
   redirect('/admin/roster?price=set')
 }
 
+/**
+ * Release one maker's space, by hand.
+ *
+ * Elise, 22 Sept: a maker was accepted who was on her no list, and another
+ * should have that space. Nothing in the admin could undo a booking. The
+ * status existed in the schema and only the bulk overdue sweep could ever set
+ * one, which meant a wrong acceptance could be corrected in the database or
+ * not at all.
+ *
+ * Refuses anything that has been paid or is clearing. Money that has moved is
+ * a refund and a conversation, not a status flip, and a cancelled booking
+ * holding a real payment would drop that money out of every total on the
+ * roster while it sat in Stripe.
+ *
+ * The reason is required and goes in the audit log. A space taken back from
+ * somebody who was told they were in is exactly the decision a person has to
+ * be able to explain in November.
+ *
+ * Sends nothing. Whoever made this call writes to the maker themselves.
+ */
+export async function cancelBooking(fd: FormData): Promise<void> {
+  const bookingId = String(fd.get('bookingId') ?? '')
+  const reason = String(fd.get('reason') ?? '').trim()
+  if (reason.length < 3) redirect('/admin/roster?release=why')
+
+  const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
+  if (!b) redirect('/admin/roster?release=missing')
+  if (b.status === 'confirmed' || b.status === 'payment_processing') {
+    redirect('/admin/roster?release=paid')
+  }
+  if (b.status === 'cancelled' || b.status === 'forfeited') {
+    redirect('/admin/roster?release=already')
+  }
+
+  await db.update(bookings).set({ status: 'cancelled' }).where(eq(bookings.id, bookingId))
+
+  /* The pay link lives in an inbox forever. Killing any half finished Stripe
+     session stops the obvious race: a maker part way through checkout while
+     somebody releases the space underneath them. `canStartPayment` refuses a
+     fresh one from here on. */
+  await dropLiveCheckout(db, bookingId)
+
+  await log('booking', bookingId, 'released_by_staff',
+    { status: b.status }, { status: 'cancelled' },
+    reason, `staff:${await staffName()}`)
+
+  revalidatePath('/admin/roster')
+  revalidatePath('/admin')
+  redirect('/admin/roster?release=done')
+}
+
 /** Saves jury scores without changing status. */
 export async function saveScores(fd: FormData): Promise<void> {
   const appId = String(fd.get('applicationId'))
@@ -1660,6 +1711,8 @@ export async function payBoothFee(): Promise<void> {
       redirect('/account?pay=unavailable')
     case 'missing':
       redirect('/account?pay=missing')
+    case 'released':
+      redirect('/account?pay=released')
     default:
       console.error(`[stripe] checkout failed for booking ${booking.id}: ${result.detail}`)
       redirect('/account?pay=failed')
@@ -1913,6 +1966,8 @@ export async function payByToken(fd: FormData): Promise<void> {
       redirect(`${back}?pay=unavailable`)
     case 'missing':
       redirect(`${back}?pay=missing`)
+    case 'released':
+      redirect(`${back}?pay=released`)
     default:
       console.error(`[stripe] token checkout failed for booking ${found.id}: ${result.detail}`)
       redirect(`${back}?pay=failed`)

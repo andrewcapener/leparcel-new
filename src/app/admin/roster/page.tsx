@@ -3,7 +3,9 @@ import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
-import { markPaid, forfeitOverdueBookings, markLinkSent, setBoothPrice } from '@/app/actions'
+import {
+  markPaid, forfeitOverdueBookings, markLinkSent, setBoothPrice, cancelBooking,
+} from '@/app/actions'
 import { PayLink } from './PayLink'
 import { siteUrl } from '@/lib/site-url'
 import { usd, splitCommission, bpsLabel } from '@/lib/money'
@@ -95,7 +97,7 @@ function MarkPaid({
 export default async function Roster({
   searchParams,
 }: {
-  searchParams: Promise<{ price?: string }>
+  searchParams: Promise<{ price?: string; release?: string }>
 }) {
   const sp = await searchParams
   const show = await activeShow()
@@ -426,8 +428,31 @@ export default async function Roster({
               booking that is not awaiting_payment, so the button was already
               doing nothing there, silently, next to a maker who had paid. */}
           {!paid && !inFlight && (
-            <MarkPaid slot="row" bookingId={booking.id} shopName={vendor.shopName}
-              said={booking.saidSentVia} />
+            <>
+              <MarkPaid slot="row" bookingId={booking.id} shopName={vendor.shopName}
+                said={booking.saidSentVia} />
+              {/* Behind a disclosure, because taking a space back from
+                  somebody who was told they were in is not a thing to do with
+                  one stray click next to Mark paid. The reason is required
+                  and goes in the audit log. */}
+              <details className="adm-mask" style={{ marginTop: 8 }}>
+                <summary>Release</summary>
+                <form action={cancelBooking} className="adm-paid" style={{ marginTop: 6 }}>
+                  <input type="hidden" name="bookingId" value={booking.id} />
+                  <label className="adm-sr" htmlFor={`why-${booking.id}`}>
+                    Why {vendor.shopName} is losing this space
+                  </label>
+                  <input
+                    className="inp" id={`why-${booking.id}`} name="reason" required
+                    minLength={3} maxLength={200} placeholder="Why?"
+                  />
+                  <button className="adm-btn-q" type="submit">
+                    Release
+                    <span className="adm-sr"> {vendor.shopName}&rsquo;s space</span>
+                  </button>
+                </form>
+              </details>
+            </>
           )}
         </td>
       </tr>
@@ -440,6 +465,16 @@ export default async function Roster({
         title="Roster"
         sub={`${rows.length} ${rows.length === 1 ? 'space held' : 'spaces held'} for ${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${show.venueName}`}
       />
+
+      {sp.release && (
+        <p className="adm-note" role="status">
+          {sp.release === 'done' ? 'Space released. The maker no longer holds it, their pay link stops taking money, and the reason is in the audit log. Nothing was sent to them: that note is yours to write.'
+            : sp.release === 'paid' ? 'That booth fee is already paid or clearing, so the booking was left alone. Releasing it would drop real money out of every total on this page. Refund it in Stripe first.'
+            : sp.release === 'already' ? 'That space was already released. Nothing was changed.'
+            : sp.release === 'why' ? 'Say why, in a few words. A space taken back from somebody who was told they were in is a decision that has to be explainable in November.'
+            : 'No such booking. Nothing was changed.'}
+        </p>
+      )}
 
       {sp.price && (
         <p className="adm-note" role="status">

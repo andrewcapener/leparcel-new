@@ -79,8 +79,8 @@ export default async function PayPage({
 
   const notice = sp.paid === '1'
     ? ('paid' as const)
-    : sp.pay === 'unavailable' || sp.pay === 'missing' || sp.pay === 'failed'
-      ? (sp.pay as 'unavailable' | 'missing' | 'failed')
+    : sp.pay === 'unavailable' || sp.pay === 'missing' || sp.pay === 'failed' || sp.pay === 'released'
+      ? (sp.pay as 'unavailable' | 'missing' | 'failed' | 'released')
       : undefined
 
   /* ── one more thing, at the only moment it is free ──

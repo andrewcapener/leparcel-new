@@ -37,6 +37,25 @@ export function holdsSpace(status: string): boolean {
 }
 
 /**
+ * Can this booking still be paid?
+ *
+ * Only a booking that is waiting for money. Every other state is a no for its
+ * own reason: `confirmed` has already been paid, `payment_processing` has a
+ * transfer in flight and a second charge would take the fee twice, and
+ * `forfeited` or `cancelled` no longer holds a space at all.
+ *
+ * That last pair is why this exists. The pay link is a capability, it lives
+ * in somebody's inbox forever, and the only guard in front of it refused
+ * `confirmed` and nothing else, so a maker whose space had been released
+ * could still open an old email and pay for it. Money against a released
+ * booking is a refund, an apology, and a space that was promised to somebody
+ * else.
+ */
+export function canStartPayment(status: string): boolean {
+  return status === 'awaiting_payment'
+}
+
+/**
  * Somebody needs to chase this maker.
  *
  * Deliberately NOT `payment_processing`. Chasing a maker whose money is

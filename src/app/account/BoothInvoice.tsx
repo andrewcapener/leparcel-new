@@ -40,7 +40,7 @@ export function BoothInvoice({
   /** False when Stripe has no key on this deployment. */
   payable: boolean
   testMode: boolean
-  notice?: 'paid' | 'unavailable' | 'missing' | 'failed'
+  notice?: 'paid' | 'unavailable' | 'missing' | 'failed' | 'released'
   /** The Show's policy. Decides both what Stripe offers and, because ACH does
    *  not settle inside the window, what the deadline is asking for. */
   methods: PaymentMethods
@@ -201,6 +201,17 @@ export function BoothInvoice({
               {notice === 'missing' && (
                 <p className="rte"><strong>
                   We could not find the space to charge for. Write to us and we will sort it.
+                </strong></p>
+              )}
+
+              {/* The link outlives the booking: it sits in an inbox forever,
+                  and a space can be released after it was sent. Say so plainly
+                  rather than showing a payment failure, which would read as
+                  their card being declined. */}
+              {notice === 'released' && (
+                <p className="rte"><strong>
+                  This space is no longer held, so there is nothing to pay. If that is a
+                  surprise, write to us and we will explain what happened.
                 </strong></p>
               )}
 
