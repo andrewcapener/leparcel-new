@@ -41,7 +41,7 @@ const row: PaymentRow = {
   code: 'MM07', shop: 'Trophy Goods', contact: 'Shea Mullen', email: 'shea@crabandcleek.com',
   track: 'indoor', space: '3x8', fee: '340.00',
   payLink: 'https://mermademarket.com/pay/abc', due: 'Sep 23, 11:59 PM',
-  status: 'Awaiting', paidHow: '', paidAt: '', linkSent: '', theirMove: 'Nothing back yet',
+  status: 'Not paid', paidHow: '', paidAt: '', linkSent: '', theirMove: 'Nothing back yet',
 }
 check('every link column has a value', linkValues(row).length === LINK_COLUMNS.length)
 check('every payment column has a value', paymentValues(row).length === PAYMENT_COLUMNS.length)

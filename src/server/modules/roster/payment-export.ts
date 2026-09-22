@@ -44,12 +44,22 @@ export type PaymentRow = {
   theirMove: string
 }
 
-/** Awaiting, clearing, paid, released: the words the roster uses. */
+/**
+ * Not paid, clearing, paid, released: the same four words the roster uses.
+ *
+ * "Awaiting" was read as "paid, still processing" by the person who works
+ * this list every morning, which is the opposite of what it means. These
+ * files land in the team's own sheet, so they have to say it the same way
+ * the screen does, and say it in words that cannot be read backwards.
+ *
+ * `cancelled` used to fall through to the same word as unpaid, which put a
+ * released maker on a chase list.
+ */
 function statusWords(status: string): string {
   if (status === 'confirmed') return 'Paid'
   if (status === 'payment_processing') return 'Clearing'
-  if (status === 'forfeited') return 'Released'
-  return 'Awaiting'
+  if (status === 'forfeited' || status === 'cancelled') return 'Released'
+  return 'Not paid'
 }
 
 const MOVE: Record<string, string> = {

@@ -241,6 +241,10 @@ export default async function Roster({
      where you last saw it. Insurance used to sit between them and no longer
      ranks at all: nobody is chased for it. */
   const rank = (r: typeof rows[number]) => {
+    /* Released and forfeited first, out of the way: they hold no space, so
+       ranking them on paperwork or payment would file them under "clear for
+       load-in", which is where a released maker sat until this was fixed. */
+    if (!holdsSpace(r.booking.status)) return 3
     if (!documented(r.app)) return 0
     if (needsChasing(r.booking.status)) return 1
     return 2
@@ -252,6 +256,7 @@ export default async function Roster({
      certificate of insurance sat between unpaid and clear. */
   const needsAction = ordered.filter((r) => rank(r) < 2)
   const clear = ordered.filter((r) => rank(r) === 2)
+  const gone = ordered.filter((r) => rank(r) === 3)
 
   const row = ({ booking, vendor, app, space }: typeof rows[number]) => {
     const paid = booking.status === 'confirmed'
@@ -260,6 +265,9 @@ export default async function Roster({
        business days. The cell used to read Awaiting with a warning mark on
        it, which sent somebody chasing a maker who had already paid. */
     const inFlight = booking.status === 'payment_processing'
+    /* Released or forfeited: this row holds no space at all, so it is not
+       "clear" for anything and nobody should be chasing it either. */
+    const gone = !holdsSpace(booking.status)
     const permit = app.sellerPermit.trim()
     return (
       <tr key={booking.id}>
@@ -310,8 +318,12 @@ export default async function Roster({
 
         <td className="c-2">
           {/* Three states, in words, never by colour alone (WCAG 2.2 AA). */}
-          <span className="adm-st" data-warn={paid || inFlight ? undefined : '1'}>
-            {paid ? 'Paid' : inFlight ? 'Clearing' : 'Awaiting'}
+          {/* "Awaiting" read as "paid, still processing" to the person who
+              works this screen every day, which is the opposite of what it
+              means and would stop her chasing the only people who need it.
+              "Not paid" cannot be read the other way round. */}
+          <span className="adm-st" data-warn={paid || inFlight || gone ? undefined : '1'}>
+            {gone ? 'Released' : paid ? 'Paid' : inFlight ? 'Clearing' : 'Not paid'}
           </span>
           <span className="adm-sub2">
             {paid
@@ -755,10 +767,32 @@ export default async function Roster({
               {clear.map(row)}
             </tbody>
           )}
+
+          {gone.length > 0 && (
+            <tbody>
+              <tr className="grp">
+                <th scope="colgroup" colSpan={COLS}>
+                  No longer holding a space <span className="c">{gone.length}</span>
+                </th>
+              </tr>
+              {gone.map(row)}
+            </tbody>
+          )}
         </table>
       )}
 
       <div className="adm-foot">
+        {/* Hillary asked on payment morning whether "awaiting" meant they had
+            paid and it was still processing. It meant the opposite, and a
+            person who believes that stops chasing the only rows that need
+            it. The word changed; this says all four so nobody has to ask. */}
+        <p className="adm-note">
+          <strong>The fee column.</strong> <em>Not paid</em> means no money and nothing started:
+          these are the ones to chase. <em>Clearing</em> means they paid by bank transfer and
+          Stripe is settling it, about four business days, so they have done everything asked and
+          should not be chased. <em>Paid</em> means it is in. <em>Released</em> means the space
+          went back into the pool and they are not coming.
+        </p>
         <p className="adm-note">
           <strong>Blocks load-in</strong> means no seller&rsquo;s permit number and no CDTFA-410-D
           on file. Publication 111 puts the record-keeping duty on the market, not the maker: up to
