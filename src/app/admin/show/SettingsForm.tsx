@@ -165,18 +165,22 @@ export function SettingsForm({ show }: { show: Show }) {
           >
             <input className="inp num" id="commissionPct" name="commissionPct" type="number" step="0.25" min="0" max="50" required {...keep('commissionPct', String(show.commissionBps / 100))} />
           </Field>
-          <Field
-            name="paymentWindowHours" label="Payment window (hours)" error={e.paymentWindowHours}
-            hint="How long an accepted maker has to pay before the space returns to the pool."
-          >
-            <input className="inp num" id="paymentWindowHours" name="paymentWindowHours" type="number" min="1" max="240" required {...keep('paymentWindowHours', String(show.paymentWindowHours))} />
-          </Field>
+          {/* The deadline everybody is actually given, so it reads before
+              the fallback rather than under it. Drew looked for it on 21
+              Sept, found the hours box first, and reported that the only
+              choices were 48 hours or a time. */}
           <Field
             name="paymentDueOn" label="Booth fees due by" error={e.paymentDueOn}
-            hint={'One date for every maker, however long the accepting takes. Stored as 11:59pm Pacific on the day you pick. Leave it empty and each maker instead gets the window above counted from the moment they were accepted, which means a maker accepted on Monday night and emailed on Tuesday morning has already lost most of it. The window stays on as a floor either way: nobody accepted close to this date gets less than it.'}
+            hint="One date for every maker, at 11:59pm Pacific. Pick a date and this is the deadline."
           >
             <input className="inp" id="paymentDueOn" name="paymentDueOn" type="date"
               {...keep('paymentDueOn', show.paymentDueAt ? show.paymentDueAt.slice(0, 10) : '')} />
+          </Field>
+          <Field
+            name="paymentWindowHours" label="Least time anyone gets (hours)" error={e.paymentWindowHours}
+            hint="A floor under the date above, so a maker accepted the night before it still gets this long. With no date set, this is the whole deadline, counted from each acceptance."
+          >
+            <input className="inp num" id="paymentWindowHours" name="paymentWindowHours" type="number" min="1" max="240" required {...keep('paymentWindowHours', String(show.paymentWindowHours))} />
           </Field>
         </div>
         <div className="adm-row2">

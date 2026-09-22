@@ -90,10 +90,19 @@ export default async function ShowSettings() {
           label="Commission" icon="money" value={bpsLabel(show.commissionBps)}
           note="Indoor consignment. Snapshotted onto each booking at acceptance."
         />
-        <Stat
-          label="Payment window" icon="clock" value={show.paymentWindowHours} unit="hours"
-          note="From acceptance until the space returns to the pool."
-        />
+        {/* The date if there is one, because that is the answer to "when are
+            booth fees due" and the hours are only the floor under it. */}
+        {show.paymentDueAt ? (
+          <Stat
+            label="Booth fees due" icon="clock" text value={fmtDateTime(show.paymentDueAt)}
+            note={`The same deadline for everybody, with no maker given less than ${show.paymentWindowHours} hours.`}
+          />
+        ) : (
+          <Stat
+            label="Payment window" icon="clock" value={show.paymentWindowHours} unit="hours"
+            note="From each acceptance until the space returns to the pool. No fixed date is set."
+          />
+        )}
         <Stat
           label="Capacity" icon="tent" value={show.indoorCapacity + show.outdoorCapacity} unit="spaces"
           note={`${show.indoorCapacity} indoor, ${show.outdoorCapacity} outdoor.`}
