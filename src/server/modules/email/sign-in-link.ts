@@ -24,10 +24,22 @@ export function signInLinkHtml({
     webFonts: true,
     eyebrow: shopName ? `Sign in · ${shopName}` : 'Sign in',
     heading: 'Your way in',
-    sub: 'One tap, no password, nothing to remember.',
+    /* The sub and the first paragraph used to say the same thing twice, in
+       almost the same words: "One tap, no password, nothing to remember" then
+       "Tap the button and you are in. No password, and nothing to remember."
+       Read back to back that is not reassuring, it is confusing, because a
+       reader assumes the second sentence must be adding something and goes
+       looking for what. Drew, 22 Sept: "the magic link to sign in was a bit
+       confusing".
+
+       So the sub keeps the promise and the paragraph now does the other job a
+       sign-in email should do: say what is on the other side of the button,
+       for somebody who asked for this link a few minutes ago and has already
+       half forgotten why. */
+    sub: 'One tap, and no password to remember.',
     inner:
       paragraphs([
-        'Tap the button and you are in. No password, and nothing to remember.',
+        'It opens your maker account, where your booth fee, anything we still need from you, and everything you sent us all live.',
       ])
       + button({ href: url, label: 'Sign in to Mermade' })
       + paragraphs([

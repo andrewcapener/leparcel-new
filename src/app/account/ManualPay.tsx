@@ -1,4 +1,3 @@
-import { Card, CardNote } from './Shell'
 import type { ManualOption } from '@/server/modules/payments/manual'
 
 /**
@@ -21,12 +20,10 @@ import type { ManualOption } from '@/server/modules/payments/manual'
  * to go hunting for.
  */
 export function ManualPay({
-  options, vendorCode, dueWords, codes,
+  options, vendorCode, codes,
 }: {
   options: ManualOption[]
   vendorCode: string
-  /** What the deadline means here, in the words the rest of the page uses. */
-  dueWords: string
   /** A scannable code per method, for somebody reading this on a laptop.
    *  Hidden on a phone, where you cannot scan your own screen. */
   codes?: Record<string, string | null>
@@ -34,16 +31,9 @@ export function ManualPay({
   if (options.length === 0) return null
 
   return (
-    <Card title="Or pay by Venmo or Zelle" id="other-ways" wide>
-      <p className="mk-card__lede">
-        If one of these is easier, they are welcome. Send the exact total, and
-        put <strong>{vendorCode}</strong> in the note so we can match it to your
-        space. {dueWords}
-      </p>
-
-      <ul className="mk-pays">
+    <>
         {options.map((o) => (
-          <li className="mk-pay" key={o.kind}>
+        <li className="mk-pay" key={o.kind}>
             {o.kind === 'venmo' ? (
               <>
                 <p className="mk-pay__who">Venmo <strong>{o.handle}</strong></p>
@@ -86,14 +76,6 @@ export function ManualPay({
             <p className="mk-pay__note">Note: <code>{o.note}</code></p>
           </li>
         ))}
-      </ul>
-
-      <CardNote>
-        These two are checked by a person rather than confirmed automatically,
-        so your page may still say unpaid for a day after you send it. That is
-        fine and your space is held. We only ever show these here, on your own
-        link. If you get an email asking you to Venmo somebody, it is not us.
-      </CardNote>
-    </Card>
+    </>
   )
 }

@@ -17,7 +17,6 @@ import { Checklist } from './Checklist'
 import { WhatYouTold, YourDetails } from './YourApplication'
 import { CallTimes } from './CallTimes'
 import { PayoutSetup } from './PayoutSetup'
-import { ManualPay } from './ManualPay'
 import { manualOptions, qrDataUri } from '@/server/modules/payments/manual'
 import { checklistFor, clearForLoadIn, slotOptions } from '@/server/modules/compliance/checklist'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
@@ -264,14 +263,6 @@ export default async function Account({
               </Card>
             )}
 
-            {billing && billing.booking.status === 'awaiting_payment' && (
-              <ManualPay
-                options={manualHere}
-                vendorCode={billing.booking.vendorCode}
-                codes={codes}
-                dueWords={`Send it by ${fmtDate(billing.booking.paymentDueAt)} and your space is held.`}
-              />
-            )}
 
             {billing && (
               <BoothInvoice
@@ -284,6 +275,8 @@ export default async function Account({
                 testMode={isTestMode()}
                 notice={notice}
                 methods={show.paymentMethods}
+                manual={manualHere}
+                codes={codes}
               />
             )}
 

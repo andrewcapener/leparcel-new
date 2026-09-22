@@ -2880,3 +2880,16 @@ h3, .h3 { line-height: 1.15; }
   .mk-pay__qr img { display: block; width: 132px; height: 132px; }
   .mk-pay__qr small { display: block; margin-top: .4em; color: #5F5A57; }
 }
+
+/* The three ways to pay, in one row. They are answers to one question, so a
+   maker should see them together and choose, rather than read a card button
+   and then discover two more options further down the page. */
+.mk-ways {
+  list-style: none; margin: 1.1em 0 0; padding: 0;
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  align-items: start;
+}
+.mk-ways .mk-pay { margin: 0; }
+/* The one that confirms itself reads as the primary answer. */
+.mk-pay--now { border-color: rgb(var(--text-color) / 0.34); }

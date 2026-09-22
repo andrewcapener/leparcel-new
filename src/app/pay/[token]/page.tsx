@@ -8,7 +8,6 @@ import { BoothInvoice } from '@/app/account/BoothInvoice'
 import { bookingByPayToken, boothInvoice } from '@/server/modules/payments/booth'
 import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
 import { PayoutSetup } from '@/app/account/PayoutSetup'
-import { ManualPay } from '@/app/account/ManualPay'
 import { manualOptions, qrDataUri } from '@/server/modules/payments/manual'
 import { payByToken, startConnectOnboardingByToken } from '@/app/actions'
 import {
@@ -153,12 +152,8 @@ export default async function PayPage({
               methods={methods}
               action={payByToken}
               token={token}
-            />
-            <ManualPay
-              options={manual}
-              vendorCode={billing.booking.vendorCode}
+              manual={manual}
               codes={codes}
-              dueWords={`Send it by ${new Date(billing.booking.paymentDueAt).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'long', day: 'numeric' })} and your space is held.`}
             />
 
             {payouts && (

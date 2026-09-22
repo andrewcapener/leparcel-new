@@ -3,6 +3,8 @@ import { fmtDateTime } from '@/lib/dates'
 import { payBoothFee } from '@/app/actions'
 import type { Invoice } from '@/server/modules/payments/invoice'
 import { deadlineMeans, offersCard, offersBank, type PaymentMethods } from '@/server/modules/payments/methods'
+import type { ManualOption } from '@/server/modules/payments/manual'
+import { ManualPay } from './ManualPay'
 
 /**
  * The one screen an accepted maker actually needs.
@@ -22,7 +24,7 @@ import { deadlineMeans, offersCard, offersBank, type PaymentMethods } from '@/se
 export function BoothInvoice({
   invoice, status, dueAt, paidAt, vendorCode,
   payable, testMode, notice, methods, preview = false, id = 'booth-fee',
-  action, token,
+  action, token, manual = [], codes,
 }: {
   invoice: Invoice
   status: string
@@ -36,6 +38,12 @@ export function BoothInvoice({
   /** The Show's policy. Decides both what Stripe offers and, because ACH does
    *  not settle inside the window, what the deadline is asking for. */
   methods: PaymentMethods
+  /** Venmo and Zelle, shown BESIDE the card button rather than in a card of
+   *  their own further down. Drew, 22 Sept: the maker was reading two separate
+   *  offers and had to work out they were alternatives. They are one question
+   *  with three answers, so they belong in one row. */
+  manual?: ManualOption[]
+  codes?: Record<string, string | null>
   /** Rendered inside the admin preview. Everything looks the same; the button
    *  is inert, because pressing a real Pay button from a preview would start a
    *  checkout against whatever booking the presser happens to own. */
@@ -213,21 +221,46 @@ export function BoothInvoice({
                 <p className="rte">Pay by card to confirm. It takes a minute.</p>
               )}
 
-              {nothingDue ? null : payable && preview ? (
-                <button className="btn btn--primary" type="button" disabled>
-                  Pay {usd(invoice.totalCents)}
-                </button>
-              ) : payable ? (
-                <form action={action ?? payBoothFee}>
-                  {token && <input type="hidden" name="token" value={token} />}
-                  <button className="btn btn--primary" type="submit">
-                    Pay {usd(invoice.totalCents)}
-                  </button>
-                </form>
-              ) : (
-                <p className="rte">
-                  The payment page is not live yet. It will be before your deadline, and we
-                  will write to you the moment it is.
+              {/* One question, three answers, in one row. The card button
+                  used to sit here and Venmo and Zelle in a separate card
+                  further down the page, which made a maker read two offers and
+                  work out for herself that they were alternatives. */}
+              {!nothingDue && (
+                <ul className="mk-ways">
+                  <li className="mk-pay mk-pay--now">
+                    <p className="mk-pay__who">
+                      <strong>{offersCard(methods) ? 'Card or bank transfer' : 'Bank transfer'}</strong>
+                    </p>
+                    {payable && preview ? (
+                      <button className="btn btn--primary" type="button" disabled>
+                        Pay {usd(invoice.totalCents)}
+                      </button>
+                    ) : payable ? (
+                      <form action={action ?? payBoothFee}>
+                        {token && <input type="hidden" name="token" value={token} />}
+                        <button className="btn btn--primary" type="submit">
+                          Pay {usd(invoice.totalCents)}
+                        </button>
+                      </form>
+                    ) : (
+                      <p className="mk-pay__how">
+                        Not live yet. It will be before your deadline, and we will
+                        write to you the moment it is.
+                      </p>
+                    )}
+                    <p className="mk-pay__note">Confirms your space straight away.</p>
+                  </li>
+                  <ManualPay options={manual} vendorCode={vendorCode} codes={codes} />
+                </ul>
+              )}
+
+              {!nothingDue && manual.length > 0 && (
+                <p className="mk-card__note">
+                  Venmo and Zelle are checked by a person rather than confirmed
+                  automatically, so your page may still say unpaid for a day after
+                  you send it. That is fine and your space is held. We only ever
+                  show these here, on your own link: if you get an email asking you
+                  to Venmo somebody, it is not us.
                 </p>
               )}
 
