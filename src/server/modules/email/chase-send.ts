@@ -68,11 +68,21 @@ export async function chaseBookings(db: DbHandle, showId: string): Promise<Chase
   }))
 }
 
-/** What would go out, without anything going out. */
+/**
+ * What would go out, without anything going out.
+ *
+ * `forDay` is the Pacific day the email ARRIVES, not the day somebody is
+ * looking at the screen. The email says "due today", so today means the
+ * morning it lands: a batch built on Tuesday night for Wednesday at nine is
+ * a list of everybody due on Wednesday. Computing it from the clock instead
+ * is how pressing Schedule the night before sends to nobody, which is what
+ * it did until this argument existed.
+ */
 export async function planChase(
-  db: DbHandle, showId: string, siteUrl: string, now = new Date(),
+  db: DbHandle, showId: string, siteUrl: string, forDay: string,
 ): Promise<{ plan: ChasePlan; today: string; alreadySent: Set<string> }> {
-  const today = pacificDay(now)
+  const today = forDay
+  const now = new Date()
   const all = await chaseBookings(db, showId)
   const plan = chasePlan(all, today, (t) => `${siteUrl}/pay/${t}`)
 
@@ -109,9 +119,10 @@ export async function sendChase(
   siteUrl: string,
   only: Set<string>,
   scheduledAtIso: string,
-  now = new Date(),
 ): Promise<SendResult> {
-  const { plan, today } = await planChase(db, showId, siteUrl, now)
+  /* The day it lands, for the same reason planChase takes one. */
+  const today = pacificDay(new Date(scheduledAtIso))
+  const { plan } = await planChase(db, showId, siteUrl, today)
   const going = plan.send.filter((c) => only.has(c.booking.bookingId))
 
   if (going.length === 0) return { ok: false, detail: 'Nobody is selected, so nothing was sent.' }

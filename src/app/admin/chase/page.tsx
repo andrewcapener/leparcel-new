@@ -3,10 +3,14 @@ import { activeShow } from '@/db/queries'
 import { siteUrl } from '@/lib/site-url'
 import { usd } from '@/lib/money'
 import { fmtDateTime } from '@/lib/dates'
+import { bookings, vendors } from '@/db/schema'
+import { eq } from 'drizzle-orm'
+import { deadlineChanges, losesTime } from '@/server/modules/payments/align-deadline'
 import { planChase } from '@/server/modules/email/chase-send'
 import { nextNineAmPacific, owedCents, pacificDay } from '@/server/modules/email/fee-chase'
 import { PageHead, Stats, Stat } from '../ui'
 import { ChaseForm, type Row } from './ChaseForm'
+import { alignDeadlines } from './actions'
 
 export const dynamic = 'force-dynamic'
 /* Sixty two inserts and one call to Resend. Comfortably inside a minute and
@@ -34,7 +38,12 @@ export default async function ChasePage() {
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
   const now = new Date()
-  const { plan, today, alreadySent } = await planChase(db, show.id, siteUrl(), now)
+  /* The list is for the morning it arrives, not for tonight. Everything on
+     this screen, the count, the money and the email itself, is what will be
+     true when it lands. */
+  const arrival = nextNineAmPacific(now)
+  const forDay = pacificDay(arrival)
+  const { plan, today, alreadySent } = await planChase(db, show.id, siteUrl(), forDay)
 
   const rows: Row[] = plan.send.map((c) => ({
     bookingId: c.booking.bookingId,
@@ -48,6 +57,22 @@ export default async function ChasePage() {
     already: alreadySent.has(c.booking.email.toLowerCase()),
   }))
 
+  /* Bookings sitting on a different deadline from the show's. The system
+     never hands anybody less than the payment window, so a maker accepted on
+     the last afternoon carries a later date than the rest of the roster, and
+     until they are all the same this screen holds them back rather than tell
+     them something false. */
+  const dueRows = await db
+    .select({
+      bookingId: bookings.id, vendorCode: bookings.vendorCode,
+      shopName: vendors.shopName, status: bookings.status,
+      paymentDueAt: bookings.paymentDueAt,
+    })
+    .from(bookings)
+    .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
+    .where(eq(bookings.showId, show.id))
+  const moves = show.paymentDueAt ? deadlineChanges(dueRows, show.paymentDueAt) : []
+
   const hasKey = Boolean(process.env.RESEND_API_KEY)
   const defaultAt = pacificLocalValue(nextNineAmPacific(now))
   const sample = plan.send[0]
@@ -56,7 +81,7 @@ export default async function ChasePage() {
     <div className="adm-narrow">
       <PageHead
         title="Chase the booth fee"
-        sub={`${show.numeral} · ${show.name} · ${today} Pacific`}
+        sub={`${show.numeral} · ${show.name} · due ${today} Pacific`}
       />
 
       <Stats cols={3}>
@@ -72,6 +97,43 @@ export default async function ChasePage() {
           would have sent, and will tell you it did not send.
         </p>
       )}
+
+      {moves.length > 0 && show.paymentDueAt && (
+        <>
+          <div className="adm-sec"><h2>One deadline for everybody</h2></div>
+          <p className="adm-note">
+            <strong>
+              {moves.length} unpaid {moves.length === 1 ? 'booking is' : 'bookings are'} on a
+              different date from the show&rsquo;s.
+            </strong>{' '}
+            The show says {fmtDateTime(show.paymentDueAt)}, and these carry their own, because a
+            maker is never handed less than the payment window at the moment they are accepted.
+            Until they match, they are held out of the send below rather than told their fee is
+            due on a day it is not.
+          </p>
+          {losesTime(moves).length > 0 && (
+            <p className="adm-note">
+              {losesTime(moves).length} of them would be brought <strong>forward</strong>, which
+              is sooner than the deadline they were given when they were accepted:{' '}
+              {losesTime(moves).map((m) => m.shopName).join(', ')}. Every move is written to the
+              audit log with the date it had and the date it gets.
+            </p>
+          )}
+          <form action={alignDeadlines}>
+            <div className="adm-acts">
+              <button className="adm-btn" type="submit">
+                Put all {moves.length} on {fmtDateTime(show.paymentDueAt)}
+              </button>
+            </div>
+          </form>
+        </>
+      )}
+
+      <p className="adm-note">
+        This list is everybody whose fee is due on <strong>{today}</strong>, the morning it
+        arrives. It is not a list of who owes money tonight, because the email says the fee is
+        due today and today is the day it lands.
+      </p>
 
       <p className="adm-note">
         One email per maker, rendered from their own booking: their name, their space, their

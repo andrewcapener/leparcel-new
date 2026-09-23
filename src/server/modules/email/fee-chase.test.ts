@@ -217,5 +217,24 @@ for (const at of ['2026-01-15T20:00:00.000Z', '2026-03-08T12:00:00.000Z',
     String(body[0]!.text).includes('/pay/tok1'))
 }
 
+/* ── the list belongs to the day it lands, not the day it is built ── */
+
+{
+  /* Drew builds the batch on Tuesday night for Wednesday at nine. Everybody
+     is due Wednesday at 11:59pm. Planning against Tuesday finds nobody, which
+     is how pressing Schedule the night before quietly sent to an empty list. */
+  const dueWednesday = b({ paymentDueAt: '2026-09-24T06:59:00.000Z' })
+
+  eq('planned for Tuesday, nobody is due yet',
+    chasePlan([dueWednesday], '2026-09-22', url).send.length, 0)
+  eq('planned for the Wednesday it arrives, they are',
+    chasePlan([dueWednesday], '2026-09-23', url).send.length, 1)
+
+  /* And the reason a Tuesday plan gives is the honest one rather than silence. */
+  const tue = chasePlan([dueWednesday], '2026-09-22', url)
+  ok('and Tuesday says why they are not on it',
+    /Not due until 2026-09-23/.test(tue.held[0]?.because ?? ''))
+}
+
 if (failures > 0) { console.error(`\n${failures} failure(s).`); process.exit(1) }
 console.log('fee chase: nobody is chased for money they do not owe, on a day that is not theirs')
