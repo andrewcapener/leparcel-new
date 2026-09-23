@@ -72,6 +72,27 @@ for (const st of ['awaiting_payment', 'payment_processing', 'confirmed', 'forfei
   if (canStartPayment(st)) check(`${st} holds a space if it can be paid`, holdsSpace(st))
 }
 
+/* ── a maker who owes nothing is never released ── */
+
+{
+  const past = '2026-09-25T00:00:00.000Z'
+  const due = '2026-09-24T06:59:00.000Z'
+
+  check('an unpaid maker past their deadline is forfeitable',
+    isForfeitable('awaiting_payment', due, past, null, 28000) === true)
+
+  /* Three credits from previous shows and one free space the girls granted
+     outright. Releasing a space because somebody failed to pay zero dollars
+     is the worst thing this button could do, and it would have done it. */
+  check('a maker on a full credit is not',
+    isForfeitable('awaiting_payment', due, past, null, 0) === false)
+
+  /* An old caller that does not pass the total must not silently start
+     forfeiting the free spaces, and must not stop forfeiting everybody else. */
+  check('an unknown total is judged on the deadline alone',
+    isForfeitable('awaiting_payment', due, past, null) === true)
+}
+
 if (failures) {
   console.error(`\n${failures} check(s) failed.`)
   process.exit(1)

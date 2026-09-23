@@ -81,9 +81,18 @@ export function isForfeitable(
      one mistake here that cannot be undone with a click. So it holds the
      space and hands the row to a person instead. */
   saidSentAt?: string | null,
+  /* What they actually owe, fee plus add-ons. A maker on a full credit owes
+     nothing, so there is no payment for them to be late with, and releasing
+     their space for not paying zero dollars is the single worst thing this
+     button could do. Four makers on this roster are in that position:
+     three credits from previous shows and one free space the girls granted
+     outright. Optional so an old caller cannot silently start forfeiting
+     them, and read as "unknown, so judge it on the deadline alone". */
+  totalCents?: number,
 ): boolean {
   if (status !== 'awaiting_payment') return false
   if (saidSentAt) return false
+  if (totalCents === 0) return false
   const due = Date.parse(dueAtIso)
   const now = Date.parse(nowIso)
   if (!Number.isFinite(due) || !Number.isFinite(now)) return false

@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow } from '@/db/queries'
+import { activeShow, activeSpaceTypes } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
 import {
-  markPaid, forfeitOverdueBookings, markLinkSent, setBoothPrice, cancelBooking,
+  markPaid, forfeitOverdueBookings, markLinkSent, setBoothPrice, setBoothSpace, cancelBooking,
 } from '@/app/actions'
 import { PayLink } from './PayLink'
 import { siteUrl } from '@/lib/site-url'
@@ -116,6 +116,11 @@ export default async function Roster({
     .where(eq(bookings.showId, show.id))
     .orderBy(asc(bookings.vendorCode))
 
+  /* Every space still on offer, for the per-row space picker. Withdrawn ones
+     keep their rows so an existing booking can still resolve, and this list
+     is what a maker can be MOVED to, so it is the active ones only. */
+  const spaceChoices = await activeSpaceTypes(show.id)
+
   /* Hillary runs outdoor, Elise runs indoor, and on payment week each of them
      is asking "who on MY list has not paid". The filter narrows the WHOLE
      page rather than just the table, because a count that answers for the
@@ -144,7 +149,7 @@ export default async function Roster({
      these spaces go back into the pool, and until now nothing did it. */
   const overdue = rows.filter(
     (r) => isForfeitable(r.booking.status, r.booking.paymentDueAt, new Date().toISOString(),
-      r.booking.saidSentAt),
+      r.booking.saidSentAt, r.booking.priceCents + r.booking.addonsCents),
   )
   const collected = confirmed.reduce((a, r) => a + r.booking.priceCents, 0)
   const outstanding = awaiting.reduce((a, r) => a + r.booking.priceCents, 0)
@@ -304,6 +309,41 @@ export default async function Roster({
         <td className="c-1">
           {space.label}
           <span className="adm-sub2">{app.track}</span>
+          {/* Same disclosure as the fee, for the same reason: a footprint is
+              what the floor plan and the load-in are built from, so it should
+              be changeable without a database, and not by leaning on a
+              keyboard. Only the spaces on this maker's own track are offered.
+              The fee does not follow: it carries credits and discounts the
+              list price knows nothing about. */}
+          {!paid && booking.status !== 'payment_processing' && (
+            <details className="adm-mask">
+              <summary>
+                <span className="mk">Change</span>
+                <span className="adm-sr"> the space for {vendor.shopName}</span>
+              </summary>
+              <form action={setBoothSpace}>
+                <input type="hidden" name="bookingId" value={booking.id} />
+                <label className="adm-sr" htmlFor={`s-${booking.id}`}>New space</label>
+                <select className="inp" id={`s-${booking.id}`} name="spaceTypeId"
+                  defaultValue={booking.spaceTypeId}>
+                  {spaceChoices
+                    .filter((t) => t.track === space.track)
+                    .map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label} (lists at {usd(t.priceCents)})
+                      </option>
+                    ))}
+                </select>
+                <label className="adm-sr" htmlFor={`sr-${booking.id}`}>Why</label>
+                <input className="inp" id={`sr-${booking.id}`} name="reason" type="text"
+                  placeholder="Why (goes in the audit log)" />
+                <button className="adm-btn-q" type="submit">Save space</button>
+              </form>
+              <span className="adm-sub2">
+                The fee stays {usd(booking.priceCents)} until you change it too.
+              </span>
+            </details>
+          )}
         </td>
 
         <td className="r">

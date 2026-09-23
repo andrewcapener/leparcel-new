@@ -1370,6 +1370,62 @@ export async function setBoothPrice(fd: FormData): Promise<void> {
 }
 
 /**
+ * Move a maker into a different space.
+ *
+ * Elise, 23 Sept: "switch Emily ceramics 3x6 instead of 3x8." Until now only
+ * the fee could be changed, which captures the money and leaves the roster
+ * still saying 3x8. That row is what the floor plan and the load-in are built
+ * from in November, so a fee that quietly disagrees with a footprint is a
+ * problem waiting eight weeks to happen.
+ *
+ * The fee does NOT follow automatically. A booth fee on this roster is rarely
+ * the list price: it carries credits, second day discounts and whatever the
+ * girls granted, and silently repricing somebody because their footprint
+ * changed would undo the very decisions the fee column exists to record. The
+ * screen says what the new space lists at and the fee stays a separate,
+ * deliberate press.
+ *
+ * Same guard as the fee: gone once money has moved. Changing the footprint
+ * somebody has already paid for is a conversation, not a form.
+ */
+export async function setBoothSpace(fd: FormData): Promise<void> {
+  const bookingId = String(fd.get('bookingId') ?? '')
+  const spaceTypeId = String(fd.get('spaceTypeId') ?? '')
+  const reason = String(fd.get('reason') ?? '').trim()
+
+  const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
+  if (!b) redirect('/admin/roster?space=missing')
+  if (b.status === 'confirmed' || b.status === 'payment_processing') {
+    redirect('/admin/roster?space=paid')
+  }
+  if (!spaceTypeId || spaceTypeId === b.spaceTypeId) redirect('/admin/roster')
+
+  const next = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, spaceTypeId) })
+  const had = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, b.spaceTypeId) })
+  if (!next) redirect('/admin/roster?space=missing')
+
+  /* A maker applied to one track and is placed on that track. Moving an
+     indoor consignment maker into an outdoor booth is not a space change, it
+     is a different agreement, a different commission and a different day. */
+  if (had && next.track !== had.track) redirect('/admin/roster?space=track')
+
+  await db.update(bookings).set({ spaceTypeId }).where(eq(bookings.id, bookingId))
+
+  /* After the write, for the same reason the fee change does it: a maker must
+     not be able to finish paying against the space they no longer hold. */
+  await dropLiveCheckout(db, bookingId)
+
+  await log('booking', bookingId, 'space_changed',
+    { spaceTypeId: b.spaceTypeId, label: had?.label ?? '' },
+    { spaceTypeId, label: next.label },
+    reason || 'no reason given', `staff:${await staffName()}`)
+
+  revalidatePath('/admin/roster')
+  revalidatePath('/account')
+  redirect('/admin/roster?space=set')
+}
+
+/**
  * Release one maker's space, by hand.
  *
  * Elise, 22 Sept: a maker was accepted who was on her no list, and another
@@ -2057,7 +2113,8 @@ export async function forfeitOverdueBookings(): Promise<void> {
     .where(eq(bookings.showId, show.id))
 
   const doomed = rows.filter(
-    (r) => isForfeitable(r.booking.status, r.booking.paymentDueAt, now, r.booking.saidSentAt),
+    (r) => isForfeitable(r.booking.status, r.booking.paymentDueAt, now, r.booking.saidSentAt,
+      r.booking.priceCents + r.booking.addonsCents),
   )
 
   /* Same gate as a jury decision: releasing a space is a dashboard action, so
