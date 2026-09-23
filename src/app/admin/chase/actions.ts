@@ -219,6 +219,15 @@ async function stop(): Promise<StopState> {
   /* Say what happened in every case, including the case where the answer is
      nothing. A button that reports nothing is indistinguishable from a button
      that does nothing, and this one has already been pressed once in the dark. */
+  if (res.reconciled) {
+    return {
+      ok: true,
+      message: `Resend has nothing of ours waiting, so those ${res.cancelled} are stopped. `
+        + 'They were cancelled somewhere else, most likely in the Resend dashboard, and this '
+        + 'has caught our own record up. The list below is ready to schedule again.',
+    }
+  }
+
   const parts: string[] = []
   if (res.cancelled > 0) parts.push(`${res.cancelled} stopped.`)
   if (res.alreadyGone > 0) parts.push(`${res.alreadyGone} had already gone and cannot be recalled.`)

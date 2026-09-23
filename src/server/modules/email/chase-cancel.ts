@@ -39,6 +39,8 @@ export type CancelResult = {
   fromProvider: number
   /** Why the provider's list gave us nothing, when it gave us nothing. */
   listProblem: string
+  /** Somebody had already stopped them elsewhere and our record caught up. */
+  reconciled: boolean
 }
 
 type Listed = { id: string; to: string[]; scheduled_at?: string | null; last_event?: string }
@@ -99,12 +101,12 @@ export async function scheduledChase(
  */
 export async function recoverIds(
   key: string, addresses: Set<string>, now = new Date(),
-): Promise<{ ids: string[]; problem: string }> {
+): Promise<{ ids: string[]; problem: string; listed: boolean }> {
   let res: { status: number; text: string }
   try {
     res = await resend(`/emails?limit=${LIST_MAX}`, 'GET', key)
   } catch (err) {
-    return { ids: [], problem: err instanceof Error ? err.message : 'could not reach Resend' }
+    return { ids: [], listed: false, problem: err instanceof Error ? err.message : 'could not reach Resend' }
   }
   if (res.status === 401 || res.status === 403) {
     /* The likeliest cause by far, and the raw message does not say it. A
@@ -113,7 +115,7 @@ export async function recoverIds(
        Nothing in the send path ever reveals that, so it surfaces here, on
        the night somebody needs to take an email back. */
     return {
-      ids: [],
+      ids: [], listed: false,
       problem: `Resend refused (HTTP ${res.status}): ${res.text.slice(0, 120)}. `
         + 'That is almost certainly an API key with sending access only. A key like that can '
         + 'queue an email and cannot list or cancel one. Check it at resend.com under API '
@@ -122,7 +124,7 @@ export async function recoverIds(
   }
   if (res.status !== 200) {
     return {
-      ids: [],
+      ids: [], listed: false,
       problem: `Resend would not list the account's emails (HTTP ${res.status}). `
         + `${res.text.slice(0, 160)}`,
     }
@@ -131,10 +133,10 @@ export async function recoverIds(
   try {
     data = (JSON.parse(res.text) as { data?: Listed[] }).data ?? []
   } catch {
-    return { ids: [], problem: 'Resend answered the list with something that is not JSON.' }
+    return { ids: [], listed: false, problem: 'Resend answered the list with something that is not JSON.' }
   }
   if (data.length === 0) {
-    return { ids: [], problem: 'Resend listed no emails at all on this account.' }
+    return { ids: [], listed: true, problem: 'Resend listed no emails at all on this account.' }
   }
 
   const matched = data
@@ -148,9 +150,9 @@ export async function recoverIds(
 
   return {
     ids: matched,
+    listed: true,
     problem: matched.length > 0 ? '' :
-      `Resend listed ${data.length} emails but none of them is one of ours still waiting to go. `
-      + 'Cancel them from the Resend dashboard instead.',
+      `Resend listed ${data.length} emails and none of ours is still waiting to go.`,
   }
 }
 
@@ -175,7 +177,7 @@ export async function cancelScheduledChase(
   const key = process.env.RESEND_API_KEY
   const { ids, unknown, addresses, rowIds } = await scheduledChase(db, now)
 
-  const base = { fromOurRecords: ids.length, fromProvider: 0, listProblem: '' }
+  const base = { fromOurRecords: ids.length, fromProvider: 0, listProblem: '', reconciled: false }
 
   if (ids.length === 0 && unknown === 0) {
     return { ...base, cancelled: 0, alreadyGone: 0, failed: [], nothingToDo: true }
@@ -190,10 +192,14 @@ export async function cancelScheduledChase(
   const all = new Set(ids)
   let fromProvider = 0
   let listProblem = ''
+  /* The provider answered and had nothing of ours waiting. That is an answer,
+     not a failure: whatever we think is in flight is not. */
+  let confirmedNoneWaiting = false
   if (unknown > 0) {
     const rec = await recoverIds(key, addresses, now)
     listProblem = rec.problem
     for (const id of rec.ids) { if (!all.has(id)) fromProvider++; all.add(id) }
+    confirmedNoneWaiting = rec.listed && rec.ids.length === 0
   }
 
   let cancelled = 0
@@ -203,20 +209,48 @@ export async function cancelScheduledChase(
   for (const id of all) {
     const res = await resend(`/emails/${encodeURIComponent(id)}/cancel`, 'POST', key)
     if (res.status === 200) { cancelled++; continue }
-    /* Already sent, or already cancelled. Not a failure: the goal was that it
-       does not go out again, and one that has gone cannot be recalled. */
-    if (res.status === 404 || /already|not scheduled/i.test(res.text)) { alreadyGone++; continue }
+
+    /* Already cancelled, by somebody in the provider's own dashboard. That is
+       the goal, not a failure, and it counts as cancelled so our record stops
+       claiming the message is on its way. Drew stopped the first batch by
+       hand while this button was being fixed, and a database still insisting
+       those sixty five were in flight would have left the whole roster
+       unticked on the re-send with nothing on screen explaining it. */
+    if (/cancel/i.test(res.text)) { cancelled++; continue }
+
+    /* Gone. Not a failure either, but a genuinely different thing: an email
+       that has been delivered cannot be recalled and must never be recorded
+       as though it were. */
+    if (res.status === 404 || /already sent|delivered|not scheduled/i.test(res.text)) {
+      alreadyGone++
+      continue
+    }
     failed.push({ id, detail: `HTTP ${res.status}: ${res.text.slice(0, 160)}` })
   }
 
-  if (cancelled > 0 && rowIds.length > 0) {
+  /* Our record catches up in two cases: we cancelled something, or the
+     provider told us plainly that nothing of ours is waiting. The second is
+     what happens when somebody cancels in the dashboard, which is exactly
+     what we tell people to do when this button cannot. Without it the screen
+     would insist sixty five emails were in flight forever, and the re-send
+     list would stay unticked with no explanation. */
+  const reconciled = confirmedNoneWaiting && cancelled === 0 && failed.length === 0
+  if ((cancelled > 0 || reconciled) && rowIds.length > 0) {
     await db.update(emailOutbox)
-      .set({ deliveryStatus: 'cancelled', deliveryDetail: `cancelled ${now.toISOString()}` })
+      .set({
+        deliveryStatus: 'cancelled',
+        deliveryDetail: reconciled
+          ? `not scheduled at Resend, reconciled ${now.toISOString()}`
+          : `cancelled ${now.toISOString()}`,
+      })
       .where(inArray(emailOutbox.id, rowIds))
   }
 
   return {
-    cancelled, alreadyGone, failed, nothingToDo: false,
-    fromOurRecords: ids.length, fromProvider, listProblem,
+    cancelled: reconciled ? rowIds.length : cancelled,
+    alreadyGone, failed, nothingToDo: false,
+    fromOurRecords: ids.length, fromProvider,
+    listProblem: reconciled ? '' : listProblem,
+    reconciled,
   }
 }
