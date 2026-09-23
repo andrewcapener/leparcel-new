@@ -26,6 +26,7 @@ import { stripeMethods, type PaymentMethods } from './methods'
 import { canStartPayment } from './booking-status'
 import { viaFromEvent } from './paid-via'
 import { recordAccount } from './connect'
+import { pushPaymentTabsIfConnected } from '@/server/modules/roster/sheet-push'
 import { siteUrl } from '@/lib/site-url'
 
 export type DbHandle = typeof Db
@@ -298,6 +299,20 @@ const HANDLED = new Set([
  * exact bytes, so anything that re-serialises the JSON first breaks
  * verification in a way that looks like an attack.
  */
+/**
+ * Refresh the team's Google Sheet after a payment moves.
+ *
+ * This is the path that makes the Payments tab live: most of the money
+ * arrives through Stripe and nobody presses anything when it does. It is
+ * capped and swallowed inside pushPaymentTabsIfConnected, so a slow or
+ * unreachable Google can neither fail this webhook nor push it past Stripe's
+ * ten second timeout into a retry.
+ */
+async function refreshSheet(db: DbHandle, showId: string): Promise<void> {
+  const show = await db.query.shows.findFirst({ where: (t, { eq: e }) => e(t.id, showId) })
+  await pushPaymentTabsIfConnected(db, showId, show?.paymentSheetId, siteUrl())
+}
+
 export async function handleStripeWebhook(
   db: DbHandle, rawBody: string, signature: string | null,
 ): Promise<WebhookResult> {
@@ -423,6 +438,7 @@ export async function handleStripeWebhook(
     }).where(eq(bookings.id, booking.id))
     await audit('payment_failed', before, { status: 'awaiting_payment', paidVia: null })
     await finish({ bookingId, payload: 'bank transfer did not clear' })
+    await refreshSheet(db, booking.showId)
     return { outcome: 'payment_failed', eventId: event.id, bookingId }
   }
 
@@ -453,6 +469,7 @@ export async function handleStripeWebhook(
     await audit('payment_processing', before,
       { status: 'payment_processing', amountCents: received, paidVia: via })
     await finish({ bookingId, payload: `bank transfer initiated, ${received} cents in flight` })
+    await refreshSheet(db, booking.showId)
     return { outcome: 'processing', eventId: event.id, bookingId }
   }
 
@@ -482,6 +499,7 @@ export async function handleStripeWebhook(
   await audit('payment_confirmed', before,
     { status: 'confirmed', paidAt, amountPaidCents: received, paidVia: via ?? booking.paidVia })
   await finish({ bookingId, payload: `confirmed ${received} cents` })
+  await refreshSheet(db, booking.showId)
   return { outcome: 'confirmed', eventId: event.id, bookingId }
 }
 

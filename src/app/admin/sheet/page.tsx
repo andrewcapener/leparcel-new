@@ -33,7 +33,13 @@ export default async function SheetPush() {
      that is confidently wrong, and pressing the button without reading the
      field would have written the payment tabs into the wrong document. An
      empty field asks a question; a wrong one answers it. */
-  const configured = process.env.PAYMENT_SHEET_URL?.trim() ?? ''
+  /* The sheet this show is connected to, remembered from the last successful
+     send. That is what the automatic refresh pushes into, so showing it here
+     is showing where the live tabs actually go. */
+  const connected = show.paymentSheetId?.trim() ?? ''
+  const configured = connected
+    ? `https://docs.google.com/spreadsheets/d/${connected}/edit`
+    : process.env.PAYMENT_SHEET_URL?.trim() ?? ''
 
   return (
     <div className="adm-narrow">
@@ -68,7 +74,21 @@ export default async function SheetPush() {
         </p>
       )}
 
-      <div className="adm-sec"><h2>Send</h2></div>
+      {connected && (
+        <>
+          <div className="adm-sec"><h2>Live</h2></div>
+          <p className="adm-note" role="status">
+            <strong>Connected, and keeping itself up to date.</strong> Every payment that lands,
+            every Venmo or Zelle you match by hand and every space you release refreshes both
+            tabs on its way past. Nobody has to press anything. If Google is slow or unreachable
+            the payment still records exactly as it should and the tabs catch up on the next one,
+            or when you press the button below.
+          </p>
+          <p className="adm-code" style={{ userSelect: 'all' }}>{configured}</p>
+        </>
+      )}
+
+      <div className="adm-sec"><h2>{connected ? 'Refresh now' : 'Send'}</h2></div>
       <PushForm defaultLink={configured} />
 
       <p className="adm-note">

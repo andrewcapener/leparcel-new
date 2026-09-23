@@ -103,6 +103,10 @@ export async function activeShow(): Promise<Show | undefined> {
         // makes no promise about when a maker will hear, which is what the
         // thank-you screen falls back to.
         decisionsFromOn: null, decisionsToOn: null,
+        /* No sheet, so nothing is pushed anywhere. A database one migration
+           behind must never write a maker's pay link into a document nobody
+           on this deployment chose. */
+        paymentSheetId: null,
       }
     : undefined
 }

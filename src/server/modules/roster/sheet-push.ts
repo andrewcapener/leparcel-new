@@ -31,6 +31,10 @@ export const LINKS_TAB = 'Pay links'
 export const PAYMENTS_TAB = 'Payments'
 
 const TIMEOUT_MS = 15_000
+/* Shorter for the automatic path. Stripe gives a webhook ten seconds before
+   it calls it failed and retries, and a sheet nobody is watching is not worth
+   spending that on. */
+const LIVE_TIMEOUT_MS = 6_000
 
 /**
  * The id out of whatever somebody pastes.
@@ -185,4 +189,48 @@ export async function pushPaymentTabs(
   if (payments !== true) return { ok: false, detail: payments }
 
   return { ok: true, rows: all.length, tabs: [LINKS_TAB, PAYMENTS_TAB], email: sa.email }
+}
+
+/* ──────────────────── the live half ──────────────────── */
+
+/**
+ * Push the tabs because something changed, not because somebody pressed a
+ * button.
+ *
+ * Called from the paths that move money: a Stripe webhook confirming or
+ * failing, staff matching a Venmo, a space being released. That is what makes
+ * the Payments tab answer "who has paid" rather than "who had paid when
+ * somebody last remembered to refresh it".
+ *
+ * Three rules, because this runs inside code that must not break:
+ *
+ *   It never throws. A booth fee is recorded whether or not Google is
+ *   reachable, and an exception here would fail a Stripe webhook that had
+ *   already taken the money.
+ *
+ *   It is a no-op unless a sheet is connected. No column, no service account,
+ *   no push, no error.
+ *
+ *   It is capped in time. A slow Google is not allowed to push a webhook past
+ *   Stripe's timeout and earn a retry.
+ *
+ * A failure is deliberately quiet here and loud on the screen: /admin/sheet is
+ * where somebody finds out the connection is broken, because that is where
+ * they would go to fix it.
+ */
+export async function pushPaymentTabsIfConnected(
+  db: DbHandle, showId: string, sheetId: string | null | undefined, siteUrl: string,
+): Promise<void> {
+  const id = (sheetId ?? '').trim()
+  if (!id) return
+  if (!serviceAccount()) return
+  try {
+    await Promise.race([
+      pushPaymentTabs(db, showId, id, siteUrl),
+      new Promise((resolve) => setTimeout(resolve, LIVE_TIMEOUT_MS)),
+    ])
+  } catch {
+    /* Swallowed on purpose. See above: the money is already recorded, and
+       nothing about this is worth failing that for. */
+  }
 }

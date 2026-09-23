@@ -84,6 +84,11 @@ export const shows = pgTable('shows', {
      wants a Social Security number for it. Everything behind this is built;
      the switch is the date, not the decision. */
   payoutSetup: text('payout_setup', { enum: ['on', 'off'] }).notNull().default('off'),
+
+  /* The Google Sheet the live payment tabs are written into, as an id rather
+     than a share link. Empty means nobody has connected one and nothing is
+     pushed. Set by /admin/sheet; see src/server/modules/roster/sheet-push.ts. */
+  paymentSheetId: text('payment_sheet_id'),
   /* Venmo and Zelle, shown on the booking's own page and never in an email.
      Blank means the option is not offered, which is how it ships: no handle is
      invented in code. These payments are manual, so staff press Mark paid. */

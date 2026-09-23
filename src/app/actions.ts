@@ -44,6 +44,7 @@ import { slotOptions } from '@/server/modules/compliance/checklist'
 import { boothFeeHtml, boothFeeText } from '@/server/modules/email/booth-fee'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
 import { viaFromManual, viaLabel } from '@/server/modules/payments/paid-via'
+import { pushPaymentTabsIfConnected } from '@/server/modules/roster/sheet-push'
 import { paymentDueAt } from '@/server/modules/payments/deadline'
 import {
   intakeAccepts, intakeMode, intakeStatus,
@@ -1284,6 +1285,8 @@ export async function markPaid(fd: FormData): Promise<void> {
     { status: 'confirmed', paidAt, paidVia: via },
     `booth fee received, matched by hand: ${viaLabel(via).toLowerCase()}`)
 
+  await liveSheet(b.showId)
+
   revalidatePath('/admin/roster')
   revalidatePath('/')
 }
@@ -1402,6 +1405,8 @@ export async function cancelBooking(fd: FormData): Promise<void> {
   await log('booking', bookingId, 'released_by_staff',
     { status: b.status }, { status: 'cancelled' },
     reason, `staff:${await staffName()}`)
+
+  await liveSheet(b.showId)
 
   revalidatePath('/admin/roster')
   revalidatePath('/admin')
@@ -1923,6 +1928,19 @@ export async function sayManualSent(fd: FormData): Promise<void> {
 /** Who is signed in, for the audit row. Falls back rather than throwing: the
  *  point of the record is that somebody marked it, and losing the name is not
  *  a reason to lose the timestamp. */
+/**
+ * Refresh the connected Google Sheet, if there is one.
+ *
+ * Called after anything that changes what a maker owes or has paid, so the
+ * tabs the team works from answer "who has paid" rather than "who had paid
+ * when somebody last pressed Send". Never throws and never blocks for long:
+ * see pushPaymentTabsIfConnected.
+ */
+async function liveSheet(showId: string): Promise<void> {
+  const show = await db.query.shows.findFirst({ where: (t, { eq: e }) => e(t.id, showId) })
+  await pushPaymentTabsIfConnected(db, showId, show?.paymentSheetId, siteUrl())
+}
+
 async function staffName(): Promise<string> {
   const who = await staffForSession((await cookies()).get(ADMIN_COOKIE)?.value)
   return who?.name ?? 'staff'
