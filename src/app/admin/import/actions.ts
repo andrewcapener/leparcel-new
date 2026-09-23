@@ -8,6 +8,8 @@ import { activeShow } from '@/db/queries'
 import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
 import { parseAcceptSheet } from '@/server/modules/roster/import'
 import { applyPlan, planFor } from '@/server/modules/roster/apply'
+import { pushPaymentTabsIfConnected } from '@/server/modules/roster/sheet-push'
+import { siteUrl } from '@/lib/site-url'
 import { emptyImport, type ImportState } from './state'
 
 /**
@@ -61,6 +63,11 @@ export async function runImport(_prev: ImportState, fd: FormData): Promise<Impor
 
   const who = await staffForSession((await cookies()).get(ADMIN_COOKIE)?.value)
   const done = await applyPlan(db, show.id, plan, `staff:${who?.name ?? 'staff'}`)
+
+  /* Same reason as the single-maker path: accepting changes the roster, and
+     the payment tabs are how the girls read the roster. Capped and swallowed
+     inside, so a slow Google never costs a booking that is already made. */
+  await pushPaymentTabsIfConnected(db, show.id, show.paymentSheetId, siteUrl())
 
   revalidatePath('/admin')
   revalidatePath('/admin/roster')

@@ -1112,6 +1112,15 @@ export async function decide(fd: FormData): Promise<void> {
     )
   }
 
+  /* A new maker is a new row on the payment tabs, and accepting one was the
+     only thing that changed the roster without refreshing them. The sheet
+     pushed on payments, Venmo matches and releases, so it told the truth
+     about money and lied about who was on the list: Drew accepted three
+     makers late on the 22nd, asked whether they had pay links, and the sheet
+     still showed the roster as it had been at the last payment. Acceptance
+     changes the roster, so acceptance refreshes it too. */
+  await liveSheet(show.id)
+
   revalidatePath('/admin/jury')
   revalidatePath('/admin/roster')
   revalidatePath(`/admin/applications/${appId}`)
