@@ -15,3 +15,7 @@ export type ChaseState = {
 }
 
 export const emptyChase: ChaseState = { ok: false, message: '', at: '' }
+
+export type StopState = { ok: boolean; message: string }
+
+export const emptyStop: StopState = { ok: false, message: '' }

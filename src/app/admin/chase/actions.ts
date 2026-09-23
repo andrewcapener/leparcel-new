@@ -13,7 +13,7 @@ import { deadlineChanges, losesTime } from '@/server/modules/payments/align-dead
 import { sendChase } from '@/server/modules/email/chase-send'
 import { cancelScheduledChase } from '@/server/modules/email/chase-cancel'
 import { pacificWallToUtc } from '@/server/modules/email/fee-chase'
-import type { ChaseState } from './state'
+import type { ChaseState, StopState } from './state'
 
 /**
  * Hand the morning's chase to Resend, with a time on it.
@@ -176,23 +176,75 @@ export async function alignDeadlines(): Promise<void> {
  * unsending sixty five emails is a thing somebody should be able to find
  * afterwards (rule 3).
  */
-export async function stopScheduledChase(): Promise<void> {
+export async function stopScheduledChase(
+  _prev: StopState, _fd: FormData,
+): Promise<StopState> {
+  try {
+    return await stop()
+  } catch (err) {
+    return {
+      ok: false,
+      message: 'Nothing was cancelled, and this is why: '
+        + (err instanceof Error ? err.message.slice(0, 300) : 'it failed without saying anything.')
+        + ' You can always cancel a scheduled send by hand in the Resend dashboard.',
+    }
+  }
+}
+
+async function stop(): Promise<StopState> {
   const show = await activeShow()
   const res = await cancelScheduledChase(db)
 
-  if (!res.nothingToDo) {
-    await db.insert(auditLog).values({
-      id: randomUUID(), entity: 'show', entityId: show?.id ?? '',
-      action: res.failed.length > 0 ? 'fee_chase_cancel_partial' : 'fee_chase_cancelled',
-      actor: 'staff',
-      before: null,
-      after: JSON.stringify({
-        cancelled: res.cancelled, alreadyGone: res.alreadyGone, failed: res.failed.length,
-      }),
-      reason: 'scheduled chase stopped before it went out',
-    })
+  if (res.nothingToDo) {
+    return { ok: true, message: 'Nothing is scheduled, so there was nothing to stop.' }
   }
+
+  await db.insert(auditLog).values({
+    id: randomUUID(), entity: 'show', entityId: show?.id ?? '',
+    action: res.failed.length > 0 || res.cancelled === 0
+      ? 'fee_chase_cancel_partial'
+      : 'fee_chase_cancelled',
+    actor: 'staff',
+    before: null,
+    after: JSON.stringify({
+      cancelled: res.cancelled, alreadyGone: res.alreadyGone, failed: res.failed.length,
+      fromOurRecords: res.fromOurRecords, fromProvider: res.fromProvider,
+    }),
+    reason: res.listProblem || 'scheduled chase stopped before it went out',
+  })
 
   revalidatePath('/admin/chase')
   revalidatePath('/admin/outbox')
+
+  /* Say what happened in every case, including the case where the answer is
+     nothing. A button that reports nothing is indistinguishable from a button
+     that does nothing, and this one has already been pressed once in the dark. */
+  const parts: string[] = []
+  if (res.cancelled > 0) parts.push(`${res.cancelled} stopped.`)
+  if (res.alreadyGone > 0) parts.push(`${res.alreadyGone} had already gone and cannot be recalled.`)
+  if (res.failed.length > 0) {
+    parts.push(`${res.failed.length} would not cancel: ${res.failed[0]!.detail}`)
+  }
+
+  if (res.cancelled === 0 && res.alreadyGone === 0) {
+    return {
+      ok: false,
+      message: 'Nothing was cancelled. '
+        + (res.listProblem
+          ? res.listProblem + ' '
+          : `We held ${res.fromOurRecords} message ids and none of them cancelled. `)
+        + 'Cancel them in the Resend dashboard instead: open resend.com, go to Emails, and '
+        + 'cancel the ones scheduled for the morning. That always works, and it is the same '
+        + 'thing this button is asking Resend to do.',
+    }
+  }
+
+  return {
+    ok: res.failed.length === 0,
+    message: parts.join(' ')
+      + (res.fromProvider > 0
+        ? ` ${res.fromProvider} of those were found by asking Resend, because they were scheduled`
+          + ' before this site started keeping their ids.'
+        : ''),
+  }
 }

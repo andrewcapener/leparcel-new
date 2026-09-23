@@ -31,6 +31,14 @@ export type CancelResult = {
   failed: { id: string; detail: string }[]
   /** Nothing was scheduled, so nothing was there to stop. */
   nothingToDo: boolean
+  /** How many handles we held, and where each came from. Reported on the
+   *  screen, because "nothing happened" is the one answer a button must
+   *  never give and the difference between no ids and no permission is the
+   *  whole diagnosis. */
+  fromOurRecords: number
+  fromProvider: number
+  /** Why the provider's list gave us nothing, when it gave us nothing. */
+  listProblem: string
 }
 
 type Listed = { id: string; to: string[]; scheduled_at?: string | null; last_event?: string }
@@ -91,23 +99,73 @@ export async function scheduledChase(
  */
 export async function recoverIds(
   key: string, addresses: Set<string>, now = new Date(),
-): Promise<string[]> {
-  const res = await resend(`/emails?limit=${LIST_MAX}`, 'GET', key)
-  if (res.status !== 200) return []
+): Promise<{ ids: string[]; problem: string }> {
+  let res: { status: number; text: string }
+  try {
+    res = await resend(`/emails?limit=${LIST_MAX}`, 'GET', key)
+  } catch (err) {
+    return { ids: [], problem: err instanceof Error ? err.message : 'could not reach Resend' }
+  }
+  if (res.status === 401 || res.status === 403) {
+    /* The likeliest cause by far, and the raw message does not say it. A
+       Resend key can be issued with sending access only, which is enough to
+       queue sixty five emails and not enough to list or cancel one of them.
+       Nothing in the send path ever reveals that, so it surfaces here, on
+       the night somebody needs to take an email back. */
+    return {
+      ids: [],
+      problem: `Resend refused (HTTP ${res.status}): ${res.text.slice(0, 120)}. `
+        + 'That is almost certainly an API key with sending access only. A key like that can '
+        + 'queue an email and cannot list or cancel one. Check it at resend.com under API '
+        + 'Keys: it needs full access for this button to work.',
+    }
+  }
+  if (res.status !== 200) {
+    return {
+      ids: [],
+      problem: `Resend would not list the account's emails (HTTP ${res.status}). `
+        + `${res.text.slice(0, 160)}`,
+    }
+  }
   let data: Listed[] = []
   try {
     data = (JSON.parse(res.text) as { data?: Listed[] }).data ?? []
-  } catch { return [] }
+  } catch {
+    return { ids: [], problem: 'Resend answered the list with something that is not JSON.' }
+  }
+  if (data.length === 0) {
+    return { ids: [], problem: 'Resend listed no emails at all on this account.' }
+  }
 
-  return data
+  const matched = data
     .filter((e) => {
       const at = e.scheduled_at ? new Date(e.scheduled_at).getTime() : 0
       if (!at || at <= now.getTime()) return false
-      const to = (e.to ?? []).map((t) => String(t).toLowerCase())
-      return to.some((t) => addresses.has(t))
+      return recipients(e).some((t) => addresses.has(t))
     })
     .map((e) => e.id)
     .filter(Boolean)
+
+  return {
+    ids: matched,
+    problem: matched.length > 0 ? '' :
+      `Resend listed ${data.length} emails but none of them is one of ours still waiting to go. `
+      + 'Cancel them from the Resend dashboard instead.',
+  }
+}
+
+/**
+ * The addresses on a listed message, whatever shape the field arrives in.
+ *
+ * `to` is documented as an array and has been seen as a bare string. Calling
+ * .map on a string throws, the action dies, and the button looks like it did
+ * nothing, which is exactly how this was found.
+ */
+function recipients(e: Listed | { to?: unknown }): string[] {
+  const t = (e as { to?: unknown }).to
+  if (Array.isArray(t)) return t.map((x) => String(x).trim().toLowerCase())
+  if (typeof t === 'string') return [t.trim().toLowerCase()]
+  return []
 }
 
 /** Cancel every scheduled chase that has not gone yet. */
@@ -117,18 +175,26 @@ export async function cancelScheduledChase(
   const key = process.env.RESEND_API_KEY
   const { ids, unknown, addresses, rowIds } = await scheduledChase(db, now)
 
+  const base = { fromOurRecords: ids.length, fromProvider: 0, listProblem: '' }
+
   if (ids.length === 0 && unknown === 0) {
-    return { cancelled: 0, alreadyGone: 0, failed: [], nothingToDo: true }
+    return { ...base, cancelled: 0, alreadyGone: 0, failed: [], nothingToDo: true }
   }
   if (!key) {
     return {
-      cancelled: 0, alreadyGone: 0, nothingToDo: false,
+      ...base, cancelled: 0, alreadyGone: 0, nothingToDo: false,
       failed: [{ id: '', detail: 'No Resend key on this deployment, so nothing can be cancelled.' }],
     }
   }
 
   const all = new Set(ids)
-  if (unknown > 0) for (const id of await recoverIds(key, addresses, now)) all.add(id)
+  let fromProvider = 0
+  let listProblem = ''
+  if (unknown > 0) {
+    const rec = await recoverIds(key, addresses, now)
+    listProblem = rec.problem
+    for (const id of rec.ids) { if (!all.has(id)) fromProvider++; all.add(id) }
+  }
 
   let cancelled = 0
   let alreadyGone = 0
@@ -149,5 +215,8 @@ export async function cancelScheduledChase(
       .where(inArray(emailOutbox.id, rowIds))
   }
 
-  return { cancelled, alreadyGone, failed, nothingToDo: false }
+  return {
+    cancelled, alreadyGone, failed, nothingToDo: false,
+    fromOurRecords: ids.length, fromProvider, listProblem,
+  }
 }

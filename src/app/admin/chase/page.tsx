@@ -11,7 +11,8 @@ import { scheduledChase } from '@/server/modules/email/chase-cancel'
 import { nextNineAmPacific, owedCents, pacificDay } from '@/server/modules/email/fee-chase'
 import { PageHead, Stats, Stat } from '../ui'
 import { ChaseForm, type Row } from './ChaseForm'
-import { alignDeadlines, stopScheduledChase } from './actions'
+import { alignDeadlines } from './actions'
+import { StopForm } from './StopForm'
 
 export const dynamic = 'force-dynamic'
 /* Sixty two inserts and one call to Resend. Comfortably inside a minute and
@@ -114,15 +115,20 @@ export default async function ChasePage() {
               have not gone out yet.
             </strong>{' '}
             Until they do, they can still be stopped. Stop them if the words need changing,
-            fix what needs fixing, then schedule again from the list below.
+            fix what needs fixing, then schedule again from the list below.{' '}
+            {waiting.unknown > 0 && (
+              <>
+                {waiting.unknown} of them were scheduled before this site kept their ids, so
+                stopping those means asking Resend which of its waiting emails are ours.
+              </>
+            )}
           </p>
-          <form action={stopScheduledChase}>
-            <div className="adm-acts">
-              <button className="adm-btn" type="submit">
-                Stop {waitingCount === 1 ? 'it' : `all ${waitingCount}`}
-              </button>
-            </div>
-          </form>
+          <StopForm count={waitingCount} />
+          <p className="adm-note">
+            If this cannot stop them, they can always be cancelled by hand at{' '}
+            <strong>resend.com</strong> under Emails. That is the same thing this button asks
+            Resend to do, and it does not depend on anything here working.
+          </p>
         </>
       )}
 
