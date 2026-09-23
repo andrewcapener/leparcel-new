@@ -7,10 +7,12 @@
  * settings. So the answer is a screen, built from the same values the sending
  * code reads, and this is the pure half of it.
  *
- * There is exactly one function in the codebase that transmits mail, `mail()`
- * in src/app/actions.ts, and it has nine call sites. All nine are below. If a
- * tenth is ever added, it belongs here on the same commit, and the test next
- * door is the thing that will be wrong if it is not.
+ * `mail()` in src/app/actions.ts transmits one message at a time and has nine
+ * call sites. `sendChase()` in ./chase-send.ts is the only other thing that
+ * can transmit, it hands Resend a whole batch at once, and it exists because
+ * the alternative was a mail merge out of a spreadsheet. Both are below. If a
+ * third route is ever added it belongs here on the same commit, and the test
+ * next door is the thing that will be wrong if it is not.
  */
 
 export type MailFacts = {
@@ -60,6 +62,21 @@ export function mailPaths(f: MailFacts): MailPath[] {
   const noKey = 'No Resend key on this deployment, so nothing can leave at all.'
 
   return [
+    {
+      what: 'Booth fee chase, to everyone due today',
+      to: 'the maker',
+      sets: 'staff press a button',
+      trigger: 'Ticking a list on Chase the booth fee and pressing Schedule.',
+      /* The only thing here that reaches a crowd. No switch arms it and no
+         job runs it: somebody reads a list of names and addresses, ticks
+         them, and chooses the minute it arrives. It is armed whenever mail
+         can leave at all, because the gate is the screen rather than a
+         setting, and a setting would be the wrong gate for this one. */
+      armed: key,
+      because: key
+        ? 'Only ever the makers ticked on that screen, at the time chosen there.'
+        : noKey,
+    },
     {
       what: 'Booth fee, with their pay link',
       to: 'the maker',

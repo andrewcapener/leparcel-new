@@ -37,6 +37,7 @@ const MAIN: Array<{
   { href: '/admin/jury', label: 'Review queue', icon: 'queue', count: 'undecided', owns: '/admin/applications' },
   { href: '/admin/roster', label: 'Roster', icon: 'roster', count: 'needsPerson' },
   { href: '/admin/import', label: 'Accept from the sheet', icon: 'queue' },
+  { href: '/admin/chase', label: 'Chase the booth fee', icon: 'clock' },
   { href: '/admin/sheet', label: 'Send to Google Sheet', icon: 'external' },
   { href: '/admin/show', label: 'Show settings', icon: 'settings' },
   { href: '/admin/outbox', label: 'Outbox', icon: 'mail' },
