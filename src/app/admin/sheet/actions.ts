@@ -7,18 +7,36 @@ import { shows } from '@/db/schema'
 import { activeShow } from '@/db/queries'
 import { siteUrl } from '@/lib/site-url'
 import { pushPaymentTabs, spreadsheetIdFrom } from '@/server/modules/roster/sheet-push'
+import { redact } from '@/server/modules/sheets/transport'
+import type { PushState } from './state'
 
-export type PushState = {
-  /** Echoed back so a rejected paste is not lost. */
-  link: string
-  ok: boolean
-  message: string
-}
-
-export const emptyPush: PushState = { link: '', ok: false, message: '' }
-
+/**
+ * Write the two payment tabs into the sheet somebody pasted.
+ *
+ * Every failure comes back as a sentence on the screen, including the ones
+ * nobody anticipated. An action that throws takes the page into an error
+ * boundary, and an error boundary on a button is indistinguishable from a
+ * button that does nothing, which is the report this page has already
+ * produced once. A migration one deploy behind, a database that blinked, a
+ * Google that hung: each of those is worth a line somebody can act on and
+ * none of them is worth a blank screen.
+ */
 export async function pushToSheet(_prev: PushState, fd: FormData): Promise<PushState> {
   const link = String(fd.get('link') ?? '')
+  try {
+    return await push(link)
+  } catch (err) {
+    return {
+      link,
+      ok: false,
+      message: 'Nothing was written. ' + redact(
+        err instanceof Error ? err.message : 'Something failed and said nothing about itself.',
+      ),
+    }
+  }
+}
+
+async function push(link: string): Promise<PushState> {
   const id = spreadsheetIdFrom(link)
   if (!id) {
     return { link, ok: false, message: 'That is not a Google Sheet link. Paste the whole URL from the address bar.' }

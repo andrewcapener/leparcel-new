@@ -1,7 +1,8 @@
 'use client'
 
 import { useActionState } from 'react'
-import { pushToSheet, emptyPush, type PushState } from './actions'
+import { pushToSheet } from './actions'
+import { emptyPush, type PushState } from './state'
 
 /**
  * One field and one button: the link to the sheet, and Send.
