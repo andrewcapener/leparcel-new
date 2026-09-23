@@ -14,7 +14,11 @@ import { viaLabel, makerSignal, type MakerSignal } from '@/server/modules/paymen
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { connectState, owesPayoutSetup, type ConnectState } from '@/server/modules/payments/connect'
 import { fmtDateTime, fmtRange } from '@/lib/dates'
-import { PageHead, Stats, Stat, Progress } from '../ui'
+import { PageHead, Stats, Stat, Progress, Tabs, Tab } from '../ui'
+import {
+  asFee, asTrack, FEE_FILTERS, FEE_LABEL, feeBucket, filterWords, isFiltered,
+  matchesFee, matchesTrack, TRACK_FILTERS, TRACK_LABEL,
+} from '@/server/modules/roster/filters'
 
 export const dynamic = 'force-dynamic'
 
@@ -97,13 +101,13 @@ function MarkPaid({
 export default async function Roster({
   searchParams,
 }: {
-  searchParams: Promise<{ price?: string; release?: string }>
+  searchParams: Promise<{ price?: string; release?: string; track?: string; fee?: string }>
 }) {
   const sp = await searchParams
   const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
-  const rows = await db
+  const everyone = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
@@ -111,6 +115,25 @@ export default async function Roster({
     .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
     .where(eq(bookings.showId, show.id))
     .orderBy(asc(bookings.vendorCode))
+
+  /* Hillary runs outdoor, Elise runs indoor, and on payment week each of them
+     is asking "who on MY list has not paid". The filter narrows the WHOLE
+     page rather than just the table, because a count that answers for the
+     show while the table answers for one track is worse than no count. */
+  const track = asTrack(sp.track)
+  const fee = asFee(sp.fee)
+  const filtered = isFiltered(track, fee)
+  const rows = everyone.filter(
+    (r) => matchesTrack(r.space.track, track) && matchesFee(r.booking.status, fee),
+  )
+  /* Links that keep the other axis where it is, so the two strips compose. */
+  const to = (t: string, f: string) => {
+    const q = new URLSearchParams()
+    if (t !== 'all') q.set('track', t)
+    if (f !== 'all') q.set('fee', f)
+    const s = q.toString()
+    return s ? `/admin/roster?${s}` : '/admin/roster'
+  }
 
   const confirmed = rows.filter((r) => isPaid(r.booking.status))
   const awaiting = rows.filter((r) => needsChasing(r.booking.status))
@@ -475,8 +498,37 @@ export default async function Roster({
     <>
       <PageHead
         title="Roster"
-        sub={`${rows.length} ${rows.length === 1 ? 'space held' : 'spaces held'} for ${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${show.venueName}`}
+        sub={filtered
+          /* Say what is being shown AND out of how many, so a narrowed page
+             can never be mistaken for the whole show. */
+          ? `${rows.length} of ${everyone.length} · ${filterWords(track, fee)} · ${show.name}`
+          : `${rows.length} ${rows.length === 1 ? 'space held' : 'spaces held'} for ${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${show.venueName}`}
       />
+
+      {/* Two strips that compose: pick a track, pick a fee state, and each
+          link keeps the other where it is. Counts come from the whole show,
+          so a filter never hides how much it is hiding. */}
+      <Tabs label="Filter the roster by track">
+        {TRACK_FILTERS.map((t) => (
+          <Tab
+            key={t} href={to(t, fee)} label={TRACK_LABEL[t]} on={track === t}
+            count={everyone.filter(
+              (r) => matchesTrack(r.space.track, t) && matchesFee(r.booking.status, fee),
+            ).length}
+          />
+        ))}
+      </Tabs>
+
+      <Tabs label="Filter the roster by fee">
+        {FEE_FILTERS.map((f) => (
+          <Tab
+            key={f} href={to(track, f)} label={FEE_LABEL[f]} on={fee === f}
+            count={everyone.filter(
+              (r) => matchesTrack(r.space.track, track) && matchesFee(r.booking.status, f),
+            ).length}
+          />
+        ))}
+      </Tabs>
 
       {sp.release && (
         <p className="adm-note" role="status">
@@ -593,7 +645,12 @@ export default async function Roster({
         )}
       </div>
 
-      {overdue.length > 0 && (
+      {/* Hidden while a filter is on. "Release 2 spaces" under an indoor
+          filter would release every overdue space in the show, indoor and
+          out, because the action works from the Show record and knows
+          nothing about what the page was showing. A button that does more
+          than it says is worse than one you have to clear a filter to reach. */}
+      {overdue.length > 0 && !filtered && (
         <>
           <div className="adm-sec" id="overdue" style={{ scrollMarginTop: '24px' }}>
             <h2>Past the payment window</h2>
@@ -725,8 +782,14 @@ export default async function Roster({
 
       {rows.length === 0 ? (
         <p className="adm-empty">
-          Nothing here yet. When you accept an application in the review queue, the booking lands
-          on this roster with its fee and paperwork status.
+          {filtered
+            /* Nobody matching a filter is a different fact from an empty
+               roster, and telling somebody their roster is empty when it
+               holds eighty one makers is how trust in a screen goes. */
+            ? <>No {filterWords(track, fee)} makers. {everyone.length} on the roster
+              altogether: <Link className="adm-lk" href="/admin/roster">show everyone</Link>.</>
+            : <>Nothing here yet. When you accept an application in the review queue, the booking
+              lands on this roster with its fee and paperwork status.</>}
         </p>
       ) : (
         <table className="adm-tbl">
