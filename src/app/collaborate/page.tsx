@@ -75,20 +75,32 @@ export default async function Collaborate() {
             </p>
           </RichText>
 
+          {/* Every figure here is the founders' own, given by Elise and Drew on
+              23 Sept 2026, and each replaces a older number carried over from
+              the Shopify site. docs/09-CONTENT-AUDIT.md section 5: publish only
+              what you can source, because one soft number inverts the whole
+              effect of the rest.
+
+              Two carry a caveat worth keeping next to them. The Instagram
+              count is "I think we have 19k" and wants ten seconds in the app
+              to confirm. The attendance figure is Elise's "4-5k" with no label
+              attached; it is rendered as attendance per show because that is
+              what a range of that size describes, and the old label said
+              "repeat attendees", which is a different and larger claim. */}
           <StatRow
             id="section-merstats-1"
             stats={[
-              { value: '6k', label: 'Repeat show attendees' },
-              { value: '17K', label: 'Followers on Instagram' },
-              { value: '11+', label: 'Years deep' },
+              { value: '4,000-5,000', label: 'Attendance per show' },
+              { value: '19k', label: 'Followers on Instagram' },
+              { value: '13', label: 'Years deep' },
             ]}
           />
           <StatRow
             id="section-merstats-2"
             stats={[
               { value: '100+', label: 'Makers per show' },
-              { value: '22', label: 'Past shows' },
-              { value: '10,000', label: 'Email subscribers' },
+              { value: '23', label: 'Past shows' },
+              { value: '12,000', label: 'Email subscribers' },
             ]}
           />
 
