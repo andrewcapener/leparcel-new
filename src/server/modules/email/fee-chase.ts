@@ -86,6 +86,62 @@ export function spacePhrase(track: string, label: string): string {
   return l ? `Your indoor space (${l})` : 'Your indoor space'
 }
 
+
+/**
+ * What to call somebody at the top of an email.
+ *
+ * Drew, after scheduling the first batch: "it has their first and last name,
+ * can you make it just their first name." He is right. "Rosie Alcala," at the
+ * top of a note about her own booth fee reads like a bank; "Rosie," reads
+ * like Elise wrote it.
+ *
+ * The contact field on this roster is not a clean first and last name, so
+ * this is more than splitting on a space. Real values it has to survive:
+ *
+ *   "Brighton Awad (Melissa, mom)"          a parent in a parenthetical
+ *   "Claudette Renault c/o Bailey & Janie"  a grown-up minding two kids
+ *   "Via and Emma Erickson"                 two sisters, one booth
+ *   "Thomas & Anders Wheeler"               two brothers
+ *   "SAMANTHA FRANK"                        typed with caps lock on
+ *   "kristine l"                            typed in a hurry
+ *
+ * Two names joined by "and" or "&" keep both, because addressing a JR Maker
+ * booth run by two sisters as only the older one is exactly the kind of small
+ * wrong thing this market does not do. Anything after "c/o" or inside
+ * brackets is somebody's parent or a note to staff and is never the greeting.
+ *
+ * Casing is fixed only when the whole word is one case, so "McGill" and
+ * "DeAnna" are left exactly as their owner typed them.
+ */
+export function firstName(contactName: string): string {
+  let n = (contactName ?? '').trim()
+  if (!n) return 'Hello'
+
+  /* A parent, a note, or a second contact. Never the person being greeted. */
+  n = n.replace(/\([^)]*\)/g, ' ')
+  n = n.replace(/\bc\/o\b.*$/i, ' ')
+  n = n.replace(/[,;].*$/, ' ')
+  n = n.trim()
+  if (!n) return 'Hello'
+
+  /* Two makers on one booth: "Via and Emma Erickson", "Seda & Elif". */
+  const parts = n.split(/\s+(?:and|&|\+)\s+/i).map((p) => p.trim()).filter(Boolean)
+  const firsts = parts.slice(0, 2).map(leadWord).filter(Boolean)
+  if (firsts.length === 0) return 'Hello'
+  return firsts.join(' and ')
+}
+
+/** The first word of a name, cased the way a person would write it. */
+function leadWord(part: string): string {
+  const w = (part.split(/\s+/)[0] ?? '').replace(/[^\p{L}\p{M}'-]/gu, '')
+  if (!w) return ''
+  /* Only touch it when the whole word is one case. A name somebody
+     deliberately cased, McGill or DeAnna, is theirs and stays as typed. */
+  const oneCase = w === w.toLowerCase() || w === w.toUpperCase()
+  if (!oneCase) return w
+  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+}
+
 export const CHASE_SUBJECT = 'Due today: your Fall 26 booth fee'
 
 /**
@@ -97,7 +153,7 @@ export const CHASE_SUBJECT = 'Due today: your Fall 26 booth fee'
  * the signature line the voice doc would otherwise allow.
  */
 export function chaseText(b: ChaseBooking, payUrl: string): string {
-  return `${b.contactName.trim()},
+  return `${firstName(b.contactName)},
 
 ${spacePhrase(b.track, b.spaceLabel)} is held. The fee is ${usd(b.totalCents)}, due today by 11:59pm.
 
@@ -184,9 +240,22 @@ export function owedCents(plan: ChasePlan): number {
  * Scoped to the show and the Pacific day, so pressing Send twice on the same
  * morning is the same call to Resend and delivers once, while a genuine chase
  * on a later day is a different key and goes.
+ *
+ * `sentBefore` is what stops that guard becoming a trap. Drew scheduled a
+ * batch, cancelled it to fix the greeting, and re-sent within the same hour.
+ * Without something that moves, the second send carries the first send's key,
+ * the provider replays the first response, and the screen says sixty five
+ * scheduled while nothing has actually been queued.
+ *
+ * It is a count of chase messages already handed over, cancelled ones
+ * included, so it only ever goes up and a deliberate re-send always gets a
+ * fresh key. Two people pressing at the same instant read the same count and
+ * so share a key, which is the behaviour this is for.
  */
-export function chaseIdempotencyKey(showId: string, today: string): string {
-  return `fee-chase:${showId}:${today}`
+export function chaseIdempotencyKey(showId: string, today: string, sentBefore = 0): string {
+  return sentBefore > 0
+    ? `fee-chase:${showId}:${today}:v${sentBefore + 1}`
+    : `fee-chase:${showId}:${today}`
 }
 
 /* ──────────────────────── when it arrives ──────────────────────── */

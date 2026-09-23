@@ -7,10 +7,11 @@ import { bookings, vendors } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { deadlineChanges, losesTime } from '@/server/modules/payments/align-deadline'
 import { planChase } from '@/server/modules/email/chase-send'
+import { scheduledChase } from '@/server/modules/email/chase-cancel'
 import { nextNineAmPacific, owedCents, pacificDay } from '@/server/modules/email/fee-chase'
 import { PageHead, Stats, Stat } from '../ui'
 import { ChaseForm, type Row } from './ChaseForm'
-import { alignDeadlines } from './actions'
+import { alignDeadlines, stopScheduledChase } from './actions'
 
 export const dynamic = 'force-dynamic'
 /* Sixty two inserts and one call to Resend. Comfortably inside a minute and
@@ -73,6 +74,12 @@ export default async function ChasePage() {
     .where(eq(bookings.showId, show.id))
   const moves = show.paymentDueAt ? deadlineChanges(dueRows, show.paymentDueAt) : []
 
+  /* Anything already handed to Resend for a time that has not arrived. Until
+     it goes it can still be stopped, which is the whole advantage of letting
+     the provider hold it. */
+  const waiting = await scheduledChase(db, now)
+  const waitingCount = waiting.ids.length + waiting.unknown
+
   const hasKey = Boolean(process.env.RESEND_API_KEY)
   const defaultAt = pacificLocalValue(nextNineAmPacific(now))
   const sample = plan.send[0]
@@ -96,6 +103,27 @@ export default async function ChasePage() {
           button will still write every message to the outbox so you can see exactly what it
           would have sent, and will tell you it did not send.
         </p>
+      )}
+
+      {waitingCount > 0 && (
+        <>
+          <div className="adm-sec"><h2>Already scheduled</h2></div>
+          <p className="adm-note">
+            <strong>
+              {waitingCount} {waitingCount === 1 ? 'email is' : 'emails are'} with Resend and
+              have not gone out yet.
+            </strong>{' '}
+            Until they do, they can still be stopped. Stop them if the words need changing,
+            fix what needs fixing, then schedule again from the list below.
+          </p>
+          <form action={stopScheduledChase}>
+            <div className="adm-acts">
+              <button className="adm-btn" type="submit">
+                Stop {waitingCount === 1 ? 'it' : `all ${waitingCount}`}
+              </button>
+            </div>
+          </form>
+        </>
       )}
 
       {moves.length > 0 && show.paymentDueAt && (

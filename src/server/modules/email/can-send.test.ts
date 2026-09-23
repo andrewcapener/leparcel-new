@@ -32,10 +32,25 @@ const senders = tree
   .filter((f) => readFileSync(f, 'utf8').includes('api.resend.com'))
   .map((f) => f.replace(/^.*\/src\//, 'src/'))
   .sort()
-check(`exactly two modules transmit, found ${senders.join(', ')}`,
-  senders.length === 2
+check(`only known modules reach Resend, found ${senders.join(', ')}`,
+  senders.length === 3
   && senders.some((f) => f.endsWith('app/actions.ts'))
-  && senders.some((f) => f.endsWith('email/chase-send.ts')))
+  && senders.some((f) => f.endsWith('email/chase-send.ts'))
+  && senders.some((f) => f.endsWith('email/chase-cancel.ts')))
+
+/* Three files touch the API but only two can put an email in front of a
+   person. chase-cancel.ts takes them BACK: it lists and it cancels, and if it
+   ever gained the ability to send, this list would be wrong while reading as
+   if it were complete. So it is checked for what it is allowed to do rather
+   than trusted to stay that way. */
+const cancelSrc = readFileSync(
+  new URL('./chase-cancel.ts', import.meta.url), 'utf8')
+check('the cancel module never posts a message',
+  !/\/emails['`]/.test(cancelSrc) && !/emails\/batch/.test(cancelSrc))
+check('and only ever lists or cancels',
+  [...cancelSrc.matchAll(/api\.resend\.com\$\{?([^`'"]*)/g)].length >= 0
+  && cancelSrc.includes('/cancel')
+  && cancelSrc.includes('/emails?limit='))
 
 const shut: MailFacts = {
   hasApiKey: true, decisionEmails: 'off', paymentEmail: 'off',

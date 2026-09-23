@@ -1,6 +1,6 @@
 import {
   chasePlan, chaseText, spacePhrase, pacificDay, owedCents, chaseIdempotencyKey,
-  nextNineAmPacific, pacificWallToUtc, chaseBatchBody, CHASE_SUBJECT,
+  nextNineAmPacific, pacificWallToUtc, chaseBatchBody, CHASE_SUBJECT, firstName,
   type ChaseBooking,
 } from './fee-chase'
 
@@ -124,7 +124,7 @@ eq('an outdoor day does not say outdoor twice',
 
 {
   const body = chaseText(base, url('tok1'))
-  ok('it opens with their name', body.startsWith('Rosie Alcala,'))
+  ok('it opens with their first name', body.startsWith('Rosie,'))
   ok('it carries their own fee', body.includes('$280'))
   ok('it carries their own link', body.includes('https://mermademarket.com/pay/tok1'))
   ok('it says when', body.includes('due today by 11:59pm'))
@@ -234,6 +234,57 @@ for (const at of ['2026-01-15T20:00:00.000Z', '2026-03-08T12:00:00.000Z',
   const tue = chasePlan([dueWednesday], '2026-09-22', url)
   ok('and Tuesday says why they are not on it',
     /Not due until 2026-09-23/.test(tue.held[0]?.because ?? ''))
+}
+
+/* ── the greeting ── */
+
+{
+  /* Drew, after reading the first scheduled copy: first name only. Every
+     value below is a real contact on the Fall 26 roster. */
+  const cases: Array<[string, string]> = [
+    ['Rosie Alcala', 'Rosie'],
+    ['Allison Richter', 'Allison'],
+    /* Cased by its owner. Never "Mcgill". */
+    ['Tracey McGill', 'Tracey'],
+    ['Desi Kauhi-Peterson', 'Desi'],
+    /* Caps lock, and a greeting should not shout back. */
+    ['SAMANTHA FRANK', 'Samantha'],
+    ['kristine l', 'Kristine'],
+    /* A parent in brackets is not the person being written to. */
+    ['Brighton Awad (Melissa, mom)', 'Brighton'],
+    /* Nor is whoever is minding the booth. */
+    ['Claudette Renault c/o Bailey & Janie', 'Claudette'],
+    /* Two sisters on one JR booth. Greeting only the first is the small
+       wrong thing this market does not do. */
+    ['Via and Emma Erickson', 'Via and Emma'],
+    ['Thomas & Anders Wheeler', 'Thomas and Anders'],
+    ['Stella & Winnie Ham', 'Stella and Winnie'],
+    ['Seda & Elif', 'Seda and Elif'],
+  ]
+  for (const [given, want] of cases) eq(`"${given}"`, firstName(given), want)
+
+  /* Never empty, never a comma on its own line. */
+  for (const junk of ['', '   ', '()', ',', 'c/o somebody']) {
+    ok(`"${junk}" still greets somebody`, firstName(junk).length > 0)
+  }
+}
+
+{
+  const body = chaseText(b({ contactName: 'Rosie Alcala' }), url('t'))
+  ok('the email opens with the first name alone', body.startsWith('Rosie,'))
+  ok('and never the surname', !body.includes('Alcala'))
+}
+
+/* ── sending again after a cancel ── */
+
+{
+  const day = '2026-09-23'
+  eq('an accidental double press is the same key',
+    chaseIdempotencyKey('s', day, 1), chaseIdempotencyKey('s', day, 1))
+  ok('a deliberate re-send after a cancel is not',
+    chaseIdempotencyKey('s', day, 1) !== chaseIdempotencyKey('s', day, 2))
+  eq('the first send keeps the plain key',
+    chaseIdempotencyKey('s', day, 0), `fee-chase:s:${day}`)
 }
 
 if (failures > 0) { console.error(`\n${failures} failure(s).`); process.exit(1) }

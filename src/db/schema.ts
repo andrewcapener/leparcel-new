@@ -431,8 +431,11 @@ export const emailOutbox = pgTable('email_outbox', {
   subject: text('subject').notNull(),
   body: text('body').notNull(),
   template: text('template').notNull(),
-  deliveryStatus: text('delivery_status').notNull().default('logged'), // 'logged' | 'sent' | 'failed'
+  deliveryStatus: text('delivery_status').notNull().default('logged'), // 'logged' | 'sent' | 'failed' | 'cancelled'
   deliveryDetail: text('delivery_detail').notNull().default(''),
+  /** The provider's own id, which is the only handle that can cancel a
+   *  scheduled message. See drizzle/0044_outbox-provider-id.sql. */
+  providerId: text('provider_id'),
   sentAt: dbNow('sent_at'),
 })
 

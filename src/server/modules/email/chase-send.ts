@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { and, eq, gte } from 'drizzle-orm'
+import { and, eq, gte, inArray } from 'drizzle-orm'
 import { bookings, emailOutbox, spaceTypes, vendors } from '@/db/schema'
 import type { db as Db } from '@/db'
 import {
@@ -88,7 +88,12 @@ export async function planChase(
 
   /* Who already has one of these today. Resend's idempotency key stops a
      double press inside its own window; this is the answer that survives a
-     redeploy, and it is what the screen shows so nobody wonders. */
+     redeploy, and it is what the screen shows so nobody wonders.
+     
+     Only messages that are actually still on their way count. A batch that
+     was scheduled and then stopped, to fix the greeting or anything else, has
+     reached nobody, and treating it as delivered leaves the whole roster
+     unticked on the re-send with no explanation on the screen. */
   const startOfDayUtc = new Date(now)
   startOfDayUtc.setUTCHours(startOfDayUtc.getUTCHours() - 24)
   const recent = await db
@@ -96,6 +101,7 @@ export async function planChase(
     .from(emailOutbox)
     .where(and(
       eq(emailOutbox.template, CHASE_TEMPLATE),
+      eq(emailOutbox.deliveryStatus, 'sent'),
       gte(emailOutbox.sentAt, startOfDayUtc.toISOString()),
     ))
   return { plan, today, alreadySent: new Set(recent.map((r) => r.to.toLowerCase())) }
@@ -123,6 +129,18 @@ export async function sendChase(
   /* The day it lands, for the same reason planChase takes one. */
   const today = pacificDay(new Date(scheduledAtIso))
   const { plan } = await planChase(db, showId, siteUrl, today)
+
+  /* How many chase batches have already been handed over for this arrival.
+     A cancelled one counts: it is why we are sending again, and reusing its
+     key would have the provider replay the old answer and queue nothing. */
+  const prior = await db
+    .select({ id: emailOutbox.id })
+    .from(emailOutbox)
+    .where(and(
+      eq(emailOutbox.template, CHASE_TEMPLATE),
+      inArray(emailOutbox.deliveryStatus, ['sent', 'cancelled']),
+    ))
+  const attempt = prior.length
   const going = plan.send.filter((c) => only.has(c.booking.bookingId))
 
   if (going.length === 0) return { ok: false, detail: 'Nobody is selected, so nothing was sent.' }
@@ -165,7 +183,7 @@ export async function sendChase(
         'Content-Type': 'application/json',
         /* Show and day, so pressing this twice this morning delivers once
            and a real chase tomorrow is a different key (rule 4). */
-        'Idempotency-Key': chaseIdempotencyKey(showId, today),
+        'Idempotency-Key': chaseIdempotencyKey(showId, today, attempt),
       },
       body: JSON.stringify(chaseBatchBody(going, from, REPLY_TO, scheduledAtIso)),
       signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -183,12 +201,25 @@ export async function sendChase(
     return { ok: false, detail }
   }
 
-  await markAll(db, logged, 'sent', `scheduled for ${scheduledAtIso}`)
+  /* One id per message, in the order they were sent, and each one stored
+     against its own outbox row. These are the only handles that can cancel a
+     scheduled message, and not keeping them is what turned a one word copy
+     change into an hour of recovering ids from the provider's account. */
+  const ids = allIds(text)
+  for (const [i, r] of logged.entries()) {
+    await db.update(emailOutbox)
+      .set({
+        deliveryStatus: 'sent',
+        deliveryDetail: `scheduled for ${scheduledAtIso}`,
+        providerId: ids[i] ?? null,
+      })
+      .where(eq(emailOutbox.id, r.id))
+  }
   return {
     ok: true,
     queued: going.length,
     scheduledAt: scheduledAtIso,
-    resendId: firstId(text),
+    resendId: ids[0] ?? '',
   }
 }
 
@@ -202,10 +233,10 @@ async function markAll(
   }
 }
 
-/** Resend answers with one id per message. The first is enough to find a batch. */
-function firstId(body: string): string {
+/** Resend answers with one id per message, in the order they were sent. */
+function allIds(body: string): string[] {
   try {
     const j = JSON.parse(body) as { data?: { id?: string }[] }
-    return j.data?.[0]?.id ?? ''
-  } catch { return '' }
+    return (j.data ?? []).map((d) => d?.id ?? '')
+  } catch { return [] }
 }

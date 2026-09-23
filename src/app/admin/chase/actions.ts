@@ -11,6 +11,7 @@ import { bookings, vendors } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { deadlineChanges, losesTime } from '@/server/modules/payments/align-deadline'
 import { sendChase } from '@/server/modules/email/chase-send'
+import { cancelScheduledChase } from '@/server/modules/email/chase-cancel'
 import { pacificWallToUtc } from '@/server/modules/email/fee-chase'
 import type { ChaseState } from './state'
 
@@ -161,4 +162,37 @@ export async function alignDeadlines(): Promise<void> {
 
   revalidatePath('/admin/chase')
   revalidatePath('/admin/roster')
+}
+
+/**
+ * Stop a chase that is scheduled but has not gone.
+ *
+ * The reason scheduling through the provider beats waking something up at
+ * nine: until the minute it goes, it is still somewhere you can reach it.
+ * Drew scheduled sixty five and then wanted the greeting changed, which is
+ * exactly the situation this is for.
+ *
+ * One cancelled message is one audit row, and the batch gets its own, because
+ * unsending sixty five emails is a thing somebody should be able to find
+ * afterwards (rule 3).
+ */
+export async function stopScheduledChase(): Promise<void> {
+  const show = await activeShow()
+  const res = await cancelScheduledChase(db)
+
+  if (!res.nothingToDo) {
+    await db.insert(auditLog).values({
+      id: randomUUID(), entity: 'show', entityId: show?.id ?? '',
+      action: res.failed.length > 0 ? 'fee_chase_cancel_partial' : 'fee_chase_cancelled',
+      actor: 'staff',
+      before: null,
+      after: JSON.stringify({
+        cancelled: res.cancelled, alreadyGone: res.alreadyGone, failed: res.failed.length,
+      }),
+      reason: 'scheduled chase stopped before it went out',
+    })
+  }
+
+  revalidatePath('/admin/chase')
+  revalidatePath('/admin/outbox')
 }
