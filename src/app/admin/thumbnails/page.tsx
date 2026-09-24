@@ -5,6 +5,7 @@ import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
 import { PageHead, Tabs, Tab } from '../ui'
 import { thumbnailFor, parsePhotos } from '@/server/modules/roster/thumbnail'
+import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { setThumbnail, clearThumbnail } from './actions'
 import { ThumbUpload } from './ThumbUpload'
 
@@ -26,15 +27,24 @@ import { ThumbUpload } from './ThumbUpload'
 export const dynamic = 'force-dynamic'
 
 const FILTERS = [
+  { key: 'all', label: 'Everyone' },
   { key: 'missing', label: 'No picture' },
   { key: 'theirs', label: "Maker's own" },
   { key: 'chosen', label: 'Replaced' },
-  { key: 'all', label: 'Everyone' },
 ] as const
 type FilterKey = (typeof FILTERS)[number]['key']
 
+/**
+ * Everyone, by default.
+ *
+ * This opened on the makers with no picture, on the reasoning that they are
+ * the worklist. It reads as the page being broken: the first thing anybody
+ * sees is a screen of empty boxes, and the photographs the makers actually
+ * uploaded are one tab away where nobody looks. Open on the populated state,
+ * let the counts say how much is left, and let her click the worklist.
+ */
 function asFilter(v: string | undefined): FilterKey {
-  return FILTERS.some((f) => f.key === v) ? (v as FilterKey) : 'missing'
+  return FILTERS.some((f) => f.key === v) ? (v as FilterKey) : 'all'
 }
 
 export default async function Thumbnails({
@@ -84,7 +94,12 @@ export default async function Thumbnails({
     <>
       <PageHead
         title="Maker pictures"
-        sub={`The square each maker is shown by on the site. ${counts.missing} of ${counts.all} still have none.`}
+        sub={counts.all === 0
+          ? 'No booked makers on this show yet.'
+          : `${counts.theirs + counts.chosen} of ${counts.all} makers have a square. `
+            + `${counts.theirs} came from what the maker uploaded`
+            + `${counts.chosen > 0 ? `, ${counts.chosen} replaced by hand` : ''}`
+            + `${counts.missing > 0 ? `, and ${counts.missing} still have none.` : '.'}`}
       >
         <Link className="adm-btn" href="/admin/roster">Back to the roster</Link>
       </PageHead>
@@ -95,6 +110,18 @@ export default async function Thumbnails({
             : sp.thumb === 'cleared' ? 'Back to the maker’s own photograph. Nothing of theirs was ever changed.'
               : sp.thumb === 'foreign' ? 'That picture has to be one we hold. Upload the file itself rather than linking to somebody else’s site.'
                 : 'No such maker. Nothing was changed.'}
+        </p>
+      )}
+
+      {/* When not one maker has a photograph, the screen looks broken and the
+          reason is invisible. Name it: either storage was never configured,
+          in which case no upload could ever have been kept, or it was and
+          nobody sent one. Those need different people to do different things. */}
+      {counts.all > 0 && counts.theirs === 0 && counts.chosen === 0 && (
+        <p className="adm-note" role="status">
+          {photoUploadsEnabled()
+            ? 'Not one of these makers has a photograph on their application. Uploads are switched on, so this is makers not having sent one rather than anything being broken. Add them here.'
+            : 'Photo uploads are not configured on this deployment, so nothing a maker sent could have been kept. Set the Supabase service role key before chasing anybody for pictures.'}
         </p>
       )}
 
