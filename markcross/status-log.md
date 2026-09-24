@@ -147,3 +147,14 @@ feel extremely confident in").
   Meta write freeze (Andrew's own caution protocol post-ban, to ~Oct 1)
   stands; a generic delegation isn't an explicit waiver. Needs either his
   60-second UI change or an explicit instruction to use the Meta API.
+
+## 2026-09-24 pt 2 (Meta retargeting bump — explicit waiver)
+
+Andrew: "Run #2 for sure" — explicit one-time waiver on the Meta write
+freeze (second waiver; first was the 9/8 pause). Executed via API:
+
+- **rt-nc_maxconv_sales_DABA_cbo_120525 (120239391490950706): CBO daily
+  budget $100 → $130 (+30%)**, single read-then-write, success:true.
+- Next step per scale protocol: +25-30% again ~Sep 27-28 if CAC holds,
+  manual or by then freeze-free. Freeze otherwise still in force until
+  ~Oct 1 (prospecting rebuild).
