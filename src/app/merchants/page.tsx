@@ -3,6 +3,8 @@ import { eq, and, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
+import { thumbnailFor } from '@/server/modules/roster/thumbnail'
+import { MakerGrid, type MakerCard } from './MakerGrid'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, LogoGrid, RichText, Banner } from '@/components/theme/Sections'
 import { fmtDate } from '@/lib/dates'
@@ -37,11 +39,15 @@ export default async function Merchants() {
 
   const roster = await db
     .select({
+      id: bookings.id,
       shopName: vendors.shopName,
       instagram: vendors.instagram,
       website: vendors.website,
       track: spaceTypes.track,
       space: spaceTypes.label,
+      category: applications.category,
+      photos: applications.photos,
+      thumbnailUrl: applications.thumbnailUrl,
     })
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
@@ -58,23 +64,41 @@ export default async function Merchants() {
     return ig ? `https://instagram.com/${ig.replace(/^@/, '')}` : null
   }
 
-  // Inside is one group, all three days. Outside is one group per space,
-  // which is one per day, in the order the spaces are listed on /apply.
-  //
-  // Every group carries its label, the inside one included. It used to be
-  // the exception, on the grounds that the intro paragraph named it the way
-  // their page does. On the page that read as an oversight: a run of names
-  // with nothing over it, then "OUTDOOR FRIDAY" and "OUTDOOR SUNDAY" neatly
-  // labelled below. A reader should not have to infer a group's identity
-  // from a paragraph two screens up.
-  const groups: Array<{ heading: string; rows: Row[] }> = []
-  const inside = roster.filter((m) => m.track === 'indoor')
-  if (inside.length > 0) groups.push({ heading: 'Inside, all 3 days', rows: inside })
-  for (const m of roster.filter((r) => r.track === 'outdoor')) {
-    const g = groups.find((x) => x.heading === m.space)
-    if (g) g.rows.push(m)
-    else groups.push({ heading: m.space, rows: [m] })
+  /* The five lists the old Shopify page kept, which are the five a shopper
+     plans around: the makers inside, the children who have a table of their
+     own, and then each day outside, because the tents change daily. */
+  const groupOf = (m: Row) => {
+    if (m.track === 'indoor') return m.space === 'JR Space' ? 'junior' : 'indoor'
+    const d = /(friday|saturday|sunday)/i.exec(m.space)
+    return d ? d[1]!.toLowerCase() : 'indoor'
   }
+
+  /* Muted, and all pulled toward the brand's stone and gold, so a grid of
+     makers without photographs still reads as one family rather than a
+     category rainbow. */
+  const TINT: Record<string, string> = {
+    Jewelry: '#BC9658', Ceramics: '#A98A72', Home: '#8E9B92', Apparel: '#7E8CA0',
+    Kids: '#C2A08C', Treats: '#C4A76B', 'Bath & Body': '#9FB0A8', Candles: '#B49C77',
+    'Paper/Art': '#8C93A8', Vintage: '#A9998C', Other: '#9A9A94',
+  }
+  const initialsOf = (name: string) => {
+    const words = name.split(/[^A-Za-z0-9]+/).filter(Boolean)
+    const keep = words.filter((w) => !['the', 'and', 'co', 'of', 'by', 'a'].includes(w.toLowerCase()))
+    const use = keep.length > 0 ? keep : words
+    if (use.length >= 2) return (use[0]![0]! + use[1]![0]!).toUpperCase()
+    return (use[0]?.slice(0, 2) ?? '??').toUpperCase()
+  }
+
+  const cards: MakerCard[] = roster.map((m) => ({
+    id: m.id,
+    name: m.shopName,
+    category: m.category || 'Other',
+    group: groupOf(m),
+    photo: thumbnailFor(m).url,
+    href: linkFor(m),
+    initials: initialsOf(m.shopName),
+    tint: TINT[m.category || 'Other'] ?? '#9A9A94',
+  }))
 
   return (
     <SiteShell show={show} template="page template-suffix-merchants">
@@ -109,18 +133,7 @@ export default async function Merchants() {
                 </p>
               </RichText>
 
-              {groups.map((g) => (
-                <div className="merchant-group" key={g.heading}>
-                  {/* Above its own group, not below the one before it. */}
-                  <div className="container">
-                    <h2 className="merchant-group__heading subheading">{g.heading}</h2>
-                  </div>
-                  <LogoGrid
-                    id={`section-merchants-${g.heading.replace(/\W+/g, '-').toLowerCase()}`}
-                    cards={g.rows.map((m) => ({ name: m.shopName, href: linkFor(m) }))}
-                  />
-                </div>
-              ))}
+              <MakerGrid makers={cards} />
             </>
           )}
 
