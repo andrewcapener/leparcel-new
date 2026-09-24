@@ -18,6 +18,7 @@ import { WhatYouTold, YourDetails } from './YourApplication'
 import { CallTimes } from './CallTimes'
 import { PayoutSetup } from './PayoutSetup'
 import { manualOptions, qrDataUri } from '@/server/modules/payments/manual'
+import { canCollect } from '@/server/modules/payments/booking-status'
 import { checklistFor, clearForLoadIn, slotOptions } from '@/server/modules/compliance/checklist'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { settlesInsideWindow, offersCard } from '@/server/modules/payments/methods'
@@ -167,10 +168,10 @@ export default async function Account({
 
   /* Venmo and Zelle, on the maker's own page. Only while something is owed:
      a second way to pay a settled invoice is how somebody pays twice. */
-  const manualHere = billing && billing.booking.status === 'awaiting_payment' && billing.invoice.totalCents > 0
+  const manualHere = billing && canCollect(billing.booking.status, billing.invoice.amountDueCents)
     ? manualOptions(
         { venmoHandle: show.venmoHandle, zelleContact: show.zelleContact, zelleName: show.zelleName },
-        billing.invoice.totalCents, billing.booking.vendorCode, show.name,
+        billing.invoice.amountDueCents, billing.booking.vendorCode, show.name,
       )
     : []
   /* One code per method that has a url to encode. Venmo's carries the amount

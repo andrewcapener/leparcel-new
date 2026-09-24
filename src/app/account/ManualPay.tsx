@@ -1,3 +1,4 @@
+import { usd } from '@/lib/money'
 import type { ManualOption } from '@/server/modules/payments/manual'
 import { sayManualSent } from '@/app/actions'
 
@@ -60,9 +61,11 @@ export function ManualPay({
                     The code below is the shortcut, and only on a screen the
                     maker is not holding. */}
                 <p className="mk-pay__how">
-                  Send it from your own bank app, to the number above. Type in
-                  the total yourself: a Zelle code carries who to pay and
-                  nothing else.
+                  Send it from your own bank app, to the number above. Type in{' '}
+                  <strong>{usd(o.amountCents)}</strong> yourself: a Zelle code carries
+                  who to pay and nothing else. {/* The figure, never the words
+                  "the total". A maker who has already paid part of her fee
+                  reads "the total" as the whole thing and sends it twice. */}
                 </p>
               </>
             )}

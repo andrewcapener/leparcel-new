@@ -69,7 +69,16 @@ export function BoothInvoice({
   action?: (fd: FormData) => Promise<void>
   token?: string
 }) {
-  const paid = status === 'confirmed'
+  /* What is still outstanding, which is not the same question as the status.
+     A booking that was paid and then grew a second day is confirmed AND owes
+     $350, and both have to be true on this page at once. Reading "confirmed"
+     as "has paid" is what left a maker looking at a line on her invoice with
+     no way to settle it. */
+  const owes = invoice.amountDueCents > 0
+  const paid = status === 'confirmed' && !owes
+  /* Paid once, and something has been added since. She keeps her space and
+     the page still has to ask her for the difference. */
+  const owesMore = status === 'confirmed' && owes
   const lost = status === 'forfeited' || status === 'cancelled'
   /* Bank transfer authorised, money still moving. Stripe puts ACH settlement
      at about four business days, which is longer than the payment window, so
@@ -81,7 +90,7 @@ export function BoothInvoice({
      take a $0 payment (its minimum is fifty cents), so a Pay button here is a
      button that can only fail. The maker is told there is nothing owed and
      staff confirm the space from the roster. */
-  const nothingDue = invoice.totalCents === 0
+  const nothingDue = invoice.amountDueCents === 0 && invoice.totalCents === 0
 
   /* What to call the code, and the one line under it. Indoor keeps "Your
      Mermade ID"; outdoor is told it is a payment reference and not a booth
@@ -100,6 +109,8 @@ export function BoothInvoice({
       <h2 className="mk-card__title">
             {paid
               ? 'Your space is confirmed'
+              : owesMore
+                ? 'There is more to pay'
               : inFlight
                 ? 'Your transfer is on its way'
                 : lost
@@ -120,6 +131,20 @@ export function BoothInvoice({
               <dt><strong>Total</strong></dt>
               <dd><strong>{usd(invoice.totalCents)}</strong></dd>
             </div>
+            {/* Only once they differ. On an ordinary unpaid invoice the total
+                IS what is owed, and saying it twice reads as two charges. */}
+            {invoice.paidCents > 0 && invoice.paidCents !== invoice.totalCents && (
+              <>
+                <div className="mk-dl__row">
+                  <dt>Already paid</dt>
+                  <dd>{usd(invoice.paidCents)}</dd>
+                </div>
+                <div className="mk-dl__row">
+                  <dt><strong>Left to pay</strong></dt>
+                  <dd><strong>{usd(invoice.amountDueCents)}</strong></dd>
+                </div>
+              </>
+            )}
             <div className="mk-dl__row">
               <dt>{code.label}</dt>
               <dd>{vendorCode}</dd>
@@ -166,6 +191,15 @@ export function BoothInvoice({
             <p className="rte">
               That is everything. Your space is held and you will hear from us next about
               load-in. Nothing else is due before the show.
+            </p>
+          )}
+
+          {owesMore && (
+            <p className="rte">
+              Your space is held and what you have already paid is on this invoice. Since
+              then {invoice.lines.length > 1 ? 'something has been added' : 'the amount has changed'},
+              so there is {usd(invoice.amountDueCents)} left. You are only being asked for
+              the difference, never the whole fee again.
             </p>
           )}
 
@@ -266,13 +300,13 @@ export function BoothInvoice({
                     </p>
                     {payable && preview ? (
                       <button className="btn btn--primary" type="button" disabled>
-                        Pay {usd(invoice.totalCents)}
+                        Pay {usd(invoice.amountDueCents)}
                       </button>
                     ) : payable ? (
                       <form action={action ?? payBoothFee}>
                         {token && <input type="hidden" name="token" value={token} />}
                         <button className="btn btn--primary" type="submit">
-                          Pay {usd(invoice.totalCents)}
+                          Pay {usd(invoice.amountDueCents)}
                         </button>
                       </form>
                     ) : (

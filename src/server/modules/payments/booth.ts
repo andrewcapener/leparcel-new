@@ -25,7 +25,7 @@ import {
   invoiceFor, paymentMatches, bookingPaymentKey, paymentDoor, checkoutLines, type Invoice,
 } from './invoice'
 import { stripeMethods, type PaymentMethods } from './methods'
-import { canStartPayment } from './booking-status'
+import { canCollect } from './booking-status'
 import { viaFromEvent } from './paid-via'
 import { recordAccount } from './connect'
 import { pushPaymentTabsIfConnected } from '@/server/modules/roster/sheet-push'
@@ -175,10 +175,14 @@ export async function startBoothPayment(
   const found = await boothInvoice(db, bookingId)
   if (!found) return { outcome: 'missing' }
   const { booking, invoice } = found
-  if (booking.status === 'confirmed') return { outcome: 'already_paid' }
-  /* Anything else that is not waiting for money: a released space, or a
-     transfer already in flight that a second charge would double. */
-  if (!canStartPayment(booking.status)) return { outcome: 'released' }
+  /* The BALANCE says whether there is anything to collect, not the status.
+     A booking that was paid and then grew a second day is confirmed and still
+     owes, and this used to refuse it: the maker saw the new line on her
+     invoice and had no way to pay it. */
+  if (invoice.amountDueCents <= 0) return { outcome: 'already_paid' }
+  /* Anything the status rules out: a released space, or a transfer already in
+     flight that a second charge would double. */
+  if (!canCollect(booking.status, invoice.amountDueCents)) return { outcome: 'released' }
 
   /* An existing session is reused while it is still open. Stripe expires a
      session after 24 hours, and the payment window is 48, so a maker who

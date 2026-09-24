@@ -1424,6 +1424,14 @@ export async function addBoothCharge(fd: FormData): Promise<void> {
     createdBy: `staff:${await staffName()}`,
   })
 
+  /* Same reason setBoothPrice bumps it: the idempotency key carries this
+     number, and Stripe answers a reused key by REPLAYING the first session
+     rather than opening a new one. Without the bump, a maker who has already
+     paid and is now asked for a second day would be handed her own completed
+     checkout, and the $350 could never be collected. */
+  await db.update(bookings).set({ priceVersion: b.priceVersion + 1 })
+    .where(eq(bookings.id, bookingId))
+
   /* A maker part way through checking out is paying the old balance. Drop it
      so the next thing she opens asks for the new one. */
   await dropLiveCheckout(db, bookingId)
@@ -1462,6 +1470,13 @@ export async function voidBoothCharge(fd: FormData): Promise<void> {
     voidedBy: `staff:${await staffName()}`,
     voidReason: reason || 'no reason given',
   }).where(eq(bookingCharges.id, chargeId))
+
+  /* The balance moved, so the next checkout needs its own idempotency key
+     exactly as it does when a line is added. */
+  if (b) {
+    await db.update(bookings).set({ priceVersion: b.priceVersion + 1 })
+      .where(eq(bookings.id, c.bookingId))
+  }
 
   await dropLiveCheckout(db, c.bookingId)
 

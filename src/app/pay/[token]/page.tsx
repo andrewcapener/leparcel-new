@@ -13,7 +13,7 @@ import { payByToken, startConnectOnboardingByToken } from '@/app/actions'
 import {
   connectState, owesPayoutSetup, requirementList, requirementsInPlainWords,
 } from '@/server/modules/payments/connect'
-import { isPaid } from '@/server/modules/payments/booking-status'
+import { isPaid, canCollect } from '@/server/modules/payments/booking-status'
 import { vendorCodeWords } from '@/server/modules/payments/vendor-code'
 
 export const dynamic = 'force-dynamic'
@@ -105,14 +105,17 @@ export default async function PayPage({
   /* Venmo and Zelle, if the Show has handles set. Only while something is
      still owed: offering a second way to pay a settled invoice is how a maker
      pays twice. */
-  const manual = billing.booking.status === 'awaiting_payment' && billing.invoice.totalCents > 0
+  const manual = canCollect(billing.booking.status, billing.invoice.amountDueCents)
     ? manualOptions(
         {
           venmoHandle: (its ?? show).venmoHandle,
           zelleContact: (its ?? show).zelleContact,
           zelleName: (its ?? show).zelleName,
         },
-        billing.invoice.totalCents, billing.booking.vendorCode, (its ?? show).name,
+        /* What is LEFT, never the total. A maker who paid $280 and added a day
+           must be sent to Venmo for $350, and sending her the full $630 is how
+           she pays for her space twice. */
+        billing.invoice.amountDueCents, billing.booking.vendorCode, (its ?? show).name,
       )
     : []
 

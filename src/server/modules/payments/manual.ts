@@ -30,8 +30,12 @@ export type ManualPayConfig = {
 }
 
 export type ManualOption =
-  | { kind: 'venmo'; handle: string; url: string; note: string }
-  | { kind: 'zelle'; contact: string; note: string; url: string | null }
+  | { kind: 'venmo'; handle: string; url: string; note: string; amountCents: number }
+  /* Zelle carries the amount here rather than in its code, because the format
+     holds only the recipient. The maker types the figure herself, so the tile
+     has to be able to say which figure: "the total" is wrong the moment a
+     maker has already paid part of it. */
+  | { kind: 'zelle'; contact: string; note: string; url: string | null; amountCents: number }
 
 /** The handle as Venmo wants it in a url: no leading @, no stray spaces. */
 export function venmoUser(raw: string): string {
@@ -88,12 +92,14 @@ export function manualOptions(
   const out: ManualOption[] = []
   const venmo = venmoUser(cfg.venmoHandle)
   if (venmo) {
-    out.push({ kind: 'venmo', handle: `@${venmo}`, url: venmoUrl(venmo, amountCents, note), note })
+    out.push({
+      kind: 'venmo', handle: `@${venmo}`, url: venmoUrl(venmo, amountCents, note), note, amountCents,
+    })
   }
   const zelle = cfg.zelleContact.trim()
   if (zelle) {
     out.push({
-      kind: 'zelle', contact: zelle, note,
+      kind: 'zelle', contact: zelle, note, amountCents,
       url: zelleQrUrl(zelle, cfg.zelleName ?? ''),
     })
   }

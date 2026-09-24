@@ -56,6 +56,34 @@ export function canStartPayment(status: string): boolean {
 }
 
 /**
+ * Can we ask this maker for money right now, and how much.
+ *
+ * Status alone cannot answer this, which is what `canStartPayment` got wrong.
+ * It reads "confirmed" as "has paid", and that stopped being true the moment a
+ * booking became an order that can keep changing: a maker who paid for
+ * Saturday and then added Friday is confirmed, holds her space, and owes $350.
+ * Refusing her is how a maker with an invoice in front of her has no way to
+ * settle it.
+ *
+ * So the balance decides whether there is anything to collect, and the status
+ * decides only whether collecting is safe:
+ *
+ *   awaiting_payment  the ordinary case, nothing has arrived
+ *   confirmed         paid, then something was added. Collect the difference.
+ *   payment_processing NO. Her transfer is in flight and this is the exact
+ *                     shape of charging somebody twice for the same money.
+ *   forfeited/cancelled NO. The space is gone; taking money for it is worse
+ *                     than refusing.
+ *
+ * Never returns true for a zero or negative balance. Stripe will not take a
+ * $0 payment, and an overpaid booking is owed money rather than asked for it.
+ */
+export function canCollect(status: string, amountDueCents: number): boolean {
+  if (amountDueCents <= 0) return false
+  return status === 'awaiting_payment' || status === 'confirmed'
+}
+
+/**
  * Somebody needs to chase this maker.
  *
  * Deliberately NOT `payment_processing`. Chasing a maker whose money is

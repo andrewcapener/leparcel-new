@@ -1,5 +1,5 @@
 import {
-  isPaid, holdsSpace, needsChasing, isForfeitable, canStartPayment,
+  isPaid, holdsSpace, needsChasing, isForfeitable, canStartPayment, canCollect,
 } from './booking-status'
 
 let failures = 0
@@ -67,6 +67,30 @@ check('a transfer in flight cannot be charged again', !canStartPayment('payment_
 check('a forfeited space cannot be paid for', !canStartPayment('forfeited'))
 check('a released space cannot be paid for', !canStartPayment('cancelled'))
 check('and nor can nonsense', !canStartPayment('') && !canStartPayment('banana'))
+
+/* ── what can still be collected, which the status alone cannot answer ──
+ *
+ * The case this exists for: a maker paid for Saturday, then added Friday. She
+ * is confirmed, she holds her space, and she owes $350. Reading "confirmed" as
+ * "has paid" left her looking at a line on her invoice with no way to pay it.
+ */
+check('a maker who has paid and then added a day can pay the difference',
+  canCollect('confirmed', 35000))
+check('an ordinary unpaid booking can be paid', canCollect('awaiting_payment', 28000))
+check('one that is settled is not asked for anything', !canCollect('confirmed', 0))
+check('nor is an overpaid one, which is owed money rather than asked for it',
+  !canCollect('confirmed', -5000))
+check('a free space is never sent to Stripe', !canCollect('awaiting_payment', 0))
+/* The one that matters most: her money is already moving. */
+check('a transfer in flight is never charged again, whatever the balance says',
+  !canCollect('payment_processing', 35000))
+check('a forfeited space takes no more money', !canCollect('forfeited', 35000))
+check('nor does a released one', !canCollect('cancelled', 35000))
+check('and nor does nonsense', !canCollect('', 35000) && !canCollect('banana', 35000))
+/* Anything collectable must still be holding the space it is being paid for. */
+for (const st of ['awaiting_payment', 'confirmed', 'payment_processing', 'forfeited', 'cancelled']) {
+  if (canCollect(st, 35000)) check(`${st} holds a space if it can be collected`, holdsSpace(st))
+}
 /* Payable is a strict subset of holding a space, never the other way round. */
 for (const st of ['awaiting_payment', 'payment_processing', 'confirmed', 'forfeited', 'cancelled']) {
   if (canStartPayment(st)) check(`${st} holds a space if it can be paid`, holdsSpace(st))
