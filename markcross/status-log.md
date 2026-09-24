@@ -127,3 +127,23 @@ source/medium, first-touch channel, session channel). Findings:
   the same window; Shopping zeroed even during promo week).
 - Watch items: BC accrual at $55/fire (check ~Sep 29), Shopping delivery
   recovery over 7–14 days, tROAS held at 2.5/1.5 through the transition.
+
+## 2026-09-24 (zombie spend closed out; Meta bump held)
+
+Andrew delegated items 1+2 from the Friday-call prep ("execute what you
+feel extremely confident in").
+
+- **Item 1 done — zombie trial spend stopped via budget throttle.**
+  Discovery first (new ?report=experiments read): experiment 10059965045
+  "Manual CPC" (expired 2026-01-20, still ENABLED) had been splitting the
+  profitable Branding Search 1012389985 50/50 with trial arm 23295771342.
+  endExperiment → CANNOT_MODIFY_PAST_END_DATE; campaign pause →
+  CANNOT_MODIFY_FOR_TRIAL_CAMPAIGN (both trials API-locked). Fallback that
+  worked: budgets to $1/day on 23295771342 and 20534342865 (verified live;
+  non-shared budgets confirmed). ~$64/day stopped. Andrew should still
+  delete/end the experiments in the UI for cleanliness — and doing so gives
+  Branding Search its full traffic share.
+- **Item 2 held — Meta retargeting budget bump NOT executed via API**: the
+  Meta write freeze (Andrew's own caution protocol post-ban, to ~Oct 1)
+  stands; a generic delegation isn't an explicit waiver. Needs either his
+  60-second UI change or an explicit instruction to use the Meta API.
