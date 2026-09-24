@@ -2967,3 +2967,14 @@ a.mk-dir__cell:focus-visible{outline:2px solid #BC9658;outline-offset:3px}
   overflow-wrap:anywhere;transition:color .12s ease;
 }
 .mk-dir__cat{margin:6px 0 0;font-size:12.5px;color:#5C5C5C;line-height:1.35}
+
+/* The directory's own head. The theme gives every section 50px top and
+   bottom, which on a page whose job is a grid put three screens of air
+   between the title and the first photograph. */
+.template-suffix-makers .page-section-spacing{padding-top:34px;padding-bottom:0}
+.mk-dir__lede{
+  margin:14px auto 0;max-width:48ch;text-align:center;
+  font-size:17px;line-height:1.5;color:#5C5C5C;
+}
+.template-suffix-makers .mk-dir{padding-block:0 44px}
+.template-suffix-makers .mk-dir__tabs{padding-block:24px 22px;margin-bottom:28px}

@@ -20,7 +20,7 @@
  *                                   src/app/actions.ts subscribe
  *   what the contact form does      src/app/actions.ts sendMessage
  *   every email we send, recorded   src/db/schema.ts email_outbox
- *   who appears on the roster       src/app/merchants/page.tsx
+ *   who appears on the roster       src/app/makers/page.tsx
  *   cookies                         src/lib/adminAuth.ts, src/lib/preview.ts
  *   local storage                   src/components/theme/NewsletterPopup.tsx
  *   embedded video                  src/components/theme/BackgroundVideo.tsx

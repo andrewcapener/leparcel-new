@@ -1080,3 +1080,15 @@
   font-size:12.5px;line-height:1.4;color:var(--ad-ink-2);max-width:42ch;cursor:pointer;
 }
 .adm-check input{margin:2px 0 0;flex:0 0 auto}
+
+/* The one destructive control in a column of quiet ones. Still behind a
+   disclosure, because taking a maker's space is not a one-click thing, but
+   findable: the fee and invoice masks beside it are deliberately grey and
+   this one must not read as another of them. */
+.adm .adm-mask--danger > summary{ color: var(--ad-warn, #B4540A) }
+.adm .adm-mask--danger > summary::after{
+  content: 'Remove'; color: var(--ad-warn, #B4540A);
+  border-bottom-color: var(--ad-warn, #B4540A);
+}
+.adm .adm-mask--danger[open] > summary::after{ content: 'Close' }
+.adm .adm-mask--danger > summary:hover::after{ color: var(--ad-ink); border-bottom-color: var(--ad-ink) }

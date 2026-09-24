@@ -19,7 +19,7 @@ for (const p of [
 
 /* The marketing site, where it belongs and where the email capture is the
    revenue miss ranked first in the content audit. */
-for (const p of ['/', '/faq', '/journal', '/journal/a-post', '/lookbook', '/merchants', '/schedule']) {
+for (const p of ['/', '/faq', '/journal', '/journal/a-post', '/lookbook', '/makers', '/schedule']) {
   check(`the pop-up still runs on ${p}`, !popupSuppressed(p))
 }
 

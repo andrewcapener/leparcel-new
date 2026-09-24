@@ -616,8 +616,15 @@ export default async function Roster({
               there was nothing on screen to say why not. Makers do drop out
               after paying. */}
           {!gone && (
-            <details className="adm-mask" style={{ marginTop: 8 }}>
-              <summary>{paid || inFlight ? 'Remove' : 'Release'}</summary>
+            <details className="adm-mask adm-mask--danger" style={{ marginTop: 8 }}>
+              {/* One wording for one action. It said "Release" for an unpaid
+                  maker and "Remove" for a paid one, so there was not a single
+                  word to look for, and both sat in small grey type beside
+                  "Change fee" and "Invoice", which look exactly the same.
+                  Staff could not find it: "I still can't remove someone from
+                  the show." It names the maker and it is the one control in
+                  this column that is not grey. */}
+              <summary>Remove {vendor.shopName} from the show</summary>
               <form action={cancelBooking} className="adm-paid" style={{ marginTop: 6 }}>
                 <input type="hidden" name="bookingId" value={booking.id} />
                 <label className="adm-sr" htmlFor={`why-${booking.id}`}>

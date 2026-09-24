@@ -20,7 +20,7 @@ export const metadata = {
   title: 'Makers',
   description:
     'The makers selling at the next Mermade Market, inside and outside, by category and by day.',
-  alternates: { canonical: '/merchants' },
+  alternates: { canonical: '/makers' },
 }
 
 /**
@@ -33,7 +33,7 @@ export const metadata = {
  * before the roster is announced it says so rather than showing last
  * season's lineup.
  */
-export default async function Merchants() {
+export default async function Makers() {
   const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
@@ -101,8 +101,19 @@ export default async function Merchants() {
   }))
 
   return (
-    <SiteShell show={show} template="page template-suffix-merchants">
-          <PageTitle title={`${show.name} Makers`} />
+    <SiteShell show={show} template="page template-suffix-makers">
+          <PageTitle title={`${show.name} Makers`}>
+            {roster.length > 0 && (
+              /* One line, under the title, instead of a rich-text section of
+                 its own. The old copy explained where to scroll, which the
+                 filter above the grid now answers, and it cost a whole
+                 section's padding to say it. */
+              <p className="mk-dir__lede">
+                Inside, the same makers all three days. Outside, a different row of
+                tents each day.
+              </p>
+            )}
+          </PageTitle>
 
           {roster.length === 0 ? (
             <RichText
@@ -116,23 +127,6 @@ export default async function Merchants() {
             </RichText>
           ) : (
             <>
-              {/* Their page sets this as a tracked uppercase eyebrow: 267
-                  characters of body copy in a label setting, seven lines on a
-                  phone. Tracked uppercase is for labels.
-
-                  It is also shorter than theirs. Half of what it said was
-                  directions to the groups below it ("just below", "keep
-                  scrolling"), and the groups now label themselves. What is
-                  left is the part a shopper cannot see from the labels: that
-                  coming twice gets you a different market. */}
-              <RichText large={false}>
-                <p>
-                  The makers inside are there all three days and we restock for
-                  them. The tents outside change daily, so Saturday is a
-                  different market from Friday.
-                </p>
-              </RichText>
-
               <MakerGrid makers={cards} />
             </>
           )}

@@ -34,7 +34,7 @@ const PAGES: Array<[string, string]> = [
   ['indoor-lookbook', '/lookbook/indoor'],
   ['outdoor-lookbook', '/lookbook/outdoor'],
   // A season-specific roster. The roster page is the living version of it.
-  ['spring-2026-merchants', '/merchants'],
+  ['spring-2026-merchants', '/makers'],
   // A one-off notice to shoppers about a venue change, long past.
   ['update-to-shopper', '/'],
 ]
@@ -66,6 +66,11 @@ const config: NextConfig = {
         destination,
         permanent: true,
       })),
+      /* /merchants was this page's address until the path was made to match
+         the word the nav has always used. It is linked from outside and it is
+         what /pages/spring-2026-merchants pointed at, so it moves permanently
+         rather than disappearing. */
+      { source: '/merchants', destination: '/makers', permanent: true },
       // The journal kept its slugs, so every post redirects by name.
       { source: '/blogs/journal/:slug', destination: '/journal/:slug', permanent: true },
       { source: '/blogs/journal', destination: '/journal', permanent: true },
