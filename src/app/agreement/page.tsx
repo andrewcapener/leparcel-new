@@ -8,7 +8,18 @@ import { PageTitle, PageSection, PriceTable, FactTable } from '@/components/them
 import { PARTS, agreementVars, fillClause, TERMS_VERSION, CONTACT_EMAIL } from '@/lib/agreement'
 import { fmtDate } from '@/lib/dates'
 
-export const dynamic = 'force-dynamic'
+/* Served from Vercel's cache, re-rendered at most once a minute.
+ *
+ * This page reads the Show record and nothing per-request: no cookies, no
+ * headers, no search params. It was force-dynamic, which meant every visitor
+ * woke a serverless function that opened a cold connection to Postgres before
+ * rendering a word, and on 24 Sept the first visit after a quiet spell hung
+ * for ninety seconds and looked exactly like an outage.
+ *
+ * Sixty seconds of staleness costs nothing here, since these values change a
+ * few times a season, and staff never wait even that long: saving on
+ * /admin/show clears the tag (src/db/queries.ts). */
+export const revalidate = 60
 
 export const metadata = {
   title: 'Maker agreement',

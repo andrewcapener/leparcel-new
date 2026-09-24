@@ -1,3 +1,4 @@
+import { unstable_cache, revalidateTag } from 'next/cache'
 import { eq, and, asc } from 'drizzle-orm'
 import { db } from './index'
 import { fillCapacity } from '@/lib/counts'
@@ -23,6 +24,41 @@ import { shows, addOns, spaceTypes, type Show, type AddOn, type SpaceType } from
  * would serve the degraded page until it happened to be recycled.
  */
 
+/**
+ * The tag every cached read of the show's configuration carries.
+ *
+ * One tag rather than three, because the Show record, its spaces and its
+ * add-ons are edited together on the same screen and are read together on
+ * every public page. Clearing one and not the others is how a page comes to
+ * show a new date beside an old price.
+ */
+export const SHOW_CONFIG_TAG = 'show-config'
+
+/**
+ * How long a public page may show a stale show.
+ *
+ * Sixty seconds. These values change a handful of times a season, so the cost
+ * of being a minute behind is nil, and the cost of NOT caching was a homepage
+ * that hung for ninety seconds on the first visit after a quiet spell: every
+ * request woke a serverless function that opened a cold connection to
+ * Postgres before it could render a word. Staff edits do not wait for this
+ * window at all, because saving clears the tag.
+ */
+const CONFIG_TTL_SECONDS = 60
+
+/**
+ * Throw away every cached read of the show's configuration, now.
+ *
+ * Called from every screen that edits a show, a space or an add-on, so staff
+ * never wait out the window to see their own change. The second argument is
+ * required in Next 16 and 'max' is the recommended profile: stale content is
+ * served while the fresh read happens behind it, rather than the next visitor
+ * paying for the refresh.
+ */
+export function forgetShowConfig(): void {
+  revalidateTag(SHOW_CONFIG_TAG, 'max')
+}
+
 const MISSING_COLUMN = '42703'
 const MISSING_TABLE = '42P01'
 /** How long to trust a fallback before probing the real schema again. */
@@ -37,7 +73,12 @@ export function pgCode(err: unknown): string | undefined {
 let showsPre0002Until = 0
 
 /** The active Show, whether or not migration 0002 has run. */
-export async function activeShow(): Promise<Show | undefined> {
+export const activeShow = unstable_cache(
+  readActiveShow, ['active-show'],
+  { tags: [SHOW_CONFIG_TAG], revalidate: CONFIG_TTL_SECONDS },
+)
+
+async function readActiveShow(): Promise<Show | undefined> {
   if (Date.now() >= showsPre0002Until) {
     try {
       const full = await db.query.shows.findFirst({ where: eq(shows.isActive, true) })
@@ -114,7 +155,12 @@ export async function activeShow(): Promise<Show | undefined> {
 let addOnsMissingUntil = 0
 
 /** Every active add-on for a show, or none if the table isn't there yet. */
-export async function activeAddOns(showId: string): Promise<AddOn[]> {
+export const activeAddOns = unstable_cache(
+  readActiveAddOns, ['active-addons'],
+  { tags: [SHOW_CONFIG_TAG], revalidate: CONFIG_TTL_SECONDS },
+)
+
+async function readActiveAddOns(showId: string): Promise<AddOn[]> {
   if (Date.now() < addOnsMissingUntil) return []
   try {
     const rows = await db.query.addOns.findMany({
@@ -177,7 +223,12 @@ export async function activeAddOns(showId: string): Promise<AddOn[]> {
  * Withdrawn spaces keep their rows: an application that already chose one
  * still has to resolve its space. `is_active` is what hides them.
  */
-export async function activeSpaceTypes(showId: string): Promise<SpaceType[]> {
+export const activeSpaceTypes = unstable_cache(
+  readActiveSpaceTypes, ['active-space-types'],
+  { tags: [SHOW_CONFIG_TAG], revalidate: CONFIG_TTL_SECONDS },
+)
+
+async function readActiveSpaceTypes(showId: string): Promise<SpaceType[]> {
   const rows = await db.query.spaceTypes.findMany({
     where: and(eq(spaceTypes.showId, showId), eq(spaceTypes.isActive, true)),
     orderBy: [asc(spaceTypes.sortOrder)],

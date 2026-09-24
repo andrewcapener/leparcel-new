@@ -1,7 +1,6 @@
-import Link from 'next/link'
 import type { Show } from '@/db/schema'
 import { AnnouncementBar, PageHeader, PageFooter } from './Chrome'
-import { previewingOpenWindow } from '@/lib/preview'
+import { LaunchPreview, PreviewBar } from './LaunchPreview'
 
 /**
  * The page shell: announcement bar, header, <main>, footer — and, crucially,
@@ -25,15 +24,24 @@ import { previewingOpenWindow } from '@/lib/preview'
  * only the root layout renders <body>, and this varies per page.
  */
 export async function SiteShell({
-  show, template, children, transparentHeader = false,
+  show, template, children, transparentHeader = false, previewOpen = false,
 }: {
   show: Show
   /** e.g. 'index', 'page template-suffix-faq', 'article', 'blog' */
   template: string
   children: React.ReactNode
   transparentHeader?: boolean
+  /** Staff are being shown the site as it will read once applications open.
+   *
+   *  Passed in rather than read from a cookie here. This component wraps
+   *  every public page, so reading the cookie in it made the whole site
+   *  uncacheable and put a cold database on every visitor's critical path.
+   *  A page that has to preview faithfully on the server, above all /apply,
+   *  is dynamic anyway and reads the cookie itself. A page that leaves this
+   *  false is cached and identical for everyone, so its preview bar is drawn
+   *  in the browser by LaunchPreview and says so. */
+  previewOpen?: boolean
 }) {
-  const previewing = await previewingOpenWindow()
 
   return (
     <div className={`template-${template}`}>
@@ -43,17 +51,8 @@ export async function SiteShell({
       {/* Impossible to mistake the launch preview for the live site. It sits
           above everything, it says whose browser it is on, and it carries its
           own way out. */}
-      {previewing && (
-        <div className="preview-bar" role="status">
-          <strong>Launch preview.</strong> This browser is being shown the site
-          as it will read once applications open. Nobody else sees this. The
-          form will accept a submission from you, and it makes a real
-          application, so delete it from the admin when you are done.
-          {' '}
-          <Link href="/api/preview?on=0">Turn it off</Link>
-        </div>
-      )}
-      <AnnouncementBar show={show} previewOpen={previewing} />
+      {previewOpen ? <PreviewBar faithful /> : <LaunchPreview />}
+      <AnnouncementBar show={show} previewOpen={previewOpen} />
       <PageHeader transparent={transparentHeader} />
       <main id="content" role="main">
         <div className="container cf">{children}</div>

@@ -5,7 +5,12 @@ import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
 import { PageTitle, RichText, FactTable, Banner } from '@/components/theme/Sections'
 import { bookends, extrasFor, splitDay } from '@/lib/schedule'
 
-export const dynamic = 'force-dynamic'
+/* Cached and re-rendered at most once a minute. Read-only, nothing
+ * per-request, and the Show record it reads changes a few times a season.
+ * Being dynamic meant a cold database on the visitor's critical path for no
+ * benefit; saving in the admin clears the tag, so staff still see edits at
+ * once. See src/app/page.tsx for the incident this came from. */
+export const revalidate = 60
 
 export const metadata = {
   title: 'Schedule',

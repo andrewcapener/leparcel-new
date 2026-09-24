@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers'
 import { applicationWindow, type WindowState } from '@/lib/dates'
 
-export const PREVIEW_COOKIE = 'mm_preview_window'
+export { PREVIEW_COOKIE } from './preview-cookie'
+import { PREVIEW_COOKIE } from './preview-cookie'
 
 /**
  * Launch preview: render the public site as it will read once applications

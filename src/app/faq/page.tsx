@@ -3,7 +3,12 @@ import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { Banner, FaqHeader, CollapsibleTabs, RichText, type Tab } from '@/components/theme/Sections'
 
-export const dynamic = 'force-dynamic'
+/* Cached and re-rendered at most once a minute. Read-only, nothing
+ * per-request, and the Show record it reads changes a few times a season.
+ * Being dynamic meant a cold database on the visitor's critical path for no
+ * benefit; saving in the admin clears the tag, so staff still see edits at
+ * once. See src/app/page.tsx for the incident this came from. */
+export const revalidate = 60
 
 export const metadata = {
   title: 'FAQ',

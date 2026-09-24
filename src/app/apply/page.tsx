@@ -220,7 +220,7 @@ export default async function Apply({
   ]
 
   return (
-    <SiteShell show={show} template="page template-suffix-merchant-application">
+    <SiteShell show={show} template="page template-suffix-merchant-application" previewOpen={previewingLaunch}>
       {/* ── The head ─────────────────────────────────────────────────────
           Short on purpose. On a 390px screen the form's first step is one
           swipe from here. */}

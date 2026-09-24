@@ -7,7 +7,7 @@ import { cookies, headers } from 'next/headers'
 import { eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
-import { activeShow, activeAddOns, activeSpaceTypes, pgCode } from '@/db/queries'
+import { activeShow, activeAddOns, activeSpaceTypes, forgetShowConfig, pgCode } from '@/db/queries'
 import {
   shows, vendors, applications, bookings, bookingAddons, bookingCharges, spaceTypes, addOns,
   auditLog, emailOutbox, sheetSyncs, subscribers, CATEGORIES, type ApplicationStatus,
@@ -1717,6 +1717,10 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
   await db.update(shows).set(next).where(eq(shows.id, show.id))
   await log('show', show.id, 'settings_change', before, after, '', 'staff')
 
+  /* The public pages read this through a cached wrapper, so staff must not
+     have to wait out the window to see their own edit. */
+  forgetShowConfig()
+
   revalidatePath('/')
   revalidatePath('/apply')
   revalidatePath('/admin/show')
@@ -1758,6 +1762,10 @@ export async function updateSpace(fd: FormData): Promise<void> {
 
   await db.update(spaceTypes).set(next).where(eq(spaceTypes.id, id))
   await log('space_type', id, 'settings_change', before, after, '', 'staff')
+  /* The public pages read this through a cached wrapper, so staff must not
+     have to wait out the window to see their own edit. */
+  forgetShowConfig()
+
   revalidatePath('/admin/show')
   revalidatePath('/apply')
   revalidatePath('/')
@@ -1795,6 +1803,10 @@ export async function updateAddOn(fd: FormData): Promise<void> {
 
   await db.update(addOns).set(next).where(eq(addOns.id, id))
   await log('add_on', id, 'settings_change', before, after, '', 'staff')
+  /* The public pages read this through a cached wrapper, so staff must not
+     have to wait out the window to see their own edit. */
+  forgetShowConfig()
+
   revalidatePath('/admin/show')
   revalidatePath('/apply')
   revalidatePath('/makers/indoor')

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { shows } from '@/db/schema'
-import { activeShow } from '@/db/queries'
+import { activeShow, forgetShowConfig } from '@/db/queries'
 import { siteUrl } from '@/lib/site-url'
 import { pushPaymentTabs, spreadsheetIdFrom } from '@/server/modules/roster/sheet-push'
 import { redact } from '@/server/modules/sheets/transport'
@@ -54,6 +54,11 @@ async function push(link: string): Promise<PushState> {
      again. Written only after a successful push, so the column never names a
      sheet we have not proved we can write to. */
   await db.update(shows).set({ paymentSheetId: id }).where(eq(shows.id, show.id))
+  /* The Show record is cached for a minute, and this column is the one that
+     decides whether anything is pushed at all. Without this, the next payment
+     to land would read a show that still has no sheet and quietly push
+     nowhere, which looks exactly like the sheet not working. */
+  forgetShowConfig()
 
   revalidatePath('/admin/sheet')
   revalidatePath('/admin/roster')
