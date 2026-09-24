@@ -267,6 +267,9 @@ export const applications = pgTable('applications', {
   hasCoi: boolean('has_coi').notNull().default(false),
 
   photos: text('photos').notNull().default('[]'),  // JSON array of paths
+  /** Staff's chosen square, overriding the maker's first photo. Null means
+   *  use what they uploaded. Never overwrites `photos`. */
+  thumbnailUrl: text('thumbnail_url'),
 
   status: text('status').notNull().default('new'),
   submittedAt: dbNow('submitted_at'),
