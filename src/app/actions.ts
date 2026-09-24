@@ -23,6 +23,7 @@ import { staffNoticeHtml } from '@/server/modules/email/staff-notice'
 import { applicationReceivedHtml } from '@/server/modules/email/application-received'
 import { CONTACT_EMAIL } from '@/lib/agreement'
 import { parsePhotoKeys } from '@/server/modules/uploads/photos'
+import { nextVendorCode } from '@/server/modules/payments/mm-code'
 import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
 import { cleanAttribution } from '@/lib/attribution'
@@ -36,7 +37,7 @@ import {
 } from '@/lib/makerAuth'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
-import { startBoothPayment, bookingByPayToken, dropLiveCheckout } from '@/server/modules/payments/booth'
+import { startBoothPayment, bookingByPayToken, dropLiveCheckout, boothInvoice } from '@/server/modules/payments/booth'
 import {
   ensureConnectAccount, onboardingLink, refreshAccount, owesPayoutSetup,
 } from '@/server/modules/payments/connect'
@@ -936,13 +937,28 @@ export async function decide(fd: FormData): Promise<void> {
       const space = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, bookSpaceId) })
       if (!space) throw new Error('That space no longer exists. Pick another and try again.')
       {
-        // Sequential per-show Mermade ID. Reused across shows if the maker has one.
+        /* Sequential per-show Mermade ID. Reused across shows if the maker
+           already has one.
+
+           Number(n), and the cast is the whole point: Postgres returns
+           count(*) as a bigint, which the driver hands back as a STRING. So
+           `n + 1` concatenated rather than added, and the eighty fifth maker
+           accepted on this screen was given MM841 instead of MM85. Nine
+           makers carry a code of that shape, and the code is what a person
+           types into a Venmo note for us to match the money by, so a wrong
+           one is not cosmetic. roster/apply.ts always had the cast; this path
+           did not. */
         const [{ n }] = await db
           .select({ n: sql<number>`count(*)` })
           .from(bookings)
           .where(eq(bookings.showId, show.id))
-        const code = vendor.vendorCode ?? `MM${String(n + 1).padStart(2, '0')}`
-        if (!vendor.vendorCode) {
+        let code = vendor.vendorCode
+        if (!code) {
+          const used = await db
+            .select({ c: bookings.vendorCode })
+            .from(bookings)
+            .where(eq(bookings.showId, show.id))
+          code = nextVendorCode(n, used.map((r) => r.c ?? ''))
           await db.update(vendors).set({ vendorCode: code }).where(eq(vendors.id, vendor.id))
         }
 
@@ -1283,16 +1299,29 @@ export async function markPaid(fd: FormData): Promise<void> {
   const via = viaFromManual(String(fd.get('via') ?? ''), b.saidSentVia)
   const paidAt = new Date().toISOString()
 
+  /* Record HOW MUCH, not just that it happened.
+     
+     This used to set the status and nothing else, which was fine while a
+     booking was one frozen price and the status was the whole answer. It
+     stopped being fine the moment a booking became a running total: the
+     ledger works out what is owed as total minus what has arrived, and what
+     had arrived was never written down, so seventeen makers who paid by Venmo
+     or Zelle and were matched by hand read as owing their fee in full. That
+     put $5,840 of debt on the sheet that nobody owed, and it would have shown
+     each of them a Pay button for money they had already sent. */
+  const settled = await boothInvoice(db, bookingId)
+  const amountPaidCents = settled ? settled.invoice.totalCents : b.priceCents
+
   await db.update(bookings)
-    .set({ status: 'confirmed', paidAt, paidVia: via })
+    .set({ status: 'confirmed', paidAt, paidVia: via, amountPaidCents })
     .where(eq(bookings.id, bookingId))
   await db.update(vendors)
     .set({ showsAttended: sql`${vendors.showsAttended} + 1` })
     .where(eq(vendors.id, b.vendorId))
 
   await log('booking', bookingId, 'paid',
-    { status: 'awaiting_payment', paidVia: b.paidVia },
-    { status: 'confirmed', paidAt, paidVia: via },
+    { status: 'awaiting_payment', paidVia: b.paidVia, amountPaidCents: b.amountPaidCents },
+    { status: 'confirmed', paidAt, paidVia: via, amountPaidCents },
     `booth fee received, matched by hand: ${viaLabel(via).toLowerCase()}`)
 
   await liveSheet(b.showId)

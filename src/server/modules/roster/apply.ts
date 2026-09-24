@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto'
+import { nextVendorCode } from '@/server/modules/payments/mm-code'
 import { and, eq, sql } from 'drizzle-orm'
 import type { db as Db } from '@/db'
 import { applications, bookings, spaceTypes, vendors, auditLog } from '@/db/schema'
@@ -114,9 +115,7 @@ export async function applyPlan(
           .select({ n: sql<number>`count(*)` })
           .from(bookings)
           .where(eq(bookings.showId, showId))
-        let next = Number(n) + 1
-        while (taken.has(`MM${String(next).padStart(2, '0')}`)) next++
-        code = `MM${String(next).padStart(2, '0')}`
+        code = nextVendorCode(n, taken)
         await db.update(vendors).set({ vendorCode: code }).where(eq(vendors.id, p.vendorId))
       }
       taken.add(code.toUpperCase())
