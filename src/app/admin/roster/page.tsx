@@ -2,9 +2,11 @@ import Link from 'next/link'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow, activeSpaceTypes } from '@/db/queries'
-import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
+import { ledgerFor, standing } from '@/server/modules/payments/ledger'
+import { bookings, vendors, applications, spaceTypes, bookingCharges } from '@/db/schema'
 import {
   markPaid, forfeitOverdueBookings, markLinkSent, setBoothPrice, setBoothSpace, cancelBooking,
+  addBoothCharge, voidBoothCharge,
 } from '@/app/actions'
 import { PayLink } from './PayLink'
 import { siteUrl } from '@/lib/site-url'
@@ -115,6 +117,20 @@ export default async function Roster({
     .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
     .where(eq(bookings.showId, show.id))
     .orderBy(asc(bookings.vendorCode))
+
+  /* Every line added to or taken off a booking since it was made, grouped by
+     booking. Voided ones come too: an invoice that quietly loses a line is
+     one nobody can reconcile in December (rule 3). */
+  const charges = await db
+    .select()
+    .from(bookingCharges)
+    .orderBy(asc(bookingCharges.createdAt))
+  const chargesFor = new Map<string, typeof charges>()
+  for (const c of charges) {
+    const list = chargesFor.get(c.bookingId) ?? []
+    list.push(c)
+    chargesFor.set(c.bookingId, list)
+  }
 
   /* Every space still on offer, for the per-row space picker. Withdrawn ones
      keep their rows so an existing booking can still resolve, and this list
@@ -287,6 +303,20 @@ export default async function Roster({
   const gone = ordered.filter((r) => rank(r) === 3)
 
   const row = ({ booking, vendor, app, space }: typeof rows[number]) => {
+    /* What this booking is worth NOW: the space, plus add-ons, plus every
+       line still standing, against what has actually arrived. */
+    const mine = chargesFor.get(booking.id) ?? []
+    const ledger = ledgerFor({
+      priceCents: booking.priceCents,
+      addonsCents: booking.addonsCents,
+      amountPaidCents: booking.amountPaidCents,
+      charges: mine.map((c) => ({
+        id: c.id, description: c.description, amountCents: c.amountCents, voidedAt: c.voidedAt,
+      })),
+    })
+    const owesMore = standing(ledger) === 'owes_more'
+    const overpaid = standing(ledger) === 'overpaid'
+
     const paid = booking.status === 'confirmed'
     /* Authorised and on its way. Not paid, and emphatically not "awaiting":
        this maker did everything asked of them and Stripe is taking its four
@@ -347,7 +377,18 @@ export default async function Roster({
         </td>
 
         <td className="r">
-          <span className="adm-money">{usd(booking.priceCents)}</span>
+          <span className="adm-money">{usd(ledger.totalCents)}</span>
+          {/* A booking that changed after it was paid. The loudest thing on
+              the row, because a maker who owes another $450 looks exactly
+              like a maker who owes nothing until somebody says so. */}
+          {owesMore && (
+            <span className="adm-sub2"><strong>{usd(ledger.balanceCents)} still owed</strong></span>
+          )}
+          {overpaid && (
+            <span className="adm-sub2">
+              <strong>{usd(-ledger.balanceCents)} overpaid.</strong> Refund or credit, your call.
+            </span>
+          )}
           <span className="adm-sub2">
             {app.track === 'outdoor' ? 'no commission' : `${bpsLabel(booking.commissionBps)} commission`}
           </span>
@@ -377,6 +418,55 @@ export default async function Roster({
               )}
             </details>
           )}
+
+          {/* Adding to an invoice works whether or not she has paid, which is
+              the whole point: a second day, a corner, priority placement, a
+              smaller booth. The fee above is the space and stays frozen once
+              money moves; these are everything that happened since. */}
+          <details className="adm-mask">
+            <summary>
+              <span className="mk">{mine.length > 0 ? `Invoice (${ledger.active.length})` : 'Add to invoice'}</span>
+              <span className="adm-sr"> for {vendor.shopName}</span>
+            </summary>
+
+            {mine.length > 0 && (
+              <ul className="adm-lines">
+                {mine.map((c) => (
+                  <li key={c.id} className={c.voidedAt ? 'off' : undefined}>
+                    <span>{c.description}</span>
+                    <span className="adm-money">{usd(c.amountCents)}</span>
+                    {c.voidedAt ? (
+                      <span className="adm-sub2">taken off</span>
+                    ) : (
+                      <form action={voidBoothCharge}>
+                        <input type="hidden" name="chargeId" value={c.id} />
+                        <input className="inp" name="reason" type="text" placeholder="Why" />
+                        <button className="adm-btn-q" type="submit">Take off</button>
+                      </form>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <form action={addBoothCharge}>
+              <input type="hidden" name="bookingId" value={booking.id} />
+              <label className="adm-sr" htmlFor={`cd-${booking.id}`}>What it is for</label>
+              <input className="inp" id={`cd-${booking.id}`} name="description" type="text"
+                placeholder="Sunday booth, corner, priority" required />
+              <label className="adm-sr" htmlFor={`ca-${booking.id}`}>Amount in dollars</label>
+              <input className="inp" id={`ca-${booking.id}`} name="dollars" type="text"
+                inputMode="decimal" placeholder="450.00 or -450.00" required />
+              <label className="adm-sr" htmlFor={`cr-${booking.id}`}>Why</label>
+              <input className="inp" id={`cr-${booking.id}`} name="reason" type="text"
+                placeholder="Why (goes in the audit log)" />
+              <button className="adm-btn-q" type="submit">Add line</button>
+            </form>
+            <span className="adm-sub2">
+              A minus takes it off. Her pay link then asks for {usd(Math.max(0, ledger.balanceCents))},
+              not the whole fee again.
+            </span>
+          </details>
         </td>
 
         <td className="c-2">

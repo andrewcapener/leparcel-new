@@ -19,9 +19,11 @@ import { randomUUID } from 'crypto'
 import { eq } from 'drizzle-orm'
 import type Stripe from 'stripe'
 import type { db as Db } from '@/db'
-import { bookings, bookingAddons, addOns, spaceTypes, stripeEvents, auditLog, vendors } from '@/db/schema'
+import { bookings, bookingAddons, bookingCharges, addOns, spaceTypes, stripeEvents, auditLog, vendors } from '@/db/schema'
 import { stripe, webhookSecret } from './config'
-import { invoiceFor, paymentMatches, bookingPaymentKey, paymentDoor, type Invoice } from './invoice'
+import {
+  invoiceFor, paymentMatches, bookingPaymentKey, paymentDoor, checkoutLines, type Invoice,
+} from './invoice'
 import { stripeMethods, type PaymentMethods } from './methods'
 import { canStartPayment } from './booking-status'
 import { viaFromEvent } from './paid-via'
@@ -45,6 +47,18 @@ export async function boothInvoice(
     .innerJoin(addOns, eq(bookingAddons.addOnId, addOns.id))
     .where(eq(bookingAddons.bookingId, bookingId))
 
+  /* Everything added or taken off since the booking was made. Voided lines
+     are left out of the arithmetic and stay in the table, so an invoice can
+     still be read back in December (rule 3). */
+  const changes = await db
+    .select({
+      description: bookingCharges.description,
+      amountCents: bookingCharges.amountCents,
+      voidedAt: bookingCharges.voidedAt,
+    })
+    .from(bookingCharges)
+    .where(eq(bookingCharges.bookingId, bookingId))
+
   /* Prices come off the BOOKING and its add-on rows, never off space_types or
      add_ons today. The join above reaches add_ons only for the name. */
   return {
@@ -53,6 +67,12 @@ export async function boothInvoice(
       spaceLabel: space?.label ?? 'Your space',
       spacePriceCents: booking.priceCents,
       addons: extras.map((e) => ({ name: e.name, priceCents: e.priceCents })),
+      charges: changes
+        .filter((c) => !c.voidedAt)
+        .map((c) => ({ label: c.description, amountCents: c.amountCents })),
+      /* What has arrived, so the invoice can say what is LEFT. A maker who
+         paid for Saturday and added Sunday is asked for Sunday. */
+      paidCents: booking.amountPaidCents ?? 0,
     }),
   }
 }
@@ -192,7 +212,7 @@ export async function startBoothPayment(
       customer_email: email,
       /* Whatever the Show record says, and never an empty list. */
       payment_method_types: stripeMethods(policy),
-      line_items: invoice.lines.map((l) => ({
+      line_items: checkoutLines(invoice, "Mermade Market").map((l) => ({
         quantity: 1,
         price_data: {
           currency: 'usd',
@@ -455,8 +475,8 @@ export async function handleStripeWebhook(
      `completed` event. The space is HELD: the maker did everything asked of
      them inside the window and the money is simply in transit. */
   if (session.payment_status !== 'paid') {
-    if (!paymentMatches(invoice.totalCents, received)) {
-      const detail = `expected ${invoice.totalCents}, stripe reported ${received} (${session.payment_status})`
+    if (!paymentMatches(invoice.amountDueCents, received)) {
+      const detail = `expected ${invoice.amountDueCents}, stripe reported ${received} (${session.payment_status})`
       await finish({ bookingId, error: detail })
       return { outcome: 'mismatch', eventId: event.id, bookingId, detail }
     }
@@ -473,8 +493,8 @@ export async function handleStripeWebhook(
     return { outcome: 'processing', eventId: event.id, bookingId }
   }
 
-  if (!paymentMatches(invoice.totalCents, received)) {
-    const detail = `expected ${invoice.totalCents}, stripe reported ${received} (${session.payment_status})`
+  if (!paymentMatches(invoice.amountDueCents, received)) {
+    const detail = `expected ${invoice.amountDueCents}, stripe reported ${received} (${session.payment_status})`
     await finish({ bookingId, error: detail })
     /* Deliberately NOT confirmed. A maker holding a space they did not fully
        pay for is worse than a maker who has to be emailed. */
@@ -486,10 +506,15 @@ export async function handleStripeWebhook(
     amountPaidCents: booking.amountPaidCents, paidVia: booking.paidVia,
   }
   const paidAt = new Date().toISOString()
+  /* ADDED to what was already received, never replacing it. A maker who paid
+     for Saturday and then paid the balance for Sunday has paid both, and
+     overwriting the first figure with the second would report the show as
+     having collected the top-up and lost the booth fee. */
+  const paidSoFar = (booking.amountPaidCents ?? 0) + received
   await db.update(bookings).set({
     status: 'confirmed',
     paidAt,
-    amountPaidCents: received,
+    amountPaidCents: paidSoFar,
     stripePaymentIntentId: intentId,
     /* Left alone when the event does not settle the route, which keeps the
        'bank' written days earlier at authorisation rather than replacing a
@@ -497,7 +522,8 @@ export async function handleStripeWebhook(
     ...(via ? { paidVia: via } : {}),
   }).where(eq(bookings.id, booking.id))
   await audit('payment_confirmed', before,
-    { status: 'confirmed', paidAt, amountPaidCents: received, paidVia: via ?? booking.paidVia })
+    { status: 'confirmed', paidAt, amountPaidCents: paidSoFar, received,
+      paidVia: via ?? booking.paidVia })
   await finish({ bookingId, payload: `confirmed ${received} cents` })
   await refreshSheet(db, booking.showId)
   return { outcome: 'confirmed', eventId: event.id, bookingId }

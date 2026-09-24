@@ -1002,3 +1002,17 @@
 }
 /* A link already sent reads quieter than one still waiting to go out. */
 .adm-paylink .adm-btn-q[data-on="1"] { color: var(--ad-ink-3); }
+
+/* The lines added to or taken off a booking's invoice, on the roster.
+   Tabular figures so a column of amounts lines up, and a line that was taken
+   off stays legible rather than vanishing: an invoice that quietly loses a
+   row is one nobody can reconcile against the bank in December. */
+.adm-lines { list-style: none; margin: 8px 0 10px; padding: 0; display: grid; gap: 6px; }
+.adm-lines li {
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline;
+  padding-bottom: 6px; border-bottom: 1px solid var(--ad-line);
+}
+.adm-lines li > form { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; }
+.adm-lines .adm-money { font-variant-numeric: tabular-nums; }
+.adm-lines li.off { opacity: .55; }
+.adm-lines li.off > span:first-child { text-decoration: line-through; }

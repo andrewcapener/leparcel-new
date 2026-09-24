@@ -23,10 +23,11 @@ check('a sentence is nothing', spreadsheetIdFrom('the fees sheet') === null)
 /* Short enough to be a typo rather than an id. */
 check('too short to be an id', spreadsheetIdFrom('abc123') === null)
 
-/* Column letters. The payments file is fourteen wide today, so the bug this
-   guards is the one that appears at twenty seven. */
+/* Column letters. The payments file is fifteen wide today, since a running
+   total and a balance are two different numbers, so the bug this guards is
+   the one that appears at twenty seven. */
 check('one column', colLetter(1) === 'A')
-check('the payments file today', colLetter(PAYMENT_COLUMNS.length) === 'N')
+check('the payments file today', colLetter(PAYMENT_COLUMNS.length) === 'O')
 check('the links file today', colLetter(LINK_COLUMNS.length) === 'I')
 check('the last single letter', colLetter(26) === 'Z')
 /* Off by one here writes the header into the wrong range and silently drops

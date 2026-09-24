@@ -22,12 +22,21 @@ export type InvoiceLine = {
 export type Invoice = {
   lines: InvoiceLine[]
   totalCents: number
+  /** What has already arrived against this booking. */
+  paidCents: number
+  /** What is left to collect. Never negative: see amountToCollect. */
+  amountDueCents: number
 }
 
 export type InvoiceInput = {
   spaceLabel: string
   spacePriceCents: number
   addons: { name: string; priceCents: number }[]
+  /** Things added or taken off since, already filtered to the ones that
+   *  count. Signed: a second day is positive, a downgrade negative. */
+  charges?: { label: string; amountCents: number }[]
+  /** What has already been received. */
+  paidCents?: number
 }
 
 /**
@@ -42,11 +51,41 @@ export function invoiceFor(input: InvoiceInput): Invoice {
   const lines: InvoiceLine[] = [
     { label: input.spaceLabel, amountCents: input.spacePriceCents },
     ...input.addons.map((a) => ({ label: a.name, amountCents: a.priceCents })),
+    ...(input.charges ?? []).map((c) => ({ label: c.label, amountCents: c.amountCents })),
   ]
+  const totalCents = lines.reduce((sum, l) => sum + l.amountCents, 0)
+  const paidCents = input.paidCents ?? 0
   return {
     lines,
-    totalCents: lines.reduce((sum, l) => sum + l.amountCents, 0),
+    totalCents,
+    paidCents,
+    /* Never negative. A maker who has overpaid is owed money, and asking her
+       for a negative amount is not a thing a checkout can do. What happens to
+       an overpayment is a person's decision, on the roster. */
+    amountDueCents: Math.max(0, totalCents - paidCents),
   }
+}
+
+/**
+ * What to put in front of Stripe.
+ *
+ * Nothing has been paid yet: the itemised lines, so the maker sees the space
+ * and every extra priced separately, which is most of what makes an invoice
+ * feel like an invoice.
+ *
+ * Something HAS been paid and more is owed: one line for the balance. Stripe
+ * will not take a negative line item, so there is no way to show the original
+ * lines and subtract what arrived, and showing the full list while charging
+ * the difference would be worse than showing one honest line. The itemised
+ * version is still on the page above the button; this is only what the card
+ * form says.
+ */
+export function checkoutLines(invoice: Invoice, showName: string): InvoiceLine[] {
+  if (invoice.paidCents <= 0) return invoice.lines
+  return [{
+    label: `${showName} booth fee, balance`,
+    amountCents: invoice.amountDueCents,
+  }]
 }
 
 /**

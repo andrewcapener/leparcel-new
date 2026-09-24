@@ -9,7 +9,7 @@ import { z } from 'zod'
 import { db } from '@/db'
 import { activeShow, activeAddOns, activeSpaceTypes, pgCode } from '@/db/queries'
 import {
-  shows, vendors, applications, bookings, bookingAddons, spaceTypes, addOns,
+  shows, vendors, applications, bookings, bookingAddons, bookingCharges, spaceTypes, addOns,
   auditLog, emailOutbox, sheetSyncs, subscribers, CATEGORIES, type ApplicationStatus,
 } from '@/db/schema'
 import { applicationWindow, fmtDate, fmtDateTime, fmtRange, laWallToIso } from '@/lib/dates'
@@ -43,6 +43,7 @@ import {
 import { slotOptions } from '@/server/modules/compliance/checklist'
 import { boothFeeHtml, boothFeeText } from '@/server/modules/email/booth-fee'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
+import { chargeProblem } from '@/server/modules/payments/ledger'
 import { viaFromManual, viaLabel } from '@/server/modules/payments/paid-via'
 import { pushPaymentTabsIfConnected } from '@/server/modules/roster/sheet-push'
 import { paymentDueAt } from '@/server/modules/payments/deadline'
@@ -1373,6 +1374,105 @@ export async function setBoothPrice(fd: FormData): Promise<void> {
   revalidatePath('/admin/roster')
   revalidatePath('/account')
   redirect('/admin/roster?price=set')
+}
+
+/**
+ * Add a line to a maker's invoice, or take one off.
+ *
+ * Drew, 24 Sept: "there's times when things change and we need to invoice
+ * them for more. We might add fees, they might want priority, they might want
+ * an extra day, they might want a bigger booth, they might want a smaller
+ * booth. We need to have some flexibility there."
+ *
+ * The one thing that could not be done before: change what a maker owes AFTER
+ * they have paid. The fee itself stays frozen once money moves, because
+ * editing it then makes the record disagree with the bank. This adds a line
+ * instead, so the original fee and the second day are both still legible in
+ * December, which is the whole point of not editing in place.
+ *
+ * Works on a confirmed booking on purpose. That is the case this exists for:
+ * she paid for Saturday and wants Sunday. Her existing pay link then asks for
+ * the difference rather than the whole thing again.
+ *
+ * It cannot mark anything paid and it never touches `status`. Payment state
+ * belongs to Stripe and to staff pressing Mark paid (rule 5). A booking that
+ * is confirmed and owes another $450 is both of those things at once, and the
+ * roster says so.
+ */
+export async function addBoothCharge(fd: FormData): Promise<void> {
+  const bookingId = String(fd.get('bookingId') ?? '')
+  const description = String(fd.get('description') ?? '').trim()
+  const reason = String(fd.get('reason') ?? '').trim()
+
+  /* Dollars in the box, cents in the column, through a rounding step rather
+     than a float multiply (rule 1). A leading minus is how a line comes off. */
+  const typed = String(fd.get('dollars') ?? '').replace(/[$,\s]/g, '')
+  const dollars = Number(typed)
+  if (!Number.isFinite(dollars)) redirect('/admin/roster?charge=bad')
+  const amountCents = Math.round(dollars * 100)
+
+  const problem = chargeProblem(description, amountCents)
+  if (problem) redirect('/admin/roster?charge=bad')
+
+  const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
+  if (!b) redirect('/admin/roster?charge=missing')
+
+  const id = randomUUID()
+  await db.insert(bookingCharges).values({
+    id, bookingId, description, amountCents,
+    reason: reason || 'no reason given',
+    createdBy: `staff:${await staffName()}`,
+  })
+
+  /* A maker part way through checking out is paying the old balance. Drop it
+     so the next thing she opens asks for the new one. */
+  await dropLiveCheckout(db, bookingId)
+
+  await log('booking', bookingId, 'charge_added', null,
+    { description, amountCents }, reason || 'no reason given', `staff:${await staffName()}`)
+
+  await liveSheet(b.showId)
+  revalidatePath('/admin/roster')
+  revalidatePath('/account')
+  redirect('/admin/roster?charge=added')
+}
+
+/**
+ * Take a line back off an invoice.
+ *
+ * Voided, never deleted, with who did it and why (rule 3). An invoice that
+ * quietly loses a line is one nobody can reconcile against the bank in
+ * December, and "it was there yesterday" is not a thing anybody should have
+ * to say about a maker's money.
+ */
+export async function voidBoothCharge(fd: FormData): Promise<void> {
+  const chargeId = String(fd.get('chargeId') ?? '')
+  const reason = String(fd.get('reason') ?? '').trim()
+
+  const c = await db.query.bookingCharges.findFirst({
+    where: eq(bookingCharges.id, chargeId),
+  })
+  if (!c) redirect('/admin/roster?charge=missing')
+  if (c.voidedAt) redirect('/admin/roster')
+
+  const b = await db.query.bookings.findFirst({ where: eq(bookings.id, c.bookingId) })
+
+  await db.update(bookingCharges).set({
+    voidedAt: new Date().toISOString(),
+    voidedBy: `staff:${await staffName()}`,
+    voidReason: reason || 'no reason given',
+  }).where(eq(bookingCharges.id, chargeId))
+
+  await dropLiveCheckout(db, c.bookingId)
+
+  await log('booking', c.bookingId, 'charge_voided',
+    { description: c.description, amountCents: c.amountCents }, null,
+    reason || 'no reason given', `staff:${await staffName()}`)
+
+  if (b) await liveSheet(b.showId)
+  revalidatePath('/admin/roster')
+  revalidatePath('/account')
+  redirect('/admin/roster?charge=voided')
 }
 
 /**

@@ -39,7 +39,7 @@ check('rows are CRLF separated', toCsv(['a'], [['1'], ['2']]).split('\r\n').leng
 
 const row: PaymentRow = {
   code: 'MM07', shop: 'Trophy Goods', contact: 'Shea Mullen', email: 'shea@crabandcleek.com',
-  track: 'indoor', space: '3x8', fee: '340.00',
+  track: 'indoor', space: '3x8', fee: '340.00', balance: '340.00',
   payLink: 'https://mermademarket.com/pay/abc', due: 'Sep 23, 11:59 PM',
   status: 'Not paid', paidHow: '', paidAt: '', linkSent: '', theirMove: 'Nothing back yet',
 }
@@ -54,6 +54,27 @@ check('and so is the link',
 /* The mail merge file carries nothing that changes while the merge runs. */
 for (const c of ['Status', 'Paid how', 'Paid at', 'Their move']) {
   check(`the links file does not carry "${c}"`, !(LINK_COLUMNS as readonly string[]).includes(c))
+}
+
+/* ── a booking that changed after it was paid ── */
+
+{
+  /* The column exists so the girls can see the difference between a maker who
+     owes $450 and one who owes nothing, when both read "Paid" on the status. */
+  const partPaid: PaymentRow = {
+    ...row, code: 'MM08', shop: 'Awe collective jewelry',
+    fee: '1350.00', balance: '450.00', status: 'Part paid', paidHow: 'Zelle',
+  }
+  check('the payment file carries the balance',
+    paymentValues(partPaid).includes('450.00'))
+  check('and the running total beside it',
+    paymentValues(partPaid).includes('1350.00'))
+  check('every payment column still has a value',
+    paymentValues(partPaid).length === PAYMENT_COLUMNS.length)
+  /* The merge file is for writing to people about what they owe, and it
+     carries the fee, so the two files must not disagree about it. */
+  check('both files agree on the fee',
+    linkValues(partPaid)[6] === paymentValues(partPaid)[6])
 }
 
 if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }

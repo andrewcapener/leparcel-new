@@ -6,7 +6,7 @@
  * guards against is a rounding or accumulation bug that only shows up on
  * particular combinations of add-ons.
  */
-import { invoiceFor, paymentMatches, bookingPaymentKey, paymentDoor } from './invoice'
+import { invoiceFor, checkoutLines, paymentMatches, bookingPaymentKey, paymentDoor } from './invoice'
 
 let failures = 0
 const check = (name: string, ok: boolean) => {
@@ -79,6 +79,66 @@ check('the account is the portal', paymentDoor('/account') === 'portal')
 /* Anything unrecognised is treated as the portal rather than inventing a
    third door, because a third door is a third live Checkout session. */
 check('anything else is the portal', paymentDoor('/somewhere/else') === 'portal')
+
+/* ── a booking that changed after it was paid ── */
+
+{
+  /* Awe Collective: $900 for Saturday and Sunday, paid in full, then adds
+     Friday at $450. The bug this guards against is the checkout asking for
+     $1,350 from somebody who already paid $900. */
+  const inv = invoiceFor({
+    spaceLabel: 'Outdoor Saturday', spacePriceCents: 90000, addons: [],
+    charges: [{ label: 'Friday booth', amountCents: 45000 }],
+    paidCents: 90000,
+  })
+  check('the invoice still totals everything', inv.totalCents === 135000)
+  check('it remembers what arrived', inv.paidCents === 90000)
+  check('and only asks for the difference', inv.amountDueCents === 45000)
+
+  /* The page shows all three lines. Stripe gets one, because a negative line
+     item does not exist and charging the full list would be theft. */
+  const lines = checkoutLines(inv, 'Fall 2026')
+  check('the maker still sees every line', inv.lines.length === 2)
+  check('but the card form asks once', lines.length === 1)
+  check('for exactly the balance', lines[0]!.amountCents === 45000)
+  check('and says what it is', /balance/i.test(lines[0]!.label))
+  check('never a negative line item', lines.every((l) => l.amountCents >= 0))
+}
+
+{
+  /* Nothing paid yet: the itemised list, which is most of what makes an
+     invoice feel like an invoice. */
+  const inv = invoiceFor({
+    spaceLabel: '3x6', spacePriceCents: 28000,
+    addons: [{ name: 'Corner', priceCents: 4000 }], charges: [], paidCents: 0,
+  })
+  check('a fresh invoice asks for the whole thing', inv.amountDueCents === 32000)
+  check('and shows it itemised', checkoutLines(inv, 'Fall 2026').length === 2)
+}
+
+{
+  /* Downsized after paying. Owed money, never asked for a negative amount. */
+  const inv = invoiceFor({
+    spaceLabel: 'Outdoor Saturday', spacePriceCents: 50000, addons: [],
+    charges: [{ label: 'Dropped Sunday', amountCents: -20000 }],
+    paidCents: 50000,
+  })
+  check('the total comes down', inv.totalCents === 30000)
+  check('and nothing more is due', inv.amountDueCents === 0)
+  check('never a negative amount due', inv.amountDueCents >= 0)
+}
+
+{
+  /* The exact-match rule still bites, now against the balance. A maker who
+     pays the old full amount when only a balance is owed is a mismatch and
+     lands on a person's desk rather than being waved through. */
+  const inv = invoiceFor({
+    spaceLabel: '3x6', spacePriceCents: 28000, addons: [],
+    charges: [{ label: 'Corner', amountCents: 4000 }], paidCents: 28000,
+  })
+  check('the balance is what must match', paymentMatches(inv.amountDueCents, 4000))
+  check('and the old total does not', !paymentMatches(inv.amountDueCents, 32000))
+}
 
 if (failures) {
   console.error(`\n${failures} check(s) failed.`)

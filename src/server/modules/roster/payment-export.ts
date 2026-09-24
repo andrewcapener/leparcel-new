@@ -1,7 +1,8 @@
 import { asc, eq } from 'drizzle-orm'
-import { bookings, spaceTypes, vendors } from '@/db/schema'
+import { bookings, bookingCharges, spaceTypes, vendors } from '@/db/schema'
 import { fmtDateTime } from '@/lib/dates'
 import { isPaid } from '@/server/modules/payments/booking-status'
+import { ledgerFor } from '@/server/modules/payments/ledger'
 import { viaLabel, makerSignal } from '@/server/modules/payments/paid-via'
 import type { db as Db } from '@/db'
 
@@ -31,8 +32,10 @@ export type PaymentRow = {
   email: string
   track: string
   space: string
-  /** Dollars, plain, for a spreadsheet to sum: "280.00". */
+  /** Dollars, plain, for a spreadsheet to sum: "280.00". The running total. */
   fee: string
+  /** What is still owed after what has arrived. Never negative. */
+  balance: string
   payLink: string
   due: string
   status: string
@@ -80,7 +83,34 @@ export async function paymentRows(
     .where(eq(bookings.showId, showId))
     .orderBy(asc(bookings.vendorCode))
 
-  return rows.map(({ booking, vendor, space }) => ({
+  /* Lines added or taken off since the booking was made. The fee on the
+     booking is the space; a maker who added a second day owes more than that
+     and the sheet is where the girls read it, so a tab showing the old number
+     is a tab that sends somebody to collect the wrong amount. */
+  const charges = await db
+    .select({
+      id: bookingCharges.id, bookingId: bookingCharges.bookingId,
+      description: bookingCharges.description, amountCents: bookingCharges.amountCents,
+      voidedAt: bookingCharges.voidedAt,
+    })
+    .from(bookingCharges)
+  const byBooking = new Map<string, typeof charges>()
+  for (const c of charges) {
+    const list = byBooking.get(c.bookingId) ?? []
+    list.push(c)
+    byBooking.set(c.bookingId, list)
+  }
+
+  return rows.map(({ booking, vendor, space }) => {
+    const ledger = ledgerFor({
+      priceCents: booking.priceCents,
+      addonsCents: booking.addonsCents,
+      amountPaidCents: booking.amountPaidCents,
+      charges: (byBooking.get(booking.id) ?? []).map((c) => ({
+        id: c.id, description: c.description, amountCents: c.amountCents, voidedAt: c.voidedAt,
+      })),
+    })
+    return {
     code: booking.vendorCode,
     shop: vendor.shopName,
     contact: vendor.contactName,
@@ -89,15 +119,25 @@ export async function paymentRows(
     space: space.label,
     /* Cents to a plain decimal, never a float multiply (rule 1), and never a
        dollar sign: a sheet has to be able to add this column up. */
-    fee: centsToPlain(booking.priceCents + booking.addonsCents),
+    /* The running total, not the original fee. */
+    fee: centsToPlain(ledger.totalCents),
+    /* What is still owed after what has arrived. Zero for a settled booking,
+       and the number to chase for everybody else. */
+    balance: centsToPlain(Math.max(0, ledger.balanceCents)),
     payLink: booking.payToken ? `${siteUrl}/pay/${booking.payToken}` : '',
     due: booking.paymentDueAt ? fmtDateTime(booking.paymentDueAt) : '',
-    status: statusWords(booking.status),
+    /* A booking can be confirmed AND owe money: she paid for Saturday and
+       added Sunday. The ledger knows that and the status column alone does
+       not, so the word comes from whichever is the more useful answer. */
+    status: ledger.balanceCents > 0 && isPaid(booking.status)
+      ? 'Part paid'
+      : statusWords(booking.status),
     paidHow: isPaid(booking.status) ? viaLabel(booking.paidVia) : '',
     paidAt: booking.paidAt ? fmtDateTime(booking.paidAt) : '',
     linkSent: booking.linkSentAt ? fmtDateTime(booking.linkSentAt) : '',
     theirMove: MOVE[makerSignal(booking)] ?? '',
-  }))
+    }
+  })
 }
 
 /** Integer cents as a spreadsheet can add it: 28000 -> "280.00". */
@@ -119,12 +159,12 @@ export const linkValues = (r: PaymentRow) =>
 
 /** What they watch all day. Everything above plus where the money got to. */
 export const PAYMENT_COLUMNS = [
-  'Mermade ID', 'Shop', 'Contact', 'Email', 'Track', 'Space', 'Fee',
+  'Mermade ID', 'Shop', 'Contact', 'Email', 'Track', 'Space', 'Fee', 'Still owed',
   'Status', 'Paid how', 'Paid at', 'Link sent', 'Their move', 'Due', 'Pay link',
 ] as const
 
 export const paymentValues = (r: PaymentRow) =>
-  [r.code, r.shop, r.contact, r.email, r.track, r.space, r.fee,
+  [r.code, r.shop, r.contact, r.email, r.track, r.space, r.fee, r.balance,
     r.status, r.paidHow, r.paidAt, r.linkSent, r.theirMove, r.due, r.payLink]
 
 /**

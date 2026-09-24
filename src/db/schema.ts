@@ -378,6 +378,30 @@ export const bookingAddons = pgTable('booking_addons', {
   priceCents: integer('price_cents').notNull(),   // snapshot
 }, (t) => [index('booking_addons_booking').on(t.bookingId)])
 
+/**
+ * Things added to or taken off a booking after it was made.
+ *
+ * A second day, a corner, priority placement, a smaller booth. The fee on the
+ * booking is the space; this is everything that happened since. Signed cents,
+ * voided rather than deleted, and never able to change payment status.
+ * See drizzle/0045_booking-charges.sql.
+ */
+export const bookingCharges = pgTable('booking_charges', {
+  id: text('id').primaryKey(),
+  bookingId: text('booking_id').notNull().references(() => bookings.id),
+  /** What the maker reads on their invoice. */
+  description: text('description').notNull(),
+  /** Signed: positive is owed, negative comes off. Integer cents (rule 1). */
+  amountCents: integer('amount_cents').notNull(),
+  reason: text('reason').notNull().default(''),
+  createdAt: dbNow('created_at'),
+  createdBy: text('created_by').notNull().default('staff'),
+  /** Null means the line counts. Never deleted (rule 3). */
+  voidedAt: text('voided_at'),
+  voidedBy: text('voided_by'),
+  voidReason: text('void_reason'),
+}, (t) => [index('booking_charges_booking').on(t.bookingId)])
+
 /* ─────────────────────── audit log ───────────────────────
  * CLAUDE.md rule 3 — every state change that touches money or a
  * maker's standing is logged with actor, before, after, reason.
