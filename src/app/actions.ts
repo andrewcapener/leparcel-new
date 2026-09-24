@@ -1606,11 +1606,24 @@ export async function cancelBooking(fd: FormData): Promise<void> {
 
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
   if (!b) redirect('/admin/roster?release=missing')
-  if (b.status === 'confirmed' || b.status === 'payment_processing') {
-    redirect('/admin/roster?release=paid')
-  }
   if (b.status === 'cancelled' || b.status === 'forfeited') {
     redirect('/admin/roster?release=already')
+  }
+
+  /* A maker who has paid can be removed, because makers do drop out after
+     paying and somebody has to be able to take the space back. This used to
+     refuse outright, which was right about the danger and wrong about the
+     job: it left staff with a roster they could not correct.
+     
+     What it will not do is let the money vanish quietly. Removing a paid
+     booking takes a second, explicit yes, and the amount that had arrived is
+     written into the audit log at the moment of removal, so the space leaving
+     the roster and the refund owed are both still answerable in December
+     (rule 3). Nothing here moves money: Stripe and Venmo are where that
+     happens, and a refund is a person's job. */
+  const hadPaid = b.status === 'confirmed' || b.status === 'payment_processing'
+  if (hadPaid && String(fd.get('confirmPaid') ?? '') !== 'on') {
+    redirect('/admin/roster?release=paid')
   }
 
   await db.update(bookings).set({ status: 'cancelled' }).where(eq(bookings.id, bookingId))
@@ -1622,8 +1635,13 @@ export async function cancelBooking(fd: FormData): Promise<void> {
   await dropLiveCheckout(db, bookingId)
 
   await log('booking', bookingId, 'released_by_staff',
-    { status: b.status }, { status: 'cancelled' },
-    reason, `staff:${await staffName()}`)
+    { status: b.status, amountPaidCents: b.amountPaidCents, paidVia: b.paidVia },
+    { status: 'cancelled' },
+    hadPaid
+      ? `${reason} [had paid ${usd(b.amountPaidCents ?? 0)} via `
+        + `${b.paidVia ?? 'route not recorded'}; refund owed unless already returned]`
+      : reason,
+    `staff:${await staffName()}`)
 
   await liveSheet(b.showId)
 

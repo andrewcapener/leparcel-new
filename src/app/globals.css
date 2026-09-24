@@ -1072,3 +1072,11 @@
   outline:2px solid var(--ad-focus,#1F6FEB);outline-offset:2px;
 }
 .adm-empty{margin:24px 0;color:var(--ad-ink-2);font-size:15px}
+
+/* The second yes on a removal that has money behind it. Not a row of
+   controls: a sentence with a box in it, so it is read rather than clicked. */
+.adm-check{
+  display:flex;gap:8px;align-items:flex-start;margin:6px 0 2px;
+  font-size:12.5px;line-height:1.4;color:var(--ad-ink-2);max-width:42ch;cursor:pointer;
+}
+.adm-check input{margin:2px 0 0;flex:0 0 auto}

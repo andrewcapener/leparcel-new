@@ -595,32 +595,55 @@ export default async function Roster({
           {/* Nothing to press on a transfer in flight. Mark paid refuses a
               booking that is not awaiting_payment, so the button was already
               doing nothing there, silently, next to a maker who had paid. */}
-          {!paid && !inFlight && (
-            <>
-              <MarkPaid slot="row" bookingId={booking.id} shopName={vendor.shopName}
-                said={booking.saidSentVia} />
-              {/* Behind a disclosure, because taking a space back from
-                  somebody who was told they were in is not a thing to do with
-                  one stray click next to Mark paid. The reason is required
-                  and goes in the audit log. */}
-              <details className="adm-mask" style={{ marginTop: 8 }}>
-                <summary>Release</summary>
-                <form action={cancelBooking} className="adm-paid" style={{ marginTop: 6 }}>
-                  <input type="hidden" name="bookingId" value={booking.id} />
-                  <label className="adm-sr" htmlFor={`why-${booking.id}`}>
-                    Why {vendor.shopName} is losing this space
+          {/* `!gone` as well, which it was missing: a released or forfeited
+              space is none of paid, clearing or awaiting, so Mark paid was
+              being offered on a booking nobody holds. The action refuses it,
+              so nothing could go wrong, but a control that does nothing is
+              how a screen teaches somebody not to trust it. */}
+          {!paid && !inFlight && !gone && (
+            <MarkPaid slot="row" bookingId={booking.id} shopName={vendor.shopName}
+              said={booking.saidSentVia} />
+          )}
+
+          {/* Behind a disclosure, because taking a space back from somebody who
+              was told they were in is not a thing to do with one stray click
+              next to Mark paid. The reason is required and goes in the audit
+              log.
+
+              It is offered whatever the fee has done, which it was not before:
+              the whole block sat behind "not paid", so a maker who had paid and
+              then dropped out could not be taken off the roster at all, and
+              there was nothing on screen to say why not. Makers do drop out
+              after paying. */}
+          {!gone && (
+            <details className="adm-mask" style={{ marginTop: 8 }}>
+              <summary>{paid || inFlight ? 'Remove' : 'Release'}</summary>
+              <form action={cancelBooking} className="adm-paid" style={{ marginTop: 6 }}>
+                <input type="hidden" name="bookingId" value={booking.id} />
+                <label className="adm-sr" htmlFor={`why-${booking.id}`}>
+                  Why {vendor.shopName} is losing this space
+                </label>
+                <input
+                  className="inp" id={`why-${booking.id}`} name="reason" required
+                  minLength={3} maxLength={200} placeholder="Why?"
+                />
+                {(paid || inFlight) && (
+                  /* The second yes. Nothing here moves money: this says the
+                     refund is somebody's job and they know it. */
+                  <label className="adm-check" htmlFor={`rf-${booking.id}`}>
+                    <input type="checkbox" id={`rf-${booking.id}`} name="confirmPaid" />
+                    <span>
+                      {usd(ledger.paidCents)} has been paid. Refund it in Stripe or send it
+                      back by hand first: removing them here does not.
+                    </span>
                   </label>
-                  <input
-                    className="inp" id={`why-${booking.id}`} name="reason" required
-                    minLength={3} maxLength={200} placeholder="Why?"
-                  />
-                  <button className="adm-btn-q" type="submit">
-                    Release
-                    <span className="adm-sr"> {vendor.shopName}&rsquo;s space</span>
-                  </button>
-                </form>
-              </details>
-            </>
+                )}
+                <button className="adm-btn-q" type="submit">
+                  {paid || inFlight ? 'Remove' : 'Release'}
+                  <span className="adm-sr"> {vendor.shopName}&rsquo;s space</span>
+                </button>
+              </form>
+            </details>
           )}
         </td>
       </tr>
@@ -666,7 +689,7 @@ export default async function Roster({
       {sp.release && (
         <p className="adm-note" role="status">
           {sp.release === 'done' ? 'Space released. The maker no longer holds it, their pay link stops taking money, and the reason is in the audit log. Nothing was sent to them: that note is yours to write.'
-            : sp.release === 'paid' ? 'That booth fee is already paid or clearing, so the booking was left alone. Releasing it would drop real money out of every total on this page. Refund it in Stripe first.'
+            : sp.release === 'paid' ? 'That maker has paid, so removing them needs the tick as well as the reason. Nothing was changed. Refund them first: taking them off the roster here does not move any money.'
             : sp.release === 'already' ? 'That space was already released. Nothing was changed.'
             : sp.release === 'why' ? 'Say why, in a few words. A space taken back from somebody who was told they were in is a decision that has to be explainable in November.'
             : 'No such booking. Nothing was changed.'}
