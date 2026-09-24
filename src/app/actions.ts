@@ -1364,6 +1364,12 @@ export async function setBoothPrice(fd: FormData): Promise<void> {
     { priceCents: b.priceCents }, { priceCents },
     reason || 'no reason given', `staff:${await staffName()}`)
 
+  /* The girls read the sheet, not this screen. A fee changed here and not
+     there is how Emily Davis Ceramics came to be discussed as a 3x6 in one
+     place and a 3x8 in another on the day she was trying to pay. What a
+     maker owes is exactly the kind of thing the payment tabs exist to say. */
+  await liveSheet(b.showId)
+
   revalidatePath('/admin/roster')
   revalidatePath('/account')
   redirect('/admin/roster?price=set')
@@ -1419,6 +1425,10 @@ export async function setBoothSpace(fd: FormData): Promise<void> {
     { spaceTypeId: b.spaceTypeId, label: had?.label ?? '' },
     { spaceTypeId, label: next.label },
     reason || 'no reason given', `staff:${await staffName()}`)
+
+  /* Same reason as the fee. A footprint that has moved here and not on the
+     sheet is two people reading two different numbers about one maker. */
+  await liveSheet(b.showId)
 
   revalidatePath('/admin/roster')
   revalidatePath('/account')
