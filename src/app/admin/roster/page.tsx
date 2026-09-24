@@ -103,7 +103,10 @@ function MarkPaid({
 export default async function Roster({
   searchParams,
 }: {
-  searchParams: Promise<{ price?: string; release?: string; track?: string; fee?: string }>
+  searchParams: Promise<{
+    price?: string; release?: string; track?: string; fee?: string
+    charge?: string; space?: string
+  }>
 }) {
   const sp = await searchParams
   const show = await activeShow()
@@ -676,6 +679,29 @@ export default async function Roster({
             : sp.price === 'paid' ? 'That fee is already paid or clearing, so it was left alone. Changing it would only make the record disagree with the bank: that one needs a refund, not an edit.'
             : sp.price === 'bad' ? 'That did not look like an amount. Nothing was changed.'
             : 'No such booking. Nothing was changed.'}
+        </p>
+      )}
+
+      {/* Adding a line and moving a space both redirected here with an answer
+          that nothing read, so a refusal looked exactly like a press that did
+          nothing. That is the report this screen produced twice: "I keep
+          changing it and she still sees the old number." Every outcome says
+          something now, including the ones that worked. */}
+      {sp.charge && (
+        <p className="adm-note" role="status">
+          {sp.charge === 'added' ? 'Line added. It is on the maker\u2019s invoice now, their pay link asks for the new balance rather than the whole fee again, and any half-finished checkout of theirs was cancelled.'
+            : sp.charge === 'voided' ? 'Line taken off. It stays on the invoice as a voided row with who removed it and why, and the balance has come down.'
+            : sp.charge === 'bad' ? 'That line was not added. It needs a description and an amount that is a real number of dollars, and a minus sign is how you take money off.'
+            : 'No such booking or line. Nothing was changed.'}
+        </p>
+      )}
+
+      {sp.space && (
+        <p className="adm-note" role="status">
+          {sp.space === 'set' ? 'Space changed. The fee moved with it unless it had been set by hand, and any half-finished checkout of theirs was cancelled.'
+            : sp.space === 'paid' ? 'That booth fee is already paid or clearing, so the space was left alone. Moving it now would make the record disagree with the bank.'
+            : sp.space === 'track' ? 'That would move the maker between indoors and outdoors, which is a different agreement and a different fee. Release the booking and rebook it instead.'
+            : 'No such booking or space. Nothing was changed.'}
         </p>
       )}
 
