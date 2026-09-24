@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { eq, and, asc } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
@@ -151,8 +152,19 @@ export default async function Thumbnails({
               <li className="thumb-cell" key={r.applicationId}>
                 <div className="thumb-art" data-empty={r.thumb.url ? undefined : '1'}>
                   {r.thumb.url ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={r.thumb.url} alt="" loading="lazy" width={200} height={200} />
+                    /* Resized at the edge rather than in CSS. A maker's upload
+                       can be ten megabytes and this screen shows every one of
+                       them at once. */
+                    <Image
+                      src={r.thumb.url}
+                      alt=""
+                      width={220}
+                      height={220}
+                      sizes="220px"
+                      quality={70}
+                      loading="lazy"
+                      unoptimized={false}
+                    />
                   ) : (
                     <span className="thumb-none">No picture</span>
                   )}
@@ -197,8 +209,19 @@ export default async function Thumbnails({
                           className="thumb-pick"
                           aria-current={url === r.thumb.url ? 'true' : undefined}
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={url} alt="" loading="lazy" width={44} height={44} />
+                          {/* 44px on screen, so 44px over the wire. These were
+                              the worse half of the problem: a maker with four
+                              uploads pulled four full-size files to draw four
+                              thumbnails the size of a fingernail. */}
+                          <Image
+                            src={url}
+                            alt=""
+                            width={44}
+                            height={44}
+                            sizes="44px"
+                            quality={60}
+                            loading="lazy"
+                          />
                           <span className="adm-sr">Use this one</span>
                         </button>
                       </form>

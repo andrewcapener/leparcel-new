@@ -40,6 +40,25 @@ const PAGES: Array<[string, string]> = [
 ]
 
 const config: NextConfig = {
+  /**
+   * Maker photographs, resized at the edge.
+   *
+   * A maker uploads a square straight off a phone and it can be ten megabytes.
+   * /admin/thumbnails shows every booked maker at once, plus each of their
+   * other uploads as a small picker, so at ninety two makers that was several
+   * hundred full-resolution files being downloaded and then scaled down in
+   * CSS. The screen took its time for exactly that reason.
+   *
+   * Going through next/image means Vercel serves a resized WebP at the size
+   * actually asked for. The pattern is a wildcard because the project host is
+   * derived from DATABASE_URL at runtime and is not known here.
+   */
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.supabase.co', pathname: '/storage/v1/object/public/**' },
+    ],
+  },
+
   async redirects() {
     return [
       ...PAGES.map(([from, destination]) => ({
