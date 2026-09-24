@@ -25,8 +25,15 @@ import { useEffect, useRef, useState } from 'react'
  */
 export function BackgroundVideo({ youtubeId }: { youtubeId: string }) {
   const [show, setShow] = useState(false)
+  const [near, setNear] = useState(false)
+  const [settled, setSettled] = useState(false)
   const [playing, setPlaying] = useState(false)
   const frame = useRef<HTMLIFrameElement>(null)
+  const box = useRef<HTMLDivElement>(null)
+
+  /* Both have to be true before a byte of player is fetched: the page itself
+     has finished, and this section is near enough to be worth it. */
+  const ready = near && settled
 
   useEffect(() => {
     const still = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -41,8 +48,45 @@ export function BackgroundVideo({ youtubeId }: { youtubeId: string }) {
     return () => still.removeEventListener('change', decide)
   }, [])
 
+  /* Wait for the page itself to finish before fetching a megabyte of player.
+     The embed costs about 1MB across sixteen requests, and mounting it during
+     hydration put all of that in a race with the hero photograph and the
+     fonts: the home page took 3.2s to load and 5.1s to go quiet on a phone,
+     and the thing people were waiting for was a video they had not asked to
+     watch yet. The poster is already on screen the whole time, so nothing is
+     missing while this waits. */
   useEffect(() => {
-    if (!show || playing) return
+    if (document.readyState === 'complete') {
+      const t = setTimeout(() => setSettled(true), 400)
+      return () => clearTimeout(t)
+    }
+    const done = () => setTimeout(() => setSettled(true), 400)
+    window.addEventListener('load', done, { once: true })
+    return () => window.removeEventListener('load', done)
+  }, [])
+
+  /* And only for a section somebody can actually see. The home page carries
+     two of these; the second is well below the fold and was pulling its own
+     player on every visit for a film nobody had scrolled to. */
+  /* Depends on `show`, and that is not incidental. This component renders
+     null until the first effect decides motion is wanted, so on mount there
+     is no element to observe: with an empty dependency list the observer
+     attached to nothing, `near` stayed false, and the video never appeared at
+     all. It has to run again once the box is actually in the document. */
+  useEffect(() => {
+    if (!show || near) return
+    const el = box.current
+    if (!el) return
+    if (typeof IntersectionObserver !== 'function') { setNear(true); return }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { setNear(true); io.disconnect() }
+    }, { rootMargin: '250px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [show, near])
+
+  useEffect(() => {
+    if (!show || !ready || playing) return
     const onMessage = (e: MessageEvent) => {
       try {
         if (/(^|\.)youtube(-nocookie)?\.com$/.test(new URL(e.origin).hostname)) setPlaying(true)
@@ -59,7 +103,7 @@ export function BackgroundVideo({ youtubeId }: { youtubeId: string }) {
       clearInterval(t)
       clearTimeout(stop)
     }
-  }, [show, playing])
+  }, [show, ready, playing])
 
   if (!show) return null
 
@@ -70,14 +114,22 @@ export function BackgroundVideo({ youtubeId }: { youtubeId: string }) {
   })
 
   return (
-    <div className="video-section__bg-iframe-video" aria-hidden="true" data-playing={playing ? '1' : undefined}>
-      <iframe
-        ref={frame}
-        src={`https://www.youtube-nocookie.com/embed/${youtubeId}?${params}`}
-        title=""
-        tabIndex={-1}
-        allow="autoplay; encrypted-media"
-      />
+    <div
+      ref={box}
+      className="video-section__bg-iframe-video"
+      aria-hidden="true"
+      data-playing={playing ? '1' : undefined}
+    >
+      {ready && (
+        <iframe
+          ref={frame}
+          src={`https://www.youtube-nocookie.com/embed/${youtubeId}?${params}`}
+          title=""
+          tabIndex={-1}
+          allow="autoplay; encrypted-media"
+          loading="lazy"
+        />
+      )}
     </div>
   )
 }

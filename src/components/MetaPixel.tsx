@@ -17,8 +17,15 @@ import { pixelId } from '@/server/modules/meta/config'
  * business, CPRA applies, and the flag has to be on the first event or the
  * first one is not covered.
  *
- * afterInteractive, so it never delays the page. Marketing does not get to be
- * the reason the hero is slow.
+ * lazyOnload, so it never delays the page. Marketing does not get to be the
+ * reason the hero is slow, and this is 194KB across two requests: fbevents.js
+ * and the pixel's config. afterInteractive still put both of those in a race
+ * with hydration, which on a phone is exactly when the page feels stuck.
+ *
+ * The cost of waiting is a PageView missed for somebody who leaves inside a
+ * second or two. That is a price worth paying here, because the event that
+ * actually matters, an application, is sent from the server through the
+ * Conversions API and does not depend on this script running at all.
  */
 export function MetaPixel() {
   const id = pixelId()
@@ -26,7 +33,7 @@ export function MetaPixel() {
 
   return (
     <>
-      <Script id="meta-pixel" strategy="afterInteractive">
+      <Script id="meta-pixel" strategy="lazyOnload">
         {`!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};
