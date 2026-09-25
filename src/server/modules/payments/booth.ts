@@ -342,7 +342,12 @@ export async function handleStripeWebhook(
 ): Promise<WebhookResult> {
   const s = stripe()
   const secret = webhookSecret()
-  if (!s || !secret || !signature) return { outcome: 'unconfigured' }
+  /* No keys on this deployment is a different thing from a caller that sent
+     no signature, and saying the first when you mean the second sends
+     somebody hunting for missing environment variables that are all present.
+     An unsigned POST is simply not from Stripe. */
+  if (!s || !secret) return { outcome: 'unconfigured' }
+  if (!signature) return { outcome: 'bad_signature' }
 
   let event
   try {

@@ -406,9 +406,25 @@ export default async function Roster({
                 <span className="mk">Change</span>
                 <span className="adm-sr"> the booth fee for {vendor.shopName}</span>
               </summary>
+              {/* The space alone is what this box edits, and it is often not
+                  what the maker sees. Kelly's Coastal Creations had an $850
+                  space and $100 of add-ons, so staff typed 850 into here
+                  three times and the maker went on being shown $950. The sum
+                  is spelled out rather than left to be worked out. */}
+              <p className="adm-breakdown">
+                <span>Space {usd(booking.priceCents)}</span>
+                {booking.addonsCents > 0 && <span>Add-ons {usd(booking.addonsCents)}</span>}
+                {ledger.active.length > 0 && (
+                  <span>
+                    {ledger.active.length} line{ledger.active.length > 1 ? 's' : ''}{' '}
+                    {usd(ledger.totalCents - booking.priceCents - booking.addonsCents)}
+                  </span>
+                )}
+                <strong>The maker sees {usd(ledger.totalCents)}</strong>
+              </p>
               <form action={setBoothPrice}>
                 <input type="hidden" name="bookingId" value={booking.id} />
-                <label className="adm-sr" htmlFor={`p-${booking.id}`}>New fee in dollars</label>
+                <label className="adm-sr" htmlFor={`p-${booking.id}`}>New space fee in dollars</label>
                 <input className="inp" id={`p-${booking.id}`} name="dollars" type="text"
                   inputMode="decimal" defaultValue={(booking.priceCents / 100).toFixed(2)} />
                 <label className="adm-sr" htmlFor={`r-${booking.id}`}>Why</label>
@@ -707,6 +723,7 @@ export default async function Roster({
         <p className="adm-note" role="status">
           {sp.price === 'set' ? 'Booth fee updated. The maker sees the new amount, any half-finished Stripe checkout of theirs was cancelled, and the change is in the audit log.'
             : sp.price === 'paid' ? 'That fee is already paid or clearing, so it was left alone. Changing it would only make the record disagree with the bank: that one needs a refund, not an edit.'
+            : sp.price === 'same' ? 'That is already the space fee, so nothing changed. If the maker is seeing a bigger number, it is add-ons or invoice lines on top: open Invoice on their row to see the breakdown and take a line off there.'
             : sp.price === 'bad' ? 'That did not look like an amount. Nothing was changed.'
             : 'No such booking. Nothing was changed.'}
         </p>

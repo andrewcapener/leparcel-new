@@ -1092,3 +1092,12 @@
 }
 .adm .adm-mask--danger[open] > summary::after{ content: 'Close' }
 .adm .adm-mask--danger > summary:hover::after{ color: var(--ad-ink); border-bottom-color: var(--ad-ink) }
+
+/* The sum behind a booth fee, where staff try to change it. The box edits the
+   space alone and the maker is shown the total, and without this the two
+   numbers disagree with no explanation on screen. */
+.adm .adm-breakdown{
+  display:flex;flex-wrap:wrap;gap:4px 12px;margin:2px 0 8px;
+  font-family:var(--font-m);font-size:var(--t-mono);color:var(--ad-ink-2);
+}
+.adm .adm-breakdown strong{color:var(--ad-ink);font-weight:600}

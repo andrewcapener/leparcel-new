@@ -1379,7 +1379,13 @@ export async function setBoothPrice(fd: FormData): Promise<void> {
   if (b.status === 'confirmed' || b.status === 'payment_processing') {
     redirect('/admin/roster?price=paid')
   }
-  if (priceCents === b.priceCents) redirect('/admin/roster')
+  /* Typing the number that is already there is not nothing: it is somebody
+     trying to make the maker's total match and not understanding why it will
+     not. Hillary, on Kelly's Coastal Creations: "I tried changing myself but
+     it's not reflecting on her end." The space fee was already what she
+     typed; the maker's invoice is higher because of add-ons and lines, and
+     this redirect said nothing at all. */
+  if (priceCents === b.priceCents) redirect('/admin/roster?price=same')
 
   await db.update(bookings).set({
     priceCents,
