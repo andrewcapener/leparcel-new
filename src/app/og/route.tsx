@@ -18,10 +18,12 @@ import { BandCard, type CardFacts } from '@/server/modules/og/card'
  * 13-15 inside it that somebody has to remember to re-cut the day the show
  * moves. It has moved three times in three shows. CLAUDE.md rule 6.
  *
- * The photograph is one of the homepage filmstrip frames, and that is not an
- * arbitrary pick: everything in public/photos is from a venue this market has
- * left. The strip was re-shot at the Community House and the card never
- * caught up, so a link to a Dana Point market was showing River Street.
+ * The photograph is Drew's pick, 24 Sept 2026, and it is a full 1200x1800
+ * portrait, so the band is a straight crop out of it with nothing upscaled.
+ * Picking it mattered more than the layout did: most of public/photos is from
+ * a venue this market has left (photos/tents.jpg still has RIVER STREET on
+ * the building behind it), so a link to a Dana Point market was advertising
+ * the old address.
  *
  * Cached for a day at the edge. A scraper is the least patient client there
  * is, and none of them will wait for a cold function to load three fonts and
@@ -35,9 +37,9 @@ async function dataUri(rel: string, mime: string) {
   return `data:${mime};base64,${b.toString('base64')}`
 }
 
-/* 900x600, and the card needs to know so it can work out the crop. */
-const PHOTO = 'photos/strip/mermade-183.jpg'
-const PHOTO_ASPECT = 900 / 600
+/* 1200x1800, and the card needs the shape to work out the crop. */
+const PHOTO = 'photos/lot.jpg'
+const PHOTO_ASPECT = 1200 / 1800
 
 export async function GET() {
   const show = await activeShow()
@@ -50,9 +52,11 @@ export async function GET() {
     kicker: '',
     photo: await dataUri(PHOTO, 'image/jpeg'),
     photoAspect: PHOTO_ASPECT,
-    /* Keeps the maker, her table and the CHARM BAR cloth. Higher and the
-       cloth is sliced through its own lettering. */
-    photoOffsetY: 0.38,
+    /* The band is 412 of 1800, so most of this photograph is not on the card
+       and which slice is chosen is the whole decision. Higher is sky and an
+       empty canopy; lower crops through the shoppers' heads. Here you get
+       both of them, the maker at her stands, and the tents behind. */
+    photoOffsetY: 0.50,
     wordmark: await dataUri('brand/mermade-wordmark-white.svg', 'image/svg+xml'),
   }
 
