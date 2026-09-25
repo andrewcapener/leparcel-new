@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
 import { activeShow } from '@/db/queries'
 import { fmtRange } from '@/lib/dates'
 import { brandFonts } from '@/server/modules/og/fonts'
-import { PosterCard, SplitCard, BroadsideCard, type CardFacts } from '@/server/modules/og/card'
+import { PosterCard, SplitCard, BroadsideCard, BandCard, type CardFacts } from '@/server/modules/og/card'
 
 /**
  * The social card, rendered for choosing between. Behind the /admin gate.
@@ -36,12 +36,12 @@ export async function GET(req: NextRequest) {
     kicker: 'Applications open',
     photo: await dataUri(photo, 'image/jpeg'),
     wordmark: await dataUri(
-      v === 'a' ? 'brand/mermade-wordmark-white.svg' : 'brand/mermade-wordmark-ink.svg',
+      v === 'a' || v === 'd' ? 'brand/mermade-wordmark-white.svg' : 'brand/mermade-wordmark-ink.svg',
       'image/svg+xml',
     ),
   }
 
-  const Card = v === 'b' ? SplitCard : v === 'c' ? BroadsideCard : PosterCard
+  const Card = v === 'b' ? SplitCard : v === 'c' ? BroadsideCard : v === 'd' ? BandCard : PosterCard
   return new ImageResponse(<Card {...facts} />, {
     width: 1200, height: 630, fonts: await brandFonts(),
   })

@@ -30,11 +30,11 @@ import { MetaPixel } from '@/components/MetaPixel'
  * canonical on all of them. Pages here set their own description; this is the
  * fallback for anything that has not, and the canonical is per-page below.
  */
-/** The picture a shared link shows: the painted backdrop with the hand-cut
- *  MERMADE MARKET sign, cropped to the 1200x630 every scraper expects. It
- *  carries the name, it is unmistakably this market rather than a logo on a
- *  background, and there is no face in it to crop through. */
-const OG_IMAGE = img('/photos/og.jpg')
+/** The picture a shared link shows, drawn at /og from the Show record so the
+ *  dates and the venue on it are the ones /admin/show says today. It was a
+ *  still of the painted backdrop, which carried the market's name and not one
+ *  fact a person needs in order to turn up. See src/app/og/route.tsx. */
+const OG_IMAGE = img('/og')
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),

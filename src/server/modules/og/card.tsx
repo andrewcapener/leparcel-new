@@ -31,6 +31,10 @@ export type CardFacts = {
   /** Optional second line under the dates. */
   standfirst?: string
   photo: string
+  /** Width over height of `photo`, so the crop can be computed. Default 3:2. */
+  photoAspect?: number
+  /** Which slice of a too-tall photo to keep: 0 the top, 1 the bottom. */
+  photoOffsetY?: number
   wordmark: string
 }
 
@@ -122,7 +126,55 @@ export function BroadsideCard(f: CardFacts) {
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <div style={{ display: 'flex', width: 24, height: 24, backgroundColor: GOLD, marginRight: 18 }} />
         <div style={{ display: 'flex', fontFamily: 'Figtree', fontSize: 28, color: '#767676' }}>
-          A hundred makers, hand curated, in Dana Point
+          {f.kicker}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * D · Band. A photograph on top, the facts in a solid bar beneath it.
+ *
+ * Chosen by Drew, 24 Sept 2026, over the poster and the broadside. The reason
+ * the type sits in a bar rather than on the picture is the one that matters:
+ * a scrim has to be re-checked against every new photograph, and the day
+ * somebody swaps in a bright one the date goes unreadable and nobody finds
+ * out until a link has been shared a hundred times. In a bar the contrast is
+ * a constant, so the photograph is free to change every season.
+ *
+ * `photoOffsetY` crops the picture. Satori does not honour object-position,
+ * so the image is drawn oversize inside a clipped box and pushed up by hand:
+ * 0 keeps the top of the frame, 1 keeps the bottom.
+ */
+export function BandCard(f: CardFacts) {
+  const PIC = 412
+  /* Cover, computed rather than declared: the source is scaled to the full
+     1200 width and the overflow is what gets cropped. */
+  const drawn = Math.round(1200 / (f.photoAspect ?? 1.5))
+  const top = -Math.round(Math.max(0, drawn - PIC) * (f.photoOffsetY ?? 0.38))
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: INK }}>
+      <div style={{ display: 'flex', width: 1200, height: PIC, overflow: 'hidden', position: 'relative' }}>
+        <img src={f.photo} width={1200} height={drawn} style={{ position: 'absolute', left: 0, top }} alt="" />
+      </div>
+
+      {/* The one gold line on the card, holding the picture off the bar. */}
+      <div style={{ display: 'flex', width: 1200, height: 5, backgroundColor: GOLD }} />
+
+      <div style={{
+        display: 'flex', flex: 1, alignItems: 'center', padding: '0 64px', backgroundColor: INK,
+      }}>
+        <img src={f.wordmark} height={74} style={{ marginRight: 40 }} alt="Mermade Market" />
+        <div style={{ display: 'flex', width: 1, height: 96, backgroundColor: 'rgba(255,255,255,0.28)', marginRight: 40 }} />
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', fontFamily: 'Oswald', fontSize: 62, lineHeight: 1, color: '#fff', letterSpacing: 0.6 }}>
+            {f.dates.toUpperCase()}
+          </div>
+          <div style={{ display: 'flex', marginTop: 12, fontFamily: 'Figtree', fontSize: 25, color: '#DFE3E8' }}>
+            {f.venue} · Free to attend
+          </div>
         </div>
       </div>
     </div>
