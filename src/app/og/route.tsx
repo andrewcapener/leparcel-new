@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { activeShow } from '@/db/queries'
-import { fmtRange } from '@/lib/dates'
+import { cityOf, datesNoYear } from '@/server/modules/og/facts'
 import { brandFonts } from '@/server/modules/og/fonts'
 import { BandCard, SHOW_CREAM, type CardFacts } from '@/server/modules/og/card'
 
@@ -60,9 +60,17 @@ export async function GET() {
   const show = await activeShow()
   if (!show) return new Response('No active show.', { status: 404 })
 
+  /* "November 13-15 · Dana Point" over "Community House · Free to attend".
+     The year was the least useful thing on it, and the town is what somebody
+     deciding whether to come actually needs. The town moves up rather than
+     being said twice: it reads badly directly above "Dana Point Community
+     House", and the venue line still names the building. */
+  const town = cityOf(show.venueAddress)
   const facts: CardFacts = {
-    dates: fmtRange(show.startsOn, show.endsOn),
-    venue: `Dana Point ${show.venueName}`,
+    dates: town
+      ? `${datesNoYear(show.startsOn, show.endsOn)} · ${town}`
+      : datesNoYear(show.startsOn, show.endsOn),
+    venue: show.venueName,
     /* Unused by this layout, and required by the type. */
     kicker: '',
     photo: await dataUri(PHOTO, 'image/jpeg'),
