@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useFormStatus } from 'react-dom'
 
 export type BoardCard = {
   id: string
@@ -33,6 +34,34 @@ const GROUPS: Array<{ key: string; label: string }> = [
  * it is unusable without one, so every card also has two buttons, which is
  * what a keyboard and a screen reader get (WCAG 2.2 AA).
  */
+
+/**
+ * The Save button, which has to say that it is saving.
+ *
+ * Drew, 25 Sept: "when I press save the button doesn't appear that its saving
+ * something - but it does". With eighty eight cards the write is real work
+ * and the round trip is long enough to doubt, and a button that looks
+ * unpressed is one a person presses again. Twice.
+ *
+ * useFormStatus only reports the form it is rendered inside, which is why
+ * this is its own component rather than state in the board.
+ */
+function SaveButton({ children }: { children: React.ReactNode }) {
+  const { pending } = useFormStatus()
+  return (
+    <button className="adm-btn" type="submit" disabled={pending} aria-busy={pending}>
+      {pending ? 'Saving the lineup' : children}
+    </button>
+  )
+}
+
+/** Dims the board while the save is in flight, so it reads as busy rather
+ *  than as ignoring the press. */
+function BoardBusy({ children }: { children: React.ReactNode }) {
+  const { pending } = useFormStatus()
+  return <div className={pending ? 'lb-body is-saving' : 'lb-body'} aria-busy={pending}>{children}</div>
+}
+
 export function LineupBoard(
   { cards, action }: { cards: BoardCard[]; action: (fd: FormData) => Promise<void> },
 ) {
@@ -85,9 +114,10 @@ export function LineupBoard(
           {order.length - hiddenCount} on the page
           {hiddenCount > 0 ? `, ${hiddenCount} held back` : ''}
         </span>
-        <button className="adm-btn" type="submit">Save the lineup</button>
+        <SaveButton>Save the lineup</SaveButton>
       </div>
 
+      <BoardBusy>
       {GROUPS.map(({ key, label }) => {
         const inGroup = order.filter((c) => c.group === key)
         if (inGroup.length === 0) return null
@@ -133,9 +163,10 @@ export function LineupBoard(
           </section>
         )
       })}
+      </BoardBusy>
 
       <div className="lb-bar">
-        <button className="adm-btn" type="submit">Save the lineup</button>
+        <SaveButton>Save the lineup</SaveButton>
       </div>
     </form>
   )

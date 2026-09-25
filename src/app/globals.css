@@ -1139,4 +1139,9 @@
    path and must never be hidden (WCAG 2.2 AA). */
 .lb-card :focus-visible { outline: 2px solid var(--adm-accent, #BC9658); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .lb-card { transition: none; } }
+/* While a save is in flight. Dimmed and not clickable, so a slow write reads
+   as busy rather than as a press that did nothing. */
+.lb-body.is-saving { opacity: .5; pointer-events: none; }
+.lb-body { transition: opacity .12s ease; }
+@media (prefers-reduced-motion: reduce) { .lb-body { transition: none; } }
 
