@@ -45,10 +45,21 @@ export default async function PayPage({
 }) {
   const { token } = await params
   const sp = await searchParams
-  const show = await activeShow()
+  /* Two round trips, not four. Nothing here needed to wait on anything else:
+     the active show and the token's booking are independent, and so are the
+     invoice and the booking's own show. Read serially this page spent four
+     database latencies before it rendered a byte, on a link a maker opens
+     once with a card in their hand. */
+  const [show, found] = await Promise.all([activeShow(), bookingByPayToken(db, token)])
 
-  const found = await bookingByPayToken(db, token)
-  const billing = found ? await boothInvoice(db, found.id) : undefined
+  const [billing, its] = found
+    ? await Promise.all([
+      boothInvoice(db, found.id),
+      /* The show this booking belongs to, not whichever one is active: a link
+         pasted last season must price against the season it was made for. */
+      db.query.shows.findFirst({ where: eq(shows.id, found.showId) }),
+    ])
+    : [undefined, undefined]
 
   /* One message for an unknown token and for a booking that is gone, so this
      page never confirms whether a guessed token was real. */
@@ -72,9 +83,6 @@ export default async function PayPage({
       : dead
   }
 
-  /* The show this booking belongs to, not whichever one is active: a link
-     pasted last season must price against the season it was made for. */
-  const its = await db.query.shows.findFirst({ where: eq(shows.id, found.showId) })
   const methods = its?.paymentMethods ?? show.paymentMethods
 
   const notice = sp.paid === '1'

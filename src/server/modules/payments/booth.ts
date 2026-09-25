@@ -40,24 +40,29 @@ export async function boothInvoice(
   const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1)
   if (!booking) return undefined
 
-  const [space] = await db.select().from(spaceTypes).where(eq(spaceTypes.id, booking.spaceTypeId)).limit(1)
-  const extras = await db
-    .select({ name: addOns.name, priceCents: bookingAddons.priceCents })
-    .from(bookingAddons)
-    .innerJoin(addOns, eq(bookingAddons.addOnId, addOns.id))
-    .where(eq(bookingAddons.bookingId, bookingId))
-
-  /* Everything added or taken off since the booking was made. Voided lines
-     are left out of the arithmetic and stay in the table, so an invoice can
-     still be read back in December (rule 3). */
-  const changes = await db
-    .select({
-      description: bookingCharges.description,
-      amountCents: bookingCharges.amountCents,
-      voidedAt: bookingCharges.voidedAt,
-    })
-    .from(bookingCharges)
-    .where(eq(bookingCharges.bookingId, bookingId))
+  /* The booking had to come first, for its space id. These three did not have
+     to wait on each other, and reading them in a row cost this invoice three
+     database latencies for nothing. Every page that prices a booth builds
+     through here, so the waterfall was paid on all of them. */
+  const [[space], extras, changes] = await Promise.all([
+    db.select().from(spaceTypes).where(eq(spaceTypes.id, booking.spaceTypeId)).limit(1),
+    db
+      .select({ name: addOns.name, priceCents: bookingAddons.priceCents })
+      .from(bookingAddons)
+      .innerJoin(addOns, eq(bookingAddons.addOnId, addOns.id))
+      .where(eq(bookingAddons.bookingId, bookingId)),
+    /* Everything added or taken off since the booking was made. Voided lines
+       are left out of the arithmetic and stay in the table, so an invoice can
+       still be read back in December (rule 3). */
+    db
+      .select({
+        description: bookingCharges.description,
+        amountCents: bookingCharges.amountCents,
+        voidedAt: bookingCharges.voidedAt,
+      })
+      .from(bookingCharges)
+      .where(eq(bookingCharges.bookingId, bookingId)),
+  ])
 
   /* Prices come off the BOOKING and its add-on rows, never off space_types or
      add_ons today. The join above reaches add_ons only for the name. */
