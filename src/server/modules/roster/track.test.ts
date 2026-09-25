@@ -1,4 +1,4 @@
-import { moveProblem, tradingTrack, moveNotice } from './track'
+import { moveProblem, tradingTrack, moveNotice, lineupNotice } from './track'
 
 let failures = 0
 const check = (n: string, ok: boolean) => { if (!ok) { failures++; console.error(`FAIL: ${n}`) } }
@@ -36,6 +36,18 @@ check('every notice is dash free and unexcited',
       && !t.includes(String.fromCharCode(0x2014)) && !t.includes(String.fromCharCode(0x2013))
   }))
 check('an unknown code says nothing', moveNotice('nope') === null)
+
+/* The thing a person must not be able to misread: hiding is not cancelling,
+   and the maker can still pay. */
+check('hiding says the space and the pay link are untouched',
+  (lineupNotice('hidden') ?? '').includes('still works'))
+check('every lineup notice is dash free and unexcited',
+  ['hidden', 'listed', 'missing'].every((c) => {
+    const t = lineupNotice(c) ?? ''
+    return t.length > 0 && !t.includes('!')
+      && !t.includes(String.fromCharCode(0x2014)) && !t.includes(String.fromCharCode(0x2013))
+  }))
+check('an unknown lineup code says nothing', lineupNotice('nope') === null)
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('track move: a paid maker can be recategorised, and the booked space decides the track')

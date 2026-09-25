@@ -84,3 +84,19 @@ export function moveNotice(code: string): string | null {
       return null
   }
 }
+
+/** The notice after showing or hiding a maker on the public lineup. */
+export function lineupNotice(code: string): string | null {
+  switch (code) {
+    case 'hidden':
+      return 'Taken off the public lineup. They keep their space and their pay link '
+        + 'still works, so nothing about their booking changed and they can still pay.'
+    case 'listed':
+      return 'Back on the public lineup.'
+    case 'missing':
+      return 'That booking is no longer there. Nothing was changed.'
+    default:
+      return null
+  }
+}
+

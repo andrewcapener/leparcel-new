@@ -362,6 +362,11 @@ export const bookings = pgTable('bookings', {
      booking that quietly reads as paid. Both ids are uniquely indexed so a
      webhook naming one finds exactly one booking. */
   stripeSessionId: text('stripe_session_id'),
+  /** Set means they hold their space but are not listed on /makers. Null is
+   *  listed, which is what every booking was before this column existed. */
+  lineupHiddenAt: text('lineup_hidden_at'),
+  lineupHiddenBy: text('lineup_hidden_by'),
+  lineupHiddenReason: text('lineup_hidden_reason'),
   stripePaymentIntentId: text('stripe_payment_intent_id'),
   amountPaidCents: integer('amount_paid_cents'),
 

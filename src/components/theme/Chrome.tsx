@@ -49,6 +49,9 @@ const HEADER_CSS_SOLID = `.logo img { width: 150px; }
 .section-store-messages { display: none; }`
 
 const NAV = [
+  /* Drew, 25 Sept: the lineup goes in the nav. It leads, because it is the
+     page a shopper actually wants: who is going to be there. */
+  { href: '/makers', label: 'MAKERS', featured: false },
   { href: '/faq', label: 'FAQ', featured: false },
   { href: '/schedule', label: 'SCHEDULE', featured: true },
 ]

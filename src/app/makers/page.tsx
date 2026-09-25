@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { eq, and, asc, inArray } from 'drizzle-orm'
+import { eq, and, asc, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
@@ -7,7 +7,6 @@ import { MakerGrid, type MakerCard } from './MakerGrid'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, LogoGrid, RichText, Banner } from '@/components/theme/Sections'
 import { fmtDate } from '@/lib/dates'
-import { unlisted } from '@/lib/pages'
 
 /* Cached and re-rendered at most once a minute. Read-only, nothing
  * per-request, and the Show record it reads changes a few times a season.
@@ -21,7 +20,6 @@ export const metadata = {
      is sending round, kept out of the sitemap and the nav, and noindex so it
      does not turn up in a search for Mermade before it is ready. One word in
      src/lib/pages.ts puts it back. */
-  ...unlisted,
   title: 'Makers',
   description:
     'The makers selling at the next Mermade Market, inside and outside, by category and by day.',
@@ -74,6 +72,9 @@ export default async function Makers() {
     .where(and(
       eq(bookings.showId, show.id),
       inArray(bookings.status, ['confirmed', 'payment_processing', 'awaiting_payment']),
+      /* Held back by staff. They keep their space and their pay link; this
+         page just does not name them yet. See drizzle/0053. */
+      isNull(bookings.lineupHiddenAt),
     ))
     .orderBy(asc(spaceTypes.sortOrder), asc(vendors.shopName))
 

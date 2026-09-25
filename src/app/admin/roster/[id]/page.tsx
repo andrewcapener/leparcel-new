@@ -13,11 +13,12 @@ import {
 } from '@/app/actions'
 import { voidBoothAddon } from '@/app/admin/roster/void-addon'
 import { moveBoothTrack } from '@/app/admin/roster/move-track'
+import { setLineupVisibility } from '@/app/admin/roster/lineup'
 import { resendBoothInvoice } from '@/app/admin/roster/resend'
 import {
   NOTE_MAX, addonNotice, resendNotice, resendProblem,
 } from '@/app/admin/roster/resend-lines'
-import { moveNotice } from '@/server/modules/roster/track'
+import { moveNotice, lineupNotice } from '@/server/modules/roster/track'
 import { boothInvoice } from '@/server/modules/payments/booth'
 import { ledgerFor, standing, standingWords } from '@/server/modules/payments/ledger'
 import { holdsSpace, isPaid } from '@/server/modules/payments/booking-status'
@@ -94,10 +95,12 @@ export default async function MakerDetail({
    *  in the add-a-line form, ready to be pressed rather than typed. `resend`
    *  is how the invoice email reports back, and `addon` how taking an add-on
    *  off does: both are told to return here rather than to the roster. */
-  searchParams: Promise<{ add?: string; resend?: string; addon?: string; move?: string }>
+  searchParams: Promise<{
+    add?: string; resend?: string; addon?: string; move?: string; lineup?: string
+  }>
 }) {
   const { id } = await params
-  const { add, resend, addon, move } = await searchParams
+  const { add, resend, addon, move, lineup } = await searchParams
 
   const [row] = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
@@ -207,6 +210,8 @@ export default async function MakerDetail({
   const resendSaid = resendNotice(resend ?? '')
   const addonSaid = addonNotice(addon ?? '')
   const moveSaid = moveNotice(move ?? '')
+  const lineupSaid = lineupNotice(lineup ?? '')
+  const offLineup = Boolean(booking.lineupHiddenAt)
   const permit = permitState({
     /* The booked space, not the application: an outdoor maker owes a permit
        and an indoor consignment one does not, and Sunsea applied indoor. */
@@ -255,6 +260,7 @@ export default async function MakerDetail({
       {resendSaid && <p className="adm-note" role="status">{resendSaid}</p>}
       {addonSaid && <p className="adm-note" role="status">{addonSaid}</p>}
       {moveSaid && <p className="adm-note" role="status">{moveSaid}</p>}
+      {lineupSaid && <p className="adm-note" role="status">{lineupSaid}</p>}
 
       <PageHead
         title={vendor.shopName}
@@ -803,6 +809,51 @@ export default async function MakerDetail({
                 </label>
                 <button className="adm-btn-q" type="submit">Move them</button>
               </form>
+            </>
+          )}
+
+          {/* ── the public lineup ──
+              Not the danger control below it, and deliberately nowhere near
+              it: this changes what a shopper sees and nothing else. The
+              booking, the space and the pay link are all untouched. */}
+          {!gone && (
+            <>
+              <div className="adm-sec" style={{ margin: '24px 0 10px', border: 0, paddingBottom: 0 }}>
+                <h2>On the public lineup</h2>
+                <span className="c">{offLineup ? 'Hidden' : 'Listed'}</span>
+              </div>
+              {offLineup ? (
+                <>
+                  <p className="adm-note">
+                    Taken off {booking.lineupHiddenAt ? fmtDateTime(booking.lineupHiddenAt) : ''}
+                    {booking.lineupHiddenBy ? ` by ${booking.lineupHiddenBy}` : ''}
+                    {booking.lineupHiddenReason ? ` · ${booking.lineupHiddenReason}` : ''}.
+                    They still hold their space and their pay link still works.
+                  </p>
+                  <form action={setLineupVisibility}>
+                    <input type="hidden" name="bookingId" value={booking.id} />
+                    <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
+                    <input type="hidden" name="hide" value="0" />
+                    <button className="adm-btn-q" type="submit">Put them back on the lineup</button>
+                  </form>
+                </>
+              ) : (
+                <form action={setLineupVisibility}>
+                  <input type="hidden" name="bookingId" value={booking.id} />
+                  <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
+                  <input type="hidden" name="hide" value="1" />
+                  <label className="adm-field" htmlFor="lr">
+                    <span className="lb">Why they come off</span>
+                    <input className="inp" id="lr" name="reason" type="text" autoComplete="off"
+                      placeholder="Goes in the audit log" />
+                    <span className="hint">
+                      Takes them off {'/makers'} only. They keep their space, their pay link
+                      keeps working, and one press puts them back.
+                    </span>
+                  </label>
+                  <button className="adm-btn-q" type="submit">Take them off the lineup</button>
+                </form>
+              )}
             </>
           )}
 
