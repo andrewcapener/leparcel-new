@@ -344,7 +344,10 @@ export default async function Roster({
 
         <td className="c-1">
           {space.label}
-          <span className="adm-sub2">{app.track}</span>
+          {/* Under the space, so it says the space's track. It read the
+              application's, which is what she asked for and not where she
+              ended up. */}
+          <span className="adm-sub2">{space.track}</span>
           {/* Same disclosure as the fee, for the same reason: a footprint is
               what the floor plan and the load-in are built from, so it should
               be changeable without a database, and not by leaning on a
@@ -396,7 +399,9 @@ export default async function Roster({
             </span>
           )}
           <span className="adm-sub2">
-            {app.track === 'outdoor' ? 'no commission' : `${bpsLabel(booking.commissionBps)} commission`}
+            {/* What she DOES, which is where her booked space is, not what
+                she applied as. Sunsea applied indoor and stands outdoors. */}
+            {space.track === 'outdoor' ? 'no commission' : `${bpsLabel(booking.commissionBps)} commission`}
           </span>
           {/* Most fees are the list price. This is for the one or two that are
               not, and it is deliberately a disclosure rather than a field
@@ -522,7 +527,7 @@ export default async function Roster({
                 never sets, so it could not render for anybody. */}
             {(() => {
               const st = permitState({
-                track: app.track, permitStatus: app.permitStatus,
+                track: space.track, permitStatus: app.permitStatus,
                 sellerPermit: app.sellerPermit, occasionalSeller: app.occasionalSeller,
               })
               if (st === 'on_file') return <span className="adm-tag">Permit on file</span>

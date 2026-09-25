@@ -12,10 +12,12 @@ import {
   voidBoothCharge,
 } from '@/app/actions'
 import { voidBoothAddon } from '@/app/admin/roster/void-addon'
+import { moveBoothTrack } from '@/app/admin/roster/move-track'
 import { resendBoothInvoice } from '@/app/admin/roster/resend'
 import {
   NOTE_MAX, addonNotice, resendNotice, resendProblem,
 } from '@/app/admin/roster/resend-lines'
+import { moveNotice } from '@/server/modules/roster/track'
 import { boothInvoice } from '@/server/modules/payments/booth'
 import { ledgerFor, standing, standingWords } from '@/server/modules/payments/ledger'
 import { holdsSpace, isPaid } from '@/server/modules/payments/booking-status'
@@ -92,10 +94,10 @@ export default async function MakerDetail({
    *  in the add-a-line form, ready to be pressed rather than typed. `resend`
    *  is how the invoice email reports back, and `addon` how taking an add-on
    *  off does: both are told to return here rather than to the roster. */
-  searchParams: Promise<{ add?: string; resend?: string; addon?: string }>
+  searchParams: Promise<{ add?: string; resend?: string; addon?: string; move?: string }>
 }) {
   const { id } = await params
-  const { add, resend, addon } = await searchParams
+  const { add, resend, addon, move } = await searchParams
 
   const [row] = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
@@ -163,7 +165,10 @@ export default async function MakerDetail({
   /* What this maker could be moved to, and what could be added to their
      invoice. Both come off the Show record rather than out of this file, so a
      price nobody typed here can never appear on an invoice (rule 6). */
-  const spaceChoices = (await activeSpaceTypes(show.id)).filter((t) => t.track === space.track)
+  const allSpaces = await activeSpaceTypes(show.id)
+  const spaceChoices = allSpaces.filter((t) => t.track === space.track)
+  /* The other track's spaces, for a maker filed on the wrong one. */
+  const otherTrack = allSpaces.filter((t) => t.track !== space.track)
   const presets = chargePresets(await activeAddOns(show.id), space.track)
   const fill = presetFill(presets, add)
 
@@ -198,8 +203,11 @@ export default async function MakerDetail({
   ]
   const resendSaid = resendNotice(resend ?? '')
   const addonSaid = addonNotice(addon ?? '')
+  const moveSaid = moveNotice(move ?? '')
   const permit = permitState({
-    track: app.track, permitStatus: app.permitStatus,
+    /* The booked space, not the application: an outdoor maker owes a permit
+       and an indoor consignment one does not, and Sunsea applied indoor. */
+    track: space.track, permitStatus: app.permitStatus,
     sellerPermit: app.sellerPermit, occasionalSeller: app.occasionalSeller,
   })
 
@@ -243,6 +251,7 @@ export default async function MakerDetail({
 
       {resendSaid && <p className="adm-note" role="status">{resendSaid}</p>}
       {addonSaid && <p className="adm-note" role="status">{addonSaid}</p>}
+      {moveSaid && <p className="adm-note" role="status">{moveSaid}</p>}
 
       <PageHead
         title={vendor.shopName}
@@ -296,8 +305,8 @@ export default async function MakerDetail({
                   <span className="adm-sub2">{show.venueName}</span>
                 </Row>
                 <Row k="Paperwork" n={permit === 'on_file' || permit === 'occasional_documented'
-                  ? 'On file' : app.track === 'indoor' ? 'Not needed' : ''}>
-                  {app.track === 'indoor'
+                  ? 'On file' : space.track === 'indoor' ? 'Not needed' : ''}>
+                  {space.track === 'indoor'
                     ? 'Sells inside, so no permit is needed: Mermade is the retailer of record.'
                     : permit === 'on_file'
                       ? 'Seller’s permit number on file.'
@@ -748,6 +757,46 @@ export default async function MakerDetail({
               keeps the original fee and the change both legible. A fee that is genuinely
               wrong needs a refund and a person, not an edit.
             </p>
+          )}
+
+          {/* ── the other track ──
+              Outside the frozen guard on purpose. Hillary, 25 Sept: "can you
+              change an inside maker to outdoor for me? Sunsea candles, she's
+              already paid." Being paid is exactly when this comes up, and
+              nothing here moves money: the fee is a snapshot on the booking,
+              not the space's list price, so the balance is the same after. */}
+          {!gone && otherTrack.length > 0 && (
+            <>
+              <div className="adm-sec" style={{ margin: '24px 0 10px', border: 0, paddingBottom: 0 }}>
+                <h2>Move to {space.track === 'indoor' ? 'outdoor' : 'indoor'}</h2>
+              </div>
+              <form action={moveBoothTrack}>
+                <input type="hidden" name="bookingId" value={booking.id} />
+                <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
+                <label className="adm-field" htmlFor="moveTo">
+                  <span className="lb">Their new space</span>
+                  <select className="inp" id="moveTo" name="spaceTypeId">
+                    {otherTrack.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label} (lists at {usd(t.priceCents)})
+                      </option>
+                    ))}
+                  </select>
+                  <span className="hint">
+                    For a maker filed on the wrong track. The fee stays {usd(booking.priceCents)}
+                    {' '}and nothing is owed or refunded. Their day on the public lineup, whether
+                    they owe us a seller's permit, and whether we take a commission all follow
+                    the new space.
+                  </span>
+                </label>
+                <label className="adm-field" htmlFor="mr">
+                  <span className="lb">Why</span>
+                  <input className="inp" id="mr" name="reason" type="text" autoComplete="off"
+                    placeholder="Goes in the audit log" />
+                </label>
+                <button className="adm-btn-q" type="submit">Move them</button>
+              </form>
+            </>
           )}
 
           {/* ── taking the space back ──
