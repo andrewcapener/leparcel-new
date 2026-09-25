@@ -32,3 +32,8 @@ node_modules
 # the tree and it rides along in whatever commit happens next. It is generated,
 # it is machine-local, and nothing reads it but tsc.
 /tsconfig.tsbuildinfo
+
+# Rendered social-card candidates. Generated scratch for choosing a direction:
+# the one that wins gets built by src/server/modules/og/card.tsx at request
+# time, so no PNG from here is ever the thing that ships.
+/.og-options/
