@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { eq, and, asc } from 'drizzle-orm'
+import { eq, and, asc, inArray } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
@@ -53,7 +53,23 @@ export default async function Makers() {
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
     .innerJoin(applications, eq(bookings.applicationId, applications.id))
     .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
-    .where(and(eq(bookings.showId, show.id), eq(bookings.status, 'confirmed')))
+    /* Everyone who holds a space, not only those who have paid.
+    
+       This listed confirmed bookings on the reasoning that it "fills in as
+       makers pay and cannot go stale". What that meant on the day the roster
+       went out was seventeen outdoor makers missing from their own show,
+       nine of them on Friday, because a fee had not landed yet. Hillary, who
+       runs outdoor: "my makers aren't all correct."
+    
+       A maker who has been accepted and holds a space is in the show. The fee
+       is between them and us and is not the public's business. holdsSpace is
+       the same test the roster and the capacity counts use, so a released or
+       forfeited maker still drops off this page the moment staff take the
+       space back. */
+    .where(and(
+      eq(bookings.showId, show.id),
+      inArray(bookings.status, ['confirmed', 'payment_processing', 'awaiting_payment']),
+    ))
     .orderBy(asc(spaceTypes.sortOrder), asc(vendors.shopName))
 
   type Row = (typeof roster)[number]
