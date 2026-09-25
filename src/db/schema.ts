@@ -364,6 +364,8 @@ export const bookings = pgTable('bookings', {
   stripeSessionId: text('stripe_session_id'),
   /** Set means they hold their space but are not listed on /makers. Null is
    *  listed, which is what every booking was before this column existed. */
+  /** Where they sit on /makers. Null sorts last, then by the old default. */
+  lineupOrder: integer('lineup_order'),
   lineupHiddenAt: text('lineup_hidden_at'),
   lineupHiddenBy: text('lineup_hidden_by'),
   lineupHiddenReason: text('lineup_hidden_reason'),

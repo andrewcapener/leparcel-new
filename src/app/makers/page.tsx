@@ -76,7 +76,9 @@ export default async function Makers() {
          page just does not name them yet. See drizzle/0053. */
       isNull(bookings.lineupHiddenAt),
     ))
-    .orderBy(asc(spaceTypes.sortOrder), asc(vendors.shopName))
+    /* Staff order first. Postgres puts NULLs last on an ASC, so anyone
+       nobody has placed falls in behind and sorts the way she always did. */
+    .orderBy(asc(bookings.lineupOrder), asc(spaceTypes.sortOrder), asc(vendors.shopName))
 
   type Row = (typeof roster)[number]
   const linkFor = (m: Row) => {
