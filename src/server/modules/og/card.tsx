@@ -42,6 +42,18 @@ const GOLD = '#BC9658'
 const INK = '#171717'
 const PAPER = '#FAFAF8'
 
+/* Fall 2026's campaign colours, read off the posters on the market's own
+   Instagram grid rather than picked here: the deep olive the season's tiles
+   are set on, the warm off-white the type is set in, and the oxblood the
+   wordmark takes on those tiles.
+   The oxblood never carries a word. On the olive it measures 1.03:1, which
+   is why it reads as a tonal effect on the grid and would read as nothing at
+   all on a card somebody sees 300px wide in a text. Cream on olive is 9.0:1
+   and carries everything (WCAG 2.2 AA). */
+const SHOW_GREEN = '#38433B'
+export const SHOW_CREAM = '#EFF0E9'
+const SHOW_TERRA = '#6B292A'
+
 /** A · Poster. The photograph carries it, the facts sit in the dark. */
 export function PosterCard(f: CardFacts) {
   return (
@@ -158,21 +170,28 @@ export function BandCard(f: CardFacts) {
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: INK }}>
       <div style={{ display: 'flex', width: 1200, height: PIC, overflow: 'hidden', position: 'relative' }}>
         <img src={f.photo} width={1200} height={drawn} style={{ position: 'absolute', left: 0, top }} alt="" />
+        {/* The one thing the theme puts on a photograph, at the one strength
+            it uses: docs/08-DESIGN-SYSTEM.md section 3. */}
+        <div style={{
+          display: 'flex', position: 'absolute', left: 0, top: 0, width: 1200, height: PIC,
+          backgroundColor: 'rgba(23,23,23,0.12)',
+        }} />
       </div>
 
-      {/* The one gold line on the card, holding the picture off the bar. */}
-      <div style={{ display: 'flex', width: 1200, height: 5, backgroundColor: GOLD }} />
+      {/* The season's oxblood, holding the picture off the bar. Decoration,
+          and deliberately the only place it appears: see the note above. */}
+      <div style={{ display: 'flex', width: 1200, height: 5, backgroundColor: SHOW_TERRA }} />
 
       <div style={{
-        display: 'flex', flex: 1, alignItems: 'center', padding: '0 64px', backgroundColor: INK,
+        display: 'flex', flex: 1, alignItems: 'center', padding: '0 64px', backgroundColor: SHOW_GREEN,
       }}>
         <img src={f.wordmark} height={74} style={{ marginRight: 40 }} alt="Mermade Market" />
-        <div style={{ display: 'flex', width: 1, height: 96, backgroundColor: 'rgba(255,255,255,0.28)', marginRight: 40 }} />
+        <div style={{ display: 'flex', width: 1, height: 96, backgroundColor: 'rgba(239,240,233,0.30)', marginRight: 40 }} />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', fontFamily: 'Oswald', fontSize: 62, lineHeight: 1, color: '#fff', letterSpacing: 0.6 }}>
+          <div style={{ display: 'flex', fontFamily: 'Oswald', fontSize: 62, lineHeight: 1, color: SHOW_CREAM, letterSpacing: 0.6 }}>
             {f.dates.toUpperCase()}
           </div>
-          <div style={{ display: 'flex', marginTop: 12, fontFamily: 'Figtree', fontSize: 25, color: '#DFE3E8' }}>
+          <div style={{ display: 'flex', marginTop: 12, fontFamily: 'Figtree', fontSize: 25, color: 'rgba(239,240,233,0.82)' }}>
             {f.venue} · Free to attend
           </div>
         </div>

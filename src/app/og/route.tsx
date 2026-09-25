@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { activeShow } from '@/db/queries'
 import { fmtRange } from '@/lib/dates'
 import { brandFonts } from '@/server/modules/og/fonts'
-import { BandCard, type CardFacts } from '@/server/modules/og/card'
+import { BandCard, SHOW_CREAM, type CardFacts } from '@/server/modules/og/card'
 
 /**
  * The picture a shared link shows, drawn from the Show record.
@@ -37,6 +37,21 @@ async function dataUri(rel: string, mime: string) {
   return `data:${mime};base64,${b.toString('base64')}`
 }
 
+/**
+ * The wordmark in the season's cream, off the one master.
+ *
+ * public/mermade-wordmark.svg is drawn in `currentColor`, which is what makes
+ * this honest: it is the same artwork as every other lockup with a colour
+ * substituted, the way scripts/build-brand-assets.ts makes the committed
+ * ones. The committed white is #FFFFFF, and pure white against this olive is
+ * a slightly different mark to the one the season's posters use.
+ */
+async function creamWordmark() {
+  const svg = await readFile(join(process.cwd(), 'public/mermade-wordmark.svg'), 'utf8')
+  const tinted = svg.replaceAll('currentColor', SHOW_CREAM)
+  return `data:image/svg+xml;base64,${Buffer.from(tinted).toString('base64')}`
+}
+
 /* 1200x1800, and the card needs the shape to work out the crop. */
 const PHOTO = 'photos/lot.jpg'
 const PHOTO_ASPECT = 1200 / 1800
@@ -57,7 +72,7 @@ export async function GET() {
        empty canopy; lower crops through the shoppers' heads. Here you get
        both of them, the maker at her stands, and the tents behind. */
     photoOffsetY: 0.50,
-    wordmark: await dataUri('brand/mermade-wordmark-white.svg', 'image/svg+xml'),
+    wordmark: await creamWordmark(),
   }
 
   return new ImageResponse(<BandCard {...facts} />, {
