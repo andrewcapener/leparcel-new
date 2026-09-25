@@ -42,6 +42,7 @@ import {
   ensureConnectAccount, onboardingLink, refreshAccount, owesPayoutSetup,
 } from '@/server/modules/payments/connect'
 import { slotOptions } from '@/server/modules/compliance/checklist'
+import { mail } from '@/server/modules/email/send'
 import { boothFeeHtml, boothFeeText } from '@/server/modules/email/booth-fee'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
 import { chargeProblem } from '@/server/modules/payments/ledger'
@@ -112,50 +113,6 @@ async function log(
  * somebody has to remember. Resend still has to have mermademarket.com
  * verified for it to leave the building; /api/health says whether it does.
  */
-const DEFAULT_EMAIL_FROM = 'Mermade Market <hello@mermademarket.com>'
-
-async function mail(
-  toEmail: string, subject: string, body: string, template: string, replyTo?: string,
-  html?: string,
-) {
-  const id = randomUUID()
-  await db.insert(emailOutbox).values({ id, toEmail, subject, body, template })
-
-  const key = process.env.RESEND_API_KEY
-  if (!key) return
-
-  let status = 'sent'
-  let detail = ''
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: process.env.EMAIL_FROM ?? DEFAULT_EMAIL_FROM,
-        to: [toEmail],
-        subject,
-        // Both parts, always. The text one is what arrives when a client
-        // refuses HTML, what a screen reader reads happily, and what the
-        // outbox stores. The HTML one is what the team opens.
-        text: body,
-        ...(html ? { html } : {}),
-        ...(replyTo ? { reply_to: replyTo } : {}),
-      }),
-    })
-    if (!res.ok) {
-      status = 'failed'
-      detail = `HTTP ${res.status}: ${(await res.text()).slice(0, 500)}`
-    }
-  } catch (err) {
-    status = 'failed'
-    detail = err instanceof Error ? err.message : String(err)
-  }
-  await db.update(emailOutbox)
-    .set({ deliveryStatus: status, deliveryDetail: detail })
-    .where(eq(emailOutbox.id, id))
-  if (status === 'failed') console.error(`[mail] delivery failed for ${template}: ${detail}`)
-}
-
 export type FormState = {
   ok: boolean
   errors?: Record<string, string>

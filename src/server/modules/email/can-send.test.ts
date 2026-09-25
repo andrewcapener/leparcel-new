@@ -16,13 +16,19 @@ const check = (n: string, ok: boolean) => { if (!ok) { failures++; console.error
 const src = readFileSync(new URL('../../../app/actions.ts', import.meta.url), 'utf8')
 const callSites = (src.match(/await mail\(/g) ?? []).length
 check(`actions.ts still has nine mail call sites, found ${callSites}`, callSites === 9)
-check('actions.ts reaches Resend exactly once',
-  (src.match(/api\.resend\.com/g) ?? []).length === 1)
+/* actions.ts no longer transmits at all: mail() moved to email/send.ts when a
+   second screen needed it, so that there is one transport rather than two
+   copies drifting apart. It must not grow its own again. */
+check('actions.ts reaches Resend not at all',
+  (src.match(/api\.resend\.com/g) ?? []).length === 0)
 
-/* And that exactly two modules transmit at all. mail() sends one message;
-   sendChase() sends a batch, which is a different endpoint and could not
-   reuse it. A third file reaching api.resend.com would bypass this list, so
-   the whole tree is counted rather than trusted. */
+/* And that exactly three modules touch the API. mail() sends one message and
+   every screen that mails a person goes through it; sendChase() sends a
+   batch, which is a different endpoint and could not reuse it. A fourth file
+   reaching api.resend.com would bypass this list, so the whole tree is
+   counted rather than trusted. Copying the transport instead of importing it
+   is the specific mistake this catches: the copy grows a timeout, the
+   original does not, and one of them stops recording failures. */
 const tree = readdirSync(new URL('../../../', import.meta.url), {
   recursive: true, withFileTypes: true,
 })
@@ -34,7 +40,7 @@ const senders = tree
   .sort()
 check(`only known modules reach Resend, found ${senders.join(', ')}`,
   senders.length === 3
-  && senders.some((f) => f.endsWith('app/actions.ts'))
+  && senders.some((f) => f.endsWith('email/send.ts'))
   && senders.some((f) => f.endsWith('email/chase-send.ts'))
   && senders.some((f) => f.endsWith('email/chase-cancel.ts')))
 

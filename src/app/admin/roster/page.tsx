@@ -335,7 +335,10 @@ export default async function Roster({
         <td><span className="adm-code">{booking.vendorCode}</span></td>
 
         <td>
-          <span className="adm-nm">{vendor.shopName}</span>
+          {/* The way into one maker. Everything on this row and nothing that
+              fits in it: the whole invoice, the lines, the audit log, and the
+              controls with room to breathe. */}
+          <Link className="adm-nm" href={`/admin/roster/${booking.id}`}>{vendor.shopName}</Link>
           <span className="adm-sub2">{vendor.email}<br />{app.category}</span>
         </td>
 
