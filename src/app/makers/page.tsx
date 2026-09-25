@@ -3,7 +3,6 @@ import { eq, and, asc, inArray } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
-import { thumbnailFor } from '@/server/modules/roster/thumbnail'
 import { MakerGrid, type MakerCard } from './MakerGrid'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, LogoGrid, RichText, Banner } from '@/components/theme/Sections'
@@ -116,7 +115,23 @@ export default async function Makers() {
     name: m.shopName,
     category: m.category || 'Other',
     group: groupOf(m),
-    photo: thumbnailFor(m).url,
+    /* The staff's chosen square ONLY, never the maker's own application
+       upload.
+    
+       Elise, the night the page went round: "he must have grabbed from
+       website application... BAD BAD BAD. The ones in the drive are what we
+       wanted." She is right, and this was the mistake. A photograph sent in
+       with an application was sent to a jury, not to the public: it is
+       whatever the maker had to hand to show their work, and on this page it
+       turned into a wedding photo and two makers who did not want to be seen
+       at all.
+    
+       So the fallback is gone. A maker appears with the square Hillary shot
+       or a staff member chose, and otherwise with their initials. Nothing a
+       maker uploaded privately is ever published by default, and there is no
+       longer any way for it to become public by accident. /admin/thumbnails
+       still shows their upload to staff, which is what it is for. */
+    photo: m.thumbnailUrl?.trim() || null,
     href: linkFor(m),
     initials: initialsOf(m.shopName),
     tint: TINT[m.category || 'Other'] ?? '#9A9A94',
