@@ -39,6 +39,8 @@ export async function setThumbnail(fd: FormData): Promise<void> {
 
   revalidatePath('/admin/thumbnails')
   revalidatePath('/admin/roster')
+  /* And the page the square actually appears on. */
+  revalidatePath('/makers')
   redirect(backTo(back, 'set'))
 }
 
@@ -67,5 +69,7 @@ export async function clearThumbnail(fd: FormData): Promise<void> {
 
   revalidatePath('/admin/thumbnails')
   revalidatePath('/admin/roster')
+  /* And the page the square actually appears on. */
+  revalidatePath('/makers')
   redirect(backTo(back, 'cleared'))
 }

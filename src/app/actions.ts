@@ -1574,6 +1574,9 @@ export async function setBoothSpace(fd: FormData): Promise<void> {
      sheet is two people reading two different numbers about one maker. */
   await liveSheet(b.showId)
 
+  /* A different space can mean a different day, and the day is a tab on
+     the public lineup. */
+  revalidatePath('/makers')
   revalidatePath('/admin/roster')
   revalidatePath('/account')
   redirect('/admin/roster?space=set')
@@ -1645,6 +1648,9 @@ export async function cancelBooking(fd: FormData): Promise<void> {
 
   await liveSheet(b.showId)
 
+  /* The public lineup, so a maker taken off the show leaves it at once
+     rather than lingering for the cache's minute. */
+  revalidatePath('/makers')
   revalidatePath('/admin/roster')
   revalidatePath('/admin')
   redirect('/admin/roster?release=done')
@@ -2330,6 +2336,9 @@ export async function forfeitOverdueBookings(): Promise<void> {
     )
   }
 
+  /* Same reason as a single removal: a forfeited space leaves the public
+     lineup at once. */
+  revalidatePath('/makers')
   revalidatePath('/admin/roster')
   revalidatePath('/admin')
   /* Leave rather than re-render: the button lives inside a block that only
