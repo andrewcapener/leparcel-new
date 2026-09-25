@@ -46,3 +46,34 @@ export function datesNoYear(startIso: string, endIso: string): string {
   /* A show inside one day says that day once rather than "13-13". */
   return d1 === d2 ? `${month} ${d1}` : `${month} ${d1}-${d2}`
 }
+
+/**
+ * "Nov. 13-15", the dates short enough to sit beside a second phrase.
+ *
+ * The stop only appears when the month is actually being shortened, so May
+ * stays "May" rather than becoming "May.", which is the mistake every
+ * hand-written month abbreviation makes eventually.
+ */
+export function datesShort(startIso: string, endIso: string): string {
+  const s = new Date(startIso), e = new Date(endIso)
+  const full = s.toLocaleDateString('en-US', { timeZone: TZ, month: 'long' })
+  const abbr = s.toLocaleDateString('en-US', { timeZone: TZ, month: 'short' })
+  const month = abbr === full ? full : `${abbr}.`
+  const d1 = s.toLocaleDateString('en-US', { timeZone: TZ, day: 'numeric' })
+  const d2 = e.toLocaleDateString('en-US', { timeZone: TZ, day: 'numeric' })
+  return d1 === d2 ? `${month} ${d1}` : `${month} ${d1}-${d2}`
+}
+
+/**
+ * "Dana Point Community House", the venue said the way a person says it.
+ *
+ * The town comes off the address rather than the source. A venue whose
+ * address will not parse is named on its own, which is what the Show record
+ * calls it and still points at the right building.
+ */
+export function venueLine(
+  venueName: string, address: string | null | undefined,
+): string {
+  const town = cityOf(address)
+  return town ? `${town} ${venueName}` : venueName
+}

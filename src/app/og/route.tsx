@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { activeShow } from '@/db/queries'
-import { cityOf, datesNoYear } from '@/server/modules/og/facts'
+import { datesShort, venueLine } from '@/server/modules/og/facts'
 import { brandFonts } from '@/server/modules/og/fonts'
 import { BandCard, SHOW_CREAM, type CardFacts } from '@/server/modules/og/card'
 
@@ -60,17 +60,14 @@ export async function GET() {
   const show = await activeShow()
   if (!show) return new Response('No active show.', { status: 404 })
 
-  /* "November 13-15 · Dana Point" over "Community House · Free to attend".
-     The year was the least useful thing on it, and the town is what somebody
-     deciding whether to come actually needs. The town moves up rather than
-     being said twice: it reads badly directly above "Dana Point Community
-     House", and the venue line still names the building. */
-  const town = cityOf(show.venueAddress)
+  /* "SHOP SMALL - NOV. 13-15" over "Dana Point Community House - Free to
+     attend", Drew's copy, 24 Sept 2026. The year is gone because it is the
+     least useful thing on a card somebody sees weeks out, and "Shop Small"
+     takes the space: it is what the market calls itself on every poster this
+     season and it says what the thing IS, which a date alone never does. */
   const facts: CardFacts = {
-    dates: town
-      ? `${datesNoYear(show.startsOn, show.endsOn)} · ${town}`
-      : datesNoYear(show.startsOn, show.endsOn),
-    venue: show.venueName,
+    dates: `Shop Small \u00B7 ${datesShort(show.startsOn, show.endsOn)}`,
+    venue: venueLine(show.venueName, show.venueAddress),
     /* Unused by this layout, and required by the type. */
     kicker: '',
     photo: await dataUri(PHOTO, 'image/jpeg'),
