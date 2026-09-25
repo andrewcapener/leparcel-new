@@ -50,7 +50,6 @@ const HEADER_CSS_SOLID = `.logo img { width: 150px; }
 
 const NAV = [
   { href: '/faq', label: 'FAQ', featured: false },
-  { href: '/makers', label: 'MAKERS', featured: false },
   { href: '/schedule', label: 'SCHEDULE', featured: true },
 ]
 

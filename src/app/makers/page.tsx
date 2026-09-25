@@ -8,6 +8,7 @@ import { MakerGrid, type MakerCard } from './MakerGrid'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, LogoGrid, RichText, Banner } from '@/components/theme/Sections'
 import { fmtDate } from '@/lib/dates'
+import { unlisted } from '@/lib/pages'
 
 /* Cached and re-rendered at most once a minute. Read-only, nothing
  * per-request, and the Show record it reads changes a few times a season.
@@ -17,6 +18,11 @@ import { fmtDate } from '@/lib/dates'
 export const revalidate = 60
 
 export const metadata = {
+  /* Unlisted while the lineup is still settling: reachable by the link Drew
+     is sending round, kept out of the sitemap and the nav, and noindex so it
+     does not turn up in a search for Mermade before it is ready. One word in
+     src/lib/pages.ts puts it back. */
+  ...unlisted,
   title: 'Makers',
   description:
     'The makers selling at the next Mermade Market, inside and outside, by category and by day.',
