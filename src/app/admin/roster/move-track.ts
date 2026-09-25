@@ -62,6 +62,8 @@ export async function moveBoothTrack(fd: FormData): Promise<void> {
     holdsSpace: holdsSpace(b.status),
     fromTrack: had?.track,
     toTrack: next?.track,
+    fromSpaceId: b.spaceTypeId,
+    toSpaceId: spaceTypeId,
   })
   if (problem) redirect(backTo(back, 'move', problem))
 

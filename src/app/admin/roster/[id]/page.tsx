@@ -167,8 +167,11 @@ export default async function MakerDetail({
      price nobody typed here can never appear on an invoice (rule 6). */
   const allSpaces = await activeSpaceTypes(show.id)
   const spaceChoices = allSpaces.filter((t) => t.track === space.track)
-  /* The other track's spaces, for a maker filed on the wrong one. */
-  const otherTrack = allSpaces.filter((t) => t.track !== space.track)
+  /* Every space except the one they are in. Not just the other track's: a
+     maker who was moved to outdoor and landed on the wrong DAY has the same
+     problem, and once she has paid the ordinary space control will not take
+     it either. */
+  const moveChoices = allSpaces.filter((t) => t.id !== booking.spaceTypeId)
   const presets = chargePresets(await activeAddOns(show.id), space.track)
   const fill = presetFill(presets, add)
 
@@ -765,28 +768,32 @@ export default async function MakerDetail({
               already paid." Being paid is exactly when this comes up, and
               nothing here moves money: the fee is a snapshot on the booking,
               not the space's list price, so the balance is the same after. */}
-          {!gone && otherTrack.length > 0 && (
+          {!gone && moveChoices.length > 0 && (
             <>
               <div className="adm-sec" style={{ margin: '24px 0 10px', border: 0, paddingBottom: 0 }}>
-                <h2>Move to {space.track === 'indoor' ? 'outdoor' : 'indoor'}</h2>
+                <h2>Put them somewhere else</h2>
               </div>
               <form action={moveBoothTrack}>
                 <input type="hidden" name="bookingId" value={booking.id} />
                 <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
                 <label className="adm-field" htmlFor="moveTo">
                   <span className="lb">Their new space</span>
-                  <select className="inp" id="moveTo" name="spaceTypeId">
-                    {otherTrack.map((t) => (
+                  <select className="inp" id="moveTo" name="spaceTypeId" defaultValue="">
+                    {/* No default, so a day is chosen rather than inherited from
+                        whatever happens to sort first. Sunsea went to Friday
+                        that way. */}
+                    <option value="" disabled>Pick their space</option>
+                    {moveChoices.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.label} (lists at {usd(t.priceCents)})
+                        {t.label} ({t.track}, lists at {usd(t.priceCents)})
                       </option>
                     ))}
                   </select>
                   <span className="hint">
-                    For a maker filed on the wrong track. The fee stays {usd(booking.priceCents)}
-                    {' '}and nothing is owed or refunded. Their day on the public lineup, whether
-                    they owe us a seller's permit, and whether we take a commission all follow
-                    the new space.
+                    For a maker filed on the wrong track or the wrong day, including one who
+                    has already paid. The fee stays {usd(booking.priceCents)} and nothing is
+                    owed or refunded. Their day on the public lineup, whether they owe us a
+                    seller's permit, and whether we take a commission all follow the new space.
                   </span>
                 </label>
                 <label className="adm-field" htmlFor="mr">

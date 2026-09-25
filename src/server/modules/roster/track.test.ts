@@ -8,8 +8,12 @@ check('a paid booking can still be moved across tracks',
   moveProblem({ holdsSpace: true, fromTrack: 'indoor', toTrack: 'outdoor' }) === undefined)
 check('and back the other way',
   moveProblem({ holdsSpace: true, fromTrack: 'outdoor', toTrack: 'indoor' }) === undefined)
-check('a same track move belongs to the space control',
-  moveProblem({ holdsSpace: true, fromTrack: 'indoor', toTrack: 'indoor' }) === 'same_track')
+/* Sunsea again: moved to outdoor, landed on Friday, needs Saturday. Same
+   track, already paid, and no other control will take it. */
+check('a same track move is allowed, because the paid space control will not do it',
+  moveProblem({ holdsSpace: true, fromTrack: 'outdoor', toTrack: 'outdoor', fromSpaceId: 'fri', toSpaceId: 'sat' }) === undefined)
+check('only a genuine no-op is refused',
+  moveProblem({ holdsSpace: true, fromTrack: 'outdoor', toTrack: 'outdoor', fromSpaceId: 'fri', toSpaceId: 'fri' }) === 'same_space')
 check('a released booking has nothing to move',
   moveProblem({ holdsSpace: false, fromTrack: 'indoor', toTrack: 'outdoor' }) === 'released')
 check('a missing space on either side refuses',
@@ -26,7 +30,7 @@ check('and the application is the fallback when there is no space',
 check('the move notice says the fee did not change',
   (moveNotice('moved') ?? '').includes('fee is unchanged'))
 check('every notice is dash free and unexcited',
-  ['moved', 'same_track', 'released', 'missing', 'no_space'].every((c) => {
+  ['moved', 'same_space', 'released', 'missing', 'no_space'].every((c) => {
     const t = moveNotice(c) ?? ''
     return t.length > 0 && !t.includes('!')
       && !t.includes(String.fromCharCode(0x2014)) && !t.includes(String.fromCharCode(0x2013))

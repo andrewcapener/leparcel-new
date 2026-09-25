@@ -18,7 +18,7 @@
  * owes $500 after the move, and the balance is untouched. That is what makes
  * this safe to allow on a paid booking when a space change is not.
  */
-export type MoveRefusal = 'missing' | 'released' | 'same_track' | 'no_space'
+export type MoveRefusal = 'missing' | 'released' | 'same_space' | 'no_space'
 
 /**
  * Why the move cannot happen, or undefined when it can.
@@ -30,15 +30,21 @@ export function moveProblem(f: {
   holdsSpace: boolean
   fromTrack: string | undefined
   toTrack: string | undefined
+  fromSpaceId?: string
+  toSpaceId?: string
 }): MoveRefusal | undefined {
   if (!f.fromTrack) return 'missing'
   if (!f.toTrack) return 'no_space'
   /* A released booking has no space to move. Put them back on the roster
      first, deliberately, rather than resurrecting one through a side door. */
   if (!f.holdsSpace) return 'released'
-  /* Same track is the ordinary space change, and that screen already does it
-     with the guards that belong to it. */
-  if (f.fromTrack === f.toTrack) return 'same_track'
+  /* Only a genuine no-op is refused. This used to refuse a same-track move,
+     on the reasoning that the ordinary space control already did those. It
+     does not do them for a maker who has paid, and that left Sunsea stranded:
+     moved to outdoor, landed on Friday, and no door open to Saturday because
+     one control refused the track and the other refused the payment. A
+     correction is a correction whichever column was wrong. */
+  if (f.fromSpaceId !== undefined && f.fromSpaceId === f.toSpaceId) return 'same_space'
   return undefined
 }
 
@@ -67,9 +73,8 @@ export function moveNotice(code: string): string | null {
         + 'booking was made and never came off the space price, so nothing is owed '
         + 'or refunded. Their day on the public lineup and what they owe us in '
         + 'paperwork both follow the new space.'
-    case 'same_track':
-      return 'That space is on the same track they are already on. Use Change the '
-        + 'space for that.'
+    case 'same_space':
+      return 'That is the space they are already in, so nothing changed.'
     case 'released':
       return 'They are not holding a space, so there is nothing to move.'
     case 'no_space':

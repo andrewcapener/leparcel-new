@@ -146,8 +146,8 @@ export default async function Makers() {
                  filter above the grid now answers, and it cost a whole
                  section's padding to say it. */
               <p className="mk-dir__lede">
-                Inside, the same makers all three days. Outside, a different row of
-                tents each day.
+                Inside, the same makers all three days. Outside, the makers change
+                each day.
               </p>
             )}
           </PageTitle>
