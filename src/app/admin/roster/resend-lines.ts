@@ -288,3 +288,29 @@ export function chargeNotice(code: string): string | null {
       return null
   }
 }
+
+/**
+ * The notice after taking an add-on off a booking.
+ *
+ * Separate from chargeNotice because an add-on is a different thing to a
+ * charge line, and because the paid case has to be said out loud: taking a
+ * $100 tent off a maker who already paid $950 does not move a cent by itself.
+ * Somebody still has to send her the $100 (docs/12-VOICE.md rule 9: never
+ * ambiguous about money).
+ */
+export function addonNotice(code: string): string | null {
+  switch (code) {
+    case 'voided':
+      return 'Add-on taken off. It stays on the invoice as a voided row with who '
+        + 'removed it and why, the balance is recalculated, and any half finished '
+        + 'checkout of theirs was cancelled. If they already paid for it, this does '
+        + 'not refund them: send the money back and note it here.'
+    case 'already':
+      return 'That add-on was already off the invoice, so nothing changed.'
+    case 'missing':
+      return 'That add-on is no longer there. Nothing was changed.'
+    default:
+      return null
+  }
+}
+

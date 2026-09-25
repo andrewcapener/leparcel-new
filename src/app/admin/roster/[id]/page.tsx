@@ -11,9 +11,10 @@ import {
   addBoothCharge, cancelBooking, markLinkSent, markPaid, setBoothPrice, setBoothSpace,
   voidBoothCharge,
 } from '@/app/actions'
+import { voidBoothAddon } from '@/app/admin/roster/void-addon'
 import { resendBoothInvoice } from '@/app/admin/roster/resend'
 import {
-  NOTE_MAX, resendNotice, resendProblem,
+  NOTE_MAX, addonNotice, resendNotice, resendProblem,
 } from '@/app/admin/roster/resend-lines'
 import { boothInvoice } from '@/server/modules/payments/booth'
 import { ledgerFor, standing, standingWords } from '@/server/modules/payments/ledger'
@@ -89,12 +90,12 @@ export default async function MakerDetail({
   params: Promise<{ id: string }>
   /** `add` is a quick fill: the code of an add-on whose name and price land
    *  in the add-a-line form, ready to be pressed rather than typed. `resend`
-   *  is how the invoice email reports back, because it is the one action here
-   *  that can be told where to return to. */
-  searchParams: Promise<{ add?: string; resend?: string }>
+   *  is how the invoice email reports back, and `addon` how taking an add-on
+   *  off does: both are told to return here rather than to the roster. */
+  searchParams: Promise<{ add?: string; resend?: string; addon?: string }>
 }) {
   const { id } = await params
-  const { add, resend } = await searchParams
+  const { add, resend, addon } = await searchParams
 
   const [row] = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
@@ -132,7 +133,11 @@ export default async function MakerDetail({
 
   /* Extras bought on the application, at the price snapshotted then. */
   const extras = await db
-    .select({ id: bookingAddons.id, name: addOns.name, priceCents: bookingAddons.priceCents })
+    .select({
+      id: bookingAddons.id, name: addOns.name, priceCents: bookingAddons.priceCents,
+      voidedAt: bookingAddons.voidedAt, voidedBy: bookingAddons.voidedBy,
+      voidReason: bookingAddons.voidReason,
+    })
     .from(bookingAddons)
     .innerJoin(addOns, eq(bookingAddons.addOnId, addOns.id))
     .where(eq(bookingAddons.bookingId, booking.id))
@@ -177,7 +182,22 @@ export default async function MakerDetail({
     payToken: booking.payToken,
     email: vendor.email,
   })
+  /* Both kinds of removed line read the same to a person, so they are shown
+     as one list rather than as two sections that happen to mean the same
+     thing. Add-on ids and charge ids are both uuids, so the keys cannot
+     collide. */
+  const takenOff = [
+    ...dead.map((c) => ({
+      id: c.id, description: c.description, amountCents: c.amountCents,
+      voidedAt: c.voidedAt, voidedBy: c.voidedBy, voidReason: c.voidReason,
+    })),
+    ...extras.filter((e) => e.voidedAt).map((e) => ({
+      id: e.id, description: e.name, amountCents: e.priceCents,
+      voidedAt: e.voidedAt, voidedBy: e.voidedBy, voidReason: e.voidReason,
+    })),
+  ]
   const resendSaid = resendNotice(resend ?? '')
+  const addonSaid = addonNotice(addon ?? '')
   const permit = permitState({
     track: app.track, permitStatus: app.permitStatus,
     sellerPermit: app.sellerPermit, occasionalSeller: app.occasionalSeller,
@@ -222,6 +242,7 @@ export default async function MakerDetail({
       </nav>
 
       {resendSaid && <p className="adm-note" role="status">{resendSaid}</p>}
+      {addonSaid && <p className="adm-note" role="status">{addonSaid}</p>}
 
       <PageHead
         title={vendor.shopName}
@@ -299,8 +320,29 @@ export default async function MakerDetail({
             </caption>
             <tbody>
               <Row k="Space" n={usd(booking.priceCents)}>{space.label}</Row>
-              {extras.map((e) => (
-                <Row key={e.id} k="Add-on" n={usd(e.priceCents)}>{e.name}</Row>
+              {extras.filter((e) => !e.voidedAt).map((e) => (
+                <Row key={e.id} k="Add-on" n={usd(e.priceCents)}>
+                  {e.name}
+                  {/* The control Hillary went looking for and did not find.
+                      An add-on is the line staff most often need to remove
+                      and it was the one line with nothing on it. */}
+                  <details className="adm-mask" style={{ marginTop: 8 }}>
+                    <summary>
+                      <span className="mk">Take off</span>
+                      <span className="adm-sr"> {e.name}</span>
+                    </summary>
+                    <form action={voidBoothAddon}>
+                      <input type="hidden" name="addonId" value={e.id} />
+                      <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
+                      <label className="adm-sr" htmlFor={`va-${e.id}`}>
+                        Why this add-on comes off
+                      </label>
+                      <input className="inp" id={`va-${e.id}`} name="reason" type="text"
+                        placeholder="Why (goes in the audit log)" />
+                      <button className="adm-btn-q" type="submit">Take it off</button>
+                    </form>
+                  </details>
+                </Row>
               ))}
               {live.map((c) => (
                 <Row key={c.id} k="Line" n={usd(c.amountCents)}>
@@ -418,14 +460,14 @@ export default async function MakerDetail({
           {/* ── what was taken off ──
               Quieter, and never gone. Rule 3: voided, not deleted, with who
               and why, so this invoice can be read back in December. */}
-          {dead.length > 0 && (
+          {takenOff.length > 0 && (
             <>
               <div className="adm-sec">
                 <h2>Taken off</h2>
-                <span className="c">{dead.length} voided</span>
+                <span className="c">{takenOff.length} voided</span>
               </div>
               <ul className="adm-lines" style={{ maxWidth: 760 }}>
-                {dead.map((c) => (
+                {takenOff.map((c) => (
                   <li key={c.id} className="off">
                     <span>{c.description}</span>
                     <span className="adm-money">{usd(c.amountCents)}</span>

@@ -16,7 +16,7 @@
  * well arrive first. Both orders are fine because confirmation is idempotent.
  */
 import { randomUUID } from 'crypto'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import type Stripe from 'stripe'
 import type { db as Db } from '@/db'
 import { bookings, bookingAddons, bookingCharges, addOns, spaceTypes, stripeEvents, auditLog, vendors } from '@/db/schema'
@@ -46,11 +46,17 @@ export async function boothInvoice(
      through here, so the waterfall was paid on all of them. */
   const [[space], extras, changes] = await Promise.all([
     db.select().from(spaceTypes).where(eq(spaceTypes.id, booking.spaceTypeId)).limit(1),
+    /* Voided add-ons are left out of the arithmetic and stay in the table,
+       the same way charge lines are, so an invoice a maker paid in October
+       still reads back in December (rule 3). */
     db
       .select({ name: addOns.name, priceCents: bookingAddons.priceCents })
       .from(bookingAddons)
       .innerJoin(addOns, eq(bookingAddons.addOnId, addOns.id))
-      .where(eq(bookingAddons.bookingId, bookingId)),
+      .where(and(
+        eq(bookingAddons.bookingId, bookingId),
+        isNull(bookingAddons.voidedAt),
+      )),
     /* Everything added or taken off since the booking was made. Voided lines
        are left out of the arithmetic and stay in the table, so an invoice can
        still be read back in December (rule 3). */

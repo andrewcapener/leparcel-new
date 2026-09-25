@@ -14,7 +14,7 @@ import { hasFancyDash } from '@/lib/dashes'
 import {
   NOTE_MAX, backTo, centsFromDollars, chargeNotice, cleanNote, dueLabel,
   invoiceFields, invoiceView, resendDeadline, resendNotice, resendProblem,
-  resendSubject,
+  resendSubject, addonNotice,
 } from './resend-lines'
 
 let failures = 0
@@ -225,6 +225,20 @@ eq('and an unknown charge outcome renders nothing', chargeNotice('wat'), null)
 for (const code of ['settled', 'released', 'nolink', 'noaddress'] as const) {
   check(`${code} is answered on screen`, Boolean(resendNotice(code)))
 }
+
+/* The one an add-on notice must never leave out. Taking the tent off does not
+   move money on its own, and a screen that implies it did is how a maker ends
+   up never refunded. */
+check('taking an add-on off never implies a refund happened',
+  (addonNotice('voided') ?? '').includes('does not refund'))
+check('and every add-on notice is dash free and unexcited',
+  ['voided', 'already', 'missing'].every((c) => {
+    const t = addonNotice(c) ?? ''
+    return t.length > 0 && !t.includes('!')
+      && !t.includes(String.fromCharCode(0x2014)) && !t.includes(String.fromCharCode(0x2013))
+  }))
+check('an unknown add-on code says nothing at all',
+  addonNotice('nonsense') === null)
 
 if (failures > 0) {
   console.error(`\nresend lines: ${failures} failure(s)`)

@@ -379,6 +379,10 @@ export const bookingAddons = pgTable('booking_addons', {
   addOnId: text('add_on_id').notNull().references(() => addOns.id),
   qty: integer('qty').notNull().default(1),
   priceCents: integer('price_cents').notNull(),   // snapshot
+  /** Null means the add-on counts. Never deleted (rule 3). */
+  voidedAt: text('voided_at'),
+  voidedBy: text('voided_by'),
+  voidReason: text('void_reason'),
 }, (t) => [index('booking_addons_booking').on(t.bookingId)])
 
 /**
