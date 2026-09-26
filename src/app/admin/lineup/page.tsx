@@ -1,7 +1,7 @@
-import { and, asc, eq, inArray } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { applications, bookings, spaceTypes, vendors } from '@/db/schema'
+import { applications, bookingSpaces, bookings, spaceTypes, vendors } from '@/db/schema'
 import { boardNotice } from '@/server/modules/roster/lineup-board'
 import { PageHead } from '../ui'
 import { LineupBoard, type BoardCard } from './LineupBoard'
@@ -33,25 +33,31 @@ export default async function LineupPage({
 
   const rows = await db
     .select({
-      id: bookings.id,
+      id: bookingSpaces.id,
+      bookingId: bookings.id,
       applicationId: applications.id,
       shopName: vendors.shopName,
       track: spaceTypes.track,
       space: spaceTypes.label,
       thumbnailUrl: applications.thumbnailUrl,
-      hidden: bookings.lineupHiddenAt,
+      hidden: bookingSpaces.lineupHiddenAt,
+      hiddenAll: bookings.lineupHiddenAt,
     })
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
     .innerJoin(applications, eq(bookings.applicationId, applications.id))
-    .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
+    /* Through every space the booking holds, same as /makers, so the board
+       shows a three day maker three times and each card can be placed. */
+    .innerJoin(bookingSpaces, eq(bookingSpaces.bookingId, bookings.id))
+    .innerJoin(spaceTypes, eq(bookingSpaces.spaceTypeId, spaceTypes.id))
     .where(and(
       eq(bookings.showId, show.id),
       inArray(bookings.status, ['confirmed', 'payment_processing', 'awaiting_payment']),
+      isNull(bookingSpaces.voidedAt),
     ))
     /* The same order the public page uses, so the board is not a different
        arrangement of the same people. */
-    .orderBy(asc(bookings.lineupOrder), asc(spaceTypes.sortOrder), asc(vendors.shopName))
+    .orderBy(asc(bookingSpaces.lineupOrder), asc(spaceTypes.sortOrder), asc(vendors.shopName))
 
   /* The same rule /makers uses, so a card that looks empty here looks empty
      there: ONLY the staff chosen square, never the maker's own application
@@ -65,7 +71,7 @@ export default async function LineupPage({
       ? (r.space === 'JR Space' ? 'junior' : 'indoor')
       : r.space.replace(/^Outdoor\s+/i, '').toLowerCase(),
     photo: r.thumbnailUrl?.trim() || null,
-    shown: !r.hidden,
+    shown: !r.hidden && !r.hiddenAll,
   }))
 
   const said = sp.moved !== undefined

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { eq, and, asc, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
+import { bookings, bookingSpaces, vendors, applications, spaceTypes } from '@/db/schema'
 import { MakerGrid, type MakerCard } from './MakerGrid'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, LogoGrid, RichText, Banner } from '@/components/theme/Sections'
@@ -43,6 +43,7 @@ export default async function Makers() {
   const roster = await db
     .select({
       id: bookings.id,
+      spaceRowId: bookingSpaces.id,
       shopName: vendors.shopName,
       instagram: vendors.instagram,
       website: vendors.website,
@@ -55,7 +56,11 @@ export default async function Makers() {
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
     .innerJoin(applications, eq(bookings.applicationId, applications.id))
-    .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
+    /* Through every space the booking holds, not the one column it used to
+       carry, so a maker outdoors three days appears on all three. One row per
+       maker-day; the card key below carries both. */
+    .innerJoin(bookingSpaces, eq(bookingSpaces.bookingId, bookings.id))
+    .innerJoin(spaceTypes, eq(bookingSpaces.spaceTypeId, spaceTypes.id))
     /* Everyone who holds a space, not only those who have paid.
     
        This listed confirmed bookings on the reasoning that it "fills in as
@@ -74,11 +79,15 @@ export default async function Makers() {
       inArray(bookings.status, ['confirmed', 'payment_processing', 'awaiting_payment']),
       /* Held back by staff. They keep their space and their pay link; this
          page just does not name them yet. See drizzle/0053. */
+      /* Held back everywhere (her own page), or held back on this day
+         (the lineup board). Either one keeps the card off. */
       isNull(bookings.lineupHiddenAt),
+      isNull(bookingSpaces.lineupHiddenAt),
+      isNull(bookingSpaces.voidedAt),
     ))
     /* Staff order first. Postgres puts NULLs last on an ASC, so anyone
        nobody has placed falls in behind and sorts the way she always did. */
-    .orderBy(asc(bookings.lineupOrder), asc(spaceTypes.sortOrder), asc(vendors.shopName))
+    .orderBy(asc(bookingSpaces.lineupOrder), asc(spaceTypes.sortOrder), asc(vendors.shopName))
 
   type Row = (typeof roster)[number]
   const linkFor = (m: Row) => {
@@ -114,7 +123,9 @@ export default async function Makers() {
   }
 
   const cards: MakerCard[] = roster.map((m) => ({
-    id: m.id,
+    /* One card per maker-day, so the key is the space row and not the
+       booking: a maker outdoors three days has three cards. */
+    id: m.spaceRowId,
     name: m.shopName,
     category: m.category || 'Other',
     group: groupOf(m),

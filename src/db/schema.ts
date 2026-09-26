@@ -400,6 +400,38 @@ export const bookingAddons = pgTable('booking_addons', {
  * voided rather than deleted, and never able to change payment status.
  * See drizzle/0045_booking-charges.sql.
  */
+/**
+ * Every space a booking occupies. Outdoors, a space is a day.
+ *
+ * `priceCents` null means the space is covered by the fee already on the
+ * booking: that is what the day the booking was made for carries, and what
+ * every row backfilled by 0055 carries. A number is an added space that costs
+ * extra and shows as its own line on the invoice.
+ *
+ * What a maker has ACCESS to and what she was INVOICED are separate on
+ * purpose. Adding a day at no charge is a normal thing to do.
+ */
+export const bookingSpaces = pgTable('booking_spaces', {
+  id: text('id').primaryKey(),
+  bookingId: text('booking_id').notNull().references(() => bookings.id),
+  spaceTypeId: text('space_type_id').notNull().references(() => spaceTypes.id),
+  /** Null is "already paid for by the booking fee". */
+  priceCents: integer('price_cents'),
+  createdAt: dbNow('created_at'),
+  createdBy: text('created_by').notNull().default('staff'),
+  /** Where this maker-day sits on /makers, and whether it shows at all.
+   *  Per SPACE, so a maker outdoors three days can be placed and held back
+   *  one day at a time. bookings.lineupHiddenAt still hides her everywhere. */
+  lineupOrder: integer('lineup_order'),
+  lineupHiddenAt: text('lineup_hidden_at'),
+  lineupHiddenBy: text('lineup_hidden_by'),
+  lineupHiddenReason: text('lineup_hidden_reason'),
+  /** Null means the space counts. Never deleted (rule 3). */
+  voidedAt: text('voided_at'),
+  voidedBy: text('voided_by'),
+  voidReason: text('void_reason'),
+}, (t) => [index('booking_spaces_booking').on(t.bookingId)])
+
 export const bookingCharges = pgTable('booking_charges', {
   id: text('id').primaryKey(),
   bookingId: text('booking_id').notNull().references(() => bookings.id),

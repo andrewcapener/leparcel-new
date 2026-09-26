@@ -19,7 +19,7 @@ import { randomUUID } from 'crypto'
 import { and, eq, isNull } from 'drizzle-orm'
 import type Stripe from 'stripe'
 import type { db as Db } from '@/db'
-import { bookings, bookingAddons, bookingCharges, addOns, spaceTypes, stripeEvents, auditLog, vendors } from '@/db/schema'
+import { bookings, bookingAddons, bookingCharges, bookingSpaces, addOns, spaceTypes, stripeEvents, auditLog, vendors } from '@/db/schema'
 import { stripe, webhookSecret } from './config'
 import {
   invoiceFor, paymentMatches, bookingPaymentKey, paymentDoor, checkoutLines, type Invoice,
@@ -44,7 +44,7 @@ export async function boothInvoice(
      to wait on each other, and reading them in a row cost this invoice three
      database latencies for nothing. Every page that prices a booth builds
      through here, so the waterfall was paid on all of them. */
-  const [[space], extras, changes] = await Promise.all([
+  const [[space], extras, changes, moreSpaces] = await Promise.all([
     db.select().from(spaceTypes).where(eq(spaceTypes.id, booking.spaceTypeId)).limit(1),
     /* Voided add-ons are left out of the arithmetic and stay in the table,
        the same way charge lines are, so an invoice a maker paid in October
@@ -68,6 +68,19 @@ export async function boothInvoice(
       })
       .from(bookingCharges)
       .where(eq(bookingCharges.bookingId, bookingId)),
+    /* Further spaces this booking holds. Only the ones that cost extra reach
+       the invoice: a null price means the space is covered by the fee already
+       on the booking, which is what the booking's own day carries and what
+       every row backfilled by 0055 carries. So this changed no existing
+       invoice by a cent on the day it shipped. */
+    db
+      .select({ label: spaceTypes.label, priceCents: bookingSpaces.priceCents })
+      .from(bookingSpaces)
+      .innerJoin(spaceTypes, eq(bookingSpaces.spaceTypeId, spaceTypes.id))
+      .where(and(
+        eq(bookingSpaces.bookingId, bookingId),
+        isNull(bookingSpaces.voidedAt),
+      )),
   ])
 
   /* Prices come off the BOOKING and its add-on rows, never off space_types or
@@ -77,6 +90,9 @@ export async function boothInvoice(
     invoice: invoiceFor({
       spaceLabel: space?.label ?? 'Your space',
       spacePriceCents: booking.priceCents,
+      extraSpaces: moreSpaces
+        .filter((m) => m.priceCents !== null)
+        .map((m) => ({ label: m.label, priceCents: m.priceCents! })),
       addons: extras.map((e) => ({ name: e.name, priceCents: e.priceCents })),
       charges: changes
         .filter((c) => !c.voidedAt)

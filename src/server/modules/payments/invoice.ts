@@ -31,6 +31,13 @@ export type Invoice = {
 export type InvoiceInput = {
   spaceLabel: string
   spacePriceCents: number
+  /** Further spaces the maker holds that cost extra, each its own line.
+   *
+   *  Outdoors a space is a day, so this is how a maker booked for Friday who
+   *  later takes Saturday and Sunday is billed for them. A space granted at
+   *  no charge is not here at all: access and invoicing are separate, which
+   *  is why `booking_spaces.price_cents` is nullable. */
+  extraSpaces?: { label: string; priceCents: number }[]
   addons: { name: string; priceCents: number }[]
   /** Things added or taken off since, already filtered to the ones that
    *  count. Signed: a second day is positive, a downgrade negative. */
@@ -50,6 +57,7 @@ export type InvoiceInput = {
 export function invoiceFor(input: InvoiceInput): Invoice {
   const lines: InvoiceLine[] = [
     { label: input.spaceLabel, amountCents: input.spacePriceCents },
+    ...(input.extraSpaces ?? []).map((e) => ({ label: e.label, amountCents: e.priceCents })),
     ...input.addons.map((a) => ({ label: a.name, amountCents: a.priceCents })),
     ...(input.charges ?? []).map((c) => ({ label: c.label, amountCents: c.amountCents })),
   ]

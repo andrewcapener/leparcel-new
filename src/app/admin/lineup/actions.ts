@@ -6,7 +6,7 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { db } from '@/db'
-import { auditLog, bookings, spaceTypes, vendors } from '@/db/schema'
+import { auditLog, bookingSpaces, bookings, spaceTypes, vendors } from '@/db/schema'
 import { activeShow } from '@/db/queries'
 import {
   orderedIds, orderChanges, visibilityChanges,
@@ -44,16 +44,19 @@ export async function saveLineup(fd: FormData): Promise<void> {
 
   const rows = await db
     .select({
-      id: bookings.id,
-      lineupOrder: bookings.lineupOrder,
-      hidden: bookings.lineupHiddenAt,
+      id: bookingSpaces.id,
+      bookingId: bookings.id,
+      lineupOrder: bookingSpaces.lineupOrder,
+      hidden: bookingSpaces.lineupHiddenAt,
     })
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
-    .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
+    .innerJoin(bookingSpaces, eq(bookingSpaces.bookingId, bookings.id))
+    .innerJoin(spaceTypes, eq(bookingSpaces.spaceTypeId, spaceTypes.id))
     .where(and(
       eq(bookings.showId, show.id),
       inArray(bookings.status, ['confirmed', 'payment_processing', 'awaiting_payment']),
+      isNull(bookingSpaces.voidedAt),
     ))
 
   const known = rows.map((r) => r.id)
@@ -68,17 +71,18 @@ export async function saveLineup(fd: FormData): Promise<void> {
   const now = new Date().toISOString()
 
   for (const m of moves) {
-    await db.update(bookings).set({ lineupOrder: m.lineupOrder }).where(eq(bookings.id, m.id))
+    await db.update(bookingSpaces).set({ lineupOrder: m.lineupOrder })
+      .where(eq(bookingSpaces.id, m.id))
   }
   if (hide.length > 0) {
-    await db.update(bookings)
+    await db.update(bookingSpaces)
       .set({ lineupHiddenAt: now, lineupHiddenBy: who, lineupHiddenReason: 'from the lineup board' })
-      .where(and(inArray(bookings.id, hide), isNull(bookings.lineupHiddenAt)))
+      .where(and(inArray(bookingSpaces.id, hide), isNull(bookingSpaces.lineupHiddenAt)))
   }
   if (list.length > 0) {
-    await db.update(bookings)
+    await db.update(bookingSpaces)
       .set({ lineupHiddenAt: null, lineupHiddenBy: null, lineupHiddenReason: null })
-      .where(inArray(bookings.id, list))
+      .where(inArray(bookingSpaces.id, list))
   }
 
   /* One audit row for the press, not one per card: the board is a single

@@ -42,6 +42,7 @@ import {
   ensureConnectAccount, onboardingLink, refreshAccount, owesPayoutSetup,
 } from '@/server/modules/payments/connect'
 import { slotOptions } from '@/server/modules/compliance/checklist'
+import { backTo } from '@/app/admin/roster/resend-lines'
 import { mail } from '@/server/modules/email/send'
 import { boothFeeHtml, boothFeeText } from '@/server/modules/email/booth-fee'
 import { isForfeitable } from '@/server/modules/payments/booking-status'
@@ -1249,6 +1250,10 @@ export async function deleteApplication(fd: FormData): Promise<void> {
  * for the money Stripe never sees.
  */
 export async function markPaid(fd: FormData): Promise<void> {
+  /* Where to return to. The maker's own page passes itself, so staff who
+     are working on one maker stay on her rather than being thrown back to
+     the list after every press (Drew, 26 Sept). */
+  const back = String(fd.get('back') ?? '/admin/roster')
   const bookingId = String(fd.get('bookingId'))
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
   if (!b || b.status !== 'awaiting_payment') return
@@ -1318,6 +1323,10 @@ export async function markPaid(fd: FormData): Promise<void> {
  * the one screen with a deadline on it.
  */
 export async function setBoothPrice(fd: FormData): Promise<void> {
+  /* Where to return to. The maker's own page passes itself, so staff who
+     are working on one maker stay on her rather than being thrown back to
+     the list after every press (Drew, 26 Sept). */
+  const back = String(fd.get('back') ?? '/admin/roster')
   const bookingId = String(fd.get('bookingId') ?? '')
   const reason = String(fd.get('reason') ?? '').trim()
   /* Dollars in the box, cents in the column (rule 1). Parsed through a
@@ -1325,16 +1334,16 @@ export async function setBoothPrice(fd: FormData): Promise<void> {
      in this language and a booth fee is not a place to find that out. */
   const dollars = Number(String(fd.get('dollars') ?? '').replace(/[$,\s]/g, ''))
   if (!Number.isFinite(dollars) || dollars < 0 || dollars > 100_000) {
-    redirect('/admin/roster?price=bad')
+    redirect(backTo(back, 'price', 'bad'))
   }
   const priceCents = Math.round(dollars * 100)
 
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
-  if (!b) redirect('/admin/roster?price=missing')
+  if (!b) redirect(backTo(back, 'price', 'missing'))
   /* Confirmed, or a transfer already in flight. Both mean money has moved or
      is moving against the old number. */
   if (b.status === 'confirmed' || b.status === 'payment_processing') {
-    redirect('/admin/roster?price=paid')
+    redirect(backTo(back, 'price', 'paid'))
   }
   /* Typing the number that is already there is not nothing: it is somebody
      trying to make the maker's total match and not understanding why it will
@@ -1342,7 +1351,7 @@ export async function setBoothPrice(fd: FormData): Promise<void> {
      it's not reflecting on her end." The space fee was already what she
      typed; the maker's invoice is higher because of add-ons and lines, and
      this redirect said nothing at all. */
-  if (priceCents === b.priceCents) redirect('/admin/roster?price=same')
+  if (priceCents === b.priceCents) redirect(backTo(back, 'price', 'same'))
 
   await db.update(bookings).set({
     priceCents,
@@ -1365,7 +1374,7 @@ export async function setBoothPrice(fd: FormData): Promise<void> {
 
   revalidatePath('/admin/roster')
   revalidatePath('/account')
-  redirect('/admin/roster?price=set')
+  redirect(backTo(back, 'price', 'set'))
 }
 
 /**
@@ -1392,6 +1401,10 @@ export async function setBoothPrice(fd: FormData): Promise<void> {
  * roster says so.
  */
 export async function addBoothCharge(fd: FormData): Promise<void> {
+  /* Where to return to. The maker's own page passes itself, so staff who
+     are working on one maker stay on her rather than being thrown back to
+     the list after every press (Drew, 26 Sept). */
+  const back = String(fd.get('back') ?? '/admin/roster')
   const bookingId = String(fd.get('bookingId') ?? '')
   const description = String(fd.get('description') ?? '').trim()
   const reason = String(fd.get('reason') ?? '').trim()
@@ -1400,14 +1413,14 @@ export async function addBoothCharge(fd: FormData): Promise<void> {
      than a float multiply (rule 1). A leading minus is how a line comes off. */
   const typed = String(fd.get('dollars') ?? '').replace(/[$,\s]/g, '')
   const dollars = Number(typed)
-  if (!Number.isFinite(dollars)) redirect('/admin/roster?charge=bad')
+  if (!Number.isFinite(dollars)) redirect(backTo(back, 'charge', 'bad'))
   const amountCents = Math.round(dollars * 100)
 
   const problem = chargeProblem(description, amountCents)
-  if (problem) redirect('/admin/roster?charge=bad')
+  if (problem) redirect(backTo(back, 'charge', 'bad'))
 
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
-  if (!b) redirect('/admin/roster?charge=missing')
+  if (!b) redirect(backTo(back, 'charge', 'missing'))
 
   const id = randomUUID()
   await db.insert(bookingCharges).values({
@@ -1434,7 +1447,7 @@ export async function addBoothCharge(fd: FormData): Promise<void> {
   await liveSheet(b.showId)
   revalidatePath('/admin/roster')
   revalidatePath('/account')
-  redirect('/admin/roster?charge=added')
+  redirect(backTo(back, 'charge', 'added'))
 }
 
 /**
@@ -1446,14 +1459,18 @@ export async function addBoothCharge(fd: FormData): Promise<void> {
  * to say about a maker's money.
  */
 export async function voidBoothCharge(fd: FormData): Promise<void> {
+  /* Where to return to. The maker's own page passes itself, so staff who
+     are working on one maker stay on her rather than being thrown back to
+     the list after every press (Drew, 26 Sept). */
+  const back = String(fd.get('back') ?? '/admin/roster')
   const chargeId = String(fd.get('chargeId') ?? '')
   const reason = String(fd.get('reason') ?? '').trim()
 
   const c = await db.query.bookingCharges.findFirst({
     where: eq(bookingCharges.id, chargeId),
   })
-  if (!c) redirect('/admin/roster?charge=missing')
-  if (c.voidedAt) redirect('/admin/roster')
+  if (!c) redirect(backTo(back, 'charge', 'missing'))
+  if (c.voidedAt) redirect(backTo(back, 'charge', 'ok'))
 
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, c.bookingId) })
 
@@ -1479,7 +1496,7 @@ export async function voidBoothCharge(fd: FormData): Promise<void> {
   if (b) await liveSheet(b.showId)
   revalidatePath('/admin/roster')
   revalidatePath('/account')
-  redirect('/admin/roster?charge=voided')
+  redirect(backTo(back, 'charge', 'voided'))
 }
 
 /**
@@ -1502,25 +1519,29 @@ export async function voidBoothCharge(fd: FormData): Promise<void> {
  * somebody has already paid for is a conversation, not a form.
  */
 export async function setBoothSpace(fd: FormData): Promise<void> {
+  /* Where to return to. The maker's own page passes itself, so staff who
+     are working on one maker stay on her rather than being thrown back to
+     the list after every press (Drew, 26 Sept). */
+  const back = String(fd.get('back') ?? '/admin/roster')
   const bookingId = String(fd.get('bookingId') ?? '')
   const spaceTypeId = String(fd.get('spaceTypeId') ?? '')
   const reason = String(fd.get('reason') ?? '').trim()
 
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
-  if (!b) redirect('/admin/roster?space=missing')
+  if (!b) redirect(backTo(back, 'space', 'missing'))
   if (b.status === 'confirmed' || b.status === 'payment_processing') {
-    redirect('/admin/roster?space=paid')
+    redirect(backTo(back, 'space', 'paid'))
   }
-  if (!spaceTypeId || spaceTypeId === b.spaceTypeId) redirect('/admin/roster')
+  if (!spaceTypeId || spaceTypeId === b.spaceTypeId) redirect(backTo(back, 'space', 'ok'))
 
   const next = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, spaceTypeId) })
   const had = await db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, b.spaceTypeId) })
-  if (!next) redirect('/admin/roster?space=missing')
+  if (!next) redirect(backTo(back, 'space', 'missing'))
 
   /* A maker applied to one track and is placed on that track. Moving an
      indoor consignment maker into an outdoor booth is not a space change, it
      is a different agreement, a different commission and a different day. */
-  if (had && next.track !== had.track) redirect('/admin/roster?space=track')
+  if (had && next.track !== had.track) redirect(backTo(back, 'space', 'track'))
 
   await db.update(bookings).set({ spaceTypeId }).where(eq(bookings.id, bookingId))
 
@@ -1542,7 +1563,7 @@ export async function setBoothSpace(fd: FormData): Promise<void> {
   revalidatePath('/makers')
   revalidatePath('/admin/roster')
   revalidatePath('/account')
-  redirect('/admin/roster?space=set')
+  redirect(backTo(back, 'space', 'set'))
 }
 
 /**
@@ -1566,14 +1587,18 @@ export async function setBoothSpace(fd: FormData): Promise<void> {
  * Sends nothing. Whoever made this call writes to the maker themselves.
  */
 export async function cancelBooking(fd: FormData): Promise<void> {
+  /* Where to return to. The maker's own page passes itself, so staff who
+     are working on one maker stay on her rather than being thrown back to
+     the list after every press (Drew, 26 Sept). */
+  const back = String(fd.get('back') ?? '/admin/roster')
   const bookingId = String(fd.get('bookingId') ?? '')
   const reason = String(fd.get('reason') ?? '').trim()
-  if (reason.length < 3) redirect('/admin/roster?release=why')
+  if (reason.length < 3) redirect(backTo(back, 'cancel', 'why'))
 
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
-  if (!b) redirect('/admin/roster?release=missing')
+  if (!b) redirect(backTo(back, 'cancel', 'missing'))
   if (b.status === 'cancelled' || b.status === 'forfeited') {
-    redirect('/admin/roster?release=already')
+    redirect(backTo(back, 'cancel', 'already'))
   }
 
   /* A maker who has paid can be removed, because makers do drop out after
@@ -1589,7 +1614,7 @@ export async function cancelBooking(fd: FormData): Promise<void> {
      happens, and a refund is a person's job. */
   const hadPaid = b.status === 'confirmed' || b.status === 'payment_processing'
   if (hadPaid && String(fd.get('confirmPaid') ?? '') !== 'on') {
-    redirect('/admin/roster?release=paid')
+    redirect(backTo(back, 'cancel', 'paid'))
   }
 
   await db.update(bookings).set({ status: 'cancelled' }).where(eq(bookings.id, bookingId))
@@ -1616,7 +1641,7 @@ export async function cancelBooking(fd: FormData): Promise<void> {
   revalidatePath('/makers')
   revalidatePath('/admin/roster')
   revalidatePath('/admin')
-  redirect('/admin/roster?release=done')
+  redirect(backTo(back, 'cancel', 'done'))
 }
 
 /** Saves jury scores without changing status. */
@@ -2219,10 +2244,14 @@ export async function payByToken(fd: FormData): Promise<void> {
  * column the roster reads to show who is accepted and still in the dark.
  */
 export async function markLinkSent(fd: FormData): Promise<void> {
+  /* Where to return to. The maker's own page passes itself, so staff who
+     are working on one maker stay on her rather than being thrown back to
+     the list after every press (Drew, 26 Sept). */
+  const back = String(fd.get('back') ?? '/admin/roster')
   const bookingId = String(fd.get('bookingId') ?? '')
   const undo = String(fd.get('undo') ?? '') === '1'
   const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1)
-  if (!booking) redirect('/admin/roster')
+  if (!booking) redirect(backTo(back, 'link', 'ok'))
 
   const before = { linkSentAt: booking.linkSentAt, linkSentBy: booking.linkSentBy }
   const after = undo
@@ -2233,7 +2262,7 @@ export async function markLinkSent(fd: FormData): Promise<void> {
   await log('booking', bookingId, undo ? 'link_unsent' : 'link_sent', before, after)
 
   revalidatePath('/admin/roster')
-  redirect('/admin/roster')
+  redirect(backTo(back, 'link', 'ok'))
 }
 
 /**

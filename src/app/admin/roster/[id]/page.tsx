@@ -4,7 +4,7 @@ import { and, asc, desc, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeAddOns, activeSpaceTypes } from '@/db/queries'
 import {
-  addOns, applications, auditLog, bookingAddons, bookingCharges, bookings, shows,
+  addOns, applications, auditLog, bookingAddons, bookingCharges, bookingSpaces, bookings, shows,
   spaceTypes, vendors,
 } from '@/db/schema'
 import {
@@ -14,11 +14,13 @@ import {
 import { voidBoothAddon } from '@/app/admin/roster/void-addon'
 import { moveBoothTrack } from '@/app/admin/roster/move-track'
 import { setLineupVisibility } from '@/app/admin/roster/lineup'
+import { grantBoothSpace, revokeBoothSpace } from '@/app/admin/roster/spaces'
 import { resendBoothInvoice } from '@/app/admin/roster/resend'
 import {
   NOTE_MAX, addonNotice, resendNotice, resendProblem,
 } from '@/app/admin/roster/resend-lines'
 import { moveNotice, lineupNotice } from '@/server/modules/roster/track'
+import { spaceNotice } from '@/server/modules/roster/spaces'
 import { boothInvoice } from '@/server/modules/payments/booth'
 import { ledgerFor, standing, standingWords } from '@/server/modules/payments/ledger'
 import { holdsSpace, isPaid } from '@/server/modules/payments/booking-status'
@@ -97,10 +99,11 @@ export default async function MakerDetail({
    *  off does: both are told to return here rather than to the roster. */
   searchParams: Promise<{
     add?: string; resend?: string; addon?: string; move?: string; lineup?: string
+    space?: string
   }>
 }) {
   const { id } = await params
-  const { add, resend, addon, move, lineup } = await searchParams
+  const { add, resend, addon, move, lineup, space: spaceMsg } = await searchParams
 
   const [row] = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
@@ -168,8 +171,35 @@ export default async function MakerDetail({
   /* What this maker could be moved to, and what could be added to their
      invoice. Both come off the Show record rather than out of this file, so a
      price nobody typed here can never appear on an invoice (rule 6). */
+  /* Every space this booking holds. Outdoors a space is a day, so this is
+     how a maker who is there all three days is recorded. */
+  const held = await db
+    .select({
+      id: bookingSpaces.id,
+      label: spaceTypes.label,
+      track: spaceTypes.track,
+      priceCents: bookingSpaces.priceCents,
+      voidedAt: bookingSpaces.voidedAt,
+      voidedBy: bookingSpaces.voidedBy,
+      voidReason: bookingSpaces.voidReason,
+      sortOrder: spaceTypes.sortOrder,
+    })
+    .from(bookingSpaces)
+    .innerJoin(spaceTypes, eq(bookingSpaces.spaceTypeId, spaceTypes.id))
+    .where(eq(bookingSpaces.bookingId, booking.id))
+    .orderBy(asc(spaceTypes.sortOrder))
+  const liveSpaces = held.filter((h) => !h.voidedAt)
+  const goneSpaces = held.filter((h) => h.voidedAt)
+
   const allSpaces = await activeSpaceTypes(show.id)
   const spaceChoices = allSpaces.filter((t) => t.track === space.track)
+  /* The same track only: indoor is consignment and outdoor is a booth
+     licence, so mixing them on one booking would make "what does this maker
+     owe us" unanswerable. Changing track wholesale is its own control. */
+  const grantable = allSpaces.filter(
+    (t) => t.track === space.track && !liveSpaces.some((h) => h.label === t.label),
+  )
+
   /* Every space except the one they are in. Not just the other track's: a
      maker who was moved to outdoor and landed on the wrong DAY has the same
      problem, and once she has paid the ordinary space control will not take
@@ -211,6 +241,7 @@ export default async function MakerDetail({
   const addonSaid = addonNotice(addon ?? '')
   const moveSaid = moveNotice(move ?? '')
   const lineupSaid = lineupNotice(lineup ?? '')
+  const spaceSaid = spaceNotice(spaceMsg ?? '')
   const offLineup = Boolean(booking.lineupHiddenAt)
   const permit = permitState({
     /* The booked space, not the application: an outdoor maker owes a permit
@@ -261,6 +292,7 @@ export default async function MakerDetail({
       {addonSaid && <p className="adm-note" role="status">{addonSaid}</p>}
       {moveSaid && <p className="adm-note" role="status">{moveSaid}</p>}
       {lineupSaid && <p className="adm-note" role="status">{lineupSaid}</p>}
+      {spaceSaid && <p className="adm-note" role="status">{spaceSaid}</p>}
 
       <PageHead
         title={vendor.shopName}
@@ -338,6 +370,15 @@ export default async function MakerDetail({
             </caption>
             <tbody>
               <Row k="Space" n={usd(booking.priceCents)}>{space.label}</Row>
+              {/* The further spaces that cost extra. They are in the total, so
+                  they have to be in the rows: an invoice whose lines do not add
+                  up to what the button charges is us being wrong in front of a
+                  maker. A space granted at no charge is not a line, because it
+                  is not money. */}
+              {liveSpaces.filter((h) => h.priceCents !== null && h.label !== space.label)
+                .map((h) => (
+                  <Row key={h.id} k="Space" n={usd(h.priceCents!)}>{h.label}</Row>
+                ))}
               {extras.filter((e) => !e.voidedAt).map((e) => (
                 <Row key={e.id} k="Add-on" n={usd(e.priceCents)}>
                   {e.name}
@@ -376,6 +417,7 @@ export default async function MakerDetail({
                     </summary>
                     <form action={voidBoothCharge}>
                       <input type="hidden" name="chargeId" value={c.id} />
+                      <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
                       <label className="adm-sr" htmlFor={`vr-${c.id}`}>
                         Why this line comes off
                       </label>
@@ -445,6 +487,7 @@ export default async function MakerDetail({
           )}
           <form action={addBoothCharge} className="mk-add">
             <input type="hidden" name="bookingId" value={booking.id} />
+            <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
             <div className="mk-fields">
               <label className="adm-field" htmlFor="cd">
                 <span className="lb">What it is for</span>
@@ -533,78 +576,110 @@ export default async function MakerDetail({
             </ol>
           )}
 
-          <div className="adm-foot">
-            <p className="adm-note">
-              <strong>Saving anything here returns you to the roster list.</strong> The actions
-              are shared with that screen and it is where they land. Click back into this maker
-              to carry on.
-            </p>
-            <p className="adm-note">
-              <strong>Commission is snapshotted on the booking</strong> and never changes.
-              Changing the show rate later has no effect on what this maker was promised.
-            </p>
+          {/* ── what they have at this show ──
+              Drew, 26 Sept: "treat each and every one of our days and inside
+              spaces as like an a la carte product, so I have full control
+              over what this person has access to this show regardless of
+              whatever fees they paid."
+
+              So access and invoicing are two decisions here. A space added
+              with no price changes what she has and not what she owes, which
+              is what an outdoor maker who is there all three days needs. A
+              space with a price lands on her invoice as its own line and she
+              can be re-invoiced from this page. */}
+          <div className="adm-sec" style={{ marginTop: 26 }}>
+            <h2>What they have at this show</h2>
+            <span className="c">{liveSpaces.length} {liveSpaces.length === 1 ? 'space' : 'spaces'}</span>
           </div>
-        </div>
 
-        {/* ── the money rail ── */}
-        <aside className="adm-rail" aria-label="Payment and the link">
-          <span className="k">Booth fee</span>
-          <table className="adm-fx" style={{ marginTop: 10 }}>
-            <tbody>
-              <Row k="Status">
-                <span className="adm-st" data-warn={paid || inFlight || gone ? undefined : '1'}>
-                  {gone ? 'Released' : paid ? 'Paid' : inFlight ? 'Clearing' : 'Not paid'}
+          <ul className="adm-lines mk-spaces" style={{ maxWidth: 760 }}>
+            {liveSpaces.map((h) => (
+              <li key={h.id}>
+                <span>{h.label}</span>
+                <span className="adm-money">
+                  {h.priceCents === null ? 'in the booth fee' : usd(h.priceCents)}
                 </span>
-                <span className="adm-sub2">
-                  {/* A released booking has no deadline left to print, and
-                      printing one read as a maker who was late. What it may
-                      still have is money that arrived, which the row below
-                      says, and a reason, which the history says. */}
-                  {gone
-                    ? 'The space is back in the pool.'
-                    : paid
-                      ? [booking.paidAt && fmtDateTime(booking.paidAt), viaLabel(booking.paidVia)]
-                        .filter(Boolean).join(' · ')
-                      : inFlight
-                        ? `${viaLabel(booking.paidVia ?? 'bank')}, about 4 business days`
-                        : `Due ${fmtDateTime(booking.paymentDueAt)}`}
-                </span>
-              </Row>
-              <Row k="Received" n={usd(booking.amountPaidCents ?? 0)}>
-                {booking.amountPaidCents
-                  ? 'What Stripe or a person recorded as arriving.'
-                  : 'Nothing recorded against this booking yet.'}
-              </Row>
-              <Row k="Stripe">
-                {booking.stripeSessionId
-                  ? 'A checkout was started.'
-                  : 'No checkout started.'}
-                {booking.stripePaymentIntentId && (
-                  <span className="adm-sub2">A payment intent exists.</span>
-                )}
-              </Row>
-              <Row k="Their link">
-                {booking.linkSentAt
-                  ? `Marked sent ${fmtDateTime(booking.linkSentAt)}`
-                  : 'Nobody has marked it sent.'}
-                {booking.linkSentBy && <span className="adm-sub2">by {booking.linkSentBy}</span>}
-              </Row>
-              <Row k="Fee email">
-                {booking.feeEmailAt
-                  ? `Sent ${fmtDateTime(booking.feeEmailAt)}`
-                  : 'Not sent from here.'}
-              </Row>
-              {booking.saidSentAt && (
-                <Row k="They say">
-                  Sent {booking.saidSentVia === 'zelle' ? 'a Zelle' : 'a Venmo'}
+                {liveSpaces.length > 1 && (
                   <span className="adm-sub2">
-                    {fmtDateTime(booking.saidSentAt)} · the note reads {booking.vendorCode}
+                    <details className="adm-mask">
+                      <summary>
+                        <span className="mk">Take off</span>
+                        <span className="adm-sr"> {h.label}</span>
+                      </summary>
+                      <form action={revokeBoothSpace}>
+                        <input type="hidden" name="spaceId" value={h.id} />
+                        <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
+                        <label className="adm-sr" htmlFor={`rs-${h.id}`}>Why it comes off</label>
+                        <input className="inp" id={`rs-${h.id}`} name="reason" type="text"
+                          placeholder="Why (goes in the audit log)" />
+                        <button className="adm-btn-q" type="submit">Take it off</button>
+                      </form>
+                    </details>
                   </span>
-                </Row>
-              )}
-            </tbody>
-          </table>
+                )}
+              </li>
+            ))}
+          </ul>
 
+          {goneSpaces.length > 0 && (
+            <ul className="adm-lines" style={{ maxWidth: 760 }}>
+              {goneSpaces.map((h) => (
+                <li key={h.id} className="off">
+                  <span>{h.label}</span>
+                  <span className="adm-money">
+                    {h.priceCents === null ? 'in the booth fee' : usd(h.priceCents)}
+                  </span>
+                  <span className="adm-sub2">
+                    Taken off {h.voidedAt ? fmtDateTime(h.voidedAt) : ''}
+                    {h.voidedBy ? ` by ${h.voidedBy}` : ''}
+                    {h.voidReason ? ` · ${h.voidReason}` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!gone && grantable.length > 0 && (
+            <div className="mk-card" style={{ maxWidth: 760 }}>
+              <form action={grantBoothSpace} className="mk-add">
+                <input type="hidden" name="bookingId" value={booking.id} />
+                <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
+                <label className="adm-field" htmlFor="gs">
+                  <span className="lb">Add a {space.track === 'outdoor' ? 'day' : 'space'}</span>
+                  <select className="inp" id="gs" name="spaceTypeId" defaultValue="">
+                    <option value="" disabled>Pick one</option>
+                    {grantable.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label} (lists at {usd(t.priceCents)})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="adm-field" htmlFor="gd">
+                  <span className="lb">Charge them</span>
+                  <input className="inp" id="gd" name="dollars" type="text" inputMode="decimal"
+                    autoComplete="off" placeholder="Leave empty for no charge" />
+                </label>
+                <label className="adm-field" htmlFor="gr">
+                  <span className="lb">Why</span>
+                  <input className="inp" id="gr" name="reason" type="text" autoComplete="off"
+                    placeholder="Goes in the audit log" />
+                </label>
+                <button className="adm-btn" type="submit">Add it</button>
+              </form>
+              <p className="adm-note" style={{ marginTop: 10 }}>
+                Leave the price empty to give them the {space.track === 'outdoor' ? 'day' : 'space'}
+                {' '}without changing what they owe. Type an amount and it goes on their invoice as
+                its own line, and you can send the invoice again below.
+              </p>
+            </div>
+          )}
+
+          {/* ── everything you can change about this maker ──
+              Drew, 26 Sept: "the editing is happening in the sidebar. I
+              should have more control kind of on the left-hand side, the
+              main section." He is right. The rail is for reading what is
+              true; this column is for changing it. */}
           {/* Money Stripe never sees. A card or a transfer is confirmed by a
               verified webhook and never by a person (rule 5). */}
           {!paid && !inFlight && !gone && (
@@ -614,6 +689,7 @@ export default async function MakerDetail({
               </div>
               <form action={markPaid} className="adm-paid">
                 <input type="hidden" name="bookingId" value={booking.id} />
+                <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
                 <label className="adm-sr" htmlFor="via">How {vendor.shopName} paid</label>
                 <select className="inp" id="via" name="via"
                   defaultValue={booking.saidSentVia ?? ''} required>
@@ -645,6 +721,7 @@ export default async function MakerDetail({
               />
               <form action={markLinkSent} style={{ marginTop: 10 }}>
                 <input type="hidden" name="bookingId" value={booking.id} />
+                <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
                 {booking.linkSentAt && <input type="hidden" name="undo" value="1" />}
                 <button className="adm-btn-q" type="submit">
                   {booking.linkSentAt ? 'Sent, undo' : 'Mark sent'}
@@ -711,6 +788,7 @@ export default async function MakerDetail({
               </p>
               <form action={setBoothPrice}>
                 <input type="hidden" name="bookingId" value={booking.id} />
+                <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
                 <label className="adm-field" htmlFor="price">
                   <span className="lb">Space fee in dollars</span>
                   <input className="inp" id="price" name="dollars" type="text" inputMode="decimal"
@@ -734,6 +812,7 @@ export default async function MakerDetail({
                   </div>
                   <form action={setBoothSpace}>
                     <input type="hidden" name="bookingId" value={booking.id} />
+                    <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
                     <label className="adm-field" htmlFor="spaceTypeId">
                       <span className="lb">New space</span>
                       <select className="inp" id="spaceTypeId" name="spaceTypeId"
@@ -871,6 +950,7 @@ export default async function MakerDetail({
               </p>
               <form action={cancelBooking}>
                 <input type="hidden" name="bookingId" value={booking.id} />
+                <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
                 <label className="adm-field" htmlFor="why">
                   <span className="lb">Why this space is being taken back</span>
                   <input className="inp" id="why" name="reason" required minLength={3}
@@ -899,6 +979,78 @@ export default async function MakerDetail({
               the space is back in the pool. The invoice and its history stay here.
             </p>
           )}
+
+          <div className="adm-foot">
+            <p className="adm-note">
+              <strong>Everything here saves and stays on this maker.</strong> Nothing bounces you
+              back to the list any more, so you can work through one maker in one place.
+            </p>
+            <p className="adm-note">
+              <strong>Commission is snapshotted on the booking</strong> and never changes.
+              Changing the show rate later has no effect on what this maker was promised.
+            </p>
+          </div>
+        </div>
+
+        {/* ── the money rail ── */}
+        <aside className="adm-rail" aria-label="Payment and the link">
+          <span className="k">Booth fee</span>
+          <table className="adm-fx" style={{ marginTop: 10 }}>
+            <tbody>
+              <Row k="Status">
+                <span className="adm-st" data-warn={paid || inFlight || gone ? undefined : '1'}>
+                  {gone ? 'Released' : paid ? 'Paid' : inFlight ? 'Clearing' : 'Not paid'}
+                </span>
+                <span className="adm-sub2">
+                  {/* A released booking has no deadline left to print, and
+                      printing one read as a maker who was late. What it may
+                      still have is money that arrived, which the row below
+                      says, and a reason, which the history says. */}
+                  {gone
+                    ? 'The space is back in the pool.'
+                    : paid
+                      ? [booking.paidAt && fmtDateTime(booking.paidAt), viaLabel(booking.paidVia)]
+                        .filter(Boolean).join(' · ')
+                      : inFlight
+                        ? `${viaLabel(booking.paidVia ?? 'bank')}, about 4 business days`
+                        : `Due ${fmtDateTime(booking.paymentDueAt)}`}
+                </span>
+              </Row>
+              <Row k="Received" n={usd(booking.amountPaidCents ?? 0)}>
+                {booking.amountPaidCents
+                  ? 'What Stripe or a person recorded as arriving.'
+                  : 'Nothing recorded against this booking yet.'}
+              </Row>
+              <Row k="Stripe">
+                {booking.stripeSessionId
+                  ? 'A checkout was started.'
+                  : 'No checkout started.'}
+                {booking.stripePaymentIntentId && (
+                  <span className="adm-sub2">A payment intent exists.</span>
+                )}
+              </Row>
+              <Row k="Their link">
+                {booking.linkSentAt
+                  ? `Marked sent ${fmtDateTime(booking.linkSentAt)}`
+                  : 'Nobody has marked it sent.'}
+                {booking.linkSentBy && <span className="adm-sub2">by {booking.linkSentBy}</span>}
+              </Row>
+              <Row k="Fee email">
+                {booking.feeEmailAt
+                  ? `Sent ${fmtDateTime(booking.feeEmailAt)}`
+                  : 'Not sent from here.'}
+              </Row>
+              {booking.saidSentAt && (
+                <Row k="They say">
+                  Sent {booking.saidSentVia === 'zelle' ? 'a Zelle' : 'a Venmo'}
+                  <span className="adm-sub2">
+                    {fmtDateTime(booking.saidSentAt)} · the note reads {booking.vendorCode}
+                  </span>
+                </Row>
+              )}
+            </tbody>
+          </table>
+
         </aside>
       </div>
     </>
