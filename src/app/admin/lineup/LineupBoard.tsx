@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 
 export type BoardCard = {
   id: string
+  /** The application, because the square lives there, not on the booking. */
+  applicationId: string
   name: string
   group: string
   photo: string | null
@@ -62,6 +64,96 @@ function BoardBusy({ children }: { children: React.ReactNode }) {
   return <div className={pending ? 'lb-body is-saving' : 'lb-body'} aria-busy={pending}>{children}</div>
 }
 
+/**
+ * Replace one maker's square, in place.
+ *
+ * Elise, 26 Sept: swap images on the board itself. The bytes go straight from
+ * this browser to Supabase, the same path a maker's own upload takes, so a
+ * hundred replacements never pass through our server and never time out a
+ * serverless function.
+ *
+ * Saved the moment it is picked rather than on the board's Save. The file
+ * input carries no `name`, so a picked file is never submitted with the
+ * board: a browser only sends named fields, and the two jobs stay separate.
+ */
+function SwapPicture(
+  { applicationId, name, onDone }: {
+    applicationId: string; name: string; onDone: (url: string) => void
+  },
+) {
+  const input = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [pct, setPct] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+
+  async function pick(file: File) {
+    setError(null); setBusy(true); setPct(0)
+    try {
+      const minted = await fetch('/api/admin/thumbnail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentType: file.type, size: file.size }),
+      })
+      if (!minted.ok) {
+        const b = (await minted.json().catch(() => ({}))) as { error?: string }
+        throw new Error(b.error ?? 'We could not start that upload.')
+      }
+      const { uploadUrl, publicUrl } = (await minted.json()) as {
+        uploadUrl: string; publicUrl: string
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('PUT', uploadUrl, true)
+        xhr.setRequestHeader('Content-Type', file.type)
+        /* A photograph off a phone takes long enough that a silent control
+           gets clicked twice. */
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setPct(Math.round((e.loaded / e.total) * 100))
+        }
+        xhr.onload = () => (xhr.status >= 200 && xhr.status < 300
+          ? resolve() : reject(new Error(`Upload failed (${xhr.status}).`)))
+        xhr.onerror = () => reject(new Error('The upload did not reach storage.'))
+        xhr.send(file)
+      })
+
+      const saved = await fetch('/api/admin/thumbnail/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicationId, url: publicUrl }),
+      })
+      if (!saved.ok) {
+        const b = (await saved.json().catch(() => ({}))) as { error?: string }
+        throw new Error(b.error ?? 'We could not save that picture.')
+      }
+      onDone(publicUrl)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'That did not work.')
+    } finally {
+      setBusy(false)
+      if (input.current) input.current.value = ''
+    }
+  }
+
+  return (
+    <div className="lb-swap">
+      {/* No name, so a picked file is never posted with the board's Save. */}
+      <input
+        ref={input} type="file" accept="image/*" hidden disabled={busy}
+        aria-label={`Replace the picture for ${name}`}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) void pick(f) }}
+      />
+      <button
+        type="button" className="adm-btn-q" disabled={busy} aria-busy={busy}
+        onClick={() => input.current?.click()}
+      >
+        {busy ? `Uploading ${pct}%` : 'Change picture'}
+      </button>
+      {error && <span className="lb-err" role="alert">{error}</span>}
+    </div>
+  )
+}
+
 export function LineupBoard(
   { cards, action }: { cards: BoardCard[]; action: (fd: FormData) => Promise<void> },
 ) {
@@ -70,6 +162,11 @@ export function LineupBoard(
     () => Object.fromEntries(cards.map((c) => [c.id, c.shown])),
   )
   const [held, setHeld] = useState<string | null>(null)
+  /* Squares swap on their own, so the board keeps its own copy rather than
+     waiting for the page to be fetched again. */
+  const [photos, setPhotos] = useState<Record<string, string | null>>(
+    () => Object.fromEntries(cards.map((c) => [c.id, c.photo])),
+  )
 
   /** Move `id` to sit where `overId` is, refusing a move across groups. */
   function place(id: string, overId: string) {
@@ -135,9 +232,9 @@ export function LineupBoard(
                   onDragOver={(e) => { e.preventDefault(); if (held) place(held, c.id) }}
                 >
                   <div className="lb-sq">
-                    {c.photo
+                    {photos[c.id]
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      ? <img src={c.photo} alt="" width={120} height={120} />
+                      ? <img src={photos[c.id]!} alt="" width={120} height={120} />
                       : <span className="lb-init" aria-hidden="true">
                         {c.name.trim().slice(0, 2).toUpperCase()}
                       </span>}
@@ -151,6 +248,11 @@ export function LineupBoard(
                     />
                     <span>{shown[c.id] ? 'On the page' : 'Held back'}</span>
                   </label>
+                  <SwapPicture
+                    applicationId={c.applicationId}
+                    name={c.name}
+                    onDone={(url) => setPhotos((p) => ({ ...p, [c.id]: url }))}
+                  />
                   <div className="lb-move">
                     <button type="button" className="adm-btn-q" onClick={() => nudge(c.id, -1)}
                       disabled={i === 0} aria-label={`Move ${c.name} earlier`}>↑</button>

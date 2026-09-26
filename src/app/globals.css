@@ -1144,4 +1144,7 @@
 .lb-body.is-saving { opacity: .5; pointer-events: none; }
 .lb-body { transition: opacity .12s ease; }
 @media (prefers-reduced-motion: reduce) { .lb-body { transition: none; } }
+.lb-swap { display: flex; flex-direction: column; gap: 4px; }
+.lb-swap .adm-btn-q { width: 100%; }
+.lb-err { font-size: 11px; color: var(--adm-danger, #b3261e); line-height: 1.3; }
 

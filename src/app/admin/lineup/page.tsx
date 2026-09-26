@@ -34,6 +34,7 @@ export default async function LineupPage({
   const rows = await db
     .select({
       id: bookings.id,
+      applicationId: applications.id,
       shopName: vendors.shopName,
       track: spaceTypes.track,
       space: spaceTypes.label,
@@ -58,6 +59,7 @@ export default async function LineupPage({
      put a wedding photo on the public page once already. */
   const cards: BoardCard[] = rows.map((r) => ({
     id: r.id,
+    applicationId: r.applicationId,
     name: r.shopName,
     group: r.track === 'indoor'
       ? (r.space === 'JR Space' ? 'junior' : 'indoor')
