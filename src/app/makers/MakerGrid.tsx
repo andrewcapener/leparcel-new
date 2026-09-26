@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { GROUP_KEYS, bySection } from './group-order'
 import Image from 'next/image'
 
 /**
@@ -31,13 +32,19 @@ export type MakerCard = {
   tint: string
 }
 
+const LABELS: Record<string, string> = {
+  indoor: 'Indoor makers',
+  junior: 'Junior makers',
+  friday: 'Friday outside',
+  saturday: 'Saturday outside',
+  sunday: 'Sunday outside',
+}
+
+/* One list, so the tabs and the Everyone order cannot drift apart: both read
+   GROUP_KEYS, in that order. See group-order.ts. */
 const GROUPS: Array<{ key: string; label: string }> = [
   { key: 'all', label: 'Everyone' },
-  { key: 'indoor', label: 'Indoor makers' },
-  { key: 'junior', label: 'Junior makers' },
-  { key: 'friday', label: 'Friday outside' },
-  { key: 'saturday', label: 'Saturday outside' },
-  { key: 'sunday', label: 'Sunday outside' },
+  ...GROUP_KEYS.map((key) => ({ key: key as string, label: LABELS[key]! })),
 ]
 
 export function MakerGrid({ makers }: { makers: MakerCard[] }) {
@@ -49,7 +56,13 @@ export function MakerGrid({ makers }: { makers: MakerCard[] }) {
     () => GROUPS.filter((g) => g.key === 'all' || makers.some((m) => m.group === g.key)),
     [makers],
   )
-  const shown = group === 'all' ? makers : makers.filter((m) => m.group === group)
+  /* Everyone is the sections, in tab order, each one internally exactly as
+     its own tab shows it. It used to be the raw server order, which sorts by
+     the booked space, and junior makers book an indoor space, so they sat
+     scattered through the indoor grid here and gathered together the moment
+     somebody pressed Junior. */
+  const everyone = useMemo(() => bySection(makers), [makers])
+  const shown = group === 'all' ? everyone : makers.filter((m) => m.group === group)
 
   return (
     <div className="mk-dir">
