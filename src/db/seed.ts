@@ -4,7 +4,7 @@ import { db, sqlClient } from './index'
 import { indoorShots, outdoorShots } from '@/lib/lookbook'
 import { img } from '@/lib/theme-img'
 import {
-  shows, spaceTypes, addOns, vendors, applications, bookings, bookingAddons,
+  shows, spaceTypes, addOns, vendors, applications, bookings, bookingAddons, bookingSpaces,
   auditLog, emailOutbox, subscribers, type Category,
 } from './schema'
 
@@ -305,8 +305,9 @@ async function main() {
         const code = `MM${String(paidCount + 1).padStart(2, '0')}`
         await db.update(vendors).set({ vendorCode: code }).where(eq(vendors.id, vendorId))
         const paid = paidCount < 7
+        const bookingId = randomUUID()
         await db.insert(bookings).values({
-          id: randomUUID(), showId, vendorId, applicationId: appId,
+          id: bookingId, showId, vendorId, applicationId: appId,
           spaceTypeId: spaceIds[spaceCode]!,
           vendorCode: code,
           priceCents: spaces.find((s) => s.code === spaceCode)!.priceCents,
@@ -314,6 +315,10 @@ async function main() {
           status: paid ? 'confirmed' : 'awaiting_payment',
           paymentDueAt: new Date(Date.now() + 48 * 3600_000).toISOString(),
           paidAt: paid ? new Date(Date.now() - 2 * 3600_000).toISOString() : null,
+        })
+        await db.insert(bookingSpaces).values({
+          id: randomUUID(), bookingId, spaceTypeId: spaceIds[spaceCode]!, priceCents: null,
+          createdBy: 'seed',
         })
         paidCount++
       }

@@ -9,7 +9,7 @@ import { z } from 'zod'
 import { db } from '@/db'
 import { activeShow, activeAddOns, activeSpaceTypes, forgetShowConfig, pgCode } from '@/db/queries'
 import {
-  shows, vendors, applications, bookings, bookingAddons, bookingCharges, spaceTypes, addOns,
+  shows, vendors, applications, bookings, bookingAddons, bookingSpaces, bookingCharges, spaceTypes, addOns,
   auditLog, emailOutbox, sheetSyncs, subscribers, CATEGORIES, type ApplicationStatus,
 } from '@/db/schema'
 import { applicationWindow, fmtDate, fmtDateTime, fmtRange, laWallToIso } from '@/lib/dates'
@@ -959,6 +959,14 @@ export async function decide(fd: FormData): Promise<void> {
              does: a roster row with an Accept but no link to copy would send
              somebody back to the database. */
           payToken,
+        })
+        /* The booking's own space, as a row. Since 0055 the public lineup
+           and the board read booking_spaces, not bookings.space_type_id, so a
+           booking created without this one is a maker nobody can see. Null
+           price: it is covered by the fee on the booking. */
+        await db.insert(bookingSpaces).values({
+          id: randomUUID(), bookingId, spaceTypeId: space.id, priceCents: null,
+          createdBy: 'accepted',
         })
         for (const a of granted) {
           await db.insert(bookingAddons).values({

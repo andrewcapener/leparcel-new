@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto'
 import { nextVendorCode } from '@/server/modules/payments/mm-code'
 import { and, eq, sql } from 'drizzle-orm'
 import type { db as Db } from '@/db'
-import { applications, bookings, spaceTypes, vendors, auditLog } from '@/db/schema'
+import { applications, bookings, bookingSpaces, spaceTypes, vendors, auditLog } from '@/db/schema'
 import { paymentDueAt } from '@/server/modules/payments/deadline'
 import { planImport, summarise, type Lookups, type Planned, type SheetRow } from './import'
 
@@ -135,6 +135,13 @@ export async function applyPlan(
           acceptedAtIso: new Date().toISOString(),
         }),
         payToken,
+      })
+
+      /* See the note in actions.ts: booking_spaces is what the public lineup
+         reads, so a booking created without a row is an invisible maker. */
+      await db.insert(bookingSpaces).values({
+        id: randomUUID(), bookingId, spaceTypeId: p.spaceTypeId, priceCents: null,
+        createdBy: 'imported',
       })
       await db.update(applications).set({
         status: 'accepted', decidedAt: new Date().toISOString(), decidedBy: actor,
