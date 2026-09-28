@@ -3,6 +3,7 @@ import { eq, and, asc, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, bookingSpaces, vendors, applications, spaceTypes } from '@/db/schema'
+import { makerLink } from '@/server/modules/roster/maker-link'
 import { MakerGrid, type MakerCard } from './MakerGrid'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, LogoGrid, RichText, Banner } from '@/components/theme/Sections'
@@ -52,6 +53,7 @@ export default async function Makers() {
       category: applications.category,
       photos: applications.photos,
       thumbnailUrl: applications.thumbnailUrl,
+      linkUrl: applications.linkUrl,
     })
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
@@ -90,12 +92,6 @@ export default async function Makers() {
     .orderBy(asc(bookingSpaces.lineupOrder), asc(spaceTypes.sortOrder), asc(vendors.shopName))
 
   type Row = (typeof roster)[number]
-  const linkFor = (m: Row) => {
-    const w = m.website?.trim()
-    if (w) return w.startsWith('http') ? w : `https://${w}`
-    const ig = m.instagram?.trim()
-    return ig ? `https://instagram.com/${ig.replace(/^@/, '')}` : null
-  }
 
   /* The five lists the old Shopify page kept, which are the five a shopper
      plans around: the makers inside, the children who have a table of their
@@ -146,7 +142,7 @@ export default async function Makers() {
        longer any way for it to become public by accident. /admin/thumbnails
        still shows their upload to staff, which is what it is for. */
     photo: m.thumbnailUrl?.trim() || null,
-    href: linkFor(m),
+    href: makerLink(m),
     initials: initialsOf(m.shopName),
     tint: TINT[m.category || 'Other'] ?? '#9A9A94',
   }))

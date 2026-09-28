@@ -11,6 +11,10 @@ export type BoardCard = {
   group: string
   photo: string | null
   shown: boolean
+  /** Where the tile sends a shopper today, whatever decided it. */
+  link: string
+  /** True when that came from the maker's own answer, not a staff override. */
+  linkIsHers: boolean
 }
 
 const GROUPS: Array<{ key: string; label: string }> = [
@@ -247,6 +251,26 @@ export function LineupBoard(
                       onChange={(e) => setShown((p) => ({ ...p, [c.id]: e.target.checked }))}
                     />
                     <span>{shown[c.id] ? 'On the page' : 'Held back'}</span>
+                  </label>
+                  <label className="lb-link">
+                    <span className="adm-sr">Where {c.name} links to</span>
+                    {/* Deliberately not type="url". The browser's own check on
+                        a url field refuses anything without a scheme, which is
+                        exactly what somebody types here: instagram.com/name.
+                        It refuses it by blocking the whole form, so one bare
+                        address on one card quietly threw away the drags and
+                        the ticks in the same press. cleanLinkUrl on the server
+                        is the check, and it adds the https:// itself. */}
+                    <input
+                      className="inp" type="text" inputMode="url"
+                      autoComplete="off" spellCheck={false}
+                      name={`link:${c.id}`}
+                      defaultValue={c.link}
+                      placeholder={c.linkIsHers ? 'Their own link' : 'Where this tile goes'}
+                      title={c.linkIsHers
+                        ? 'From their application. Type here to send the tile somewhere else.'
+                        : 'Set by staff. Clear it to go back to their own link.'}
+                    />
                   </label>
                   <SwapPicture
                     applicationId={c.applicationId}

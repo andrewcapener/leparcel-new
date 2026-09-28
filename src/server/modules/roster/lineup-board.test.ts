@@ -42,8 +42,19 @@ check('the notice counts what happened',
   boardNotice(3, 1, 0) === 'Saved: 3 makers moved, 1 taken off. The public lineup is updated.')
 check('one maker is singular', boardNotice(1, 0, 0).includes('1 maker moved'))
 check('nothing is said plainly', boardNotice(0, 0, 0) === 'Nothing changed.')
+check('a link change is said', boardNotice(0, 0, 0, 2).includes('2 links changed'))
+check('one link is singular', boardNotice(0, 0, 0, 1).includes('1 link changed'))
+/* The quiet failure this stops: a link we would not publish falls back to the
+   maker's own, and without a sentence that reads as "it saved". */
+check('a refused link is said even when nothing else changed',
+  boardNotice(0, 0, 0, 0, 1).startsWith('Nothing changed.')
+  && boardNotice(0, 0, 0, 0, 1).includes('One link was'))
+check('several refused links are counted',
+  boardNotice(1, 0, 0, 0, 3).includes('3 links were'))
+check('no refusal is mentioned when there was none',
+  !boardNotice(1, 0, 0, 1).toLowerCase().includes('publish'))
 check('the notice carries no fancy dash and no exclamation',
-  [boardNotice(3, 1, 2), boardNotice(0, 0, 0)].every((t) =>
+  [boardNotice(3, 1, 2), boardNotice(0, 0, 0), boardNotice(0, 0, 0, 1, 2)].every((t) =>
     !t.includes('!') && !t.includes(String.fromCharCode(0x2014)) && !t.includes(String.fromCharCode(0x2013))))
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }

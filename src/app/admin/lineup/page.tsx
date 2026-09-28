@@ -3,6 +3,7 @@ import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { applications, bookingSpaces, bookings, spaceTypes, vendors } from '@/db/schema'
 import { boardNotice } from '@/server/modules/roster/lineup-board'
+import { makerLink } from '@/server/modules/roster/maker-link'
 import { PageHead } from '../ui'
 import { LineupBoard, type BoardCard } from './LineupBoard'
 import { saveLineup } from './actions'
@@ -25,7 +26,8 @@ export const metadata = { title: 'The lineup' }
 export default async function LineupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ moved?: string; hid?: string; lit?: string }>
+  searchParams: Promise<{ moved?: string; hid?: string; lit?: string;
+    rel?: string; bad?: string }>
 }) {
   const sp = await searchParams
   const show = await activeShow()
@@ -40,6 +42,9 @@ export default async function LineupPage({
       track: spaceTypes.track,
       space: spaceTypes.label,
       thumbnailUrl: applications.thumbnailUrl,
+      linkUrl: applications.linkUrl,
+      website: vendors.website,
+      instagram: vendors.instagram,
       hidden: bookingSpaces.lineupHiddenAt,
       hiddenAll: bookings.lineupHiddenAt,
     })
@@ -72,10 +77,14 @@ export default async function LineupPage({
       : r.space.replace(/^Outdoor\s+/i, '').toLowerCase(),
     photo: r.thumbnailUrl?.trim() || null,
     shown: !r.hidden && !r.hiddenAll,
+    /* What the tile does today, and whether that is her answer or ours. */
+    link: r.linkUrl?.trim() || makerLink({ website: r.website, instagram: r.instagram }) || '',
+    linkIsHers: !r.linkUrl?.trim(),
   }))
 
   const said = sp.moved !== undefined
-    ? boardNotice(Number(sp.moved) || 0, Number(sp.hid) || 0, Number(sp.lit) || 0)
+    ? boardNotice(Number(sp.moved) || 0, Number(sp.hid) || 0, Number(sp.lit) || 0,
+      Number(sp.rel) || 0, Number(sp.bad) || 0)
     : null
 
   return (
@@ -89,7 +98,9 @@ export default async function LineupPage({
         Drag a card to move it, or use the arrows. A maker only moves within her own
         group, because her group is the space she booked. Untick a maker to keep her
         off the page: she keeps her space and her pay link, and ticking her puts her
-        back. Nothing changes until you press Save.
+        back. The link box is where that maker&rsquo;s tile sends a shopper: type an
+        address such as instagram.com/hername, or empty the box to hand the tile back
+        to whatever she put on her application. Nothing changes until you press Save.
       </p>
       <LineupBoard cards={cards} action={saveLineup} />
     </>

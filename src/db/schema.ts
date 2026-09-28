@@ -270,6 +270,10 @@ export const applications = pgTable('applications', {
   /** Staff's chosen square, overriding the maker's first photo. Null means
    *  use what they uploaded. Never overwrites `photos`. */
   thumbnailUrl: text('thumbnail_url'),
+  /** Where this maker's tile sends a shopper, when staff need it somewhere
+   *  other than the website or Instagram she gave us. An override: null
+   *  falls back to her own answer, which is never written over. */
+  linkUrl: text('link_url'),
 
   status: text('status').notNull().default('new'),
   submittedAt: dbNow('submitted_at'),

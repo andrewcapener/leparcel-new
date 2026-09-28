@@ -73,11 +73,24 @@ export function visibilityChanges(
 }
 
 /** What the screen says after a save. */
-export function boardNotice(moved: number, hidden: number, listed: number): string {
-  if (moved === 0 && hidden === 0 && listed === 0) return 'Nothing changed.'
+export function boardNotice(
+  moved: number, hidden: number, listed: number, relinked = 0, refused = 0,
+): string {
+  /* A link we refused is the one outcome worth a sentence of its own. The
+     board silently falls back to the maker's own website when a typed link
+     is not one we will publish, and silence there reads as "it saved" to the
+     person who typed it. */
+  const refusal = refused > 0
+    ? ` ${refused === 1 ? 'One link was' : `${refused} links were`} not a web address `
+      + 'we can publish, so those tiles still go where they went before.'
+    : ''
+  if (moved === 0 && hidden === 0 && listed === 0 && relinked === 0) {
+    return refused > 0 ? `Nothing changed.${refusal}` : 'Nothing changed.'
+  }
   const bits: string[] = []
   if (moved > 0) bits.push(`${moved} ${moved === 1 ? 'maker' : 'makers'} moved`)
   if (hidden > 0) bits.push(`${hidden} taken off`)
   if (listed > 0) bits.push(`${listed} put back`)
-  return `Saved: ${bits.join(', ')}. The public lineup is updated.`
+  if (relinked > 0) bits.push(`${relinked} ${relinked === 1 ? 'link' : 'links'} changed`)
+  return `Saved: ${bits.join(', ')}. The public lineup is updated.${refusal}`
 }

@@ -6,11 +6,12 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { db } from '@/db'
-import { auditLog, bookingSpaces, bookings, spaceTypes, vendors } from '@/db/schema'
+import { applications, auditLog, bookingSpaces, bookings, spaceTypes, vendors } from '@/db/schema'
 import { activeShow } from '@/db/queries'
 import {
   orderedIds, orderChanges, visibilityChanges,
 } from '@/server/modules/roster/lineup-board'
+import { cleanLinkUrl, makerLink } from '@/server/modules/roster/maker-link'
 import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
 
 /** Who pressed it (rule 3). The audit log carries a name, never an address. */
@@ -46,11 +47,16 @@ export async function saveLineup(fd: FormData): Promise<void> {
     .select({
       id: bookingSpaces.id,
       bookingId: bookings.id,
+      applicationId: applications.id,
+      linkUrl: applications.linkUrl,
+      website: vendors.website,
+      instagram: vendors.instagram,
       lineupOrder: bookingSpaces.lineupOrder,
       hidden: bookingSpaces.lineupHiddenAt,
     })
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
+    .innerJoin(applications, eq(bookings.applicationId, applications.id))
     .innerJoin(bookingSpaces, eq(bookingSpaces.bookingId, bookings.id))
     .innerJoin(spaceTypes, eq(bookingSpaces.spaceTypeId, spaceTypes.id))
     .where(and(
@@ -70,6 +76,40 @@ export async function saveLineup(fd: FormData): Promise<void> {
   const who = await staffActor()
   const now = new Date().toISOString()
 
+  /* Where each tile sends a shopper. One application can have several cards
+     (a maker outdoors three days), so the last non-empty value for an
+     application wins and an emptied field clears the override, handing her
+     own website or Instagram back. Cleaned before it is stored, because this
+     ends up as an href on a page shoppers read. */
+  const wantLink = new Map<string, string | null>()
+  let refused = 0
+  for (const r of rows) {
+    const typed = fd.get(`link:${r.id}`)
+    if (typed === null) continue
+    const raw = String(typed).trim()
+    let cleaned = raw ? cleanLinkUrl(raw) : null
+    /* Something was typed and it is not an address we will publish. Leave the
+       tile exactly as it was and say so, rather than clearing whatever was
+       working before because the last keystroke was a typo. */
+    if (raw && cleaned === null) { refused++; continue }
+    /* The field arrives pre-filled with what the tile does today, which for
+       most makers is their own website or Instagram. Saving the board must
+       not turn all eighty eight of those into staff overrides: a value equal
+       to her own link IS no override, so it stores as none and her tile keeps
+       following her application. */
+    if (cleaned !== null && cleaned === makerLink({ website: r.website, instagram: r.instagram })) {
+      cleaned = null
+    }
+    const prev = wantLink.get(r.applicationId)
+    if (prev === undefined || cleaned !== null) wantLink.set(r.applicationId, cleaned)
+  }
+  const linkChanges = [...wantLink.entries()].filter(
+    ([appId, url]) => (rows.find((r) => r.applicationId === appId)?.linkUrl ?? null) !== url,
+  )
+  for (const [appId, url] of linkChanges) {
+    await db.update(applications).set({ linkUrl: url }).where(eq(applications.id, appId))
+  }
+
   for (const m of moves) {
     await db.update(bookingSpaces).set({ lineupOrder: m.lineupOrder })
       .where(eq(bookingSpaces.id, m.id))
@@ -88,14 +128,17 @@ export async function saveLineup(fd: FormData): Promise<void> {
   /* One audit row for the press, not one per card: the board is a single
      editorial act and reads back as one. Each maker whose visibility changed
      is named, because that is the part somebody comes asking about. */
-  if (moves.length > 0 || hide.length > 0 || list.length > 0) {
+  if (moves.length > 0 || hide.length > 0 || list.length > 0 || linkChanges.length > 0) {
     await db.insert(auditLog).values({
       id: randomUUID(),
       entity: 'show',
       entityId: show.id,
       action: 'lineup_saved',
       before: JSON.stringify({ hiddenCount: rows.filter((r) => r.hidden).length }),
-      after: JSON.stringify({ moved: moves.length, hidden: hide, listed: list }),
+      after: JSON.stringify({
+        moved: moves.length, hidden: hide, listed: list,
+        relinked: linkChanges.map(([id, url]) => ({ applicationId: id, url })),
+      }),
       reason: 'lineup board',
       actor: who,
     })
@@ -103,5 +146,6 @@ export async function saveLineup(fd: FormData): Promise<void> {
 
   revalidatePath('/makers')
   revalidatePath('/admin/lineup')
-  redirect(`/admin/lineup?moved=${moves.length}&hid=${hide.length}&lit=${list.length}`)
+  redirect(`/admin/lineup?moved=${moves.length}&hid=${hide.length}&lit=${list.length}`
+    + `&rel=${linkChanges.length}&bad=${refused}`)
 }
