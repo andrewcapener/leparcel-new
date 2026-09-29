@@ -158,3 +158,26 @@ freeze (second waiver; first was the 9/8 pause). Executed via API:
 - Next step per scale protocol: +25-30% again ~Sep 27-28 if CAC holds,
   manual or by then freeze-free. Freeze otherwise still in force until
   ~Oct 1 (prospecting rebuild).
+
+## 2026-09-29 (7-day signal-fix review — scheduled)
+
+1. **$55 value: VERIFIED.** Post-fix window (Sep 22–29): brand-shop BC =
+   23 conv / $1,265.00 = exactly $55.00/fire. No tag values leaking.
+2. **Shopping recovery: UNDERWAY.** Delivery restored (brand 493c/17.6k
+   impr, non-brand 229c/41.4k impr this week vs near-dead prior week).
+   Non-brand booked its first clean-era Shopping purchase value: 0.59
+   attributed purchases / $1,179 on $713 spend ≈ 1.65x — above the 1.33
+   breakeven for the week. 30d purchase split now 7 / $10,364 (was
+   5 / $6,313 a week ago). Trending right; do not touch mid-learn.
+3. **Dashboard purchase-only: VERIFIED.** Week gConv $1,179 matches the
+   Purchase row exactly; $1,265 of BC value correctly excluded.
+4. **tROAS 2.5 not choking:** non-brand at ~$89/day of $110 budget with
+   the week's best economics. Keep 2.5; no change.
+
+Other: zombie throttles holding (neither trial in the spend table);
+experiments still not ended in UI (cosmetic now). Meta retargeting bump
+landed (~$110–150/day) — 4 purchases / $7,499 claimed this week (~6.5x).
+Week: $16.3k web / 9 orders, steady ~$2k/day drumbeat, 4 zero days
+(trough pattern, unchanged). Freeze lifts ~Oct 1 → prospecting rebuild +
+next retargeting ladder step both scheduled for that day.
+Recommendation: SCALE as planned Oct 1; HOLD Google untouched.
