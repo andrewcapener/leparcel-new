@@ -181,3 +181,19 @@ Week: $16.3k web / 9 orders, steady ~$2k/day drumbeat, 4 zero days
 (trough pattern, unchanged). Freeze lifts ~Oct 1 → prospecting rebuild +
 next retargeting ladder step both scheduled for that day.
 Recommendation: SCALE as planned Oct 1; HOLD Google untouched.
+
+## 2026-09-30 (client-reported: 0 repeat purchases — root-caused and fixed)
+
+Olivia (Mark Cross) flagged the dashboard's 0 repeat purchases. Probe
+confirmed root cause: Shopify's orders API no longer embeds
+customer.orders_count (null on all 15 probed orders), so the proxy
+`(orders_count ?? 0) <= 1` classified EVERY order as new. Fix shipped:
+cached per-customer lookup (customers/{id}.json?fields=orders_count)
+when the embedded count is absent; verified live.
+
+Corrected era (Sep 3–30): 47 new / $89,740 vs **9 returning / $12,321**
+(16% of web orders). Knock-ons, now honest: CAC $231 → **$285**,
+new-customer ROAS → 6.69 (still ~5x above the $1,437 breakeven).
+Also: Olivia requested a creative-asset-performance section in reports —
+planned for Weekly Nº2 alongside the prospecting launch (Meta ad-level
+insights read).
