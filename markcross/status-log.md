@@ -197,3 +197,15 @@ new-customer ROAS → 6.69 (still ~5x above the $1,437 breakeven).
 Also: Olivia requested a creative-asset-performance section in reports —
 planned for Weekly Nº2 alongside the prospecting launch (Meta ad-level
 insights read).
+
+## 2026-09-30 pt 2 (creative performance section shipped same-day)
+
+Andrew told Olivia it was live → made it live. New
+`markcross-creative-report` route (stolberg pattern; rewritten fetch:
+ACTIVE-roster filter + spender id batches, because the full /ads crawl
+hit Meta's response-size limit on this account's archive) + Creative
+Performance section restored on the client dashboard (running/retired
+split, account-average verdicts, directional-attribution caveats).
+Verified live: Sept shows 5 ads / $3,903 / 29 purchases / 15.7x —
+daba_allproducts_pdp (ACTIVE, 14.4x, the AI-copy ad Andrew flagged)
+plus 4 paused TrunkShow statics. Section fills out with the Oct launch.
