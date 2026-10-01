@@ -281,3 +281,21 @@ Andrew: the 5 staged clips were the wrong videos ("Drew videos spring
 **Process rule added: no creative asset is ever staged without an
 explicit file list from Andrew.** Video wave rebuild awaits his file
 names / correct folder.
+
+## 2026-10-01 pt 5 ("Approved" email defused; account verified clean)
+
+Andrew received Meta's ad-review email ("Approved — 23 ads scheduled or
+running") with Mermade Market footage visible in video thumbnails —
+confirming the wrong-video call. Facts verified live from the API:
+- The email is the review notice for all 23 ads created today (8 static
+  + 15 video); review completed around the deletion window. "Scheduled
+  or running" is Meta's template language, not delivery.
+- Current state: campaign PAUSED/PAUSED, exactly 2 adsets, exactly 8
+  static ads, all PAUSED, ZERO video ads anywhere. Library videos gone.
+- Found & removed a duplicate EMPTY broad adset (120252306659350706)
+  left by the failed first phase-1 attempt (idempotency gap covered
+  campaign+LAL but not adsets).
+- Pre-existing (not ours): second DABA adset 120243994512920706 sits
+  PAUSED in the rt campaign since the old setup; left alone.
+- Silver lining: the 8 statics are review-approved already — activation
+  will deliver without review delay.
