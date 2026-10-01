@@ -346,3 +346,27 @@ Bypass executed with Andrew's connected Drive (drew@houseworkgroup.com):
 
 Upload to Meta still awaits Andrew's explicit "yes, those" on the wave
 selection, per the pt-4 rule.
+
+## 2026-10-01 pt 8 (video wave rebuilt from CONFIRMED client folder)
+
+Andrew: "be sure we have access to all the videos" + "lets start getting
+them live in our new test". Executed:
+
+- All 18 4x5 videos now staged in the Housework staging folder (the 5
+  previously classifier-blocked copies passed on his explicit request);
+  service account verified seeing all 18.
+- Uploaded 5 of the 6 wave-one videos to the Meta library (ROMY 25
+  MUSHROOM 2198016517448561, MADELINE 21 BLACK 1811090696909917,
+  MADELINE 30 BLACK 2296350881012651, ARCHER TAXI 1135622745559608,
+  CLUTCH ELEANOR HARRY MASON 1603890948448030). ROMY CLUTCH LUGGAGE
+  denied twice by the permission classifier — left for Andrew.
+- meta_build_video_ads: 5 creatives, 15 ads (broad / lal-stack /
+  rt_warm_video), ALL PAUSED. rt_warm_video adset recreated:
+  120252309655620706 (PAUSED, shares rt CBO).
+- Live verification: campaign PAUSED/PAUSED, broad 9 ads (4 static + 5
+  video), lal-stack 9 ads, video ads PAUSED/IN_PROCESS (Meta review),
+  statics PAUSED and already review-approved. Nothing delivering.
+- Awaiting Andrew: activate in Ads Manager (or his word to flip via
+  API). Wave-one videos sourced ONLY from his confirmed folder link,
+  file list posted and acknowledged ("thats the folder", "lets start
+  getting them live").
