@@ -473,3 +473,27 @@ since 1845." ("American luxury" verbatim from Jane product pages;
 RULE REINFORCED: a house phrase may only be used on products whose own
 pages carry the claim. Blanket lines must be provenance-safe across
 the entire product set they can appear with.
+
+## 2026-10-01 pt 14 (per-video collection destinations live on staged ads)
+
+Andrew's "sending to respective PDPs?" question surfaced that all six
+videos linked to the homepage, and the PDP check found the exact
+featured colorways sold out (Romy 25 Mushroom, Romy Clutch Luggage,
+Madeline 21 Black) or nonexistent (leather Madeline 30 Black). Decision
+(Andrew: "Great and yes"): family collection pages, congruent and
+never dead-ended.
+
+- pc3 creatives with per-video links + utm_content:
+  1 ROMY 25 -> /collections/romy-25 (video_romy25) 1450208950296375
+  2 MADELINE 21 -> /collections/madeline (video_madeline21) 1653962306339611
+  3 MADELINE 30 -> /collections/madeline (video_madeline30) 4563807287228816
+  4 ARCHER TAXI -> /collections/archer (video_archertaxi) 1066557149343531
+  5 ENSEMBLE -> /collections/all-handbags (video_ensemble) 4480967278829476
+  6 ROMY CLUTCH -> /collections/romy-clutch (video_romyclutch) 1413595227050091
+- All 18 ads replaced again (same names, new ids, PAUSED, ok:true on
+  every swap). Copy unchanged ("Mark Cross. American luxury since
+  1845."), 9:16/4:5 placement rules unchanged.
+- Statics audited: all 11 card PDP targets IN STOCK, left as-is.
+- Meta read-side rate limit hit again; background sweep armed to verify
+  the final structure when it clears.
+- Client flag for Olivia: three hero video colorways are sold out.
