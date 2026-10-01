@@ -513,3 +513,11 @@ Flipped live via new meta_activate_launch action (~20:45Z):
   Oct 2 16:30Z (delivery, pace vs $150/day + $162.50/day, CAC vs $450
   ceiling, DABA replacement delivering). 72h no-edit learning window
   from now. Oct 3 day-30 trigger still in place.
+
+## 2026-10-01 pt 16 (post-launch sweep: all green)
+
+Rate limit cleared; live verification: campaign ACTIVE/ACTIVE $150/day,
+both adsets ACTIVE/ACTIVE, all 20 prospecting ads ACTIVE with
+effective_status ACTIVE (review already cleared, including the pc3
+video ads), rt_warm_video ACTIVE/ACTIVE. Launch fully delivering-
+eligible as of ~21:30Z Oct 1.
