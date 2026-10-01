@@ -264,3 +264,20 @@ PAUSED, copy: "Mark Cross. Crafted in Northern Italy. Since 1845."
 **Account now staged PAUSED for Andrew's Ads Manager review:**
 prospecting campaign (8 static + 10 video ads) + rt warm video adset
 (5 ads). Activation = his click(s).
+
+## 2026-10-01 pt 4 (WRONG VIDEOS — full removal, verified)
+
+Andrew: the 5 staged clips were the wrong videos ("Drew videos spring
+2026" picked blind by me — process failure, logged below). Containment:
+
+- All 15 hw_video_* ads deleted — every one PAUSED from creation to
+  deletion; zero impressions, zero spend, never public.
+- All 5 video creatives deleted; rt_warm_video adset deleted.
+- 5 library videos: direct DELETE refused (page permission) → deleted via
+  act/advideos edge, then VERIFIED gone (re-delete returns "not a valid
+  video ID" for all five). Account media library is clean.
+- Statics untouched (audited copy, still PAUSED awaiting review).
+
+**Process rule added: no creative asset is ever staged without an
+explicit file list from Andrew.** Video wave rebuild awaits his file
+names / correct folder.
