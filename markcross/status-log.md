@@ -425,3 +425,23 @@ Andrew confirmed the duration mapping ("smart and yes"). Executed:
   review (previous approvals were for the replaced ads).
 - Cosmetic debt: a few orphan pc-named creatives from the timeout/failed
   runs sit unattached in the creative library; harmless, cleanup optional.
+
+## 2026-10-01 pt 12 (DABA clean-copy replacement staged; "not live" confirmed)
+
+Andrew screenshotted the LIVE incumbent DABA ad: the AI-tell caption
+("From the first cut to the final stitch, every detail is considered.
+Form, balance, and material - perfectly resolved.") plus an "Offer
+available" badge. Read the incumbent creative (1341481104621062, ad
+daba_allproducts_pdp_103125): badge comes from catalog enhancements
+OPT_IN (product_metadata_automation + standard_enhancements_catalog).
+
+Created rt_daba_clean_housework_100126 BESIDE the incumbent (ad
+120252310312390706, creative 1980034979374710, PAUSED): same product
+set 1594844998136914 and template structure, message "Mark Cross.
+Crafted in Northern Italy. Since 1845.", the two offer-surfacing
+enhancements opted OUT. Incumbent untouched per spec (never paused
+until replacement proves itself).
+
+Also confirmed to Andrew: nothing we built is live; prospecting
+campaign + rt_warm_video all PAUSED awaiting his activation; video ads
+re-entered review after the placement upgrade.
