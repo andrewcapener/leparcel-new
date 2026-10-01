@@ -235,3 +235,32 @@ Andrew: "this is great! Go". Executed per launch-spec-oct1.md:
   link-shared URLs). Not blocking today's static launch.
 - Still open Andrew-side: END the two expired Google experiments in UI
   (Branding Search delivery still strangled at ~$8/wk until then).
+
+## 2026-10-01 pt 3 (copy audit + video wave, Andrew's go)
+
+**Copy audit (Andrew: "zero AI tells, quadruple sure"):** all 4 static
+captions rewritten from PROVENANCE-VERIFIED house language only — their
+product pages ("ultimate everyday, everywhere bag", "Box Calf Palmellato",
+"signature collar studs", "front clasp pulled from our infamous Rear
+Window case", "Crafted in Northern Italy", "perfect gift for the regular
+traveller"), their running ads ("Since 1845..."), their email titles
+("Meet Madeline" per their "Meet Eleanor"; "For Him & For Her").
+Dropped my earlier INVENTED heritage claims (steamer-trunk turn-lock,
+1930s originals) — unverifiable. Homepage tagline unverifiable (bot wall
+429) → not used. All 8 paused ads re-pointed to new creatives via phase2
+refresh mode. Rules enforced: no em dashes, no abstract triads, no
+verdict-words, every claim sourced.
+
+**Video wave (Drive folder "Drew videos spring 2026", shared to service
+account):** 5 clips uploaded via Drive API → Meta library (7417, 7416,
+7411, 7408, 7393; video ids 2126308411321099, 4232853963512609,
+1787751039231998, 28362537226700032, 1426324832809164). New warm
+retargeting adset rt_warm_video_housework_100126 (120252307705510706)
+inside the rt campaign (visitors 180d + IG/FB 365 engagers, purchasers
+excluded) — DABA adset is catalog-dynamic, can't carry standard video.
+5 video creatives × 3 placements (broad, lal, rtg) = 15 video ads, ALL
+PAUSED, copy: "Mark Cross. Crafted in Northern Italy. Since 1845."
+
+**Account now staged PAUSED for Andrew's Ads Manager review:**
+prospecting campaign (8 static + 10 video ads) + rt warm video adset
+(5 ads). Activation = his click(s).
