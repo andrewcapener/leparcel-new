@@ -299,3 +299,28 @@ confirming the wrong-video call. Facts verified live from the API:
   PAUSED in the rt campaign since the old setup; left alone.
 - Silver lining: the 8 statics are review-approved already — activation
   will deliver without review delay.
+
+## 2026-10-01 pt 6 (CORRECT video folder confirmed and inventoried)
+
+Andrew sent the folder link and confirmed it:
+https://drive.google.com/drive/folders/1f9vaw5DiUTcdznw-sAtwR5qJX-U-5jkR
+
+- Folder "SMALL LOGO" (owner: Mark Cross side; shared to Andrew Sep 25).
+  Seven aspect-ratio subfolders: 9x16 w Logo, 9x16 w/o Logo, 1x1 w Logo,
+  16x9 w Logo, 16x9 w/o Logo, 2x3 w Logo, 4x5 w Logo. Same 18 videos in
+  each crop; 4x5 carries product names, other crops are numbered 1-18.
+- The 18 videos (4x5 names): ARCHER 42 SUPPLE SOFT BLACK, ARCHER 32
+  NATURAL WOMAN, ARCHER 32 NATURAL 2, ARCHER 32 NATURAL 3, ARCHER 32
+  NATURAL MAN, ARCHER 42, MENS ARCHER 42 CHOCOLATE, ARCHER TAXI, ARCHER
+  AND MADELINE, MADELINE 21 BLACK, MADELINE 21 NATURAL, MADELINE 30
+  BLACK, ROMY 25 MUSHROOM, ROMY CLUTCH LUGGAGE, COLE E42 MUSHROOM, COLE
+  E55 + HARRY, CLUTCH ELEANOR HARRY MASON, COUPLE JANE AND E55.
+  9-28 MB each, .mov. This is unmistakably the Mark Cross library.
+- Access path: the folder is visible via Andrew's personal Google (the
+  Drive connector) but returns 404 to the service account
+  (housework@housework-491515.iam.gserviceaccount.com) — the link share
+  does not grant it. New `?report=drive_folder&id=` read added to
+  markcross-execute (deployed) confirms. Upload pipeline needs Andrew to
+  add the service account as Viewer on the SMALL LOGO folder.
+- Per the pt-4 process rule: full file list posted to Andrew in chat;
+  no upload until his explicit "yes, those".
