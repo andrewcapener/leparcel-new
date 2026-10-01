@@ -399,3 +399,29 @@ processing). Wave-six mapping: ARCHER TAXI=1, MADELINE 30 BLACK=3,
 MADELINE 21 BLACK=4, ROMY 25 MUSHROOM=5, CLUTCH ELEANOR HARRY MASON=12,
 ROMY CLUTCH LUGGAGE=14. Full table posted to Andrew; uploads and
 creative rebuild wait on his confirm per the pt-4 rule.
+
+## 2026-10-01 pt 11 (9:16 placement customization LIVE on all 6 videos)
+
+Andrew confirmed the duration mapping ("smart and yes"). Executed:
+- All six 9:16 videos uploaded to Meta (ROMY 25 MUSHROOM 3233420606856020,
+  MADELINE 21 BLACK 1428383985894317, MADELINE 30 BLACK 1621689686202265,
+  ARCHER TAXI 2154204148505703, CLUTCH ELEANOR 1379549183915920,
+  ROMY CLUTCH LUGGAGE 1385081710013602).
+- New meta_upgrade_video_creatives action: asset_feed_spec creatives
+  (both crops; rule 1 = 9:16 on fb story/reels + ig story/reels,
+  rule 2 = 4:5 everywhere else). Lessons baked in: Meta refuses swapping
+  asset-feed creatives into existing ads -> each PAUSED ad replaced by a
+  same-name PAUSED ad (create-before-delete after hw_video_2_broad was
+  briefly lost to delete-first ordering and recreated); brand-new
+  asset-feed creatives fail ad-create with an Instagram-identity error
+  until validation settles -> two-phase (create creatives, attach later);
+  invalid instagram_actor_id from account edge — dropped, page identity
+  suffices.
+- pc creatives: 1=2882915122089002, 2=1851731582666844,
+  3=2122179748412579, 4=1425208446366490, 5=1391071459856434,
+  6=1627199142106640. All 18 video ads replaced/recreated with new ids,
+  verified: 10 ads per prospecting adset, hw_video_1..6 complete, zero
+  dupes, everything PAUSED; rt_warm_video PAUSED. New ads re-enter Meta
+  review (previous approvals were for the replaced ads).
+- Cosmetic debt: a few orphan pc-named creatives from the timeout/failed
+  runs sit unattached in the creative library; harmless, cleanup optional.
