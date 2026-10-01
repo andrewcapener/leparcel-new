@@ -445,3 +445,31 @@ until replacement proves itself).
 Also confirmed to Andrew: nothing we built is live; prospecting
 campaign + rt_warm_video all PAUSED awaiting his activation; video ads
 re-entered review after the placement upgrade.
+
+## 2026-10-01 pt 13 (PROVENANCE CORRECTION: "Northern Italy" pulled)
+
+Andrew challenged "Crafted in Northern Italy" on the staged copy.
+Verified against products.json (166 products): the phrase IS verbatim
+site language but ONLY on Harry ("Crafted in Northern Italy from a
+tumbled grain leather...") and Grace ("handcrafted in Italy"). The
+wave's hero products carry ZERO Italy mention (Romy 0/25, Madeline 0/8,
+Archer 0/16). One Madeline 30 says "made in an italian canvas"
+(material, not manufacture). Claim pulled.
+
+Replacement line, fully house-sourced: "Mark Cross. American luxury
+since 1845." ("American luxury" verbatim from Jane product pages;
+1845 = founding). Executed across everything staged:
+- 6 new pc2 creatives (1=1418718683726664, 2=28441934042102454,
+  3=1081418511156667, 4=2282205992619161, 5=2005879104149971,
+  6=1383445130621540); all 18 video ads replaced again with the
+  corrected copy (same names, new ids, PAUSED).
+- DABA: first replacement deleted; rt_daba_clean2_housework_100126
+  created (ad 120252310387770706, creative 1416099159855532, PAUSED)
+  with corrected copy + offer enhancements opted out.
+- Final verify pending: Meta adsets edge rate-limited after today's
+  call volume (campaign reads fine, adset lists transiently empty);
+  background poll running until it recovers.
+
+RULE REINFORCED: a house phrase may only be used on products whose own
+pages carry the claim. Blanket lines must be provenance-safe across
+the entire product set they can appear with.
