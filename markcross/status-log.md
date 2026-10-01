@@ -497,3 +497,19 @@ never dead-ended.
 - Meta read-side rate limit hit again; background sweep armed to verify
   the final structure when it clears.
 - Client flag for Olivia: three hero video colorways are sold out.
+
+## 2026-10-01 pt 15 (LAUNCH ACTIVATED on Andrew's "Activate")
+
+Flipped live via new meta_activate_launch action (~20:45Z):
+- Prospecting: campaign 120252306659040706 + both adsets + all 20 ads
+  (8 static + 12 video) -> ACTIVE in one pass, 23 activations, 0 failed.
+- RT: rt_warm_video adset + rt_daba_clean2 ad ACTIVE; the 6 warm video
+  ads were initially skipped (ads-listing edge rate-limited inside the
+  action) -> activated by id (scope "ads"), 6/6 ok, 0 failed.
+- Statics deliver immediately (already review-approved); pc3 video ads
+  deliver as re-review clears. Incumbent DABA untouched and ACTIVE.
+- Background sweep armed to verify all-ACTIVE once Meta's read limit
+  clears. Day-1 check scheduled: trig_01TUyZYBbraQoxaDqMSS5FbF fires
+  Oct 2 16:30Z (delivery, pace vs $150/day + $162.50/day, CAC vs $450
+  ceiling, DABA replacement delivering). 72h no-edit learning window
+  from now. Oct 3 day-30 trigger still in place.
