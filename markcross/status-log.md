@@ -209,3 +209,29 @@ split, account-average verdicts, directional-attribution caveats).
 Verified live: Sept shows 5 ads / $3,903 / 29 purchases / 15.7x —
 daba_allproducts_pdp (ACTIVE, 14.4x, the AI-copy ad Andrew flagged)
 plus 4 paused TrunkShow statics. Section fills out with the Oct launch.
+
+## 2026-10-01 pt 2 (LAUNCH BUILD EXECUTED — Andrew's go)
+
+Andrew: "this is great! Go". Executed per launch-spec-oct1.md:
+
+- **Retargeting ladder step**: DABA CBO $130 → **$162.50/day** (+25%;
+  last-7d CAC $180 vs $450 ceiling). success:true.
+- **Prospecting build, ALL PAUSED** (two-phase via new execute actions;
+  made idempotent after partial first run; adset creation required
+  explicit targeting_automation.advantage_audience=0 + destination_type):
+  - Fresh LAL: Video Viewers L90D 1% → 120252306658680706
+  - Campaign pr-nc_cbo_prospecting_housework_100126 → 120252306659040706
+    (OUTCOME_SALES, CBO $150/day)
+  - Adsets: broad 120252306687670706 · lal-stack 120252306688040706
+    (pixel 2948677681838123, purchase opt., full exclusion stack)
+  - 4 creatives / 8 ads (romy, madeline, gifting, archer), house-voice
+    copy, imagery from the store's own CDN, UTM-tagged.
+- **Next: Andrew reviews in Ads Manager and activates the campaign.**
+  Daily CAC watch begins at activation; kill-creative rule at $900/adset
+  with zero purchases.
+- **Videos found**: Drive folder "Drew videos spring 2026" — 23 iPhone
+  .mov clips (Sep 5 upload, drew@houseworkgroup.com). Wave 2: select
+  3–5, cut to 9:16/4:5 with captions, add as video ads (UI upload or
+  link-shared URLs). Not blocking today's static launch.
+- Still open Andrew-side: END the two expired Google experiments in UI
+  (Branding Search delivery still strangled at ~$8/wk until then).
