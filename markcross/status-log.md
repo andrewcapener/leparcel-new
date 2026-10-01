@@ -383,3 +383,19 @@ them live in our new test". Executed:
   ads each (4 static + 6 video, names hw_video_1..6, all PAUSED);
   rt_warm_video adset PAUSED with 6 video ads. Awaiting Andrew's review
   and activation.
+
+## 2026-10-01 pt 10 (9x16 mapping derived, awaiting Andrew's confirm)
+
+Andrew (previewing): wants native 9:16 in Stories/Reels, not the 4x5.
+Correct — current creatives carry only the 4x5 asset. Fix = placement
+asset customization (9x16 for stories/reels, 4x5 elsewhere).
+
+The client's 9x16 files are numbered 1-18. All 18 copied into staging
+subfolder "9x16 w Logo" (no classifier blocks). Matched to the named
+4x5 files by exact video duration (millisecond-level, via new ms field
+in drive_folder): perfect bijection, every match 0ms difference;
+18.mov = ARCHER 32 NATURAL 3 by elimination (its metadata still
+processing). Wave-six mapping: ARCHER TAXI=1, MADELINE 30 BLACK=3,
+MADELINE 21 BLACK=4, ROMY 25 MUSHROOM=5, CLUTCH ELEANOR HARRY MASON=12,
+ROMY CLUTCH LUGGAGE=14. Full table posted to Andrew; uploads and
+creative rebuild wait on his confirm per the pt-4 rule.
