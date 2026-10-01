@@ -370,3 +370,16 @@ them live in our new test". Executed:
   API). Wave-one videos sourced ONLY from his confirmed folder link,
   file list posted and acknowledged ("thats the folder", "lets start
   getting them live").
+
+## 2026-10-01 pt 9 (ROMY CLUTCH LUGGAGE added — wave complete at 6)
+
+- Andrew asked for the retry; upload passed: videoId 2748764482192392.
+- Built into broad / lal / rt_warm, PAUSED. The build raced the deploy
+  of the new startIndex param, so its 3 ads were created as hw_video_1
+  dupes; fixed via new meta_rename_objects action — all renamed to
+  hw_video_6_* (ads 120252309734010706/-4150706/-4690706, creative
+  1087093917628382), verified.
+- Final verified state: campaign PAUSED/PAUSED; broad and lal-stack 10
+  ads each (4 static + 6 video, names hw_video_1..6, all PAUSED);
+  rt_warm_video adset PAUSED with 6 video ads. Awaiting Andrew's review
+  and activation.
