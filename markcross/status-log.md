@@ -536,3 +536,20 @@ Agreed plan (he deferred to recommendation): clean replacement
 (trig_01MskPQxn7rzFnFdcvsmy6MX, 15:00Z) pauses the incumbent
 (120239391490980706) if the replacement is delivering normally,
 otherwise report first. Bounds the bad-caption exposure to ~4 days.
+
+## 2026-10-02 (day-1 launch check: delivering clean, zero concerns)
+
+Day-1 numbers (Oct 1 evening + Oct 2 morning, Meta ad-level):
+- Prospecting: ~$148 spend in the first ~20h (pacing right at $150/day
+  CBO). All 20 ads delivering, impressions on every one of the 6 videos
+  and 4 statics in both adsets; nothing rejected. CTRs healthy (statics
+  1.3-2.3%, videos spending small but early CTRs strong). Zero
+  purchases day-1 — expected at this AOV, learning phase, no action.
+- rt_warm_video: ~$10 (small share of rt CBO beside the DABA, normal).
+- Clean DABA (rt_daba_clean2): $63.66 / 811 imps / 2.71% CTR vs
+  incumbent $155.77 in the same window — already taking ~29% of DABA
+  spend. Monday cutover looking very likely to pass.
+- Incumbent had 0 purchases in the same window too (day-level noise).
+- GA4 Oct 1: $7,631 / 2 transactions (updated from yesterday's partial
+  zero read). 72h no-edit window holds; next checks: Oct 3 day-30
+  trigger, Oct 5 DABA cutover.
