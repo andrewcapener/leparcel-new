@@ -521,3 +521,18 @@ both adsets ACTIVE/ACTIVE, all 20 prospecting ads ACTIVE with
 effective_status ACTIVE (review already cleared, including the pc3
 video ads), rt_warm_video ACTIVE/ACTIVE. Launch fully delivering-
 eligible as of ~21:30Z Oct 1.
+
+## 2026-10-02 (DABA incumbent retirement plan agreed)
+
+Andrew's core concern, stated plainly: the incumbent DABA caption is an
+AI tell he does not want running under Housework's watch, and the
+"Offer available" badge is off-brand. Facts: the incumbent creative
+predates us (stamped 2026-07-06; takeover Sep 2); creatives are
+immutable so "reworking the language" in place costs the same as the
+replacement path already built.
+
+Agreed plan (he deferred to recommendation): clean replacement
+(rt_daba_clean2) ramps through the weekend; Monday Oct 5 check
+(trig_01MskPQxn7rzFnFdcvsmy6MX, 15:00Z) pauses the incumbent
+(120239391490980706) if the replacement is delivering normally,
+otherwise report first. Bounds the bad-caption exposure to ~4 days.
