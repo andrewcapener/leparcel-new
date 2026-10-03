@@ -553,3 +553,21 @@ Day-1 numbers (Oct 1 evening + Oct 2 morning, Meta ad-level):
 - GA4 Oct 1: $7,631 / 2 transactions (updated from yesterday's partial
   zero read). 72h no-edit window holds; next checks: Oct 3 day-30
   trigger, Oct 5 DABA cutover.
+
+## 2026-10-03 (day-30 report, gross-profit terms)
+
+Window Sep 3-Oct 3, Shopify web (wholesale excluded), 75% GM:
+- $112,553 web revenue / 60 orders -> $84,415 gross profit vs $14,690
+  ad spend = $69,725 contribution; margin MER 5.7x (breakeven 1.33x);
+  blended CAC $288 (breakeven $1,437). AOV $1,876.
+- Repeat sanity post-fix: 51 new / 9 returning. Holding.
+- Google margin verdicts: Branding Search $1,264 -> $4,093 margin
+  (3.2x) KEEP, still strangled ($3.14 last 3d, 10% IS, experiments
+  STILL not ended - 5th flag to Andrew). Brand Shopping $5,934 ->
+  $7,482 (1.26x) KEEP, re-judge pre-holiday. Non-brand $3,290 ->
+  $3,018 (0.92x) CONDITIONAL: 1.33x margin by Nov 1 or cut to token.
+- Launch day-3: prospecting $300 spend, 0 purch (normal), CTRs healthy,
+  kill rule not near. rt_warm $23. Clean DABA $105 / 3.2% CTR, ~31%
+  share; incumbent $233 / 1 purch $920. Monday cutover on track.
+- Note: fresh container had checked out a stale branch tip (rookie
+  commit); origin intact, local reset to origin before this entry.
