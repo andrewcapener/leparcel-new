@@ -571,3 +571,19 @@ Window Sep 3-Oct 3, Shopify web (wholesale excluded), 75% GM:
   share; incumbent $233 / 1 purch $920. Monday cutover on track.
 - Note: fresh container had checked out a stale branch tip (rookie
   commit); origin intact, local reset to origin before this entry.
+
+## 2026-10-05 (DABA cutover EXECUTED - AI caption retired)
+
+Monday check per Andrew's approved plan: clean replacement over the
+weekend did $202.74 / 3,185 imps / CPM $63.65 (incumbent $60.05) /
+CTR 2.98% (incumbent 2.86%), no review issues. Criterion met.
+- Incumbent daba_allproducts_pdp_103125 (120239391490980706) PAUSED
+  via new pause_ads scope; verified PAUSED/PAUSED live. The "form,
+  balance, and material" caption and the Offer badge are out of the
+  feed permanently. rt_daba_clean2 now carries DABA alone,
+  ACTIVE/ACTIVE.
+- Prospecting through day 5: $618 spend, 0 purchases (still inside
+  normal range for $1,876 AOV; kill rule triggers at $900/adset).
+- Note: pause result JSON listed under "failed" due to field-name
+  mismatch in the report filter (paused vs ok) - cosmetic only,
+  verified against live status.
