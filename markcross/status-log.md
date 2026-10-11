@@ -620,3 +620,25 @@ Receipts assembled and handed to Andrew:
   broad passed the $900 rotation threshold midweek and the Thursday
   check was never scheduled. Rotation staged, awaiting Andrew (and
   ideally Olivia's film picks). Clean DABA: $979 / 1 purch / $2,646.
+
+## 2026-10-11 pt 2 (containment + full destination audit, per Andrew)
+
+Andrew: resolve now, review properly Mon/Tue; most troubled by the
+videos and ad destinations; prospecting itself up for a keep/kill call.
+
+Executed:
+- ALL 18 video ads PAUSED (broad/lal/rtg) + rt_warm_video adset PAUSED;
+  verified live. Statics (8) remain ACTIVE so prospecting data accrues
+  until the decision. Clean DABA remains ACTIVE. Videos had 0 purchases
+  so pausing cost nothing.
+- Destination audit (links read from live Meta creatives, not notes):
+  11 unique static card destinations -> all in catalog, all IN STOCK,
+  all HTTP 200. Both DABA ads dynamic per-product by design. Video ads
+  (now paused) -> verified collection URLs.
+- FOUND + DISARMED: previous-agency ad
+  car-bau_daba---rootedinitalian_...032426 (120243994512910706),
+  status ACTIVE inside the PAUSED productset adset - dormant but would
+  deliver if that adset were ever reactivated, and its copy carries the
+  unverifiable Italy framing. Paused.
+- Monday decision brief scheduled: trig_01BmoHyrN8M3apobWQMBhxj9
+  (Oct 12 15:30Z) - prospecting keep/kill/reallocate with full numbers.
