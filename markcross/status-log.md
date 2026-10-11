@@ -587,3 +587,36 @@ CTR 2.98% (incumbent 2.86%), no review issues. Criterion met.
 - Note: pause result JSON listed under "failed" due to field-name
   mismatch in the report filter (paused vs ok) - cosmetic only,
   verified against live status.
+
+## 2026-10-11 (client creative challenge - receipts assembled)
+
+Olivia Gold in Slack: (1) "videos look pretty AI, where did these come
+from"; (2) an ad "taking me to the wrong bag"; (3) "this one links to
+the valet tray - is that on purpose?". Andrew initially replied "we
+must have inherited these" (incorrect).
+
+Receipts assembled and handed to Andrew:
+- Provenance: the only live video ads are the six byte-for-byte files
+  from Mark Cross's own "SMALL LOGO" shared-drive folder. ACL shows
+  ogold@ (Olivia) and csanpietro@ (Caroline, credited in-thread) as
+  content managers, skoogproductions.com as writers. Zero edits by us.
+  Suggested Slack correction drafted for Andrew.
+- Destinations verified from live Meta creative specs: all six videos
+  -> their collection pages with per-video utm_content; catalog ad ->
+  the shown product's own page. No ad of ours can land on the valet
+  tray; either the catalog ad showed a tray card (full feed, by
+  design; fix = bags-only product set on request) or the unit is not
+  from our account (e.g. a team boost). Diagnostic requested: the
+  "About this ad" link from Olivia.
+- Wrong-bag click: her PDP screenshot = Romy Clutch in Canvas
+  Chocolate, which matches the bag in the ad still (chocolate trim
+  reads black in the lifestyle shot). Catalog ads always link to the
+  product shown; video ads route to collections because the filmed
+  colorways (Luggage, Mushroom, M21 Black) are sold out - flagged to
+  client Oct 2.
+- Video creatives confirmed: product_set none, ALL Advantage+
+  enhancements OPT_OUT.
+- Internal misses owned: prospecting Oct 1-11 $1,435 / 0 purchases;
+  broad passed the $900 rotation threshold midweek and the Thursday
+  check was never scheduled. Rotation staged, awaiting Andrew (and
+  ideally Olivia's film picks). Clean DABA: $979 / 1 purch / $2,646.
