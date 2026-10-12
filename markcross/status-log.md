@@ -659,3 +659,21 @@ likely a boost from the brand's own IG (separate ad account, same
 Page). Definitive check handed to Andrew: Meta Ad Library / IG "Active
 ads" for the markcross Page lists every running ad across all
 accounts. Suggested Slack reply drafted.
+
+## 2026-10-12 pt 2 (second ad source confirmed external to Housework)
+
+Olivia: "they are endless - both of these are from tonight." Receipts:
+- Our video ads: 0 impressions since the Oct 10 pause (Meta insights).
+- Housework token sees 15 ad accounts (all our clients); the ONLY Mark
+  Cross account is act_341898973409009 (ours). No second MC account in
+  our Business Manager. page ads_posts endpoint: permission denied (we
+  are not Page admins).
+Conclusion: the video ads Olivia keeps seeing run from an ad account
+outside Housework entirely - Mark Cross's own BM, a staffer boosting
+from the IG app, or the previous agency (the "car-bau"/"290219"
+naming suggests they may retain Page advertising access). Definitive
+public check handed to Andrew: Meta Ad Library for Page
+100542473354908 lists every running ad across all accounts.
+Recommended client action: audit Page advertising access and Business
+partner connections. Drew doing deep dive in AM; Monday prospecting
+decision brief still scheduled (trig_01BmoHyrN8M3apobWQMBhxj9).
