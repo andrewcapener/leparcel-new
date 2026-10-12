@@ -642,3 +642,20 @@ Executed:
   unverifiable Italy framing. Paused.
 - Monday decision brief scheduled: trig_01BmoHyrN8M3apobWQMBhxj9
   (Oct 12 15:30Z) - prospecting keep/kill/reallocate with full numbers.
+
+## 2026-10-12 (Olivia flags another video "today" - proven not ours)
+
+Olivia flagged a new still (camel coat, Christmas garland, trunk-style
+box bag); Drew replied "I'll get these down asap". Receipts pulled
+live:
+- Video ads: $0 spend / 0 impressions Oct 11-12 (paused ~24h before
+  her post; zero delivery since).
+- Account-wide ACTIVE roster = exactly 9 ads (8 statics + clean DABA).
+  No video ad exists in a runnable state in our account.
+- The flagged footage (holiday styling, box/trunk bag) matches none of
+  our six films' subjects.
+Conclusion: the unit is running from OUTSIDE our ad account - most
+likely a boost from the brand's own IG (separate ad account, same
+Page). Definitive check handed to Andrew: Meta Ad Library / IG "Active
+ads" for the markcross Page lists every running ad across all
+accounts. Suggested Slack reply drafted.
