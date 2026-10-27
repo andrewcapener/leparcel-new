@@ -81,6 +81,8 @@ export type ChecklistInput = {
   onboardingSlot?: string | null
   /** When the item list is wanted. Indoor only. Null until somebody sets it. */
   inventoryDueAt?: string | null
+  /** How many live lines the maker has put on it. */
+  inventoryCount?: number
   /** Where this maker stands with Stripe on getting PAID, as opposed to
    *  paying. Undefined when payouts are not configured on this deployment,
    *  which is the one case where the row must not appear: a button that
@@ -321,15 +323,29 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
      on /admin/show and it appears for every indoor maker at once. */
   if (input.track !== 'outdoor' && input.inventoryDueAt) {
     const due = input.inventoryDueAt
+    const n = input.inventoryCount ?? 0
+    /* The row went live the day the list did. It used to say `waiting` with
+       no way to act on it, which was right while there was nowhere to type
+       the prices and is wrong now that there is. */
+    const done = n > 0
     items.push({
       key: 'items',
       title: 'Your item list',
-      detail: 'What you are bringing, with prices, so the register knows your work. We will open the upload before the date below and write to you when it is ready.',
-      /* Still `waiting`, even with a date on it: there is nothing for a maker
-         to do until the upload opens, and a row that says "your turn" with no
-         way to take it is the thing this list exists to avoid. */
-      state: 'waiting',
+      detail: done
+        ? `${n} ${n === 1 ? 'line' : 'lines'} on your list. Add, change or remove anything until the date below.`
+        : 'What you are bringing, with prices, so the register knows your work. One line per price, not one line per item.',
+      /* Done, and still editable. A maker who has filled it in is not being
+         chased, and a maker who adds three more lines in November has not
+         undone anything. */
+      state: withDate(done ? 'done' : 'todo', due, input.nowIso),
       dueAt: due,
+      href: '#items',
+      action: done
+        ? { label: 'Change your list', href: '#items' }
+        : { label: 'Add your prices', href: '#items' },
+      /* Never. A maker whose list is short still sells: somebody writes the
+         price on a tag and keys it at the counter. Holding them off the floor
+         over a form would cost this business a table and them a weekend. */
       blocksLoadIn: false,
     })
   }

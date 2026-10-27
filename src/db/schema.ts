@@ -436,6 +436,39 @@ export const bookingSpaces = pgTable('booking_spaces', {
   voidReason: text('void_reason'),
 }, (t) => [index('booking_spaces_booking').on(t.bookingId)])
 
+/**
+ * A maker's item list, as the register needs it.
+ *
+ * One row is a KIND of goods at a price, not a SKU and not stock: Hillary's
+ * own example is "Maps: $5 or buy 2/$8", and a maker with forty stickers at
+ * $7 writes one row. Short enough that somebody fills it in, which is the
+ * only property that matters here.
+ *
+ * On the booking, so it is scoped to a show (rule 6).
+ */
+export const inventoryItems = pgTable('inventory_items', {
+  id: text('id').primaryKey(),
+  bookingId: text('booking_id').notNull().references(() => bookings.id),
+  /** What a shopper would call it. */
+  label: text('label').notNull(),
+  priceCents: integer('price_cents').notNull(),
+  /** The multi-buy: 2 and 800 is "buy 2/$8". Both null or both set. */
+  bundleQty: integer('bundle_qty'),
+  bundleCents: integer('bundle_cents'),
+  /** For the register, never for shoppers. */
+  note: text('note'),
+  /** The maker's own order, so their list reads back as they wrote it. */
+  sortOrder: integer('sort_order'),
+  createdAt: dbNow('created_at'),
+  createdBy: text('created_by').notNull().default('maker'),
+  updatedAt: text('updated_at'),
+  /** Null means the line counts. Never deleted (rule 3), so the list can be
+   *  read back as it stood the day it locked. */
+  voidedAt: text('voided_at'),
+  voidedBy: text('voided_by'),
+  voidReason: text('void_reason'),
+}, (t) => [index('inventory_items_booking').on(t.bookingId)])
+
 export const bookingCharges = pgTable('booking_charges', {
   id: text('id').primaryKey(),
   bookingId: text('booking_id').notNull().references(() => bookings.id),

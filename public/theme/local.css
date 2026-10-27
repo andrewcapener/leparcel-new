@@ -2978,3 +2978,67 @@ a.mk-dir__cell:focus-visible{outline:2px solid #BC9658;outline-offset:3px}
 }
 .template-suffix-makers .mk-dir{padding-block:0 44px}
 .template-suffix-makers .mk-dir__tabs{padding-block:24px 22px;margin-bottom:28px}
+
+/* ── The item list ────────────────────────────────────────────────────
+   What the register needs to sell a maker's work, typed by the person who
+   knows the prices. One row is a KIND of goods at a price, which is why
+   there is no quantity field anywhere on it: a maker with forty stickers at
+   $7 writes one line, and the form must not imply otherwise.
+
+   Every row is its own form, because nested forms are invalid HTML and this
+   has to work with no JavaScript at all. A magic link opened inside a mail
+   client's browser is the normal way a maker arrives here. */
+.mk-items { list-style: none; margin: 0 0 1.1em; padding: 0; display: grid; gap: .55em; }
+.mk-item {
+  display: flex;
+  align-items: flex-end;
+  gap: .5em .7em;
+  padding: .7em .8em;
+  border: 1px solid rgb(var(--text-color) / 0.14);
+}
+.mk-item__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: .5em .7em;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.mk-item__form--new {
+  padding: .8em;
+  border: 1px dashed rgb(var(--text-color) / 0.3);
+}
+.mk-item__f { display: flex; flex-direction: column; gap: .25em; flex: 0 1 7em; min-width: 0; }
+.mk-item__f--grow { flex: 1 1 11em; }
+.mk-item__f--sm { flex: 0 1 4.5em; }
+.mk-item__f .lb {
+  font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  opacity: .72;
+}
+.mk-item__f .inp { width: 100%; }
+.mk-item__do { flex: none; }
+.mk-item__rm { flex: none; }
+.mk-item__read { margin: 0; flex: 1 1 auto; }
+.mk-item__note { opacity: .66; }
+
+.mk-items__preview { margin-top: 1.2em; }
+.mk-items__preview summary { cursor: pointer; }
+.mk-items__pre {
+  margin: .8em 0;
+  padding: .9em 1em;
+  background: rgb(var(--text-color) / 0.045);
+  font-size: .92em;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+/* Narrow screens: a maker standing in their studio with a phone is the
+   likeliest person filling this in, so the fields stack rather than
+   shrinking into something untappable. */
+@media (max-width: 600px) {
+  .mk-item { flex-wrap: wrap; }
+  .mk-item__f, .mk-item__f--grow, .mk-item__f--sm { flex: 1 1 100%; }
+  .mk-item__do, .mk-item__rm { flex: 1 1 auto; }
+  .mk-item__do .btn, .mk-item__rm .btn { width: 100%; }
+}
