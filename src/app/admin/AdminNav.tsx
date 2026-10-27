@@ -40,6 +40,7 @@ const MAIN: Array<{
   { href: '/admin/lineup', label: 'The lineup', icon: 'grid' },
   { href: '/admin/import', label: 'Accept from the sheet', icon: 'queue' },
   { href: '/admin/chase', label: 'Chase the booth fee', icon: 'clock' },
+  { href: '/admin/onboarding', label: 'Item lists and payouts', icon: 'money' },
   { href: '/admin/sheet', label: 'Send to Google Sheet', icon: 'external' },
   { href: '/admin/show', label: 'Show settings', icon: 'settings' },
   { href: '/admin/outbox', label: 'Outbox', icon: 'mail' },

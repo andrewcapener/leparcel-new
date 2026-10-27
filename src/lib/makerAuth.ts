@@ -82,10 +82,29 @@ function sameString(a: string, b: string): boolean {
 
 /* ─────────────────────────── the emailed link ─────────────────────────── */
 
+/**
+ * How long a link minted for a BATCH email lasts.
+ *
+ * Twenty minutes is right for a link somebody asked for thirty seconds ago
+ * and wrong for one sent to forty people at nine in the morning: a maker who
+ * opens her email after lunch would arrive at a dead link and a sign-in form,
+ * having been told she was one click from her list.
+ *
+ * The trade is real and worth naming. For a week, anybody holding a
+ * forwarded copy of that email can open that maker's account, which shows
+ * her application, her invoice and a button into Stripe's own identity
+ * check. It is the same trade the booth fee pay link already makes, and the
+ * same reasoning: every step between an email and the thing we are asking
+ * for is a step where somebody gives up.
+ */
+export const BATCH_LINK_TTL_MS = 7 * 24 * 60 * 60_000
+
 /** `<email>.<expiry>.<signature>`, url safe. */
-export async function signLinkToken(email: string, now = Date.now()): Promise<string> {
+export async function signLinkToken(
+  email: string, now = Date.now(), ttlMs = LINK_TTL_MS,
+): Promise<string> {
   const e = normalizeEmail(email)
-  const expiry = String(now + LINK_TTL_MS)
+  const expiry = String(now + ttlMs)
   const body = `${b64url(new TextEncoder().encode(e))}.${expiry}`
   return `${body}.${await hmac(`link:${body}`)}`
 }

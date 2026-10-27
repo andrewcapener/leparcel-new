@@ -27,6 +27,11 @@ export async function GET(req: NextRequest) {
      far as a naive startsWith('/') check is concerned. */
   const want = req.nextUrl.searchParams.get('next') ?? ''
   const dest = want === 'payment' ? '/pay' : '/account'
+  /* The anchor, from the same short fixed list and for the same reason. The
+     onboarding invite asks for two things that live in two cards, and a maker
+     who clicked "open your account" should arrive looking at them rather than
+     at the top of a long page. */
+  const hash = email && (want === 'items' || want === 'payouts') ? `#${want}` : ''
 
   /* An expired link goes back to the page it was requested FROM, not to the
      account: a maker who asked to pay and waited too long should land on the
@@ -35,6 +40,7 @@ export async function GET(req: NextRequest) {
   const to = req.nextUrl.clone()
   to.pathname = dest
   to.search = email ? '' : '?expired=1'
+  to.hash = hash
 
   const res = NextResponse.redirect(to)
   if (email) {
