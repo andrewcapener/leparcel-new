@@ -35,12 +35,13 @@ for (const f of creators) {
     readFileSync(f, 'utf8').includes('.insert(bookingSpaces)'))
 }
 
-/* The three known ones. A fourth appearing is not an error, but it has to be
+/* The known ones. A new one appearing is not an error, but it has to be
    seen: this list is how somebody notices a new path exists at all. */
-check(`the creators are the three expected ones, found ${creators.map(short).sort().join(', ')}`,
-  creators.length === 3
+check(`the creators are the four expected ones, found ${creators.map(short).sort().join(', ')}`,
+  creators.length === 4
   && creators.some((f) => short(f) === 'src/app/actions.ts')
   && creators.some((f) => short(f) === 'src/server/modules/roster/apply.ts')
+  && creators.some((f) => short(f) === 'src/server/modules/roster/add-maker.ts')
   && creators.some((f) => short(f) === 'src/db/seed.ts'))
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
