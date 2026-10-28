@@ -299,6 +299,11 @@ export default async function Account({
                 methods={show.paymentMethods}
                 manual={manualHere}
                 codes={codes}
+                /* The session is the authority here, so "I have sent it" works
+                   without a pay token. Everybody we email arrives this way. */
+                signedIn
+                saidVia={billing.booking.saidSentVia}
+                saidAt={billing.booking.saidSentAt}
               />
             )}
 

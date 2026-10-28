@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { cookies, headers } from 'next/headers'
-import { eq, and, sql } from 'drizzle-orm'
+import { asc, eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
 import { activeShow, activeAddOns, activeSpaceTypes, forgetShowConfig, pgCode } from '@/db/queries'
@@ -2179,14 +2179,48 @@ export async function startConnectOnboardingByToken(fd: FormData): Promise<void>
  * reversible: pressing it again with a different method just moves the claim,
  * and staff can clear it from the roster.
  */
+/**
+ * The signed-in maker's booking, in the shape the pay-token lookup returns.
+ *
+ * Ordered the same way /account and the item list order it, so all three
+ * always mean the same booking for a maker who somehow holds two.
+ */
+async function bookingForSignedInMaker() {
+  const email = await readMakerSession((await cookies()).get(MAKER_COOKIE)?.value)
+  if (!email) return undefined
+  const show = await activeShow()
+  if (!show) return undefined
+  const vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
+  if (!vendor) return undefined
+  const [row] = await db
+    .select({ id: bookings.id, vendorId: bookings.vendorId, track: spaceTypes.track,
+      stripeAccountId: vendors.stripeAccountId })
+    .from(bookings)
+    .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
+    .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
+    .where(and(eq(bookings.showId, show.id), eq(bookings.vendorId, vendor.id)))
+    .orderBy(asc(bookings.createdAt), asc(bookings.id))
+    .limit(1)
+  return row
+}
+
 export async function sayManualSent(fd: FormData): Promise<void> {
   const token = String(fd.get('token') ?? '')
   const via = String(fd.get('via') ?? '')
-  const back = `/pay/${encodeURIComponent(token)}`
+  /* Two doors, one action. A pasted pay link authorises from its token; a
+     maker who is signed in authorises from her session.
+     
+     It used to be the token only, which meant the one fact only the maker has
+     could be given at the one place most makers never go. Everybody we email
+     from now on arrives signed in, through their account, and the button was
+     simply not there for them. */
+  const back = token ? `/pay/${encodeURIComponent(token)}` : '/account'
   if (via !== 'venmo' && via !== 'zelle') redirect(back)
 
-  const found = await bookingByPayToken(db, token)
-  if (!found) redirect('/pay/invalid')
+  const found = token
+    ? await bookingByPayToken(db, token)
+    : await bookingForSignedInMaker()
+  if (!found) redirect(token ? '/pay/invalid' : '/account')
 
   const [b] = await db.select().from(bookings).where(eq(bookings.id, found.id)).limit(1)
   /* Nothing to claim on a booking that is already settled, and a claim on one
@@ -2201,7 +2235,8 @@ export async function sayManualSent(fd: FormData): Promise<void> {
     `maker says they sent a ${via} payment`, `maker:${found.vendorId}`)
 
   revalidatePath('/admin/roster')
-  redirect(`${back}?sent=${via}`)
+  revalidatePath('/account')
+  redirect(token ? `${back}?sent=${via}` : `/account?sent=${via}#booth-fee`)
 }
 
 /** Who is signed in, for the audit row. Falls back rather than throwing: the

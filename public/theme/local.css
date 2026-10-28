@@ -3042,3 +3042,9 @@ a.mk-dir__cell:focus-visible{outline:2px solid #BC9658;outline-offset:3px}
   .mk-item__do, .mk-item__rm { flex: 1 1 auto; }
   .mk-item__do .btn, .mk-item__rm .btn { width: 100%; }
 }
+
+/* A paid invoice is a receipt, and it sits above the things that still need
+   the maker. One line, with the detail a tap away. */
+.mk-receipt { margin: 0 0 1.1em; }
+.mk-receipt summary { cursor: pointer; font-size: .92em; opacity: .78; }
+.mk-receipt[open] summary { margin-bottom: .6em; }

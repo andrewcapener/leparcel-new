@@ -22,12 +22,16 @@ import { sayManualSent } from '@/app/actions'
  * to go hunting for.
  */
 export function ManualPay({
-  options, codes, token, saidVia, saidAt,
+  options, codes, token, signedIn = false, saidVia, saidAt,
 }: {
   options: ManualOption[]
-  /** Present only on the pasted-link door, which is the one that can
-   *  authorise "I have sent it" without a sign-in. */
+  /** The pasted-link door, which authorises "I have sent it" by token. */
   token?: string
+  /** The other door: a maker reading this on her own account page, where the
+   *  session is the authority. This used to be token only, so the one fact
+   *  only the maker has could be given at the one place most makers never go.
+   *  Everybody we email from now on arrives here instead. */
+  signedIn?: boolean
   /** What they already told us, so the tile stops asking. */
   saidVia?: string | null
   saidAt?: string | null
@@ -93,7 +97,7 @@ export function ManualPay({
                 has not paid look identical on the roster, and the girls either
                 chase her or release her space. It confirms nothing on its own:
                 a person still checks Venmo and presses Mark paid. */}
-            {token && (saidVia === o.kind ? (
+            {(token || signedIn) && (saidVia === o.kind ? (
               <p className="mk-pay__said">
                 Thank you. You told us you sent this
                 {saidAt ? ` on ${new Date(saidAt).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'long', day: 'numeric' })}` : ''}.
@@ -101,7 +105,7 @@ export function ManualPay({
               </p>
             ) : (
               <form action={sayManualSent}>
-                <input type="hidden" name="token" value={token} />
+                {token && <input type="hidden" name="token" value={token} />}
                 <input type="hidden" name="via" value={o.kind} />
                 <button className="mk-pay__sent" type="submit">
                   I have sent it

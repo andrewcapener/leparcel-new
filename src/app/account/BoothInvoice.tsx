@@ -22,10 +22,21 @@ import { ManualPay } from './ManualPay'
  * stored beside them, so the rows a maker adds up cannot disagree with the
  * button.
  */
+/** The invoice table, folded away once there is nothing left to pay. */
+function Detail({ paid, children }: { paid: boolean; children: React.ReactNode }) {
+  if (!paid) return <>{children}</>
+  return (
+    <details className="mk-receipt">
+      <summary>What you paid for</summary>
+      {children}
+    </details>
+  )
+}
+
 export function BoothInvoice({
   invoice, status, dueAt, paidAt, vendorCode, track,
   payable, testMode, notice, methods, preview = false, id = 'booth-fee',
-  action, token, manual = [], codes, manualToken, saidVia, saidAt,
+  action, token, manual = [], codes, manualToken, signedIn = false, saidVia, saidAt,
 }: {
   invoice: Invoice
   status: string
@@ -52,6 +63,9 @@ export function BoothInvoice({
   codes?: Record<string, string | null>
   /** Only the pasted-link door can take "I have sent it" without a sign-in. */
   manualToken?: string
+  /** True on the maker's own signed-in account page, where the session is the
+   *  authority instead of a token. */
+  signedIn?: boolean
   saidVia?: string | null
   saidAt?: string | null
   /** Rendered inside the admin preview. Everything looks the same; the button
@@ -120,6 +134,19 @@ export function BoothInvoice({
                     : 'Your booth fee'}
           </h2>
 
+          {/* Once it is paid this is a receipt, not an invoice, and it is
+              sitting above the two things that still need the maker. So it
+              folds down to one line and the detail stays one tap away.
+              Drew, 28 October: "if a person has paid their booth fee lets
+              remove the payment info there". */}
+          {paid && (
+            <p className="rte">
+              <strong>{usd(invoice.totalCents)} paid{paidAt ? ` on ${fmtDateTime(paidAt)}` : ''}.</strong>
+              {' '}{code.label} {vendorCode}.
+            </p>
+          )}
+
+          <Detail paid={paid}>
           <dl className="mk-dl">
             {invoice.lines.map((l) => (
               <div className="mk-dl__row" key={l.label}>
@@ -179,6 +206,7 @@ export function BoothInvoice({
               </div>
             )}
           </dl>
+          </Detail>
 
           {/* The one line under the code. Outdoor makers are given a booth
               number by a different person and on a different list, so this is
@@ -318,7 +346,8 @@ export function BoothInvoice({
                     <p className="mk-pay__note">Confirms your space straight away.</p>
                   </li>
                   <ManualPay options={manual} codes={codes}
-                    token={manualToken} saidVia={saidVia} saidAt={saidAt} />
+                    token={manualToken} signedIn={signedIn}
+                    saidVia={saidVia} saidAt={saidAt} />
                 </ul>
               )}
 
