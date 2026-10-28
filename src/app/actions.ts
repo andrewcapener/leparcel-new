@@ -2034,6 +2034,30 @@ export async function chooseOnboardingSlot(fd: FormData): Promise<void> {
  * because Stripe's onboarding links are single use and expire in minutes. A
  * stored one is a broken one.
  */
+/**
+ * Record WHY Stripe refused, where staff can find it.
+ *
+ * The maker is told one plain sentence, which is right: Stripe puts request
+ * ids and internal field names in these and none of it means anything to
+ * somebody trying to get paid. But it meant the reason existed only in a
+ * platform log that nobody is reading at nine at night in November, and
+ * "it did not work" is not something anybody can act on.
+ *
+ * So it goes in the audit log against the maker, and their roster page shows
+ * it. The usual cause is Connect not being enabled on the Stripe account at
+ * all, which is one sentence from Stripe and a five minute fix, and is
+ * indistinguishable from a broken button until somebody can read it.
+ */
+async function noteConnectFailure(vendorId: string, during: string, detail: string) {
+  try {
+    await log('vendor', vendorId, 'connect_failed', null,
+      { during, detail: detail.slice(0, 300) },
+      `Stripe refused while ${during}`, `maker:${vendorId}`)
+  } catch {
+    /* Never let the record of a failure become a second failure. */
+  }
+}
+
 export async function startConnectOnboarding(): Promise<void> {
   const email = await readMakerSession((await cookies()).get(MAKER_COOKIE)?.value)
   if (!email) redirect('/account')
@@ -2046,6 +2070,7 @@ export async function startConnectOnboarding(): Promise<void> {
     /* The reason is for us, not for them: Stripe puts request context in some
        of these and the account page says one plain sentence instead. */
     console.error(`[connect] account for ${vendor.id}: ${made.error}`)
+    await noteConnectFailure(vendor.id, 'creating the account', made.error)
     redirect('/account?payouts=unavailable')
   }
 
@@ -2060,6 +2085,7 @@ export async function startConnectOnboarding(): Promise<void> {
   const link = await onboardingLink(made.accountId, '/account#payouts')
   if ('error' in link) {
     console.error(`[connect] link for ${vendor.id}: ${link.error}`)
+    await noteConnectFailure(vendor.id, 'opening the onboarding link', link.error)
     redirect('/account?payouts=unavailable')
   }
   redirect(link.url)
@@ -2114,6 +2140,7 @@ export async function startConnectOnboardingByToken(fd: FormData): Promise<void>
   const made = await ensureConnectAccount(db, found.vendorId)
   if ('error' in made) {
     console.error(`[connect] account for ${found.vendorId}: ${made.error}`)
+    await noteConnectFailure(found.vendorId, 'creating the account', made.error)
     redirect(`${back}?payouts=unavailable`)
   }
   if (!found.stripeAccountId) {
@@ -2125,6 +2152,7 @@ export async function startConnectOnboardingByToken(fd: FormData): Promise<void>
   const link = await onboardingLink(made.accountId, `${back}#payouts`)
   if ('error' in link) {
     console.error(`[connect] link for ${found.vendorId}: ${link.error}`)
+    await noteConnectFailure(found.vendorId, 'opening the onboarding link', link.error)
     redirect(`${back}?payouts=unavailable`)
   }
   redirect(link.url)

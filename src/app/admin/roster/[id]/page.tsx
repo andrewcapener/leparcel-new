@@ -168,6 +168,28 @@ export default async function MakerDetail({
     .where(and(eq(auditLog.entity, 'booking'), eq(auditLog.entityId, booking.id)))
     .orderBy(desc(auditLog.at))
 
+  /* The last time Stripe refused this maker's payout setup, if it ever has.
+     The maker is told one plain sentence, which is right, so without this the
+     reason lived only in a platform log nobody reads. "It did not work" is
+     not something anybody can act on; the sentence Stripe actually said is. */
+  const [payoutTrouble] = await db
+    .select({ at: auditLog.at, after: auditLog.after })
+    .from(auditLog)
+    .where(and(
+      eq(auditLog.entity, 'vendor'),
+      eq(auditLog.entityId, vendor.id),
+      eq(auditLog.action, 'connect_failed'),
+    ))
+    .orderBy(desc(auditLog.at))
+    .limit(1)
+  const payoutError = (() => {
+    if (!payoutTrouble?.after) return null
+    try {
+      const v = JSON.parse(payoutTrouble.after) as { during?: string; detail?: string }
+      return v.detail ? { during: v.during ?? 'setting up payouts', detail: v.detail } : null
+    } catch { return null }
+  })()
+
   /* What this maker could be moved to, and what could be added to their
      invoice. Both come off the Show record rather than out of this file, so a
      price nobody typed here can never appear on an invoice (rule 6). */
@@ -288,6 +310,12 @@ export default async function MakerDetail({
         <span className="pos">{booking.vendorCode}</span>
       </nav>
 
+      {payoutError && (
+        <p className="adm-note" role="status">
+          <strong>Stripe refused their payout setup</strong> while {payoutError.during}.
+          It said: {payoutError.detail}
+        </p>
+      )}
       {resendSaid && <p className="adm-note" role="status">{resendSaid}</p>}
       {addonSaid && <p className="adm-note" role="status">{addonSaid}</p>}
       {moveSaid && <p className="adm-note" role="status">{moveSaid}</p>}

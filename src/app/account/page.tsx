@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { cookies } from 'next/headers'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { applications, spaceTypes, vendors } from '@/db/schema'
@@ -121,10 +121,15 @@ export default async function Account({
   /* The booking, if they have one. It only exists once a jury decision made
      one, so this is the difference between "we have your application" and
      "your space is held and here is what it costs". */
+  /* Ordered, and the oldest wins, matching inventory-actions.ts exactly. Two
+     unordered limit(1) queries over one filter are not promised to pick the
+     same row, and a maker holding two bookings at one show would then have
+     her item list written against one and read back from the other. */
   const [booked] = await db
     .select({ id: bookings.id })
     .from(bookings)
     .where(and(eq(bookings.vendorId, vendor.id), eq(bookings.showId, show.id)))
+    .orderBy(asc(bookings.createdAt), asc(bookings.id))
     .limit(1)
   const billing = booked ? await boothInvoice(db, booked.id) : undefined
 
