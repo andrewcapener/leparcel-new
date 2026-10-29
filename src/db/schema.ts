@@ -370,6 +370,12 @@ export const bookings = pgTable('bookings', {
    *  listed, which is what every booking was before this column existed. */
   /** Where they sit on /makers. Null sorts last, then by the old default. */
   lineupOrder: integer('lineup_order'),
+  /** When the maker said their item list was final. Not a lock: they can
+   *  still change it, and the Show's inventoryDueAt is what ends it. It is
+   *  what crosses the row off their to-do list, which typing one line should
+   *  never have done. */
+  inventorySubmittedAt: text('inventory_submitted_at'),
+  inventorySubmittedBy: text('inventory_submitted_by'),
   lineupHiddenAt: text('lineup_hidden_at'),
   lineupHiddenBy: text('lineup_hidden_by'),
   lineupHiddenReason: text('lineup_hidden_reason'),

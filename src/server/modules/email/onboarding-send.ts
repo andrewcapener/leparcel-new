@@ -47,6 +47,7 @@ export async function inviteCandidates(
       bookingId: bookings.id,
       vendorCode: bookings.vendorCode,
       bookingStatus: bookings.status,
+      inventorySubmittedAt: bookings.inventorySubmittedAt,
       shopName: vendors.shopName,
       contactName: vendors.contactName,
       email: vendors.email,
@@ -108,6 +109,7 @@ export async function inviteCandidates(
         })
       : undefined,
     itemCount: countOf.get(r.bookingId) ?? 0,
+    itemsSent: Boolean(r.inventorySubmittedAt),
     sentBefore: already.has(r.email.toLowerCase()),
   }))
 }

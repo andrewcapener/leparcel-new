@@ -1,7 +1,10 @@
 import { Card, CardNote } from './Shell'
-import { addInventoryItem, saveInventoryItem, removeInventoryItem } from './inventory-actions'
 import {
-  formatLine, listNotice, oddCentsNote, tag, type Line, type ListState,
+  addInventoryItem, saveInventoryItem, removeInventoryItem, submitInventory,
+} from './inventory-actions'
+import {
+  formatLine, listNotice, oddCentsNote, tag, sendLabel, sendNotice,
+  type Line, type ListState, type SendState,
 } from '@/server/modules/inventory/lines'
 import { fmtDateTime } from '@/lib/dates'
 
@@ -43,10 +46,13 @@ const dollars = (cents: number) =>
   cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2)
 
 export function Inventory({
-  rows, state, dueAt, notice, echo,
+  rows, state, send, dueAt, notice, echo,
 }: {
   rows: Row[]
   state: ListState
+  /** Whether they have told us it is finished, which is what crosses the
+   *  row off their list. Typing one line never should have. */
+  send: SendState
   dueAt: string | null
   /** The complaint from the last attempt, already in the maker's words. */
   notice?: string
@@ -158,6 +164,21 @@ export function Inventory({
       )}
 
       {odd && <CardNote>{odd}</CardNote>}
+
+      {/* "That is my list." A signal, not a door closing: they can still add
+          and remove, and this asks again when they do. */}
+      {open && rows.length > 0 && (
+        <div className="mk-send">
+          {sendNotice(send) && <p className="mk-card__lede">{sendNotice(send)}</p>}
+          {sendLabel(send) ? (
+            <form action={submitInventory}>
+              <button className="btn btn--primary" type="submit">{sendLabel(send)}</button>
+            </form>
+          ) : (
+            <p className="mk-send__done">Your list is with us.</p>
+          )}
+        </div>
+      )}
 
       {rows.length > 0 && (
         <details className="mk-items__preview">

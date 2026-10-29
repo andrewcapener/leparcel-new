@@ -633,7 +633,9 @@ export default async function MakerDetail({
                 <span className="c">
                   {items.length === 0
                     ? 'nothing yet'
-                    : `${items.length} ${items.length === 1 ? 'line' : 'lines'}`}
+                    : booking.inventorySubmittedAt
+                      ? `${items.length} ${items.length === 1 ? 'line' : 'lines'} · sent ${fmtDateTime(booking.inventorySubmittedAt)}`
+                      : `${items.length} ${items.length === 1 ? 'line' : 'lines'} · not sent yet`}
                 </span>
               </div>
               {items.length === 0 ? (

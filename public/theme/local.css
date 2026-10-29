@@ -3048,3 +3048,8 @@ a.mk-dir__cell:focus-visible{outline:2px solid #BC9658;outline-offset:3px}
 .mk-receipt { margin: 0 0 1.1em; }
 .mk-receipt summary { cursor: pointer; font-size: .92em; opacity: .78; }
 .mk-receipt[open] summary { margin-bottom: .6em; }
+
+/* "That is my list." Set apart from the rows above it, because pressing it
+   is a different kind of act from typing a price. */
+.mk-send { margin-top: 1.4em; padding-top: 1.1em; border-top: 1px solid rgb(var(--text-color) / 0.14); }
+.mk-send__done { margin: 0; font-weight: 600; }

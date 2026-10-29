@@ -10,7 +10,7 @@ const maker = (over: Partial<InviteMaker> = {}): InviteMaker => ({
   bookingId: 'b1', vendorCode: 'MM04', shopName: 'The Mending Table',
   contactName: 'Jo', email: 'jo@example.com',
   track: 'indoor', bookingStatus: 'confirmed', applicationStatus: 'accepted',
-  payoutState: 'not_started', itemCount: 0,
+  payoutState: 'not_started', itemCount: 0, itemsSent: false,
   ...over,
 })
 const open = { itemsOpen: true }
@@ -31,12 +31,16 @@ check('an indoor maker with neither done is asked for both',
 
 /* The one that would read as nobody looking: a maker who filed her list last
    week being asked for it again. */
-check('a maker who filed her list is only asked for payouts',
-  JSON.stringify(needsOf(maker({ itemCount: 6 }))) === JSON.stringify(['payouts']))
+check('a maker who sent her list is only asked for payouts',
+  JSON.stringify(needsOf(maker({ itemCount: 6, itemsSent: true }))) === JSON.stringify(['payouts']))
+/* The one this distinction exists for: lines typed but never sent is not
+   finished, and that maker is exactly who the email is for. */
+check('a maker halfway through her list is still asked for it',
+  (needsOf(maker({ itemCount: 6, itemsSent: false })) ?? []).includes('items'))
 check('a maker whose payouts are live is only asked for the list',
   JSON.stringify(needsOf(maker({ payoutState: 'ready' }))) === JSON.stringify(['items']))
 check('a maker who has done both is left out',
-  heldFor(maker({ payoutState: 'ready', itemCount: 3 })) === 'Already done everything we asked.')
+  heldFor(maker({ payoutState: 'ready', itemCount: 3, itemsSent: true })) === 'Already done everything we asked.')
 
 /* Stripe's verdict is the only one that counts: an account started in
    September and never finished is still a thing to do. */
@@ -77,9 +81,9 @@ check('neither configured means nobody is emailed at all',
 
 const plan = invitePlan([
   maker({ bookingId: 'a' }),
-  maker({ bookingId: 'b', itemCount: 4 }),
+  maker({ bookingId: 'b', itemCount: 4, itemsSent: true }),
   maker({ bookingId: 'c', track: 'outdoor' }),
-  maker({ bookingId: 'd', payoutState: 'ready', itemCount: 2 }),
+  maker({ bookingId: 'd', payoutState: 'ready', itemCount: 2, itemsSent: true }),
 ], open)
 check('the cohort splits', plan.send.length === 2 && plan.held.length === 2)
 check('everybody lands in exactly one list',

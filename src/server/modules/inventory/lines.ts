@@ -209,5 +209,71 @@ export function listNotice(state: ListState, count: number): string {
     : 'Add, change or remove anything until the date above.'
 }
 
-/** Whether the list counts as done, for the checklist row. */
-export const listDone = (count: number): boolean => count > 0
+/* ──────────────────────── "that is my list" ──────────────────────── */
+
+export type SendState =
+  /** Nothing on it yet, so there is nothing to send. */
+  | 'empty'
+  /** Lines on it, never sent. */
+  | 'unsent'
+  /** Sent, and untouched since. */
+  | 'sent'
+  /** Sent, and changed since. Worth saying, because the register reads the
+   *  list and not the moment somebody pressed a button. */
+  | 'changed'
+
+/**
+ * Where a maker's list stands.
+ *
+ * Drew, 29 October: a maker needs to be able to say "this is my final
+ * inventory", and that is what should cross the row off their list.
+ *
+ * It used to tick itself the moment somebody typed one line, which is not the
+ * same thing: a maker with one line out of forty read as finished, and nobody
+ * could tell a list that was ready to key in from one somebody was halfway
+ * through.
+ *
+ * `changed` needs no stored flag. An item carries the time it was written, so
+ * anything newer than the moment it was sent answers it.
+ */
+export function sendState(
+  count: number, submittedAtIso: string | null | undefined, newestChangeIso?: string | null,
+): SendState {
+  if (count === 0) return 'empty'
+  const sent = submittedAtIso ? Date.parse(submittedAtIso) : NaN
+  if (!Number.isFinite(sent)) return 'unsent'
+  const touched = newestChangeIso ? Date.parse(newestChangeIso) : NaN
+  return Number.isFinite(touched) && touched > sent ? 'changed' : 'sent'
+}
+
+/** What the button says, or null when there is nothing to press. */
+export function sendLabel(state: SendState): string | null {
+  if (state === 'empty') return null
+  if (state === 'unsent') return 'This is my list'
+  if (state === 'changed') return 'Send the updated list'
+  return null
+}
+
+/** What the maker is told about having sent it. */
+export function sendNotice(state: SendState, submittedAtIso?: string | null): string | null {
+  if (state === 'unsent') {
+    return 'Tell us when it is finished. You can still change it afterwards.'
+  }
+  if (state === 'sent') {
+    return submittedAtIso
+      ? `Sent to us. Anything you change from here is picked up automatically.`
+      : 'Sent to us.'
+  }
+  if (state === 'changed') {
+    return 'You have changed this since you sent it. Press the button so we know it is settled.'
+  }
+  return null
+}
+
+/**
+ * Whether the list counts as done, for the checklist row.
+ *
+ * Sent, not merely started. A maker who adds three more lines in November has
+ * not undone anything, which is why `changed` still counts.
+ */
+export const listDone = (state: SendState): boolean => state === 'sent' || state === 'changed'

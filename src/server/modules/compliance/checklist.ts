@@ -23,6 +23,7 @@ import { owesPermit, permitState, permitNeedsMaker, type PermitState } from './p
 /* Type only, so this file stays pure: importing the Connect module for real
    would drag the Stripe SDK into a unit test that decides nothing but words. */
 import type { ConnectState } from '../payments/connect'
+import { listDone, type SendState } from '../inventory/lines'
 
 export type ItemState =
   /** Nothing to do: not yet asked, or does not apply to this maker. */
@@ -81,8 +82,9 @@ export type ChecklistInput = {
   onboardingSlot?: string | null
   /** When the item list is wanted. Indoor only. Null until somebody sets it. */
   inventoryDueAt?: string | null
-  /** How many live lines the maker has put on it. */
-  inventoryCount?: number
+  /** Where their list stands: nothing on it, started, or sent to us. Sent is
+   *  what crosses the row off; typing one line never should have. */
+  inventorySend?: SendState
   /** Where this maker stands with Stripe on getting PAID, as opposed to
    *  paying. Undefined when payouts are not configured on this deployment,
    *  which is the one case where the row must not appear: a button that
@@ -323,17 +325,25 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
      on /admin/show and it appears for every indoor maker at once. */
   if (input.track !== 'outdoor' && input.inventoryDueAt) {
     const due = input.inventoryDueAt
-    const n = input.inventoryCount ?? 0
+    const sent = input.inventorySend ?? 'empty'
     /* The row went live the day the list did. It used to say `waiting` with
        no way to act on it, which was right while there was nowhere to type
-       the prices and is wrong now that there is. */
-    const done = n > 0
+       the prices and is wrong now that there is.
+       
+       Done means SENT, not started. A maker with one line out of forty read
+       as finished, and nobody could tell a list ready to key in from one
+       somebody was halfway through. */
+    const done = listDone(sent)
     items.push({
       key: 'items',
       title: 'Your item list',
-      detail: done
-        ? `${n} ${n === 1 ? 'line' : 'lines'} on your list. Add, change or remove anything until the date below.`
-        : 'What you are bringing, with prices, so the register knows your work. One line per price, not one line per item.',
+      detail: sent === 'sent'
+        ? 'Sent to us. Change it any time before the date below and we will pick it up.'
+        : sent === 'changed'
+          ? 'You have changed this since you sent it. Press the button on your list so we know it is settled.'
+          : sent === 'unsent'
+            ? 'Started, and not sent yet. Tell us when it is finished.'
+            : 'What you are bringing, with prices, so the register knows your work. One line per price, not one line per item.',
       /* Done, and still editable. A maker who has filled it in is not being
          chased, and a maker who adds three more lines in November has not
          undone anything. */
@@ -342,7 +352,9 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
       href: '#items',
       action: done
         ? { label: 'Change your list', href: '#items' }
-        : { label: 'Add your prices', href: '#items' },
+        : sent === 'unsent'
+          ? { label: 'Finish your list', href: '#items' }
+          : { label: 'Add your prices', href: '#items' },
       /* Never. A maker whose list is short still sells: somebody writes the
          price on a tag and keys it at the counter. Holding them off the floor
          over a form would cost this business a table and them a weekend. */

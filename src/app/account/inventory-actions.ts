@@ -193,3 +193,36 @@ export async function removeInventoryItem(fd: FormData): Promise<void> {
   revalidatePath('/account')
   back('removed')
 }
+
+/**
+ * "That is my list."
+ *
+ * Drew, 29 October: a maker needs to be able to say they are finished, and
+ * that is what crosses the row off their to-do list. Typing one line never
+ * should have.
+ *
+ * Not a lock. They can still add and remove afterwards, and the card asks
+ * them to press it again if they do. The Show's inventory date is what
+ * actually ends it.
+ */
+export async function submitInventory(): Promise<void> {
+  const who = await whoIsAsking()
+  if ('no' in who) back(who.no)
+
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(inventoryItems)
+    .where(and(eq(inventoryItems.bookingId, who.bookingId), isNull(inventoryItems.voidedAt)))
+  if (Number(n) === 0) back('There is nothing on your list yet.')
+
+  await db.update(bookings)
+    .set({
+      inventorySubmittedAt: new Date().toISOString(),
+      inventorySubmittedBy: 'maker',
+    })
+    .where(eq(bookings.id, who.bookingId))
+
+  revalidatePath('/account')
+  revalidatePath('/admin/roster')
+  back('sent')
+}

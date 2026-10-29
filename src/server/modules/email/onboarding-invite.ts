@@ -39,6 +39,9 @@ export type InviteMaker = {
   payoutState?: ConnectState
   /** Live lines on their item list. */
   itemCount: number
+  /** Whether they have told us the list is finished. A maker with lines on it
+   *  who never pressed the button is still someone to ask. */
+  itemsSent: boolean
 }
 
 export type Invite = { maker: InviteMaker; needs: Need[] }
@@ -86,7 +89,9 @@ export function inviteFor(
 }
 
 const payoutsConfigured = (m: InviteMaker) => m.payoutState !== undefined
-const itemsWanted = (m: InviteMaker, itemsOpen: boolean) => itemsOpen && m.itemCount === 0
+/* Sent, not merely started. Somebody halfway through a list has not finished
+   telling us, and is exactly who this email is for. */
+const itemsWanted = (m: InviteMaker, itemsOpen: boolean) => itemsOpen && !m.itemsSent
 
 /** The whole cohort, split into who gets one and who does not. */
 export function invitePlan(

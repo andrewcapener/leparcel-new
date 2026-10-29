@@ -1,6 +1,7 @@
 import {
   priceFromDollars, tag, readLine, formatLine, makerBlock,
-  oddCentsNote, listState, listNotice, listDone, type Line, type LineInput,
+  oddCentsNote, listState, listNotice, listDone, sendState, sendLabel, sendNotice,
+  type Line, type LineInput,
 } from './lines'
 
 let failures = 0
@@ -123,13 +124,37 @@ check('a shut empty list offers a way through',
 check('an open empty list explains the shape',
   listNotice('open', 0).includes('One line per price'))
 
-check('an empty list is not done', listDone(0) === false)
-check('one line is done', listDone(1) === true)
+/* ── "this is my list" ───────────────────────────────────────────────── */
+
+const T0 = '2026-11-01T12:00:00.000Z'
+const T1 = '2026-11-01T13:00:00.000Z'
+
+check('nothing on it is empty', sendState(0, null) === 'empty')
+/* The one this exists to stop: one line out of forty used to read as done. */
+check('lines but never sent is unsent', sendState(3, null) === 'unsent')
+check('sent and untouched is sent', sendState(3, T0, T0) === 'sent')
+check('sent and changed since says so', sendState(3, T0, T1) === 'changed')
+check('a change before sending does not count', sendState(3, T1, T0) === 'sent')
+check('rubbish in the sent time reads as unsent', sendState(3, 'nope') === 'unsent')
+check('no change time is just sent', sendState(3, T0) === 'sent')
+
+check('an empty list offers no button', sendLabel('empty') === null)
+check('an unsent list offers one', sendLabel('unsent') === 'This is my list')
+check('a changed list asks again', (sendLabel('changed') ?? '').includes('updated'))
+check('a settled list offers nothing to press', sendLabel('sent') === null)
+
+check('an empty list is not done', listDone('empty') === false)
+check('started but unsent is not done', listDone('unsent') === false)
+check('sent is done', listDone('sent') === true)
+/* A maker who adds three more lines in November has not undone anything. */
+check('changed is still done', listDone('changed') === true)
 
 /* House style: these strings are read by makers. */
 const copy = [
   listNotice('not_open', 0), listNotice('open', 0), listNotice('open', 3),
   listNotice('locked', 0), listNotice('locked', 3),
+  sendNotice('unsent') ?? '', sendNotice('sent', T0) ?? '', sendNotice('changed') ?? '',
+  sendLabel('unsent') ?? '', sendLabel('changed') ?? '',
   oddCentsNote([{ label: 'A', priceCents: 750, bundleQty: null, bundleCents: null }]) ?? '',
   bad({ bundleQty: '2', bundlePrice: '12' }) ?? '',
 ]

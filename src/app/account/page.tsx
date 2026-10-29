@@ -19,7 +19,7 @@ import { CallTimes } from './CallTimes'
 import { PayoutSetup } from './PayoutSetup'
 import { Inventory } from './Inventory'
 import { inventoryFor } from '@/server/modules/inventory/read'
-import { listState } from '@/server/modules/inventory/lines'
+import { listState, sendState } from '@/server/modules/inventory/lines'
 import { manualOptions, qrDataUri } from '@/server/modules/payments/manual'
 import { canCollect } from '@/server/modules/payments/booking-status'
 import { checklistFor, clearForLoadIn, slotOptions } from '@/server/modules/compliance/checklist'
@@ -197,6 +197,16 @@ export default async function Account({
   const wantsItems = track !== 'outdoor' && billing !== undefined && app?.status === 'accepted'
   const items = wantsItems ? await inventoryFor(db, billing.booking.id) : []
   const itemState = listState(show.inventoryDueAt, new Date().toISOString())
+  /* Whether they have told us it is finished, and whether anything has moved
+     since. The newest write on the list answers the second without a column:
+     an item carries when it was made and when it was last changed. */
+  const newestItemChange = items
+    .map((i) => i.updatedAt ?? i.createdAt)
+    .sort()
+    .at(-1) ?? null
+  const itemSend = sendState(
+    items.length, billing?.booking.inventorySubmittedAt, newestItemChange,
+  )
 
   const checklist = app
     ? checklistFor({
@@ -219,7 +229,7 @@ export default async function Account({
           : show.onboardingSlotsIndoor,
         onboardingSlot: billing?.booking.onboardingSlot,
         inventoryDueAt: show.inventoryDueAt,
-        inventoryCount: items.length,
+        inventorySend: itemSend,
         payoutState: payouts,
         nowIso: new Date().toISOString(),
         contactEmail: CONTACT_EMAIL,
@@ -328,6 +338,7 @@ export default async function Account({
                   bundleQty: i.bundleQty, bundleCents: i.bundleCents,
                 }))}
                 state={itemState}
+                send={itemSend}
                 dueAt={show.inventoryDueAt}
                 notice={sp.inv && sp.inv !== 'saved' && sp.inv !== 'removed'
                   ? (sp.inv === 'shut' ? 'The list is closed. Write to us and we will make the change.' : sp.inv)
