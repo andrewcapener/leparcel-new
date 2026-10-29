@@ -9,7 +9,7 @@ import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, inventoryItems, vendors } from '@/db/schema'
 import { MAKER_COOKIE, readSession } from '@/lib/makerAuth'
-import { listState, readLine } from '@/server/modules/inventory/lines'
+import { listState, readLine, readPastedList } from '@/server/modules/inventory/lines'
 import type { InvCode } from '@/server/modules/inventory/notices'
 
 /**
@@ -164,6 +164,55 @@ export async function addInventoryItem(fd: FormData): Promise<void> {
     }
 
     revalidatePath('/account')
+    back()
+  })
+}
+
+/**
+ * A whole list, pasted in the shape Elise asks for it.
+ *
+ * Drew, 29 October: "thats how she usually asks for it." Makers already
+ * answer her in that format, so typing the same list again one field at a
+ * time is work we invented. Everything readable is added; everything else
+ * comes back in the box with the reason beside it.
+ */
+export async function addPastedList(fd: FormData): Promise<void> {
+  await guard('paste', async () => {
+    const who = await whoIsAsking()
+    if ('no' in who) back(who.no)
+    if (!who.open) back('shut')
+
+    const raw = field(fd, 'list')
+    const read = readPastedList(raw)
+    if (read.lines.length === 0) back('nolines', { list: raw })
+
+    try {
+      const [{ n }] = await db
+        .select({ n: sql<number>`coalesce(max(${inventoryItems.sortOrder}), 0)` })
+        .from(inventoryItems)
+        .where(and(eq(inventoryItems.bookingId, who.bookingId), isNull(inventoryItems.voidedAt)))
+
+      await db.insert(inventoryItems).values(read.lines.map((line, i) => ({
+        id: randomUUID(),
+        bookingId: who.bookingId,
+        label: line.label,
+        priceCents: line.priceCents,
+        bundleQty: line.bundleQty,
+        bundleCents: line.bundleCents,
+        sortOrder: Number(n) + 1 + i,
+        createdBy: 'maker',
+      })))
+    } catch (err) {
+      console.error(`[inventory] paste for ${who.bookingId}:`, err)
+      back('dberr', { list: raw })
+    }
+
+    revalidatePath('/account')
+    /* What could not be read goes back in the box, so the maker fixes two
+       lines rather than hunting through forty. */
+    if (read.bad.length > 0) {
+      back('pasted', { list: read.bad.map((b) => b.raw).join('\n') })
+    }
     back()
   })
 }

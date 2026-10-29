@@ -29,6 +29,8 @@ export const INV_CODES = {
   gone: 'That line is no longer on your list.',
   empty: 'There is nothing on your list yet.',
   shut: 'The list is closed. Write to us and we will make the change.',
+  pasted: 'Added everything we could read. Anything we could not is still in the box, with the reason.',
+  nolines: 'We could not read a single price out of that. One line per thing, like "Mugs: $12".',
   dberr: 'We could not save that just then. Try again, and if it keeps happening write to us.',
 } as const
 

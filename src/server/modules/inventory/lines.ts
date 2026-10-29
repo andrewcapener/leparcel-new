@@ -101,6 +101,19 @@ export function readLine(input: LineInput): { line: Line } | { bad: string } {
   if (!qRaw && !bRaw) {
     return { line: { label, priceCents: price.cents, bundleQty: null, bundleCents: null } }
   }
+  /* "Buy 1 for $12" is not a multi-buy, it is the price, and it is what
+     anybody types who reads those two boxes as "how many have you got".
+     That was a dead end, and Drew hit it three times running with lines he
+     had every right to expect to save. A quantity below two carries no
+     multi-buy, so the line is kept at its single price instead of being
+     thrown back. Checked before the half-a-bundle rules below, so a lone 0
+     or 1 in the quantity box is answered the same way whatever is beside it.
+     What the register ends up with is on the card, under "What the register
+     will see". */
+  if (/^\d+$/.test(qRaw) && Number(qRaw) < 2) {
+    return { line: { label, priceCents: price.cents, bundleQty: null, bundleCents: null } }
+  }
+
   /* Half a bundle is the most likely mistake on this form, and silently
      dropping it would put the wrong price on the shelf. */
   if (!qRaw) return { bad: 'How many for that bundle price?' }
@@ -108,7 +121,6 @@ export function readLine(input: LineInput): { line: Line } | { bad: string } {
 
   if (!/^\d+$/.test(qRaw)) return { bad: 'The bundle quantity is a whole number, like 2.' }
   const bundleQty = Number(qRaw)
-  if (bundleQty < 2) return { bad: 'A bundle is two or more.' }
   if (bundleQty > 99) return { bad: 'That is a lot. Keep bundles under 100.' }
 
   const bundle = priceFromDollars(bRaw)
@@ -277,3 +289,91 @@ export function sendNotice(state: SendState, submittedAtIso?: string | null): st
  * not undone anything, which is why `changed` still counts.
  */
 export const listDone = (state: SendState): boolean => state === 'sent' || state === 'changed'
+
+/**
+ * A list pasted in the shape Elise already asks for it.
+ *
+ * Drew, 29 October: "you saw elise's screenshot, thats how she usually asks
+ * for it." She does, and makers already answer in it, which makes typing the
+ * same list again field by field busywork we invented. Her own example, from
+ * the instructions that ship with this table:
+ *
+ *     MM15 Maggie's Maps:
+ *     Maps: $5 or buy 2/$8
+ *     Stickers/Maps/gift tags: $7
+ *     Table cloths / Backpacks: $20 or buy 2/$36
+ *
+ * So that is the input. One line per price, the same as the form, and
+ * formatLine already prints this exact shape, which means a maker can paste
+ * back what the card showed her last week and get the same list.
+ *
+ * Forgiving about everything that is not a number: bullets, dashes instead
+ * of colons, "2 for $8" or "buy 2/$8" or "2/$8", a missing dollar sign. Not
+ * forgiving about the numbers themselves, which go through the same
+ * priceFromDollars and the same bundle rules as the form, so nothing reaches
+ * the register from here that could not have been typed into the boxes.
+ *
+ * Whatever cannot be read comes back with its line and the reason, so the
+ * maker fixes two lines rather than retyping forty.
+ */
+export type PastedList = {
+  lines: Line[]
+  bad: { raw: string; why: string }[]
+}
+
+/* The two long dashes, built rather than written: this file is checked for
+   them as prose, and here they are punctuation somebody else typed. */
+const LONG_DASHES = String.fromCharCode(0x2013) + String.fromCharCode(0x2014)
+/* A trailing multi-buy: "or buy 2/$8", "buy 2/$8", "2 for $8", "2/$8". */
+const BUNDLE_AT_END = /[,;]?\s*(?:or\s+)?(?:buy\s+)?(\d+)\s*(?:\/|\s+for\s+)\s*\$?\s*([\d.,]+)\s*$/i
+/* The price: the last dollar amount left on the line. The sign is optional,
+   because plenty of pasted lists read "Cards: 7". */
+const PRICE_AT_END = /\$\s*([\d.,]+)\s*$/
+const BARE_PRICE_AT_END = new RegExp(`(?:^|[\\s:${LONG_DASHES}-])([\\d.,]+)\\s*$`)
+/* A heading like "MM15 Maggie's Maps:", which names the maker, not a price. */
+const HEADING = /^[^$]*:\s*$/
+const BULLET = new RegExp(`^[-*${String.fromCharCode(0x2022)}${LONG_DASHES}]+\\s*`)
+const TRAILING_SEP = new RegExp(`[\\s:$${LONG_DASHES}-]+$`)
+
+export function readPastedList(text: string): PastedList {
+  const out: PastedList = { lines: [], bad: [] }
+
+  for (const rawLine of (text ?? '').split(/\r?\n/)) {
+    const raw = rawLine.trim()
+    if (!raw) continue
+    /* Her first line names the maker. We know who they are. */
+    if (HEADING.test(raw)) continue
+
+    /* Bullets and dashes people paste out of Notes and Docs. */
+    let rest = raw.replace(BULLET, '').trim()
+
+    let bundleQty = ''
+    let bundlePrice = ''
+    const bundle = rest.match(BUNDLE_AT_END)
+    if (bundle) {
+      bundleQty = bundle[1]!
+      bundlePrice = bundle[2]!
+      rest = rest.slice(0, bundle.index).trim()
+      /* What is left of "Maps: $5 or". */
+      rest = rest.replace(/[,;]?\s*\bor\b\s*$/i, '').trim()
+    }
+
+    const price = rest.match(PRICE_AT_END) ?? rest.match(BARE_PRICE_AT_END)
+    if (!price) {
+      out.bad.push({ raw, why: 'We could not find a price on that line.' })
+      continue
+    }
+    const label = rest
+      .slice(0, rest.lastIndexOf(price[1]!))
+      .replace(TRAILING_SEP, '')
+      .trim()
+
+    const read = readLine({
+      label, price: price[1]!, bundleQty, bundlePrice,
+    })
+    if ('bad' in read) out.bad.push({ raw, why: read.bad })
+    else out.lines.push(read.line)
+  }
+
+  return out
+}

@@ -64,7 +64,7 @@ export default async function Account({
     payouts?: string
     /** The item list: the complaint from the last attempt, and what was
      *  typed, so a refused line is never retyped from scratch. */
-    inv?: string; l?: string; p?: string; bq?: string; bp?: string; row?: string
+    inv?: string; l?: string; p?: string; bq?: string; bp?: string; row?: string; list?: string
   }>
 }) {
   const show = await activeShow()
@@ -372,7 +372,7 @@ export default async function Account({
                 send={itemSend}
                 dueAt={show.inventoryDueAt}
                 notice={invNotice ?? undefined}
-                echo={{ l: sp.l, p: sp.p, bq: sp.bq, bp: sp.bp }}
+                echo={{ l: sp.l, p: sp.p, bq: sp.bq, bp: sp.bp, list: sp.list }}
               />
             )}
 

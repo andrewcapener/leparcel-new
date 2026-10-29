@@ -1,5 +1,5 @@
 import {
-  priceFromDollars, tag, readLine, formatLine, makerBlock,
+  priceFromDollars, tag, readLine, formatLine, makerBlock, readPastedList,
   oddCentsNote, listState, listNotice, listDone, sendState, sendLabel, sendNotice,
   type Line, type LineInput,
 } from './lines'
@@ -73,7 +73,17 @@ check('and the one with no bundle',
 /* Half a bundle is the likeliest mistake on the form. */
 check('a quantity with no price is refused', bad({ bundleQty: '2' }) !== null)
 check('a price with no quantity is refused', bad({ bundlePrice: '8' }) !== null)
-check('a bundle of one is refused', bad({ bundleQty: '1', bundlePrice: '4' }) !== null)
+/* Not refused, saved. "Buy 1 for $12" is what anybody types who reads those
+   two boxes as "how many have you got": there is no multi-buy in a quantity
+   of one, so the line is kept at its single price rather than thrown back.
+   Drew hit the old dead end three times running. */
+const one = readLine({ label: 'Ceramic Mug', price: '12', bundleQty: '1', bundlePrice: '12' })
+check('a quantity of one saves as a plain price',
+  'line' in one && one.line.bundleQty === null && one.line.bundleCents === null)
+check('and reads back as just the price',
+  'line' in one && formatLine(one.line) === 'Ceramic Mug: $12')
+check('a quantity of zero does the same',
+  'line' in readLine({ label: 'Mug', price: '12', bundleQty: '0', bundlePrice: '' }))
 check('a fractional quantity is refused', bad({ bundleQty: '2.5', bundlePrice: '8' }) !== null)
 
 /* The quiet one: a bundle that is not a discount is a typo every time, and
@@ -164,3 +174,60 @@ check('no fancy dashes and no exclamations in anything a maker reads',
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('inventory lines: a price never comes from a float, and a bundle is always a discount')
+
+
+/* ── Elise's own format, pasted straight in ──────────────────────────── */
+
+/* Her example, exactly as the instructions shipped with the table state it. */
+const elise = readPastedList([
+  "MM15 Maggie's Maps:",
+  'Maps: $5 or buy 2/$8',
+  'Stickers/Maps/gift tags: $7',
+  'Table cloths / Backpacks: $20 or buy 2/$36',
+].join('\n'))
+
+check('every priced line is read', elise.lines.length === 3)
+check('and nothing is reported as broken', elise.bad.length === 0)
+check('the maker heading is not a line', !elise.lines.some((l) => l.label.includes('Maggie')))
+check('a multi-buy survives the round trip',
+  formatLine(elise.lines[0]!) === 'Maps: $5 or buy 2/$8')
+check('a label with slashes in it is kept whole',
+  elise.lines[1]!.label === 'Stickers/Maps/gift tags')
+check('and so is one with spaces around them',
+  elise.lines[2]!.label === 'Table cloths / Backpacks')
+check('the dearer multi-buy reads back',
+  formatLine(elise.lines[2]!) === 'Table cloths / Backpacks: $20 or buy 2/$36')
+
+/* What the card prints is what it takes back. A maker pasting last week's
+   list out of her own email must land exactly where she started. */
+const roundTrip = readPastedList(elise.lines.map(formatLine).join('\n'))
+check('what the register shows can be pasted back in',
+  JSON.stringify(roundTrip.lines) === JSON.stringify(elise.lines))
+
+/* The shapes people actually paste. */
+const loose = readPastedList([
+  '- Mugs - $12',
+  '* Prints $25',
+  'Cards: 7',
+  'Totes: $30, 2 for $50',
+  'Pins: $4 buy 3/$10',
+].join('\n'))
+check('bullets, dashes and a missing dollar sign all read', loose.lines.length === 5)
+check('a dash instead of a colon keeps the label', loose.lines[0]!.label === 'Mugs')
+check('no separator at all still reads', loose.lines[1]!.label === 'Prints')
+check('"2 for $50" is a multi-buy', loose.lines[3]!.bundleQty === 2)
+check('"buy 3/$10" is too', loose.lines[4]!.bundleCents === 1000)
+
+/* Nothing reaches the register from here that the form would have refused. */
+const refused = readPastedList([
+  'Good one: $10',
+  'No price on this one',
+  'Dearer in bulk: $5 or buy 2/$20',
+].join('\n'))
+check('the readable line is kept', refused.lines.length === 1)
+check('and the other two come back', refused.bad.length === 2)
+check('each with the line as they typed it',
+  refused.bad[0]!.raw === 'No price on this one')
+check('a bulk price that is not a discount is refused here too',
+  refused.bad[1]!.why.includes('should cost less'))
+check('blank lines are not errors', readPastedList('\n\n  \n').bad.length === 0)

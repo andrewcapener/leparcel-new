@@ -1,6 +1,6 @@
 import { Card, CardNote } from './Shell'
 import {
-  addInventoryItem, saveInventoryItem, removeInventoryItem, submitInventory,
+  addInventoryItem, addPastedList, saveInventoryItem, removeInventoryItem, submitInventory,
 } from './inventory-actions'
 import {
   formatLine, listNotice, oddCentsNote, tag, sendLabel, sendNotice,
@@ -64,6 +64,46 @@ function Money({ children }: { children: React.ReactNode }) {
   )
 }
 
+/**
+ * The multi-buy, folded away until somebody wants one.
+ *
+ * Drew typed 1 and 12 into Buy and For three separate times, and he was
+ * right to: two empty boxes beside a price read as "how many have you got,
+ * and for how much". Every one of those lines was refused. The answer was
+ * never a better refusal, it was not asking the question. Most lines on most
+ * lists are a thing and a price, so that is the whole form now, and the two
+ * boxes appear for the makers who actually sell "buy 2/$8".
+ *
+ * A <details>, so it costs no JavaScript and the form still works without
+ * any: the inputs are in the document whether it is open or shut, and an
+ * empty pair means no multi-buy, which is what readLine already expects.
+ * Open on a line that already has one, so nothing is hidden from the maker
+ * who set it.
+ */
+function MultiBuy({ qty, price }: { qty: string; price: string }) {
+  const has = qty !== '' || price !== ''
+  return (
+    <details className="mk-item__opt" open={has}>
+      <summary>{has ? 'Multi-buy' : 'Add a multi-buy'}</summary>
+      <span className="mk-item__optf">
+        <label className="mk-item__f mk-item__f--sm">
+          <span className="lb">Buy</span>
+          <input className="inp" type="text" inputMode="numeric" name="bundleQty"
+            defaultValue={qty} placeholder="2" />
+        </label>
+        <label className="mk-item__f">
+          <span className="lb">For</span>
+          <Money>
+            <input className="inp" type="text" inputMode="decimal" name="bundlePrice"
+              defaultValue={price} placeholder="8" />
+          </Money>
+        </label>
+        <span className="mk-item__opth">Two or more, for less than they cost singly.</span>
+      </span>
+    </details>
+  )
+}
+
 /** Dollars for an input box: no symbol, and no .00 nobody typed. */
 const dollars = (cents: number) =>
   cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2)
@@ -80,7 +120,7 @@ export function Inventory({
   /** The complaint from the last attempt, already in the maker's words. */
   notice?: string
   /** What they typed when it was refused, so nothing is retyped. */
-  echo?: { l?: string; p?: string; bq?: string; bp?: string }
+  echo?: { l?: string; p?: string; bq?: string; bp?: string; list?: string }
 }) {
   const lines = rows.map(asLine)
   const odd = oddCentsNote(lines)
@@ -126,22 +166,12 @@ export function Inventory({
                         defaultValue={dollars(r.priceCents)} required />
                     </Money>
                   </label>
-                  <label className="mk-item__f mk-item__f--sm">
-                    <span className="lb">Buy</span>
-                    <input className="inp" type="text" inputMode="numeric" name="bundleQty"
-                      defaultValue={r.bundleQty ?? ''} placeholder="2" />
-                  </label>
-                  <label className="mk-item__f">
-                    <span className="lb">For</span>
-                    <Money>
-                      <input className="inp" type="text" inputMode="decimal" name="bundlePrice"
-                        defaultValue={r.bundleCents !== null ? dollars(r.bundleCents) : ''}
-                        placeholder="8" />
-                    </Money>
-                  </label>
                   <span className="mk-item__do">
                     <button className="btn btn--quiet" type="submit">Save</button>
                   </span>
+                  <MultiBuy
+                    qty={r.bundleQty !== null ? String(r.bundleQty) : ''}
+                    price={r.bundleCents !== null ? dollars(r.bundleCents) : ''} />
                 </form>
               ) : (
                 <p className="mk-item__read">{formatLine(asLine(r))}</p>
@@ -163,9 +193,7 @@ export function Inventory({
           the form in has already stopped reading. */}
       {open && (
         <p className="mk-item__hint">
-          Price each is what one costs. Leave Buy and For empty unless you sell
-          a multi-buy: 2 and 8 reads as &ldquo;buy 2/$8&rdquo; at the register,
-          and a multi-buy has to be two or more for less than they cost singly.
+          A thing and what one of them costs. That is all most lines need.
         </p>
       )}
 
@@ -188,22 +216,34 @@ export function Inventory({
                 defaultValue={echo?.p ?? ''} placeholder="7" required />
             </Money>
           </label>
-          <label className="mk-item__f mk-item__f--sm">
-            <span className="lb">Buy</span>
-            <input className="inp" type="text" inputMode="numeric" name="bundleQty"
-              defaultValue={echo?.bq ?? ''} placeholder="2" />
-          </label>
-          <label className="mk-item__f">
-            <span className="lb">For</span>
-            <Money>
-              <input className="inp" type="text" inputMode="decimal" name="bundlePrice"
-                defaultValue={echo?.bp ?? ''} placeholder="8" />
-            </Money>
-          </label>
           <span className="mk-item__do">
             <button className="btn btn--primary" type="submit">Add</button>
           </span>
+          <MultiBuy qty={echo?.bq ?? ''} price={echo?.bp ?? ''} />
         </form>
+      )}
+
+      {/* The whole list at once, in the format Elise already asks for.
+          Shut by default, because the form above is the quicker way to add
+          one thing, and this is the quicker way to add thirty. */}
+      {open && (
+        <details className="mk-paste" open={Boolean(echo?.list)}>
+          <summary>Paste your whole list instead</summary>
+          <form action={addPastedList}>
+            <p className="mk-item__hint">
+              One line per price, the way you would write it in an email. We
+              read &ldquo;Maps: $5 or buy 2/$8&rdquo;, and we ignore a heading
+              with your name on it.
+            </p>
+            <label>
+              <span className="lb">Your list</span>
+              <textarea className="inp mk-paste__box" name="list" rows={6}
+                defaultValue={echo?.list ?? ''}
+                placeholder={'Maps: $5 or buy 2/$8\nStickers/Maps/gift tags: $7\nTable cloths / Backpacks: $20 or buy 2/$36'} />
+            </label>
+            <button className="btn btn--primary" type="submit">Add these</button>
+          </form>
+        </details>
       )}
 
       {odd && <CardNote>{odd}</CardNote>}

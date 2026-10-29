@@ -3026,6 +3026,37 @@ a.mk-dir__cell:focus-visible{outline:2px solid #BC9658;outline-offset:3px}
 }
 .mk-item__f .mk-money .inp { padding-left: 1.55em; }
 
+/* Remove lines up with Save rather than floating against a row that the
+   multi-buy has made taller. */
+.mk-item { align-items: flex-start; }
+.mk-item__rm { margin-top: 1.55em; }
+
+/* The multi-buy, on its own line under the main row and shut by default. */
+.mk-item__opt { flex: 1 1 100%; margin-top: .2em; }
+.mk-item__opt > summary {
+  cursor: pointer; font-size: .86em; opacity: .7;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+.mk-item__optf {
+  display: flex; align-items: flex-end; gap: .6em; flex-wrap: wrap; margin-top: .55em;
+}
+.mk-item__opth { font-size: .88em; opacity: .66; flex: 1 1 14em; }
+
+/* The whole list at once, in the format Elise already asks for. */
+.mk-paste { margin-top: 1.1em; }
+.mk-paste > summary {
+  cursor: pointer; font-size: .9em; letter-spacing: .04em; text-transform: uppercase;
+}
+.mk-paste form { margin-top: .7em; }
+.mk-paste__box {
+  width: 100%; display: block; margin-bottom: .8em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .95em;
+  line-height: 1.5; resize: vertical;
+}
+
+/* The due date needs air under it; the lede was sitting on top of it. */
+.mk-task__due { margin-bottom: .9em; }
+
 /* What to type, above the boxes rather than under them. */
 .mk-item__hint { font-size: .92em; opacity: .72; margin: 0 0 .7em; }
 
