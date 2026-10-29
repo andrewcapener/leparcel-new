@@ -20,6 +20,8 @@ import {
   NOTE_MAX, addonNotice, resendNotice, resendProblem,
 } from '@/app/admin/roster/resend-lines'
 import { moveNotice, lineupNotice } from '@/server/modules/roster/track'
+import { inventoryFor } from '@/server/modules/inventory/read'
+import { formatLine } from '@/server/modules/inventory/lines'
 import { spaceNotice } from '@/server/modules/roster/spaces'
 import { boothInvoice } from '@/server/modules/payments/booth'
 import { ledgerFor, standing, standingWords } from '@/server/modules/payments/ledger'
@@ -167,6 +169,13 @@ export default async function MakerDetail({
     .from(auditLog)
     .where(and(eq(auditLog.entity, 'booking'), eq(auditLog.entityId, booking.id)))
     .orderBy(desc(auditLog.at))
+
+  /* Their item list, as the register will read it. On this page because it
+     is the first thing anybody checks when a maker says "I added my prices
+     and nothing happened": rows here mean the writing worked and the reading
+     did not, and no rows mean the opposite. It is also simply what staff need
+     to see before the show. */
+  const items = await inventoryFor(db, booking.id)
 
   /* The last time Stripe refused this maker's payout setup, if it ever has.
      The maker is told one plain sentence, which is right, so without this the
@@ -615,6 +624,34 @@ export default async function MakerDetail({
               is what an outdoor maker who is there all three days needs. A
               space with a price lands on her invoice as its own line and she
               can be re-invoiced from this page. */}
+          {/* Indoor only: Mermade rings those sales, so Mermade needs the
+              prices. An outdoor maker runs her own register. */}
+          {space.track !== 'outdoor' && (
+            <>
+              <div className="adm-sec" style={{ marginTop: 26 }}>
+                <h2>Their item list</h2>
+                <span className="c">
+                  {items.length === 0
+                    ? 'nothing yet'
+                    : `${items.length} ${items.length === 1 ? 'line' : 'lines'}`}
+                </span>
+              </div>
+              {items.length === 0 ? (
+                <p className="adm-note">
+                  They have not put any prices in yet. The list opens on their
+                  account page once the show has an item list date.
+                </p>
+              ) : (
+                <pre className="adm-pre" style={{ maxWidth: 760 }}>
+                  {items.map((i) => formatLine({
+                    label: i.label, priceCents: i.priceCents,
+                    bundleQty: i.bundleQty, bundleCents: i.bundleCents,
+                  })).join('\n')}
+                </pre>
+              )}
+            </>
+          )}
+
           <div className="adm-sec" style={{ marginTop: 26 }}>
             <h2>What they have at this show</h2>
             <span className="c">{liveSpaces.length} {liveSpaces.length === 1 ? 'space' : 'spaces'}</span>

@@ -111,8 +111,7 @@ export async function addInventoryItem(fd: FormData): Promise<void> {
       priceCents: read.line.priceCents,
       bundleQty: read.line.bundleQty,
       bundleCents: read.line.bundleCents,
-      note: field(fd, 'note').trim() || null,
-      sortOrder: Number(n) + 1,
+        sortOrder: Number(n) + 1,
       createdBy: 'maker',
     })
   } catch (err) {
@@ -162,8 +161,7 @@ export async function saveInventoryItem(fd: FormData): Promise<void> {
       priceCents: read.line.priceCents,
       bundleQty: read.line.bundleQty,
       bundleCents: read.line.bundleCents,
-      note: field(fd, 'note').trim() || null,
-      updatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
     }).where(eq(inventoryItems.id, row.id))
   } catch (err) {
     console.error(`[inventory] save ${row.id}:`, err)
@@ -194,13 +192,4 @@ export async function removeInventoryItem(fd: FormData): Promise<void> {
 
   revalidatePath('/account')
   back('removed')
-}
-
-/** The live list, newest ordering, for the page to render. */
-export async function inventoryFor(bookingId: string) {
-  return db
-    .select()
-    .from(inventoryItems)
-    .where(and(eq(inventoryItems.bookingId, bookingId), isNull(inventoryItems.voidedAt)))
-    .orderBy(asc(inventoryItems.sortOrder), asc(inventoryItems.createdAt))
 }

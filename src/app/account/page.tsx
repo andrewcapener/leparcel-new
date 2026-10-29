@@ -18,7 +18,7 @@ import { WhatYouTold, YourDetails } from './YourApplication'
 import { CallTimes } from './CallTimes'
 import { PayoutSetup } from './PayoutSetup'
 import { Inventory } from './Inventory'
-import { inventoryFor } from './inventory-actions'
+import { inventoryFor } from '@/server/modules/inventory/read'
 import { listState } from '@/server/modules/inventory/lines'
 import { manualOptions, qrDataUri } from '@/server/modules/payments/manual'
 import { canCollect } from '@/server/modules/payments/booking-status'
@@ -195,7 +195,7 @@ export default async function Account({
   /* The item list. Indoor only: an outdoor maker rings their own sales and
      the register never needs to know their prices. */
   const wantsItems = track !== 'outdoor' && billing !== undefined && app?.status === 'accepted'
-  const items = wantsItems ? await inventoryFor(billing.booking.id) : []
+  const items = wantsItems ? await inventoryFor(db, billing.booking.id) : []
   const itemState = listState(show.inventoryDueAt, new Date().toISOString())
 
   const checklist = app
@@ -325,7 +325,7 @@ export default async function Account({
               <Inventory
                 rows={items.map((i) => ({
                   id: i.id, label: i.label, priceCents: i.priceCents,
-                  bundleQty: i.bundleQty, bundleCents: i.bundleCents, note: i.note,
+                  bundleQty: i.bundleQty, bundleCents: i.bundleCents,
                 }))}
                 state={itemState}
                 dueAt={show.inventoryDueAt}

@@ -31,7 +31,6 @@ export type Row = {
   priceCents: number
   bundleQty: number | null
   bundleCents: number | null
-  note: string | null
 }
 
 const asLine = (r: Row): Line => ({
@@ -104,19 +103,12 @@ export function Inventory({
                       defaultValue={r.bundleCents !== null ? dollars(r.bundleCents) : ''}
                       placeholder="8" />
                   </label>
-                  <label className="mk-item__f mk-item__f--grow">
-                    <span className="lb">Note for the register</span>
-                    <input className="inp" type="text" name="note"
-                      defaultValue={r.note ?? ''} maxLength={140} />
-                  </label>
                   <span className="mk-item__do">
                     <button className="btn btn--quiet" type="submit">Save</button>
                   </span>
                 </form>
               ) : (
-                <p className="mk-item__read">{formatLine(asLine(r))}
-                  {r.note && <span className="mk-item__note"> · {r.note}</span>}
-                </p>
+                <p className="mk-item__read">{formatLine(asLine(r))}</p>
               )}
               {open && (
                 <form action={removeInventoryItem} className="mk-item__rm">
@@ -151,10 +143,6 @@ export function Inventory({
             <span className="lb">For</span>
             <input className="inp" type="text" inputMode="decimal" name="bundlePrice"
               defaultValue={echo?.bp ?? ''} placeholder="12" />
-          </label>
-          <label className="mk-item__f mk-item__f--grow">
-            <span className="lb">Note for the register</span>
-            <input className="inp" type="text" name="note" maxLength={140} />
           </label>
           <span className="mk-item__do">
             <button className="btn btn--primary" type="submit">Add</button>
