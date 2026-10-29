@@ -105,6 +105,10 @@ export type Holder = {
   /** A released space still has its row and still carries its number. It
    *  must not stand in the way of giving that number to somebody else. */
   status: string
+  /** Indoor or outdoor. Shown rather than acted on: the makers who turn out
+   *  to be standing on an indoor number are the outdoor ones, and seeing
+   *  that on the screen is what tells staff the bump is the right answer. */
+  track: string
 }
 
 export type CodePlan =
@@ -116,15 +120,31 @@ export type CodePlan =
      how one of them gets the other's money. */
   | { kind: 'shared'; row: CodeRow; holders: Holder[] }
   | { kind: 'nomaker'; row: CodeRow }
-  /* The code is wanted here and currently belongs to somebody else who is
-     not moving. Applying it would hand two makers the same reference. */
-  | { kind: 'taken'; row: CodeRow; holder: Holder; by: Holder }
+  /* Somebody not in the sheet is standing on the number this row wants.
+     Drew, 29 October: "those outside vendors that currently have the number
+     we are replacing will simply get assigned the next available number."
+     They are outdoor makers, the sheet is the indoor room, and the indoor
+     number is the one that has to be right. So the row takes it and the
+     maker holding it moves up, which is carried here rather than refused. */
+  | { kind: 'bumped'; row: CodeRow; holder: Holder; from: string; moves: Bump }
 
 /* A space that was given up. The booking row stays, because nothing is ever
    deleted (rule 3), and it keeps the number it was using. That number is
    free, and treating it as taken would hold back a maker for the sake of
    somebody who is not coming. */
 const GONE = new Set(['cancelled', 'forfeited'])
+
+/* What one row resolves to before the bumped makers have been given their
+   new numbers, which needs every row read first. */
+type Draft =
+  | Exclude<CodePlan, { kind: 'bumped' }>
+  | { kind: 'blocked'; row: CodeRow; holder: Holder; by: Holder }
+
+/** A maker moved off a number so an indoor row can have it. */
+export type Bump = { holder: Holder; from: string; to: string }
+
+/** The digits in MM41, B36, M42. Zero when there are none. */
+const numberIn = (code: string): number => Number(code.match(/(\d+)$/)?.[1] ?? 0)
 
 export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
   const byEmail = new Map<string, Holder[]>()
@@ -147,7 +167,7 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
   const rowsPerEmail = new Map<string, number>()
   for (const r of rows) rowsPerEmail.set(r.email, (rowsPerEmail.get(r.email) ?? 0) + 1)
 
-  return rows.map((row): CodePlan => {
+  const draft = rows.map((row): Draft => {
     const found = byEmail.get(row.email) ?? []
     if (found.length === 0) return { kind: 'nomaker', row }
     if (found.length > 1 || (rowsPerEmail.get(row.email) ?? 0) > 1) {
@@ -163,9 +183,56 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
         && !GONE.has(h.status),
     )
     if (sitting && !moving.has(normEmail(sitting.email))) {
-      return { kind: 'taken', row, holder, by: sitting }
+      return { kind: 'blocked', row, holder, by: sitting }
     }
     return { kind: 'change', row, holder, from: holder.code }
+  })
+
+  /* Where the bumped makers go.
+     
+     Every number the sheet is about to own, plus every number held by
+     somebody who is neither in the sheet nor moving. A bumped maker must
+     land outside all of it, and outside the numbers given to the other
+     bumped makers, which is why they are added as they are handed out.
+     A released space is not in the way (see GONE). */
+  const bumpers = new Set(
+    draft.filter((d) => d.kind === 'blocked').map((d) => d.by.bookingId),
+  )
+  const occupied = new Set(rows.map((r) => r.code))
+  for (const h of holders) {
+    if (GONE.has(h.status)) continue
+    if (moving.has(normEmail(h.email))) continue
+    if (bumpers.has(h.bookingId)) continue
+    occupied.add(h.code.toUpperCase())
+  }
+
+  /* Carrying on from the highest number the sheet uses, so the room keeps
+     its order and the makers who moved sit after it rather than in the gaps
+     between indoor makers. */
+  /* Compared as NUMBERS rather than as strings. MM44 and MM044 are two
+     different values to a unique index and the same number to a person
+     reading a tent card, and the roster carries both spellings. */
+  const usedNumbers = new Set([...occupied].map(numberIn))
+
+  let n = Math.max(0, ...rows.map((r) => numberIn(r.code))) + 1
+  const nextFree = (): string => {
+    while (usedNumbers.has(n)) n++
+    const code = `MM${n}`
+    occupied.add(code)
+    usedNumbers.add(n)
+    n++
+    return code
+  }
+
+  return draft.map((d): CodePlan => {
+    if (d.kind !== 'blocked') return d
+    return {
+      kind: 'bumped',
+      row: d.row,
+      holder: d.holder,
+      from: d.holder.code,
+      moves: { holder: d.by, from: d.by.code, to: nextFree() },
+    }
   })
 }
 
@@ -173,7 +240,7 @@ export function summariseCodes(plan: CodePlan[]) {
   const n = (k: CodePlan['kind']) => plan.filter((p) => p.kind === k).length
   return {
     change: n('change'), same: n('same'), shared: n('shared'),
-    nomaker: n('nomaker'), taken: n('taken'),
+    nomaker: n('nomaker'), bumped: n('bumped'),
     total: plan.length,
   }
 }
@@ -181,13 +248,19 @@ export function summariseCodes(plan: CodePlan[]) {
 /** One sentence for the top of the screen. */
 export function codeNotice(s: ReturnType<typeof summariseCodes>): string {
   if (s.total === 0) return 'Nothing to read in that.'
-  const bits = [`${s.change} to change`]
+  const bits = [`${s.change + s.bumped} to change`]
+  if (s.bumped > 0) bits.push(`${s.bumped} moving a maker up to make room`)
   if (s.same > 0) bits.push(`${s.same} already right`)
-  const stuck = s.shared + s.nomaker + s.taken
+  const stuck = s.shared + s.nomaker
   if (stuck > 0) bits.push(`${stuck} needing a person`)
   return `${bits.join(', ')}.`
 }
 
 /** The codes a plan would actually write, for the confirm step. */
 export const appliable = (plan: CodePlan[]) =>
-  plan.filter((p): p is Extract<CodePlan, { kind: 'change' }> => p.kind === 'change')
+  plan.filter((p): p is Extract<CodePlan, { kind: 'change' | 'bumped' }> =>
+    p.kind === 'change' || p.kind === 'bumped')
+
+/** The makers moved up to make room, in the order they were handed numbers. */
+export const bumps = (plan: CodePlan[]): Bump[] =>
+  plan.flatMap((p) => (p.kind === 'bumped' ? [p.moves] : []))

@@ -87,7 +87,7 @@ export function CodeForm() {
                     <td>
                       {p.kind === 'change' ? p.from
                         : p.kind === 'same' ? p.holder.code
-                        : p.kind === 'taken' ? p.holder.code
+                        : p.kind === 'bumped' ? p.from
                         : p.kind === 'shared' ? p.holders.map((h) => h.code).join(' and ')
                         : ''}
                     </td>
@@ -101,10 +101,11 @@ export function CodeForm() {
                         on the roster first.</>
                       )}
                       {p.kind === 'nomaker' && 'Nobody with this address holds a space at this show.'}
-                      {p.kind === 'taken' && (
-                        <>{p.by.shopName} holds {p.row.code} and is not in the sheet.
-                        Either they are not coming, in which case release their
-                        space, or they are and the sheet is missing them.</>
+                      {p.kind === 'bumped' && (
+                        <>Will change. {p.moves.holder.shopName} holds {p.row.code}
+                        {p.moves.holder.track === 'outdoor' ? ' outdoors' : ''} and is
+                        not in the sheet, so they move up to{' '}
+                        <strong>{p.moves.to}</strong>.</>
                       )}
                     </td>
                   </tr>

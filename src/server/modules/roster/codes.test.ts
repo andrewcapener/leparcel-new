@@ -1,4 +1,4 @@
-import { parseCodeSheet, planCodes, summariseCodes, codeNotice, appliable, type Holder } from './codes'
+import { parseCodeSheet, planCodes, summariseCodes, codeNotice, appliable, bumps, type Holder } from './codes'
 
 let failures = 0
 const check = (n: string, ok: boolean) => { if (!ok) { failures++; console.error(`FAIL: ${n}`) } }
@@ -45,7 +45,7 @@ check('a timestamped note with an address in it is not a row',
 
 const holder = (over: Partial<Holder> = {}): Holder => ({
   bookingId: 'b1', vendorId: 'v1', email: 'skyelarnalley@gmail.com',
-  shopName: 'Skylark Place', code: 'MM07', status: 'confirmed', ...over,
+  shopName: 'Skylark Place', code: 'MM07', status: 'confirmed', track: 'indoor', ...over,
 })
 
 /* ── the plan ────────────────────────────────────────────────────────── */
@@ -113,9 +113,38 @@ const clash = planCodes(
     holder({ bookingId: 'b2', email: 'stranger@example.com', code: 'MM5' }),
   ],
 )
-check('a number held by somebody not in the sheet is held back', clash[0]!.kind === 'taken')
-check('and the screen names who has it',
-  clash[0]!.kind === 'taken' && clash[0]!.by.email === 'stranger@example.com')
+/* Drew, 29 October: the makers standing on the indoor numbers are the
+   outdoor ones, and they simply move up. The indoor row takes the number. */
+check('a number held by somebody not in the sheet still changes', clash[0]!.kind === 'bumped')
+check('and the maker holding it is moved up',
+  clash[0]!.kind === 'bumped' && clash[0]!.moves.holder.email === 'stranger@example.com')
+/* Carrying on above the sheet rather than filling a gap inside the room. */
+check('to the next number after the sheet\u2019s highest',
+  clash[0]!.kind === 'bumped' && clash[0]!.moves.to === 'MM6')
+
+/* Several at once must not land on each other, and must not land on a
+   number the sheet is about to own or one somebody else is keeping. */
+const many = planCodes(
+  [
+    { line: 1, code: 'MM1', shop: '', contact: '', email: 'a@example.com' },
+    { line: 2, code: 'MM2', shop: '', contact: '', email: 'b@example.com' },
+  ],
+  [
+    holder({ bookingId: 'b1', vendorId: 'v1', email: 'a@example.com', code: 'MM9' }),
+    holder({ bookingId: 'b2', vendorId: 'v2', email: 'b@example.com', code: 'MM8' }),
+    holder({ bookingId: 'o1', vendorId: 'o1', email: 'out1@example.com', code: 'MM1', track: 'outdoor' }),
+    holder({ bookingId: 'o2', vendorId: 'o2', email: 'out2@example.com', code: 'MM2', track: 'outdoor' }),
+    holder({ bookingId: 'k1', vendorId: 'k1', email: 'keep@example.com', code: 'MM3', track: 'outdoor' }),
+  ],
+)
+const moved = bumps(many)
+check('both blockers are moved', moved.length === 2)
+check('onto different numbers', moved[0]!.to !== moved[1]!.to)
+check('and over the number somebody is keeping',
+  !moved.some((m) => m.to === 'MM3'))
+check('every row still changes', many.every((p) => p.kind === 'bumped'))
+check('and the writes cover the rows and the makers moved',
+  appliable(many).length === 2 && bumps(many).length === 2)
 
 const s = summariseCodes([...one, ...already, ...missing, ...sisters])
 check('the summary counts what will happen', s.change === 1 && s.same === 1)

@@ -6,10 +6,10 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { auditLog, bookings, vendors } from '@/db/schema'
+import { auditLog, bookings, spaceTypes, vendors } from '@/db/schema'
 import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
 import {
-  parseCodeSheet, planCodes, appliable, type CodePlan, type Holder,
+  parseCodeSheet, planCodes, appliable, bumps, type CodePlan, type Holder,
 } from '@/server/modules/roster/codes'
 
 /** Who pressed it (rule 3). A name, never an address. */
@@ -32,9 +32,11 @@ async function holders(showId: string): Promise<Holder[]> {
       shopName: vendors.shopName,
       code: bookings.vendorCode,
       status: bookings.status,
+      track: spaceTypes.track,
     })
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
+    .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
     .where(eq(bookings.showId, showId))
 }
 
@@ -84,9 +86,17 @@ export async function applyCodes(_prev: CheckState, fd: FormData): Promise<Check
   if (doing.length === 0) return { text, plan, problems, done: { changed: 0 } }
 
   const who = await staffActor()
-  const before = doing.map((p) => ({
-    booking: p.holder.bookingId, shop: p.holder.shopName, from: p.from, to: p.row.code,
-  }))
+  const moved = bumps(plan)
+  const before = [
+    ...doing.map((p) => ({
+      booking: p.holder.bookingId, shop: p.holder.shopName, from: p.from, to: p.row.code,
+    })),
+    /* The makers moved up are part of the same act and belong in the same
+       audit row. Their numbers changed and nobody asked them. */
+    ...moved.map((m) => ({
+      booking: m.holder.bookingId, shop: m.holder.shopName, from: m.from, to: m.to,
+    })),
+  ]
 
   /* Two passes, inside one transaction, and the first pass is the whole
      reason this works.
@@ -103,18 +113,22 @@ export async function applyCodes(_prev: CheckState, fd: FormData): Promise<Check
      The whole thing lands or none of it does, which is the only acceptable
      outcome when the numbers identify people's money. */
   await db.transaction(async (tx) => {
-    for (const p of doing) {
+    const writes = [
+      ...doing.map((p) => ({ holder: p.holder, code: p.row.code })),
+      ...moved.map((m) => ({ holder: m.holder, code: m.to })),
+    ]
+    for (const w of writes) {
       await tx.update(bookings)
-        .set({ vendorCode: `moving:${p.holder.bookingId}` })
-        .where(eq(bookings.id, p.holder.bookingId))
+        .set({ vendorCode: `moving:${w.holder.bookingId}` })
+        .where(eq(bookings.id, w.holder.bookingId))
     }
-    for (const p of doing) {
+    for (const w of writes) {
       await tx.update(bookings)
-        .set({ vendorCode: p.row.code })
-        .where(eq(bookings.id, p.holder.bookingId))
+        .set({ vendorCode: w.code })
+        .where(eq(bookings.id, w.holder.bookingId))
       await tx.update(vendors)
-        .set({ vendorCode: p.row.code })
-        .where(eq(vendors.id, p.holder.vendorId))
+        .set({ vendorCode: w.code })
+        .where(eq(vendors.id, w.holder.vendorId))
     }
 
     await tx.insert(auditLog).values({
