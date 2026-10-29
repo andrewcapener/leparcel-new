@@ -112,7 +112,7 @@ export type Holder = {
 }
 
 export type CodePlan =
-  | { kind: 'change'; row: CodeRow; holder: Holder; from: string }
+  | { kind: 'change'; row: CodeRow; holder: Holder; from: string; onFile?: string }
   | { kind: 'same'; row: CodeRow; holder: Holder }
   /* Two rows, one address. Drew's own sheet has this: MM18 and MM19 are two
      different people, Eléna and Sofia, sharing sam.chanell@gmail.com. An
@@ -126,7 +126,7 @@ export type CodePlan =
      They are outdoor makers, the sheet is the indoor room, and the indoor
      number is the one that has to be right. So the row takes it and the
      maker holding it moves up, which is carried here rather than refused. */
-  | { kind: 'bumped'; row: CodeRow; holder: Holder; from: string; moves: Bump }
+  | { kind: 'bumped'; row: CodeRow; holder: Holder; from: string; moves: Bump; onFile?: string }
 
 /* A space that was given up. The booking row stays, because nothing is ever
    deleted (rule 3), and it KEEPS THE NUMBER IT WAS USING.
@@ -151,7 +151,7 @@ type Draft =
   | { kind: 'change'; row: CodeRow; holder: Holder; from: string }
   /** Resolved to one maker, but not yet checked against who holds the
    *  number it wants. */
-  | { kind: 'candidate'; row: CodeRow; holder: Holder }
+  | { kind: 'candidate'; row: CodeRow; holder: Holder; onFile?: string }
 
 /** A maker moved off a number so an indoor row can have it. */
 export type Bump = { holder: Holder; from: string; to: string }
@@ -174,9 +174,41 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
   const rowsPerEmail = new Map<string, number>()
   for (const r of rows) rowsPerEmail.set(r.email, (rowsPerEmail.get(r.email) ?? 0) + 1)
 
+  /* The shop name, for the rows an address cannot find.
+     
+     Two of Drew's rows match nobody: BROS INK is listed under Hillary's
+     address and Any Given Funday under one the roster does not carry. The
+     maker is on the roster, the sheet simply reaches for her by a different
+     address, and making him hunt for which one is work a name can do.
+     
+     Only ever a fallback, only when the name picks out exactly one booking,
+     and never silently: the row says it matched by name and prints the
+     address actually on file, so the match is checked by a person before
+     anything is written. */
+  const flatName = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, '')
+  const byShop = new Map<string, Holder[]>()
+  for (const h of holders) {
+    const k = flatName(h.shopName)
+    if (k) byShop.set(k, [...(byShop.get(k) ?? []), h])
+  }
+  /* Addresses the sheet already reaches directly, so a name can never steal
+     a booking that an address has claimed. */
+  const claimed = new Set(
+    rows.flatMap((r) => (byEmail.get(r.email) ?? []).map((h) => h.bookingId)),
+  )
+
   const draft = rows.map((row): Draft => {
     const found = byEmail.get(row.email) ?? []
-    if (found.length === 0) return { kind: 'nomaker', row }
+    if (found.length === 0) {
+      const named = (byShop.get(flatName(row.shop)) ?? [])
+        .filter((h) => !claimed.has(h.bookingId))
+      if (named.length !== 1) return { kind: 'nomaker', row }
+      const only = named[0]!
+      if (only.code.toUpperCase() === row.code) {
+        return { kind: 'same', row, holder: only }
+      }
+      return { kind: 'candidate', row, holder: only, onFile: only.email }
+    }
     if (found.length > 1 || (rowsPerEmail.get(row.email) ?? 0) > 1) {
       return { kind: 'shared', row, holders: found }
     }
@@ -207,7 +239,7 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
      swapping numbers are both leaving, so that is not a clash. */
   type Settled =
     | Exclude<CodePlan, { kind: 'bumped' }>
-    | { kind: 'blocked'; row: CodeRow; holder: Holder; by: Holder }
+    | { kind: 'blocked'; row: CodeRow; holder: Holder; by: Holder; onFile?: string }
   const settled = draft.map((d): Settled => {
     if (d.kind !== 'candidate') return d
     const sitting = holders.find(
@@ -216,8 +248,8 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
         && !willMove.has(h.bookingId),
     )
     return sitting
-      ? { kind: 'blocked', row: d.row, holder: d.holder, by: sitting }
-      : { kind: 'change', row: d.row, holder: d.holder, from: d.holder.code }
+      ? { kind: 'blocked', row: d.row, holder: d.holder, by: sitting, onFile: d.onFile }
+      : { kind: 'change', row: d.row, holder: d.holder, from: d.holder.code, onFile: d.onFile }
   })
 
   /* Where the bumped makers go.
@@ -267,6 +299,7 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
       holder: d.holder,
       from: d.holder.code,
       moves: { holder: d.by, from: d.by.code, to: nextFree() },
+      onFile: d.onFile,
     }
   })
 }

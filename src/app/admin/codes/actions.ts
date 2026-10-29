@@ -97,11 +97,17 @@ export type CheckState = {
 } | null
 
 const sentence = (p: ReturnType<typeof planCodes>[number]): string => {
+  /* Said out loud whenever the address in the sheet found nobody and the
+     shop name found somebody, with the address actually on file, so the
+     match is a person's decision rather than ours. */
+  const named = 'onFile' in p && p.onFile
+    ? ` Matched by shop name: the address we hold for them is ${p.onFile}, not the one in the sheet.`
+    : ''
   switch (p.kind) {
-    case 'change': return 'Will change.'
+    case 'change': return `Will change.${named}`
     case 'same': return 'Already right.'
     case 'bumped':
-      return `Will change. ${p.moves.holder.shopName} holds ${p.row.code}`
+      return `Will change.${named} ${p.moves.holder.shopName} holds ${p.row.code}`
         + `${p.moves.holder.track === 'outdoor' ? ' outdoors' : ''} and is not in the`
         + ` sheet, so they move up to ${p.moves.to}.`
     case 'shared':

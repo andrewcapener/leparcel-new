@@ -256,5 +256,42 @@ const after = [
 check('and no two makers end up on one number',
   new Set(after).size === after.length)
 
+/* Two of Drew's rows reach for a maker by an address the roster does not
+   carry: BROS INK is listed under Hillary's. The shop name finds her. */
+const byName = planCodes(
+  [{ line: 1, code: 'MM22', shop: 'BROS INK', contact: 'Dane', email: 'hillarysalway@gmail.com' }],
+  [holder({ bookingId: 'b9', vendorId: 'v9', email: 'dane@example.com',
+            shopName: 'BROS INK', code: 'MM77' })],
+)
+check('a shop name finds a maker an address cannot', byName[0]!.kind === 'change')
+check('and the address actually on file is reported',
+  byName[0]!.kind === 'change' && byName[0]!.onFile === 'dane@example.com')
+check('punctuation and case do not stop it',
+  planCodes(
+    [{ line: 1, code: 'MM5', shop: 'bros-ink!', contact: '', email: 'nobody@example.com' }],
+    [holder({ bookingId: 'b9', email: 'dane@example.com', shopName: 'BROS INK', code: 'MM77' })],
+  )[0]!.kind === 'change')
+
+/* A name is never allowed to take a booking an address already found, and
+   two shops with one name is not an answer. */
+const nameClash = planCodes(
+  [
+    { line: 1, code: 'MM1', shop: 'Twin Shop', contact: '', email: 'real@example.com' },
+    { line: 2, code: 'MM2', shop: 'Twin Shop', contact: '', email: 'wrong@example.com' },
+  ],
+  [holder({ bookingId: 'b1', vendorId: 'v1', email: 'real@example.com', shopName: 'Twin Shop', code: 'MM9' })],
+)
+check('a name cannot steal a booking an address already claimed',
+  nameClash[1]!.kind === 'nomaker')
+check('and the address match is untouched', nameClash[0]!.kind === 'change')
+check('two shops sharing a name are left to a person',
+  planCodes(
+    [{ line: 1, code: 'MM1', shop: 'Same Name', contact: '', email: 'none@example.com' }],
+    [
+      holder({ bookingId: 'x1', email: 'a@example.com', shopName: 'Same Name', code: 'MM8' }),
+      holder({ bookingId: 'x2', email: 'b@example.com', shopName: 'Same Name', code: 'MM9' }),
+    ],
+  )[0]!.kind === 'nomaker')
+
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('maker numbers: only the roster rows are read, and nothing ambiguous is ever written')
