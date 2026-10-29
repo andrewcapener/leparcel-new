@@ -2,6 +2,11 @@ import { PageHead } from '../ui'
 import { CodeForm } from './CodeForm'
 
 export const dynamic = 'force-dynamic'
+/* Forty odd makers renumbered against a remote database. Every other screen
+   that writes in bulk carries this, and leaving it off here is why Drew
+   pressed the button and watched nothing happen: the default cut the
+   transaction off part way and rolled the whole thing back. */
+export const maxDuration = 60
 
 /**
  * Re-cutting the maker numbers from the girls' own list.

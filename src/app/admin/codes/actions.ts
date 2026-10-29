@@ -1,7 +1,7 @@
 'use server'
 
 import { randomUUID } from 'crypto'
-import { eq, inArray } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { db } from '@/db'
@@ -112,24 +112,36 @@ export async function applyCodes(_prev: CheckState, fd: FormData): Promise<Check
      
      The whole thing lands or none of it does, which is the only acceptable
      outcome when the numbers identify people's money. */
-  await db.transaction(async (tx) => {
+  try {
+    await db.transaction(async (tx) => {
     const writes = [
       ...doing.map((p) => ({ holder: p.holder, code: p.row.code })),
       ...moved.map((m) => ({ holder: m.holder, code: m.to })),
     ]
-    for (const w of writes) {
-      await tx.update(bookings)
-        .set({ vendorCode: `moving:${w.holder.bookingId}` })
-        .where(eq(bookings.id, w.holder.bookingId))
-    }
-    for (const w of writes) {
-      await tx.update(bookings)
-        .set({ vendorCode: w.code })
-        .where(eq(bookings.id, w.holder.bookingId))
-      await tx.update(vendors)
-        .set({ vendorCode: w.code })
-        .where(eq(vendors.id, w.holder.vendorId))
-    }
+
+    /* Three statements, not three hundred.
+       
+       A row at a time was forty odd makers times two tables times two
+       passes, each one its own round trip to a database in another
+       building. That is what ran out of time on Drew's press. Postgres can
+       take the whole list in one UPDATE ... FROM (VALUES ...), so the pass
+       that used to be a hundred and fifty trips is now one. */
+    const ids = writes.map((w) => sql`${w.holder.bookingId}::text`)
+    await tx.execute(sql`
+      UPDATE bookings SET vendor_code = 'moving:' || id
+      WHERE id IN (${sql.join(ids, sql`, `)})`)
+
+    const byBooking = writes.map((w) => sql`(${w.holder.bookingId}::text, ${w.code}::text)`)
+    await tx.execute(sql`
+      UPDATE bookings SET vendor_code = v.code
+      FROM (VALUES ${sql.join(byBooking, sql`, `)}) AS v(id, code)
+      WHERE bookings.id = v.id`)
+
+    const byVendor = writes.map((w) => sql`(${w.holder.vendorId}::text, ${w.code}::text)`)
+    await tx.execute(sql`
+      UPDATE vendors SET vendor_code = v.code
+      FROM (VALUES ${sql.join(byVendor, sql`, `)}) AS v(id, code)
+      WHERE vendors.id = v.id`)
 
     await tx.insert(auditLog).values({
       id: randomUUID(),
@@ -140,8 +152,23 @@ export async function applyCodes(_prev: CheckState, fd: FormData): Promise<Check
       before: JSON.stringify(before.map((b) => ({ booking: b.booking, code: b.from }))),
       after: JSON.stringify(before.map((b) => ({ booking: b.booking, code: b.to }))),
       reason: 'maker numbers reassigned from the roster sheet',
+      })
     })
-  })
+  } catch (err) {
+    /* Nothing was written: the transaction takes all of it or none. Said out
+       loud, because an apply that fails silently is what sent Drew back to
+       the roster to find out for himself whether anything had moved. */
+    console.error('[codes] apply:', err)
+    return {
+      text,
+      plan,
+      problems: [{
+        line: 0,
+        detail: `Nothing was changed. The database refused it: ${
+          err instanceof Error ? err.message.slice(0, 200) : 'unknown error'}`,
+      }],
+    }
+  }
 
   revalidatePath('/admin/roster')
   revalidatePath('/admin/codes')
