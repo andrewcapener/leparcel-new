@@ -170,8 +170,25 @@ export async function ensureConnectAccount(
       capabilities: { transfers: { requested: true } },
       metadata: { vendorId: v.id, shopName: v.shopName },
     }, {
-      /* One account per maker even if they double-click. */
-      idempotencyKey: `connect:${v.id}:v1`,
+      /* One account per maker even if they double-click, WITHOUT poisoning
+         every later attempt.
+         
+         This was `connect:${v.id}:v1`, a key that never changed. Stripe saves
+         the status and body of the first request made with a key once the
+         endpoint begins executing, errors included, and keeps keys for at
+         least 24 hours: "Retrying a cached 400 response with the same key
+         returns the same error." So the first maker to hit a configuration
+         problem on the platform, such as an incomplete Connect profile, had
+         that refusal replayed to them for a day after it was fixed. The
+         button stayed broken and nothing on our side had changed.
+         
+         A short window instead. Two presses seconds apart share a key and
+         make one account, which is the thing the key is for; an attempt
+         minutes later is a genuinely new request. The stored
+         stripeAccountId above is the real guard against duplicates and it is
+         written the moment one exists, so the only gap is the length of a
+         single API call. */
+      idempotencyKey: `connect:${v.id}:${Math.floor(Date.now() / 600_000)}`,
     })
 
     await db.update(vendors)
