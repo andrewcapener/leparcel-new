@@ -3016,6 +3016,28 @@ a.mk-dir__cell:focus-visible{outline:2px solid #BC9658;outline-offset:3px}
   opacity: .72;
 }
 .mk-item__f .inp { width: 100%; }
+
+/* A dollar sign sitting inside the box, against the figure being typed.
+   The box keeps its own width; only the text starts further in. */
+.mk-money { position: relative; display: block; }
+.mk-money__sym {
+  position: absolute; left: .62em; top: 50%; transform: translateY(-50%);
+  opacity: .5; pointer-events: none; line-height: 1;
+}
+.mk-item__f .mk-money .inp { padding-left: 1.55em; }
+
+/* What to type, above the boxes rather than under them. */
+.mk-item__hint { font-size: .92em; opacity: .72; margin: 0 0 .7em; }
+
+/* A refusal, in the colour of one. Everything else on this card is grey,
+   which is exactly how a rejected line came to read as a help note. */
+.mk-note--bad {
+  margin-top: 0; margin-bottom: .7em;
+  padding: .6em .8em;
+  border-left: 3px solid #b3261e;
+  background: rgb(179 38 30 / 0.07);
+  font-weight: 600;
+}
 .mk-item__do { flex: none; }
 .mk-item__rm { flex: none; }
 .mk-item__read { margin: 0; flex: 1 1 auto; }

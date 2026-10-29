@@ -51,7 +51,12 @@ export function invMessage(
       label: typed?.label ?? '', price: typed?.price ?? '',
       bundleQty: typed?.bundleQty ?? '', bundlePrice: typed?.bundlePrice ?? '',
     })
-    return 'bad' in read ? read.bad : null
+    /* Led by what happened, because the complaint on its own does not read
+       as one. Drew typed a price, pressed Add, and got "A bundle is two or
+       more." in the same grey as the two paragraphs of help above it. He
+       read it as instructions, tried again, and reported three times that
+       nothing saved. It was refusing him every time and never said so. */
+    return 'bad' in read ? `That line was not added. ${read.bad}` : null
   }
   if (!isInvCode(raw)) return null
   return INV_CODES[raw]

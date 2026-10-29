@@ -41,6 +41,29 @@ const asLine = (r: Row): Line => ({
   bundleQty: r.bundleQty, bundleCents: r.bundleCents,
 })
 
+/**
+ * A dollar sign inside the box, against the number the maker is typing.
+ *
+ * Drew, 29 October: "when you fill out information here on the price I think
+ * it should have a dollar symbol next to the price your filling out, so its
+ * really clear." Two of these four boxes take money and two take a count,
+ * and nothing on screen said which was which: the column headings read
+ * Price, Buy, For, and a maker typing 12 into For had no way to know whether
+ * the register would read twelve dollars or twelve of them.
+ *
+ * Decoration only, and hidden from screen readers, which have the field's
+ * own label. Nothing here reaches the parser: priceFromDollars still takes
+ * the raw text, so a maker who types the sign herself is not punished for it.
+ */
+function Money({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="mk-money">
+      <span className="mk-money__sym" aria-hidden="true">$</span>
+      {children}
+    </span>
+  )
+}
+
 /** Dollars for an input box: no symbol, and no .00 nobody typed. */
 const dollars = (cents: number) =>
   cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2)
@@ -77,7 +100,10 @@ export function Inventory({
         </p>
       )}
 
-      {notice && <p className="mk-note" role="status">{notice}</p>}
+      {/* Only when there is no form to attach it to. An open list puts the
+          same sentence directly above the boxes, because that is where the
+          maker is looking after pressing Add. */}
+      {notice && !open && <p className="mk-note" role="status">{notice}</p>}
 
       <p className="mk-card__lede">{listNotice(state, rows.length)}</p>
 
@@ -94,9 +120,11 @@ export function Inventory({
                       defaultValue={r.label} maxLength={80} required />
                   </label>
                   <label className="mk-item__f">
-                    <span className="lb">Price</span>
-                    <input className="inp" type="text" inputMode="decimal" name="price"
-                      defaultValue={dollars(r.priceCents)} required />
+                    <span className="lb">Price each</span>
+                    <Money>
+                      <input className="inp" type="text" inputMode="decimal" name="price"
+                        defaultValue={dollars(r.priceCents)} required />
+                    </Money>
                   </label>
                   <label className="mk-item__f mk-item__f--sm">
                     <span className="lb">Buy</span>
@@ -105,9 +133,11 @@ export function Inventory({
                   </label>
                   <label className="mk-item__f">
                     <span className="lb">For</span>
-                    <input className="inp" type="text" inputMode="decimal" name="bundlePrice"
-                      defaultValue={r.bundleCents !== null ? dollars(r.bundleCents) : ''}
-                      placeholder="8" />
+                    <Money>
+                      <input className="inp" type="text" inputMode="decimal" name="bundlePrice"
+                        defaultValue={r.bundleCents !== null ? dollars(r.bundleCents) : ''}
+                        placeholder="8" />
+                    </Money>
                   </label>
                   <span className="mk-item__do">
                     <button className="btn btn--quiet" type="submit">Save</button>
@@ -128,6 +158,22 @@ export function Inventory({
         </ul>
       )}
 
+      {/* Said before the boxes rather than after them. It used to sit under
+          the form as a quiet aside, which is the one place a person filling
+          the form in has already stopped reading. */}
+      {open && (
+        <p className="mk-item__hint">
+          Price each is what one costs. Leave Buy and For empty unless you sell
+          a multi-buy: 2 and 8 reads as &ldquo;buy 2/$8&rdquo; at the register,
+          and a multi-buy has to be two or more for less than they cost singly.
+        </p>
+      )}
+
+      {/* Against the boxes, in the colour of something that went wrong. */}
+      {notice && open && (
+        <p className="mk-note mk-note--bad" role="alert">{notice}</p>
+      )}
+
       {open && (
         <form action={addInventoryItem} className="mk-item__form mk-item__form--new">
           <label className="mk-item__f mk-item__f--grow">
@@ -136,9 +182,11 @@ export function Inventory({
               placeholder="Stickers" maxLength={80} required />
           </label>
           <label className="mk-item__f">
-            <span className="lb">Price</span>
-            <input className="inp" type="text" inputMode="decimal" name="price"
-              defaultValue={echo?.p ?? ''} placeholder="7" required />
+            <span className="lb">Price each</span>
+            <Money>
+              <input className="inp" type="text" inputMode="decimal" name="price"
+                defaultValue={echo?.p ?? ''} placeholder="7" required />
+            </Money>
           </label>
           <label className="mk-item__f mk-item__f--sm">
             <span className="lb">Buy</span>
@@ -147,20 +195,15 @@ export function Inventory({
           </label>
           <label className="mk-item__f">
             <span className="lb">For</span>
-            <input className="inp" type="text" inputMode="decimal" name="bundlePrice"
-              defaultValue={echo?.bp ?? ''} placeholder="12" />
+            <Money>
+              <input className="inp" type="text" inputMode="decimal" name="bundlePrice"
+                defaultValue={echo?.bp ?? ''} placeholder="8" />
+            </Money>
           </label>
           <span className="mk-item__do">
             <button className="btn btn--primary" type="submit">Add</button>
           </span>
         </form>
-      )}
-
-      {open && (
-        <CardNote>
-          Leave Buy and For empty unless there is a multi-buy. Filling them in
-          with 2 and 8 reads as &ldquo;buy 2/$8&rdquo; at the register.
-        </CardNote>
       )}
 
       {odd && <CardNote>{odd}</CardNote>}

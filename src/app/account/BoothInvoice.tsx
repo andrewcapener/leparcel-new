@@ -106,18 +106,81 @@ export function BoothInvoice({
      staff confirm the space from the roster. */
   const nothingDue = invoice.amountDueCents === 0 && invoice.totalCents === 0
 
+  /* The maker pressed "I have sent it" on a Venmo or a Zelle.
+     
+     Drew, 29 October: "in my dashboard I told the team that I paid via venmo
+     and the prompt to pay my booth fee is still there." It was. The claim
+     reached the roster, and isForfeitable has honoured it since the day it
+     shipped, so the one place it changed nothing was the page of the person
+     who made it. She told us, and we carried on asking.
+     
+     Deliberately NOT folded into `paid`. Nobody has checked Venmo yet, and a
+     page that says "confirmed" on a claim we have not matched is this app
+     telling a maker something it does not know. The state worth having sits
+     between the two: stop asking, say what happens next, and leave the other
+     ways one tap away in case they meant to pay by card. */
+  const said = Boolean(saidAt) && !paid && !owesMore && !lost && !inFlight && !nothingDue
+
   /* What to call the code, and the one line under it. Indoor keeps "Your
      Mermade ID"; outdoor is told it is a payment reference and not a booth
      number, because outdoor booths are numbered by a separate hand and an
      "ID" of MM91 reads as space 91. */
   const code = vendorCodeWords(track)
-  const codeLine = vendorCodeLine(code, !paid && !lost && !inFlight && !nothingDue)
+  const codeLine = vendorCodeLine(code, !paid && !said && !lost && !inFlight && !nothingDue)
 
   /* A card on the account's own ground, not one of the theme's full-bleed
      marketing sections. The page is a dashboard; its sections are objects on
      a surface, and the reveal-on-scroll the theme applies to a rich-text row
      left half this page parked at opacity zero in anything but a human
      scrolling it. */
+  /* The payment options, named once so they can be rendered in two places:
+     out in the open on an unpaid invoice, and behind a disclosure once the
+     maker has told us a Venmo is on its way. */
+  const ways = (
+    <>
+                {!nothingDue && (
+                  <ul className="mk-ways">
+                    <li className="mk-pay mk-pay--now">
+                      <p className="mk-pay__who">
+                        <strong>{offersCard(methods) ? 'Card or bank transfer' : 'Bank transfer'}</strong>
+                      </p>
+                      {payable && preview ? (
+                        <button className="btn btn--primary" type="button" disabled>
+                          Pay {usd(invoice.amountDueCents)}
+                        </button>
+                      ) : payable ? (
+                        <form action={action ?? payBoothFee}>
+                          {token && <input type="hidden" name="token" value={token} />}
+                          <button className="btn btn--primary" type="submit">
+                            Pay {usd(invoice.amountDueCents)}
+                          </button>
+                        </form>
+                      ) : (
+                        <p className="mk-pay__how">
+                          Not live yet. It will be before your deadline, and we will
+                          write to you the moment it is.
+                        </p>
+                      )}
+                      <p className="mk-pay__note">Confirms your space straight away.</p>
+                    </li>
+                    <ManualPay options={manual} codes={codes}
+                      token={manualToken} signedIn={signedIn}
+                      saidVia={saidVia} saidAt={saidAt} />
+                  </ul>
+                )}
+
+                {!nothingDue && manual.length > 0 && (
+                  <p className="mk-card__note">
+                    Venmo and Zelle are checked by a person rather than confirmed
+                    automatically, so your page may still say unpaid for a day after
+                    you send it. That is fine and your space is held. We only ever
+                    show these here, on your own link: if you get an email asking you
+                    to Venmo somebody, it is not us.
+                  </p>
+                )}
+    </>
+  )
+
   return (
     <section className="mk-card mk-grid__wide" id={id}>
       <h2 className="mk-card__title">
@@ -131,7 +194,9 @@ export function BoothInvoice({
                   ? 'This space was released'
                   : nothingDue
                     ? 'Nothing to pay'
-                    : 'Your booth fee'}
+                    : said
+                      ? 'We are matching your payment'
+                      : 'Your booth fee'}
           </h2>
 
           {/* Once it is paid this is a receipt, not an invoice, and it is
@@ -146,7 +211,7 @@ export function BoothInvoice({
             </p>
           )}
 
-          <Detail paid={paid}>
+          <Detail paid={paid || said}>
           <dl className="mk-dl">
             {invoice.lines.map((l) => (
               <div className="mk-dl__row" key={l.label}>
@@ -239,6 +304,21 @@ export function BoothInvoice({
             </p>
           )}
 
+          {/* What they told us, back in their own terms, with the one fact
+              they care about: the deadline is off them. A person checks the
+              account against the note and presses Mark paid, usually the same
+              day, and this page will say confirmed when they do. */}
+          {said && (
+            <p className="rte">
+              Thank you. You told us you sent {saidVia === 'zelle' ? 'a Zelle' : 'a Venmo'}
+              {saidAt ? ` on ${fmtDateTime(saidAt)}` : ''}, for {usd(invoice.amountDueCents)},
+              with <strong>{vendorCode}</strong> in the note. One of us checks it against
+              that note and confirms your space, usually the same day. Your space is held
+              meanwhile and the deadline is not held against you, so there is nothing more
+              for you to do. If you have not sent it yet, you can still pay below.
+            </p>
+          )}
+
           {lost && (
             <p className="rte">
               This space is no longer held. Write to us if you think that is wrong and we
@@ -295,7 +375,7 @@ export function BoothInvoice({
                 </p>
               )}
 
-              {!nothingDue && offersCard(methods) && offersBank(methods) && (
+              {!nothingDue && !said && offersCard(methods) && offersBank(methods) && (
                 <p className="rte">
                   Pay to confirm. Card or bank transfer, whichever suits you. Bank transfer
                   costs us less, so it is the kinder one on a larger fee, and both confirm
@@ -304,7 +384,7 @@ export function BoothInvoice({
                   from the moment you do, not from the day it lands.
                 </p>
               )}
-              {!nothingDue && !offersCard(methods) && (
+              {!nothingDue && !said && !offersCard(methods) && (
                 <p className="rte">
                   Pay by bank transfer to confirm. You will link your bank on the next
                   screen. Transfers take about four business days to arrive, so start yours
@@ -312,7 +392,7 @@ export function BoothInvoice({
                   do not have to wait for it to land.
                 </p>
               )}
-              {!nothingDue && !offersBank(methods) && (
+              {!nothingDue && !said && !offersBank(methods) && (
                 <p className="rte">Pay by card to confirm. It takes a minute.</p>
               )}
 
@@ -320,46 +400,17 @@ export function BoothInvoice({
                   used to sit here and Venmo and Zelle in a separate card
                   further down the page, which made a maker read two offers and
                   work out for herself that they were alternatives. */}
-              {!nothingDue && (
-                <ul className="mk-ways">
-                  <li className="mk-pay mk-pay--now">
-                    <p className="mk-pay__who">
-                      <strong>{offersCard(methods) ? 'Card or bank transfer' : 'Bank transfer'}</strong>
-                    </p>
-                    {payable && preview ? (
-                      <button className="btn btn--primary" type="button" disabled>
-                        Pay {usd(invoice.amountDueCents)}
-                      </button>
-                    ) : payable ? (
-                      <form action={action ?? payBoothFee}>
-                        {token && <input type="hidden" name="token" value={token} />}
-                        <button className="btn btn--primary" type="submit">
-                          Pay {usd(invoice.amountDueCents)}
-                        </button>
-                      </form>
-                    ) : (
-                      <p className="mk-pay__how">
-                        Not live yet. It will be before your deadline, and we will
-                        write to you the moment it is.
-                      </p>
-                    )}
-                    <p className="mk-pay__note">Confirms your space straight away.</p>
-                  </li>
-                  <ManualPay options={manual} codes={codes}
-                    token={manualToken} signedIn={signedIn}
-                    saidVia={saidVia} saidAt={saidAt} />
-                </ul>
-              )}
-
-              {!nothingDue && manual.length > 0 && (
-                <p className="mk-card__note">
-                  Venmo and Zelle are checked by a person rather than confirmed
-                  automatically, so your page may still say unpaid for a day after
-                  you send it. That is fine and your space is held. We only ever
-                  show these here, on your own link: if you get an email asking you
-                  to Venmo somebody, it is not us.
-                </p>
-              )}
+              {/* Still reachable after "I have sent it", because that is a
+                  claim and occasionally a mistaken one: somebody taps Venmo,
+                  thinks better of it and reaches for a card. Collapsed rather
+                  than removed, so the page stops asking without taking the
+                  answer away. */}
+              {!nothingDue && (said ? (
+                <details className="mk-receipt">
+                  <summary>Pay a different way</summary>
+                  {ways}
+                </details>
+              ) : ways)}
 
               {testMode && (
                 <p className="rte"><strong>
