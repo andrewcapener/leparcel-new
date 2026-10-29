@@ -9,7 +9,8 @@ import { activeShow } from '@/db/queries'
 import { auditLog, bookings, spaceTypes, vendors } from '@/db/schema'
 import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
 import {
-  parseCodeSheet, planCodes, appliable, bumps, type CodePlan, type Holder,
+  parseCodeSheet, planCodes, appliable, bumps, summariseCodes, codeNotice,
+  type Holder,
 } from '@/server/modules/roster/codes'
 
 /** Who pressed it (rule 3). A name, never an address. */
@@ -40,92 +41,155 @@ async function holders(showId: string): Promise<Holder[]> {
     .where(eq(bookings.showId, showId))
 }
 
+/**
+ * What the screen renders: sentences, not objects.
+ *
+ * It used to hand the whole plan back to the browser, every row carrying
+ * the maker behind it, and the pasted sheet with it, and React posts the
+ * last state back with the next press. Drew's sheet is a thousand lines of
+ * spreadsheet padding, so that went over the wire three times on every
+ * button, and the apply threw before it reached anything worth logging.
+ *
+ * So the state is now flat strings and the sheet stays where he typed it,
+ * in the textarea, posted once per press by the form it lives in.
+ */
+export type PlanRow = {
+  shop: string
+  email: string
+  now: string
+  becomes: string
+  what: string
+  acts: boolean
+}
+
 export type CheckState = {
-  text: string
-  plan: CodePlan[]
-  problems: { line: number; detail: string }[]
-  done?: { changed: number }
+  rows: PlanRow[]
+  notice: string
+  problems: string[]
+  /** How many would actually be written, for the second button. */
+  todo: number
+  /** Set once something has been written. */
+  done?: number
+  /** Set when it went wrong, and then nothing was written. */
+  error?: string
 } | null
 
-/**
- * Read the paste and say what it would do. Writes nothing.
- *
- * Separate from applying it on purpose: a Mermade ID is what a Venmo note is
- * matched by, so moving forty of them is moving the thing that identifies
- * forty people's money, and that gets read before it gets pressed.
- */
-export async function checkCodes(_prev: CheckState, fd: FormData): Promise<CheckState> {
-  const text = String(fd.get('sheet') ?? '')
-  const show = await activeShow()
-  if (!show) return { text, plan: [], problems: [{ line: 0, detail: 'No show is open.' }] }
+const sentence = (p: ReturnType<typeof planCodes>[number]): string => {
+  switch (p.kind) {
+    case 'change': return 'Will change.'
+    case 'same': return 'Already right.'
+    case 'bumped':
+      return `Will change. ${p.moves.holder.shopName} holds ${p.row.code}`
+        + `${p.moves.holder.track === 'outdoor' ? ' outdoors' : ''} and is not in the`
+        + ` sheet, so they move up to ${p.moves.to}.`
+    case 'shared':
+      return 'Two makers share this address, so we cannot tell which one this'
+        + ' number belongs to. Give them separate addresses on the roster first.'
+    case 'nomaker':
+      return 'Nobody with this address holds a space at this show.'
+  }
+}
 
-  const { rows, problems } = parseCodeSheet(text)
-  return { text, plan: planCodes(rows, await holders(show.id)), problems }
+const nowOf = (p: ReturnType<typeof planCodes>[number]): string => {
+  switch (p.kind) {
+    case 'change': return p.from
+    case 'bumped': return p.from
+    case 'same': return p.holder.code
+    case 'shared': return p.holders.map((h) => h.code).join(' and ')
+    default: return ''
+  }
 }
 
 /**
- * Write the ones that were safe to write, and only those.
+ * One door for both buttons.
  *
- * The plan is rebuilt here from the same paste rather than trusted from the
- * screen, so a stale tab cannot apply a number to a maker whose space was
- * released since it loaded, and nothing a browser posts decides who gets
- * which code.
- *
- * The code lives in two places, the vendor and the booking, and they are
- * written together. A booking whose vendorCode disagrees with its vendor is
- * how a maker is called one thing on the roster and another on her invoice.
+ * `intent` says which was pressed, so the sheet is posted once from the
+ * textarea it is typed into rather than copied into a second hidden field.
  */
-export async function applyCodes(_prev: CheckState, fd: FormData): Promise<CheckState> {
-  const text = String(fd.get('sheet') ?? '')
-  const show = await activeShow()
-  if (!show) return { text, plan: [], problems: [{ line: 0, detail: 'No show is open.' }] }
+export async function runCodes(_prev: CheckState, fd: FormData): Promise<CheckState> {
+  /* Nothing in here may throw. A server action that throws puts the admin on
+     the error screen with a reference number and no way to tell whether the
+     press went through, which is exactly where Drew ended up twice. */
+  try {
+    const text = String(fd.get('sheet') ?? '')
+    const apply = String(fd.get('intent') ?? '') === 'apply'
 
-  const { rows, problems } = parseCodeSheet(text)
-  const plan = planCodes(rows, await holders(show.id))
-  const doing = appliable(plan)
-  if (doing.length === 0) return { text, plan, problems, done: { changed: 0 } }
+    const show = await activeShow()
+    if (!show) return { rows: [], notice: '', problems: ['No show is open.'], todo: 0 }
 
+    const { rows, problems } = parseCodeSheet(text)
+    let plan = planCodes(rows, await holders(show.id))
+    let done: number | undefined
+
+    if (apply) {
+      const doing = appliable(plan)
+      const moved = bumps(plan)
+      if (doing.length > 0) {
+        await writeCodes(show.id, doing, moved)
+        /* Re-read, so the screen shows the result rather than the intention:
+           everything just written reads back as already right. */
+        plan = planCodes(rows, await holders(show.id))
+      }
+      done = doing.length
+    }
+
+    const view = plan.map((p): PlanRow => ({
+      shop: p.row.shop || p.row.email,
+      email: p.row.email,
+      now: nowOf(p),
+      becomes: p.row.code,
+      what: sentence(p),
+      acts: p.kind === 'change' || p.kind === 'bumped',
+    }))
+
+    return {
+      rows: view,
+      notice: codeNotice(summariseCodes(plan)),
+      problems: problems.map((x) => (x.line > 0 ? `Line ${x.line}: ${x.detail}` : x.detail)),
+      todo: appliable(plan).length,
+      done,
+    }
+  } catch (err) {
+    console.error('[codes] run:', err)
+    return {
+      rows: [], notice: '', problems: [], todo: 0,
+      error: `Nothing was changed. ${
+        err instanceof Error ? err.message.slice(0, 300) : 'Unknown error.'}`,
+    }
+  }
+}
+
+/**
+ * Write it, all of it or none of it.
+ *
+ * Three statements rather than three hundred: a row at a time was forty odd
+ * makers across two tables in two passes, every one its own round trip to a
+ * database in another building.
+ *
+ * The parking pass exists because bookings carries a unique index on
+ * (show_id, vendor_code) and a renumbering is full of chains: one maker
+ * moves onto a number another is still holding until they move. Everybody
+ * moving is parked on a value nothing can collide with, and only then given
+ * their real number.
+ */
+async function writeCodes(
+  showId: string,
+  doing: ReturnType<typeof appliable>,
+  moved: ReturnType<typeof bumps>,
+): Promise<void> {
   const who = await staffActor()
-  const moved = bumps(plan)
-  const before = [
-    ...doing.map((p) => ({
-      booking: p.holder.bookingId, shop: p.holder.shopName, from: p.from, to: p.row.code,
-    })),
-    /* The makers moved up are part of the same act and belong in the same
-       audit row. Their numbers changed and nobody asked them. */
-    ...moved.map((m) => ({
-      booking: m.holder.bookingId, shop: m.holder.shopName, from: m.from, to: m.to,
-    })),
+  const writes = [
+    ...doing.map((p) => ({ holder: p.holder, code: p.row.code })),
+    ...moved.map((m) => ({ holder: m.holder, code: m.to })),
+  ]
+  const record = [
+    ...doing.map((p) => ({ booking: p.holder.bookingId, from: p.from, to: p.row.code })),
+    /* The makers moved up are part of the same act. Their numbers changed
+       and nobody asked them, so they belong in the same row of the log. */
+    ...moved.map((m) => ({ booking: m.holder.bookingId, from: m.from, to: m.to })),
   ]
 
-  /* Two passes, inside one transaction, and the first pass is the whole
-     reason this works.
-     
-     bookings carries a unique index on (show_id, vendor_code), and a
-     renumbering is full of chains: Azure moves to MM20 while Caitie still
-     holds MM20 until she moves to MM25. Written one at a time in sheet
-     order, the index refuses the first collision and leaves the roster
-     half renumbered, which is worse than not starting. So every booking
-     that is moving is parked on a number nothing can collide with, and
-     only then given its real one. The parked value exists for the length
-     of one transaction and is never seen.
-     
-     The whole thing lands or none of it does, which is the only acceptable
-     outcome when the numbers identify people's money. */
-  try {
-    await db.transaction(async (tx) => {
-    const writes = [
-      ...doing.map((p) => ({ holder: p.holder, code: p.row.code })),
-      ...moved.map((m) => ({ holder: m.holder, code: m.to })),
-    ]
-
-    /* Three statements, not three hundred.
-       
-       A row at a time was forty odd makers times two tables times two
-       passes, each one its own round trip to a database in another
-       building. That is what ran out of time on Drew's press. Postgres can
-       take the whole list in one UPDATE ... FROM (VALUES ...), so the pass
-       that used to be a hundred and fifty trips is now one. */
+  await db.transaction(async (tx) => {
     const ids = writes.map((w) => sql`${w.holder.bookingId}::text`)
     await tx.execute(sql`
       UPDATE bookings SET vendor_code = 'moving:' || id
@@ -146,36 +210,15 @@ export async function applyCodes(_prev: CheckState, fd: FormData): Promise<Check
     await tx.insert(auditLog).values({
       id: randomUUID(),
       entity: 'show',
-      entityId: show.id,
+      entityId: showId,
       action: 'vendor_codes_reassigned',
       actor: who,
-      before: JSON.stringify(before.map((b) => ({ booking: b.booking, code: b.from }))),
-      after: JSON.stringify(before.map((b) => ({ booking: b.booking, code: b.to }))),
+      before: JSON.stringify(record.map((r) => ({ booking: r.booking, code: r.from }))),
+      after: JSON.stringify(record.map((r) => ({ booking: r.booking, code: r.to }))),
       reason: 'maker numbers reassigned from the roster sheet',
-      })
     })
-  } catch (err) {
-    /* Nothing was written: the transaction takes all of it or none. Said out
-       loud, because an apply that fails silently is what sent Drew back to
-       the roster to find out for himself whether anything had moved. */
-    console.error('[codes] apply:', err)
-    return {
-      text,
-      plan,
-      problems: [{
-        line: 0,
-        detail: `Nothing was changed. The database refused it: ${
-          err instanceof Error ? err.message.slice(0, 200) : 'unknown error'}`,
-      }],
-    }
-  }
+  })
 
   revalidatePath('/admin/roster')
   revalidatePath('/admin/codes')
-
-  /* Re-planned against what is now true, so the screen shows the result
-     rather than the intention: everything just written reads back as
-     "already right". */
-  const after = planCodes(rows, await holders(show.id))
-  return { text, plan: after, problems, done: { changed: doing.length } }
 }

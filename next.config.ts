@@ -41,6 +41,19 @@ const PAGES: Array<[string, string]> = [
 
 const config: NextConfig = {
   /**
+   * The pasted roster sheet is bigger than a form usually is.
+   *
+   * Drew pastes the girls' spreadsheet into /admin/codes whole, and the part
+   * with makers in it is forty two rows followed by about a thousand lines
+   * of empty cells that a spreadsheet pads its selection with. The default
+   * body limit for a Server Action is one megabyte, which that can reach,
+   * and a POST over it fails as an exception rather than as a message.
+   */
+  experimental: {
+    serverActions: { bodySizeLimit: '8mb' },
+  },
+
+  /**
    * Maker photographs, resized at the edge.
    *
    * A maker uploads a square straight off a phone and it can be ten megabytes.

@@ -1160,3 +1160,11 @@
 }
 .adm .adm-probs { margin: .8rem 0; padding-left: 1.1rem; font-size: .92rem; }
 .adm .adm-probs li { margin-bottom: .25rem; }
+
+/* An admin notice that is a failure, in the colour of one. */
+.adm .adm-note--bad {
+  border-left: 3px solid #b3261e;
+  background: rgb(179 38 30 / 0.07);
+  padding: .6rem .8rem;
+  font-weight: 600;
+}
