@@ -10,6 +10,7 @@ import { activeShow } from '@/db/queries'
 import { bookings, inventoryItems, vendors } from '@/db/schema'
 import { MAKER_COOKIE, readSession } from '@/lib/makerAuth'
 import { listState, readLine } from '@/server/modules/inventory/lines'
+import type { InvCode } from '@/server/modules/inventory/notices'
 
 /**
  * The maker's own item list, edited by the maker.
@@ -39,13 +40,13 @@ type Who = { bookingId: string; open: boolean }
  * broken button and is the worst thing a form can do. Whatever the reason, it
  * is now said out loud.
  */
-async function whoIsAsking(): Promise<Who | { no: string }> {
+async function whoIsAsking(): Promise<Who | { no: InvCode }> {
   const email = await readSession((await cookies()).get(MAKER_COOKIE)?.value)
-  if (!email) return { no: 'Your sign-in has run out. Ask for a new link and try again.' }
+  if (!email) return { no: 'expired' }
   const show = await activeShow()
-  if (!show) return { no: 'There is no show open right now.' }
+  if (!show) return { no: 'noshow' }
   const vendor = await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
-  if (!vendor) return { no: 'We could not find your maker record. Write to us and we will sort it out.' }
+  if (!vendor) return { no: 'nomaker' }
   /* Ordered, and the oldest wins. Two unordered limit(1) queries over the same
      filter, one here and one on the page that renders the list, are not
      promised to pick the same row: a maker who somehow holds two bookings at
@@ -57,17 +58,21 @@ async function whoIsAsking(): Promise<Who | { no: string }> {
     .where(and(eq(bookings.showId, show.id), eq(bookings.vendorId, vendor.id)))
     .orderBy(asc(bookings.createdAt), asc(bookings.id))
     .limit(1)
-  if (!booking) {
-    return { no: 'You do not have a space at this show yet, so there is nowhere to put a list.' }
-  }
+  if (!booking) return { no: 'nospace' }
   return {
     bookingId: booking.id,
     open: listState(show.inventoryDueAt, new Date().toISOString()) !== 'locked',
   }
 }
 
-/** Back to the list, with a sentence when something was wrong. */
-function back(why?: string, echo?: Record<string, string>): never {
+/**
+ * Back to the list, carrying a CODE rather than a sentence.
+ *
+ * The words live in inventory/notices.ts. What travelled here before was the
+ * complaint itself, and the page rendered whatever arrived as an official
+ * notice, which made any text at all paintable onto the real domain.
+ */
+function back(why?: InvCode | 'bad', echo?: Record<string, string>): never {
   const q = new URLSearchParams()
   if (why) q.set('inv', why)
   for (const [k, v] of Object.entries(echo ?? {})) if (v) q.set(k, v)
@@ -93,7 +98,7 @@ export async function addInventoryItem(fd: FormData): Promise<void> {
      four fields because one of them had a dollar sign in the wrong place is
      how a form teaches somebody to give up on it. */
   if ('bad' in read) {
-    back(read.bad, {
+    back('bad', {
       l: typed.label, p: typed.price, bq: typed.bundleQty, bp: typed.bundlePrice,
     })
   }
@@ -119,7 +124,7 @@ export async function addInventoryItem(fd: FormData): Promise<void> {
        browser shows as nothing at all: the maker presses Add, the page sits
        there, and the line is gone. Say it, and keep what they typed. */
     console.error(`[inventory] add for ${who.bookingId}:`, err)
-    back('We could not save that just then. Try again, and if it keeps happening write to us.', {
+    back('dberr', {
       l: typed.label, p: typed.price, bq: typed.bundleQty, bp: typed.bundlePrice,
     })
   }
@@ -145,7 +150,7 @@ export async function saveInventoryItem(fd: FormData): Promise<void> {
       isNull(inventoryItems.voidedAt),
     ))
     .limit(1)
-  if (!row) back('That line is no longer on your list.')
+  if (!row) back('gone')
 
   const read = readLine({
     label: field(fd, 'label'),
@@ -153,7 +158,15 @@ export async function saveInventoryItem(fd: FormData): Promise<void> {
     bundleQty: field(fd, 'bundleQty'),
     bundlePrice: field(fd, 'bundlePrice'),
   })
-  if ('bad' in read) back(read.bad, { row: id })
+  /* The typed values come back so an edit refused over one character is not
+     retyped from scratch, and the row is named so the complaint is attached
+     to the line it is about rather than floating at the top of the card. */
+  if ('bad' in read) {
+    back('bad', {
+      row: id, l: field(fd, 'label'), p: field(fd, 'price'),
+      bq: field(fd, 'bundleQty'), bp: field(fd, 'bundlePrice'),
+    })
+  }
 
   try {
     await db.update(inventoryItems).set({
@@ -165,7 +178,7 @@ export async function saveInventoryItem(fd: FormData): Promise<void> {
     }).where(eq(inventoryItems.id, row.id))
   } catch (err) {
     console.error(`[inventory] save ${row.id}:`, err)
-    back('We could not save that change just then. Try again in a moment.')
+    back('dberr')
   }
 
   revalidatePath('/account')
@@ -180,15 +193,24 @@ export async function removeInventoryItem(fd: FormData): Promise<void> {
   /* Voided, never deleted (rule 3), so the list can be read back as it stood
      on the day it locked. A maker who removes the wrong line can be given it
      back by staff rather than being asked what it said. */
-  await db.update(inventoryItems).set({
-    voidedAt: new Date().toISOString(),
-    voidedBy: 'maker',
-    voidReason: 'removed by the maker',
-  }).where(and(
-    eq(inventoryItems.id, field(fd, 'id')),
-    eq(inventoryItems.bookingId, who.bookingId),
-    isNull(inventoryItems.voidedAt),
-  ))
+  try {
+    const gone = await db.update(inventoryItems).set({
+      voidedAt: new Date().toISOString(),
+      voidedBy: 'maker',
+      voidReason: 'removed by the maker',
+    }).where(and(
+      eq(inventoryItems.id, field(fd, 'id')),
+      eq(inventoryItems.bookingId, who.bookingId),
+      isNull(inventoryItems.voidedAt),
+    )).returning({ id: inventoryItems.id })
+    /* Nothing matched: a stale tab, or a double press where the first one
+       won. Saying "removed" to somebody whose line is still there is how a
+       maker stops believing the page. */
+    if (gone.length === 0) back('gone')
+  } catch (err) {
+    console.error(`[inventory] remove for ${who.bookingId}:`, err)
+    back('dberr')
+  }
 
   revalidatePath('/account')
   back('removed')
@@ -208,12 +230,15 @@ export async function removeInventoryItem(fd: FormData): Promise<void> {
 export async function submitInventory(): Promise<void> {
   const who = await whoIsAsking()
   if ('no' in who) back(who.no)
+  /* The same guard the other three carry. Only the rendered button stopped a
+     replayed or stale post from stamping a list as final after the date. */
+  if (!who.open) back('shut')
 
   const [{ n }] = await db
     .select({ n: sql<number>`count(*)` })
     .from(inventoryItems)
     .where(and(eq(inventoryItems.bookingId, who.bookingId), isNull(inventoryItems.voidedAt)))
-  if (Number(n) === 0) back('There is nothing on your list yet.')
+  if (Number(n) === 0) back('empty')
 
   await db.update(bookings)
     .set({

@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNull, sql } from 'drizzle-orm'
 import type { db as Db } from '@/db'
 import {
   applications, bookings, emailOutbox, inventoryItems, spaceTypes, vendors,
@@ -13,6 +13,7 @@ import {
   invitePlan, inviteHtml, inviteText, inviteSubject,
   type InviteMaker, type InvitePlan,
 } from './onboarding-invite'
+import { listState } from '@/server/modules/inventory/lines'
 
 type DbHandle = typeof Db
 
@@ -41,6 +42,9 @@ export type Candidate = InviteMaker & {
  */
 export async function inviteCandidates(
   db: DbHandle, showId: string, showPayoutSetup: string,
+  /** This show's window, so a previous season's invite does not suppress
+   *  everybody. The outbox carries no show of its own. */
+  showOpenedAt?: string | null,
 ): Promise<Candidate[]> {
   const rows = await db
     .select({
@@ -76,13 +80,28 @@ export async function inviteCandidates(
     : []
   const countOf = new Map(counts.map((c) => [c.bookingId, Number(c.n)]))
 
-  /* Who has already had one. The outbox is the record of what left, so it is
-     also the honest answer to "did we already ask her". */
+  /* Who has already had one, for THIS show, that actually went.
+     
+     Two things this query used to get wrong, both of which hurt the person it
+     was meant to protect. mail() writes the outbox row BEFORE the send and
+     only then marks it sent or failed, so a bounce, a Resend 4xx or the 20s
+     timeout left a row saying "already had one" for the one maker who
+     demonstrably did not get it, and she was then unticked by default and
+     reported to staff as skipped. And the outbox carries no show, so Spring's
+     invite suppressed every returning maker in the autumn and the button read
+     "Nobody ticked".
+     
+     So: delivered only, and only since this show's applications opened. */
+  const since = showOpenedAt ?? new Date(0).toISOString()
   const already = new Set(
     (await db
       .select({ to: emailOutbox.toEmail })
       .from(emailOutbox)
-      .where(eq(emailOutbox.template, INVITE_TEMPLATE)))
+      .where(and(
+        eq(emailOutbox.template, INVITE_TEMPLATE),
+        eq(emailOutbox.deliveryStatus, 'sent'),
+        gte(emailOutbox.sentAt, since),
+      )))
       .map((r) => r.to.toLowerCase()),
   )
 
@@ -116,10 +135,16 @@ export async function inviteCandidates(
 
 export async function invitePlanFor(
   db: DbHandle, showId: string, showPayoutSetup: string, inventoryDueAt: string | null,
+  showOpenedAt?: string | null,
 ): Promise<{ plan: InvitePlan; candidates: Candidate[] }> {
-  const candidates = await inviteCandidates(db, showId, showPayoutSetup)
+  const candidates = await inviteCandidates(db, showId, showPayoutSetup, showOpenedAt)
+  /* Open means the date has not passed, not merely that somebody set one.
+     Asking twelve makers for a list the page will then refuse to take is
+     worse than not asking: it is a deadline we set, two days late, with a
+     button that does nothing. */
+  const itemsOpen = listState(inventoryDueAt, new Date().toISOString()) === 'open'
   return {
-    plan: invitePlan(candidates, { itemsOpen: Boolean(inventoryDueAt) }),
+    plan: invitePlan(candidates, { itemsOpen }),
     candidates,
   }
 }
@@ -149,6 +174,7 @@ export async function sendInvites(
     showName: string
     inventoryDueAt: string | null
     showPayoutSetup: string
+    showOpenedAt?: string | null
     again: boolean
     /** The bookings staff actually ticked. Undefined means everybody the
      *  plan chose, which is only ever used by a caller with no screen. */
@@ -156,7 +182,7 @@ export async function sendInvites(
   },
 ): Promise<SendResult> {
   const { plan, candidates } = await invitePlanFor(
-    db, opts.showId, opts.showPayoutSetup, opts.inventoryDueAt,
+    db, opts.showId, opts.showPayoutSetup, opts.inventoryDueAt, opts.showOpenedAt,
   )
   const sentBefore = new Map(candidates.map((c) => [c.bookingId, c.sentBefore]))
 

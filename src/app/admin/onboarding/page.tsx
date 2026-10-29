@@ -41,7 +41,7 @@ export default async function OnboardingPage({
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
   const { plan, candidates } = await invitePlanFor(
-    db, show.id, show.payoutSetup, show.inventoryDueAt,
+    db, show.id, show.payoutSetup, show.inventoryDueAt, show.applicationsOpenAt,
   )
   const sentBefore = new Map(candidates.map((c) => [c.bookingId, c.sentBefore]))
   const due = show.inventoryDueAt ? fmtDateTime(show.inventoryDueAt) : null

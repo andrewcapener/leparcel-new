@@ -20,6 +20,7 @@ import { PayoutSetup } from './PayoutSetup'
 import { Inventory } from './Inventory'
 import { inventoryFor } from '@/server/modules/inventory/read'
 import { listState, sendState } from '@/server/modules/inventory/lines'
+import { invMessage } from '@/server/modules/inventory/notices'
 import { manualOptions, qrDataUri } from '@/server/modules/payments/manual'
 import { canCollect } from '@/server/modules/payments/booking-status'
 import { checklistFor, clearForLoadIn, slotOptions } from '@/server/modules/compliance/checklist'
@@ -70,6 +71,18 @@ export default async function Account({
   if (!show) throw new Error('No active show.')
   const sp = await searchParams
 
+  /* From a fixed table, never from the query string. See inventory/notices.ts:
+     the complaint used to travel as its own sentence and render as an
+     official-looking Mermade message, which made any text paintable onto the
+     real domain by a link.
+     
+     Computed up here because three of these are about NOT being able to reach
+     the list, and the card that used to be the only place they rendered is
+     exactly what is missing in those cases. */
+  const invNotice = invMessage(sp.inv, {
+    label: sp.l, price: sp.p, bundleQty: sp.bq, bundlePrice: sp.bp,
+  })
+
   const email = await readSession((await cookies()).get(MAKER_COOKIE)?.value)
   const vendor = email
     ? await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
@@ -83,6 +96,7 @@ export default async function Account({
         <div className="shopify-section section-rich-text">
           <div className="fully-spaced-row--medium">
             <div className="container container--reading-width">
+              {invNotice && <p className="mk-note" role="status">{invNotice}</p>}
               <SignInForm expired={sp.expired === '1'} />
             </div>
           </div>
@@ -200,8 +214,17 @@ export default async function Account({
   /* Whether they have told us it is finished, and whether anything has moved
      since. The newest write on the list answers the second without a column:
      an item carries when it was made and when it was last changed. */
+  /* Normalised to ISO before comparing, and compared as strings only once
+     they ARE strings. `createdAt` is declared text on the schema and comes
+     back from postgres.js as a Date object, so a bare .sort() was ordering
+     these by the weekday in Date.toString(): Wed before Fri, and every Date
+     after every ISO string. A list changed after it was sent read as
+     settled, and the "Send the updated list" button never appeared. */
+  const asIso = (v: unknown): string =>
+    v instanceof Date ? v.toISOString() : String(v ?? '')
   const newestItemChange = items
-    .map((i) => i.updatedAt ?? i.createdAt)
+    .map((i) => asIso(i.updatedAt ?? i.createdAt))
+    .filter(Boolean)
     .sort()
     .at(-1) ?? null
   const itemSend = sendState(
@@ -329,6 +352,14 @@ export default async function Account({
               />
             )}
 
+            {/* Signed in, but there is no item card to hang a complaint on:
+                no booking at this show, or the list is not open. Without this
+                the "you do not have a space at this show yet" sentence was
+                written and could never be read. */}
+            {invNotice && !(wantsItems && itemState !== 'not_open') && (
+              <p className="mk-note" role="status">{invNotice}</p>
+            )}
+
             {/* What the register needs to sell their work. Indoor only, and
                 only once accepted. The checklist row anchors here. */}
             {wantsItems && itemState !== 'not_open' && (
@@ -340,9 +371,7 @@ export default async function Account({
                 state={itemState}
                 send={itemSend}
                 dueAt={show.inventoryDueAt}
-                notice={sp.inv && sp.inv !== 'saved' && sp.inv !== 'removed'
-                  ? (sp.inv === 'shut' ? 'The list is closed. Write to us and we will make the change.' : sp.inv)
-                  : undefined}
+                notice={invNotice ?? undefined}
                 echo={{ l: sp.l, p: sp.p, bq: sp.bq, bp: sp.bp }}
               />
             )}

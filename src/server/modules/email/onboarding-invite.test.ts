@@ -61,10 +61,21 @@ check('a waitlisted maker is not asked',
   (heldFor(maker({ applicationStatus: 'waitlist' })) ?? '').includes('Not accepted'))
 check('a declined maker is not asked',
   heldFor(maker({ applicationStatus: 'declined' })) !== null)
-check('a released space is not chased',
-  (heldFor(maker({ bookingStatus: 'released' })) ?? '').includes('released'))
+/* The statuses the column can actually hold. This block used to assert
+   'released', which the enum cannot produce, while `forfeited` (the real one,
+   set when a maker misses the fee window) sailed straight through. */
+check('a forfeited space is not chased',
+  (heldFor(maker({ bookingStatus: 'forfeited' })) ?? '').includes('forfeited'))
 check('a cancelled space is not chased',
   heldFor(maker({ bookingStatus: 'cancelled' })) !== null)
+check('an awaiting_payment maker IS still asked',
+  needsOf(maker({ bookingStatus: 'awaiting_payment' })) !== null)
+check('a confirmed maker is asked',
+  needsOf(maker({ bookingStatus: 'confirmed' })) !== null)
+/* Pressed the button, then removed every line. The flag is never cleared, so
+   this used to read as finished with nothing for the register to ring up. */
+check('submitted but since emptied is asked again',
+  (needsOf(maker({ itemsSent: true, itemCount: 0 })) ?? []).includes('items'))
 check('a maker with no address is left out, visibly',
   (heldFor(maker({ email: 'none' })) ?? '').includes('email'))
 

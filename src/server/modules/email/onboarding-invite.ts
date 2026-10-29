@@ -48,8 +48,19 @@ export type Invite = { maker: InviteMaker; needs: Need[] }
 export type Held = { maker: InviteMaker; because: string }
 export type InvitePlan = { send: Invite[]; held: Held[] }
 
-/** Booking states where the space is gone and nothing should be asked. */
-const GONE = new Set(['cancelled', 'released', 'refunded', 'withdrawn'])
+/**
+ * Booking states where the space is gone and nothing should be asked.
+ *
+ * These are the real ones from the schema's enum. It used to read
+ * ['cancelled', 'released', 'refunded', 'withdrawn'], three of which the
+ * column cannot hold, and it was MISSING `forfeited`, which is the status a
+ * booking actually takes when a maker misses the fee window and staff put
+ * her space back in the pool. So the one maker the system had just emailed
+ * "your space has gone back into the pool" was still on this list, ticked by
+ * default, about to be asked for her prices and a Stripe identity check for a
+ * space she no longer held.
+ */
+const GONE = new Set(['cancelled', 'forfeited'])
 
 /**
  * What this maker still owes, or the sentence saying why they are left out.
@@ -89,9 +100,12 @@ export function inviteFor(
 }
 
 const payoutsConfigured = (m: InviteMaker) => m.payoutState !== undefined
-/* Sent, not merely started. Somebody halfway through a list has not finished
-   telling us, and is exactly who this email is for. */
-const itemsWanted = (m: InviteMaker, itemsOpen: boolean) => itemsOpen && !m.itemsSent
+/* Sent, AND with something on it. Somebody halfway through a list has not
+   finished telling us and is exactly who this email is for; so is somebody
+   who pressed the button and then removed every line, which used to read as
+   finished because the flag is never cleared. */
+const itemsWanted = (m: InviteMaker, itemsOpen: boolean) =>
+  itemsOpen && !(m.itemsSent && m.itemCount > 0)
 
 /** The whole cohort, split into who gets one and who does not. */
 export function invitePlan(

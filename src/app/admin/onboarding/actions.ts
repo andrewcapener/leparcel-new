@@ -46,6 +46,7 @@ export async function sendOnboardingInvites(fd: FormData): Promise<void> {
     showName: show.name,
     inventoryDueAt: show.inventoryDueAt,
     showPayoutSetup: show.payoutSetup,
+    showOpenedAt: show.applicationsOpenAt,
     again,
     only,
   })
