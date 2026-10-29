@@ -102,6 +102,9 @@ export type Holder = {
   shopName: string
   /** What they are called today. */
   code: string
+  /** A released space still has its row and still carries its number. It
+   *  must not stand in the way of giving that number to somebody else. */
+  status: string
 }
 
 export type CodePlan =
@@ -115,7 +118,13 @@ export type CodePlan =
   | { kind: 'nomaker'; row: CodeRow }
   /* The code is wanted here and currently belongs to somebody else who is
      not moving. Applying it would hand two makers the same reference. */
-  | { kind: 'taken'; row: CodeRow; by: Holder }
+  | { kind: 'taken'; row: CodeRow; holder: Holder; by: Holder }
+
+/* A space that was given up. The booking row stays, because nothing is ever
+   deleted (rule 3), and it keeps the number it was using. That number is
+   free, and treating it as taken would hold back a maker for the sake of
+   somebody who is not coming. */
+const GONE = new Set(['cancelled', 'forfeited'])
 
 export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
   const byEmail = new Map<string, Holder[]>()
@@ -149,10 +158,12 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
     if (holder.code.toUpperCase() === row.code) return { kind: 'same', row, holder }
 
     const sitting = holders.find(
-      (h) => h.code.toUpperCase() === row.code && h.bookingId !== holder.bookingId,
+      (h) => h.code.toUpperCase() === row.code
+        && h.bookingId !== holder.bookingId
+        && !GONE.has(h.status),
     )
     if (sitting && !moving.has(normEmail(sitting.email))) {
-      return { kind: 'taken', row, by: sitting }
+      return { kind: 'taken', row, holder, by: sitting }
     }
     return { kind: 'change', row, holder, from: holder.code }
   })

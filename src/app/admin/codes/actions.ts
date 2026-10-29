@@ -31,6 +31,7 @@ async function holders(showId: string): Promise<Holder[]> {
       email: vendors.email,
       shopName: vendors.shopName,
       code: bookings.vendorCode,
+      status: bookings.status,
     })
     .from(bookings)
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
@@ -87,28 +88,45 @@ export async function applyCodes(_prev: CheckState, fd: FormData): Promise<Check
     booking: p.holder.bookingId, shop: p.holder.shopName, from: p.from, to: p.row.code,
   }))
 
-  for (const p of doing) {
-    await db.update(bookings)
-      .set({ vendorCode: p.row.code })
-      .where(eq(bookings.id, p.holder.bookingId))
-    await db.update(vendors)
-      .set({ vendorCode: p.row.code })
-      .where(eq(vendors.id, p.holder.vendorId))
-  }
+  /* Two passes, inside one transaction, and the first pass is the whole
+     reason this works.
+     
+     bookings carries a unique index on (show_id, vendor_code), and a
+     renumbering is full of chains: Azure moves to MM20 while Caitie still
+     holds MM20 until she moves to MM25. Written one at a time in sheet
+     order, the index refuses the first collision and leaves the roster
+     half renumbered, which is worse than not starting. So every booking
+     that is moving is parked on a number nothing can collide with, and
+     only then given its real one. The parked value exists for the length
+     of one transaction and is never seen.
+     
+     The whole thing lands or none of it does, which is the only acceptable
+     outcome when the numbers identify people's money. */
+  await db.transaction(async (tx) => {
+    for (const p of doing) {
+      await tx.update(bookings)
+        .set({ vendorCode: `moving:${p.holder.bookingId}` })
+        .where(eq(bookings.id, p.holder.bookingId))
+    }
+    for (const p of doing) {
+      await tx.update(bookings)
+        .set({ vendorCode: p.row.code })
+        .where(eq(bookings.id, p.holder.bookingId))
+      await tx.update(vendors)
+        .set({ vendorCode: p.row.code })
+        .where(eq(vendors.id, p.holder.vendorId))
+    }
 
-  /* One row for the press rather than forty. This is a single editorial act
-     by a named person: the girls renumbered the room, and that is the
-     question somebody asks in February. The before and after of every maker
-     is in it (rule 3). */
-  await db.insert(auditLog).values({
-    id: randomUUID(),
-    entity: 'show',
-    entityId: show.id,
-    action: 'vendor_codes_reassigned',
-    actor: who,
-    before: JSON.stringify(before.map((b) => ({ booking: b.booking, code: b.from }))),
-    after: JSON.stringify(before.map((b) => ({ booking: b.booking, code: b.to }))),
-    reason: 'maker numbers reassigned from the roster sheet',
+    await tx.insert(auditLog).values({
+      id: randomUUID(),
+      entity: 'show',
+      entityId: show.id,
+      action: 'vendor_codes_reassigned',
+      actor: who,
+      before: JSON.stringify(before.map((b) => ({ booking: b.booking, code: b.from }))),
+      after: JSON.stringify(before.map((b) => ({ booking: b.booking, code: b.to }))),
+      reason: 'maker numbers reassigned from the roster sheet',
+    })
   })
 
   revalidatePath('/admin/roster')

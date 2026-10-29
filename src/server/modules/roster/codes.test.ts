@@ -45,7 +45,7 @@ check('a timestamped note with an address in it is not a row',
 
 const holder = (over: Partial<Holder> = {}): Holder => ({
   bookingId: 'b1', vendorId: 'v1', email: 'skyelarnalley@gmail.com',
-  shopName: 'Skylark Place', code: 'MM07', ...over,
+  shopName: 'Skylark Place', code: 'MM07', status: 'confirmed', ...over,
 })
 
 /* ── the plan ────────────────────────────────────────────────────────── */
@@ -138,6 +138,26 @@ const oneSister = planCodes(
 check('two rows on one address are held back even with a single booking',
   oneSister.every((p) => p.kind === 'shared'))
 check('and nothing is written for either', appliable(oneSister).length === 0)
+
+/* A number on a space somebody gave up is free. The booking row survives
+   (rule 3) and keeps the number it was using, and holding a maker back for
+   the sake of one who is not coming would be the wrong way round. */
+const released = planCodes(
+  [{ line: 1, code: 'MM5', shop: '', contact: '', email: 'a@example.com' }],
+  [
+    holder({ bookingId: 'b1', email: 'a@example.com', code: 'MM1' }),
+    holder({ bookingId: 'b2', email: 'gone@example.com', code: 'MM5', status: 'cancelled' }),
+  ],
+)
+check('a cancelled space does not hold on to its number', released[0]!.kind === 'change')
+const forfeited = planCodes(
+  [{ line: 1, code: 'MM5', shop: '', contact: '', email: 'a@example.com' }],
+  [
+    holder({ bookingId: 'b1', email: 'a@example.com', code: 'MM1' }),
+    holder({ bookingId: 'b2', email: 'gone@example.com', code: 'MM5', status: 'forfeited' }),
+  ],
+)
+check('and neither does a forfeited one', forfeited[0]!.kind === 'change')
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('maker numbers: only the roster rows are read, and nothing ambiguous is ever written')
