@@ -3026,6 +3026,15 @@ a.mk-dir__cell:focus-visible{outline:2px solid #BC9658;outline-offset:3px}
 }
 .mk-item__f .mk-money .inp { padding-left: 1.55em; }
 
+/* Suggested text reads as a suggestion, not as a filled-in value.
+   Drew, 29 October: the 2 and the 8 in an empty multi-buy were the same
+   black as a number he had typed, so an untouched pair looked like a
+   multi-buy he had already set. Same grey as the dollar sign beside it. */
+.mk-item__form .inp::placeholder,
+.mk-paste__box::placeholder {
+  color: inherit; opacity: .42; font-style: normal;
+}
+
 /* Remove lines up with Save rather than floating against a row that the
    multi-buy has made taller. */
 .mk-item { align-items: flex-start; }

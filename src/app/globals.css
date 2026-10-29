@@ -1150,3 +1150,13 @@
 .lb-link { display: block; }
 .lb-link .inp { width: 100%; font-size: 11px; padding: 4px 6px; }
 
+
+
+/* Maker numbers: the pasted sheet, and anything the paste could not read. */
+.adm .adm-paste {
+  width: 100%; display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .9rem; line-height: 1.5; resize: vertical; white-space: pre;
+}
+.adm .adm-probs { margin: .8rem 0; padding-left: 1.1rem; font-size: .92rem; }
+.adm .adm-probs li { margin-bottom: .25rem; }
