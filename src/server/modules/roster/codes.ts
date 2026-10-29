@@ -129,9 +129,19 @@ export type CodePlan =
   | { kind: 'bumped'; row: CodeRow; holder: Holder; from: string; moves: Bump }
 
 /* A space that was given up. The booking row stays, because nothing is ever
-   deleted (rule 3), and it keeps the number it was using. That number is
-   free, and treating it as taken would hold back a maker for the sake of
-   somebody who is not coming. */
+   deleted (rule 3), and it KEEPS THE NUMBER IT WAS USING.
+   
+   That last part is the whole of it. bookings carries a unique index on
+   (show_id, vendor_code), and an index does not read a status column: a
+   cancelled booking sitting on MM10 owns MM10 as far as Postgres is
+   concerned. Treating those numbers as free is what put "duplicate key
+   value violates unique constraint" on Drew's screen, because his sheet
+   asks for MM1 to MM42 and his roster has given-up spaces across that
+   range from a season of changes.
+   
+   So a released space does not get to keep a maker waiting, and it does
+   not get to be ignored either: it is moved aside like any other holder,
+   and the number it was using is genuinely freed. */
 const GONE = new Set(['cancelled', 'forfeited'])
 
 /* What one row resolves to before the bumped makers have been given their
@@ -179,8 +189,7 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
 
     const sitting = holders.find(
       (h) => h.code.toUpperCase() === row.code
-        && h.bookingId !== holder.bookingId
-        && !GONE.has(h.status),
+        && h.bookingId !== holder.bookingId,
     )
     if (sitting && !moving.has(normEmail(sitting.email))) {
       return { kind: 'blocked', row, holder, by: sitting }
@@ -194,13 +203,16 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
      somebody who is neither in the sheet nor moving. A bumped maker must
      land outside all of it, and outside the numbers given to the other
      bumped makers, which is why they are added as they are handed out.
-     A released space is not in the way (see GONE). */
+     A released space is in the way exactly like a live one, because the
+     unique index does not read a status column (see GONE). */
   const bumpers = new Set(
     draft.filter((d) => d.kind === 'blocked').map((d) => d.by.bookingId),
   )
   const occupied = new Set(rows.map((r) => r.code))
   for (const h of holders) {
-    if (GONE.has(h.status)) continue
+    /* No GONE check here, deliberately. The index counts a released
+       booking's number as used, so anything we hand out has to avoid it
+       unless that booking is one of the ones being moved. */
     if (moving.has(normEmail(h.email))) continue
     if (bumpers.has(h.bookingId)) continue
     occupied.add(h.code.toUpperCase())

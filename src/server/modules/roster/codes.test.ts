@@ -178,7 +178,13 @@ const released = planCodes(
     holder({ bookingId: 'b2', email: 'gone@example.com', code: 'MM5', status: 'cancelled' }),
   ],
 )
-check('a cancelled space does not hold on to its number', released[0]!.kind === 'change')
+/* Moved aside, not ignored. The unique index counts a cancelled booking's
+   number as used, and pretending otherwise is what produced "duplicate key
+   value violates unique constraint" on the real roster. */
+check('a cancelled space is moved off its number rather than ignored',
+  released[0]!.kind === 'bumped')
+check('and the number it frees is genuinely free',
+  released[0]!.kind === 'bumped' && released[0]!.moves.from === 'MM5')
 const forfeited = planCodes(
   [{ line: 1, code: 'MM5', shop: '', contact: '', email: 'a@example.com' }],
   [
@@ -186,7 +192,35 @@ const forfeited = planCodes(
     holder({ bookingId: 'b2', email: 'gone@example.com', code: 'MM5', status: 'forfeited' }),
   ],
 )
-check('and neither does a forfeited one', forfeited[0]!.kind === 'change')
+check('and a forfeited one the same way', forfeited[0]!.kind === 'bumped')
+
+/* The shape that actually failed: a given-up booking holding a number the
+   sheet wants, with a live maker already on the number next door. Nothing
+   may be handed out twice, whatever its status. */
+const withDead = planCodes(
+  [
+    { line: 1, code: 'MM1', shop: '', contact: '', email: 'a@example.com' },
+    { line: 2, code: 'MM2', shop: '', contact: '', email: 'b@example.com' },
+  ],
+  [
+    holder({ bookingId: 'b1', vendorId: 'v1', email: 'a@example.com', code: 'MM7' }),
+    holder({ bookingId: 'b2', vendorId: 'v2', email: 'b@example.com', code: 'MM8' }),
+    holder({ bookingId: 'd1', vendorId: 'd1', email: 'dead@example.com', code: 'MM1', status: 'cancelled' }),
+    holder({ bookingId: 'd2', vendorId: 'd2', email: 'dead2@example.com', code: 'MM2', status: 'forfeited' }),
+    holder({ bookingId: 'k1', vendorId: 'k1', email: 'keep@example.com', code: 'MM3' }),
+  ],
+)
+const deadMoves = bumps(withDead)
+check('both given-up bookings are moved off the wanted numbers', deadMoves.length === 2)
+const finalCodes = [
+  ...withDead.map((p) => p.row.code),
+  ...deadMoves.map((m) => m.to),
+  'MM3',
+]
+check('and no number is handed out twice',
+  new Set(finalCodes).size === finalCodes.length)
+check('nothing lands on the maker who is staying put',
+  !deadMoves.some((m) => m.to === 'MM3'))
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('maker numbers: only the roster rows are read, and nothing ambiguous is ever written')
