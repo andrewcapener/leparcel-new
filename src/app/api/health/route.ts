@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
 import { NextResponse, type NextRequest } from 'next/server'
 import { transportDiagnostics } from '@/server/modules/sheets/transport'
 import { paymentsDiagnostics } from '@/server/modules/payments/config'
@@ -111,6 +111,37 @@ export async function GET(req: NextRequest) {
     diag.applications = await count(schema.applications)
     diag.bookings = await count(schema.bookings)
     diag.subscribers = await count(schema.subscribers)
+
+    /* Whether Stripe is actually DELIVERING to us, which is a different
+       question from whether the keys are set.
+       
+       account.updated is the only thing that writes payouts_enabled, so an
+       endpoint that exists but is not subscribed to it means every maker can
+       finish Connect onboarding, Stripe is satisfied, and our side reads
+       "not started" for all of them until somebody is owed money and cannot
+       be paid. Nothing anywhere says so. This does.
+       
+       `never` here with live keys and makers who have onboarded is the
+       signal: the subscription is missing in the Stripe dashboard. */
+    const recent = await db
+      .select({ type: schema.stripeEvents.type, at: schema.stripeEvents.receivedAt })
+      .from(schema.stripeEvents)
+      .orderBy(desc(schema.stripeEvents.receivedAt))
+      .limit(5)
+    const accountUpdates = Number((await db
+      .select({ n: sql<number>`count(*)` })
+      .from(schema.stripeEvents)
+      .where(eq(schema.stripeEvents.type, 'account.updated')))[0]!.n)
+    diag.stripeWebhook = {
+      eventsReceived: Number((await db
+        .select({ n: sql<number>`count(*)` })
+        .from(schema.stripeEvents))[0]!.n),
+      accountUpdatedReceived: accountUpdates,
+      lastFive: recent.map((r) => ({ type: r.type, at: r.at })),
+      meaning: accountUpdates === 0
+        ? 'No account.updated has ever arrived. If makers have finished Connect onboarding, the endpoint is not subscribed to that event and no payout account will ever read as ready.'
+        : 'account.updated is arriving, so payout status can update.',
+    }
     // The dates the whole site is built from, as this deployment's database
     // really holds them, plus where the application window stands right now.
     //
