@@ -147,8 +147,11 @@ const GONE = new Set(['cancelled', 'forfeited'])
 /* What one row resolves to before the bumped makers have been given their
    new numbers, which needs every row read first. */
 type Draft =
-  | Exclude<CodePlan, { kind: 'bumped' }>
-  | { kind: 'blocked'; row: CodeRow; holder: Holder; by: Holder }
+  | Exclude<CodePlan, { kind: 'bumped' | 'change' }>
+  | { kind: 'change'; row: CodeRow; holder: Holder; from: string }
+  /** Resolved to one maker, but not yet checked against who holds the
+   *  number it wants. */
+  | { kind: 'candidate'; row: CodeRow; holder: Holder }
 
 /** A maker moved off a number so an indoor row can have it. */
 export type Bump = { holder: Holder; from: string; to: string }
@@ -162,12 +165,6 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
     const k = normEmail(h.email)
     byEmail.set(k, [...(byEmail.get(k) ?? []), h])
   }
-
-  /* Every address this paste mentions. A code leaving a maker who is in the
-     paste is not a clash: the two simply swap, which is most of a
-     renumbering. Only a code sitting on somebody the paste never mentions
-     can actually collide. */
-  const moving = new Set(rows.map((r) => r.email))
 
   /* How many ROWS want each address. Two rows on one address is ambiguous
      whichever way the database happens to fall: if the address has two
@@ -187,14 +184,40 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
     const holder = found[0]!
     if (holder.code.toUpperCase() === row.code) return { kind: 'same', row, holder }
 
+    return { kind: 'candidate', row, holder }
+  })
+
+  /* WHO ACTUALLY ENDS UP SOMEWHERE ELSE, which is not the same question as
+     who the sheet mentions.
+     
+     This used to free every number held by anybody whose address appeared in
+     the paste. But a row that cannot be applied is not applied: the two
+     sisters sharing an address keep the number they are on, and so does an
+     address with no space at this show. Their numbers were being handed to
+     the makers moved up to make room, and the index refused the lot. That
+     is the "duplicate key value" Drew hit on three separate presses.
+     
+     So only a booking that will genuinely be written counts as vacating. */
+  const willMove = new Set(
+    draft.flatMap((d) => (d.kind === 'candidate' ? [d.holder.bookingId] : [])),
+  )
+
+  /* Now the blockers can be found honestly: a number is in the way when the
+     booking on it is not one of the bookings about to leave it. Two makers
+     swapping numbers are both leaving, so that is not a clash. */
+  type Settled =
+    | Exclude<CodePlan, { kind: 'bumped' }>
+    | { kind: 'blocked'; row: CodeRow; holder: Holder; by: Holder }
+  const settled = draft.map((d): Settled => {
+    if (d.kind !== 'candidate') return d
     const sitting = holders.find(
-      (h) => h.code.toUpperCase() === row.code
-        && h.bookingId !== holder.bookingId,
+      (h) => h.code.toUpperCase() === d.row.code
+        && h.bookingId !== d.holder.bookingId
+        && !willMove.has(h.bookingId),
     )
-    if (sitting && !moving.has(normEmail(sitting.email))) {
-      return { kind: 'blocked', row, holder, by: sitting }
-    }
-    return { kind: 'change', row, holder, from: holder.code }
+    return sitting
+      ? { kind: 'blocked', row: d.row, holder: d.holder, by: sitting }
+      : { kind: 'change', row: d.row, holder: d.holder, from: d.holder.code }
   })
 
   /* Where the bumped makers go.
@@ -206,14 +229,14 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
      A released space is in the way exactly like a live one, because the
      unique index does not read a status column (see GONE). */
   const bumpers = new Set(
-    draft.filter((d) => d.kind === 'blocked').map((d) => d.by.bookingId),
+    settled.flatMap((d) => (d.kind === 'blocked' ? [d.by.bookingId] : [])),
   )
   const occupied = new Set(rows.map((r) => r.code))
   for (const h of holders) {
-    /* No GONE check here, deliberately. The index counts a released
-       booking's number as used, so anything we hand out has to avoid it
-       unless that booking is one of the ones being moved. */
-    if (moving.has(normEmail(h.email))) continue
+    /* No GONE check here, deliberately: the index counts a released
+       booking's number as used. And no check on the sheet either, only on
+       whether this booking is actually leaving the number it is on. */
+    if (willMove.has(h.bookingId)) continue
     if (bumpers.has(h.bookingId)) continue
     occupied.add(h.code.toUpperCase())
   }
@@ -236,7 +259,7 @@ export function planCodes(rows: CodeRow[], holders: Holder[]): CodePlan[] {
     return code
   }
 
-  return draft.map((d): CodePlan => {
+  return settled.map((d): CodePlan => {
     if (d.kind !== 'blocked') return d
     return {
       kind: 'bumped',

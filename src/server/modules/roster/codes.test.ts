@@ -222,5 +222,39 @@ check('and no number is handed out twice',
 check('nothing lands on the maker who is staying put',
   !deadMoves.some((m) => m.to === 'MM3'))
 
+/* The one that failed three presses in a row.
+   
+   A row the tool refuses is a row it does not write, so that maker stays on
+   the number she is on. Treating "mentioned in the sheet" as "about to
+   vacate" freed her number on paper and handed it to somebody moved up to
+   make room, and the unique index refused the whole transaction.
+   
+   Here MM4 belongs to the sisters, whose two rows share one address and so
+   are never written. The bumped maker must not be given MM4. */
+const keptByRefusal = planCodes(
+  [
+    { line: 1, code: 'MM1', shop: '', contact: '', email: 'a@example.com' },
+    { line: 2, code: 'MM2', shop: 'Five sisters', contact: 'Elena', email: 'sis@example.com' },
+    { line: 3, code: 'MM3', shop: 'Five sisters', contact: 'Sofia', email: 'sis@example.com' },
+  ],
+  [
+    holder({ bookingId: 'b1', vendorId: 'v1', email: 'a@example.com', code: 'MM9' }),
+    holder({ bookingId: 's1', vendorId: 's1', email: 'sis@example.com', code: 'MM4' }),
+    holder({ bookingId: 'o1', vendorId: 'o1', email: 'out@example.com', code: 'MM1', track: 'outdoor' }),
+  ],
+)
+const keptMoves = bumps(keptByRefusal)
+check('the blocker is still moved', keptMoves.length === 1)
+check('but never onto a number a refused row leaves in place',
+  keptMoves[0]!.to !== 'MM4')
+/* And the whole resulting roster is unique, which is what the index asks. */
+const after = [
+  ...keptByRefusal.flatMap((p) => (p.kind === 'change' || p.kind === 'bumped' ? [p.row.code] : [])),
+  ...keptMoves.map((m) => m.to),
+  'MM4',
+]
+check('and no two makers end up on one number',
+  new Set(after).size === after.length)
+
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('maker numbers: only the roster rows are read, and nothing ambiguous is ever written')

@@ -23,9 +23,21 @@ async function staffActor(): Promise<string> {
   }
 }
 
-/** Everybody holding a space at this show, with the number they carry today. */
+/**
+ * EVERY booking at this show, with the number it carries today.
+ *
+ * Every one, and the joins are left joins for that reason. The unique index
+ * is on (show_id, vendor_code) across all of them, so a booking this query
+ * cannot see still owns its number, and a renumber that cannot see it will
+ * hand that number to somebody else and be refused.
+ *
+ * It was an inner join on space_types, added only to read the track for a
+ * sentence on the screen, and any booking whose space type had gone fell out
+ * of the plan while staying very much in the index. A missing shop name
+ * costs a word on a screen; a missing row costs the whole press.
+ */
 async function holders(showId: string): Promise<Holder[]> {
-  return db
+  const rows = await db
     .select({
       bookingId: bookings.id,
       vendorId: bookings.vendorId,
@@ -36,9 +48,19 @@ async function holders(showId: string): Promise<Holder[]> {
       track: spaceTypes.track,
     })
     .from(bookings)
-    .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
-    .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
+    .leftJoin(vendors, eq(bookings.vendorId, vendors.id))
+    .leftJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
     .where(eq(bookings.showId, showId))
+
+  return rows.map((r) => ({
+    bookingId: r.bookingId,
+    vendorId: r.vendorId,
+    email: r.email ?? '',
+    shopName: r.shopName ?? 'A maker',
+    code: r.code ?? '',
+    status: r.status ?? '',
+    track: r.track ?? '',
+  }))
 }
 
 /**
@@ -124,6 +146,38 @@ export async function runCodes(_prev: CheckState, fd: FormData): Promise<CheckSt
     if (apply) {
       const doing = appliable(plan)
       const moved = bumps(plan)
+
+      /* Work out the roster as it would stand afterwards and check it, before
+         asking the database to. Every booking at this show, carrying its new
+         number if it has one and its old one otherwise, has to be unique:
+         that is exactly what the index enforces, so if two of them match the
+         press fails whatever else is true.
+         
+         Checked here so the answer names the number and the two makers,
+         rather than arriving as a constraint name, and so nothing is
+         attempted that cannot work. */
+      const all = await holders(show.id)
+      const newCode = new Map<string, string>()
+      for (const p of doing) newCode.set(p.holder.bookingId, p.row.code)
+      for (const m of moved) newCode.set(m.holder.bookingId, m.to)
+
+      const owner = new Map<string, string>()
+      const clash: string[] = []
+      for (const h of all) {
+        const code = (newCode.get(h.bookingId) ?? h.code).toUpperCase()
+        if (!code) continue
+        const already = owner.get(code)
+        if (already) clash.push(`${code} would be both ${already} and ${h.shopName}.`)
+        else owner.set(code, h.shopName)
+      }
+      if (clash.length > 0) {
+        return {
+          rows: [], notice: '', problems: clash, todo: 0,
+          error: 'Nothing was changed. Two makers would end up on the same'
+            + ' number, so the sheet needs a look first.',
+        }
+      }
+
       if (doing.length > 0) {
         await writeCodes(show.id, doing, moved)
         /* Re-read, so the screen shows the result rather than the intention:
@@ -153,10 +207,23 @@ export async function runCodes(_prev: CheckState, fd: FormData): Promise<CheckSt
     console.error('[codes] run:', err)
     return {
       rows: [], notice: '', problems: [], todo: 0,
-      error: `Nothing was changed. ${
-        err instanceof Error ? err.message.slice(0, 300) : 'Unknown error.'}`,
+      error: `Nothing was changed. ${describe(err)}`,
     }
   }
+}
+
+/**
+ * The database's own words, including the part that names the row.
+ *
+ * postgres.js puts "Key (show_id, vendor_code)=(..., MM12) already exists."
+ * on `detail`, and that one line says which number two makers were about to
+ * share. The message alone says only that it happened.
+ */
+function describe(err: unknown): string {
+  const e = err as { message?: unknown; detail?: unknown }
+  const message = typeof e?.message === 'string' ? e.message : 'Unknown error.'
+  const detail = typeof e?.detail === 'string' ? ` ${e.detail}` : ''
+  return `${message}${detail}`.slice(0, 400)
 }
 
 /**

@@ -236,7 +236,11 @@ export default async function Account({
         applicationStatus: app.status,
         track,
         booking: billing
-          ? { status: billing.booking.status, paymentDueAt: billing.booking.paymentDueAt }
+          ? {
+              status: billing.booking.status,
+              paymentDueAt: billing.booking.paymentDueAt,
+              saidSentAt: billing.booking.saidSentAt,
+            }
           : undefined,
         sellerPermit: app.sellerPermit,
         occasionalSeller: app.occasionalSeller,

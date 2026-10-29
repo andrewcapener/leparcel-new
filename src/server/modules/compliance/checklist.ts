@@ -62,6 +62,10 @@ export type ChecklistInput = {
   booking?: {
     status: string
     paymentDueAt: string
+    /** When the maker pressed "I have sent it" on a Venmo or a Zelle. Not a
+     *  payment and it confirms nothing, but it is their half finished, and
+     *  the list has to stop asking. */
+    saidSentAt?: string | null
   }
   sellerPermit: string
   occasionalSeller: boolean
@@ -130,11 +134,19 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
   const paid = booking?.status === 'confirmed'
   const clearing = booking?.status === 'payment_processing'
   const lost = booking?.status === 'forfeited' || booking?.status === 'cancelled'
+  /* They have told us the money is on its way and a person has not matched it
+     yet. Drew, 29 October: "I paid but I still see the task up top." He had,
+     and the card below already said so while this row went on telling him to
+     pay. The deadline has not applied to him since he pressed it (see
+     isForfeitable), so this is waiting on us, not on him. */
+  const said = Boolean(booking?.saidSentAt) && !paid && !clearing && !lost
   const feeState: ItemState = !accepted || !booking
     ? 'waiting'
     : paid || clearing || lost
       ? 'done'
-      : 'todo'
+      : said
+        ? 'waiting'
+        : 'todo'
 
   const items: ChecklistItem[] = [
     {
@@ -142,6 +154,8 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
       title: 'Booth fee',
       detail: clearing
         ? 'Your bank transfer is on its way. Nothing more to do while it clears.'
+        : said
+          ? 'You told us it is sent. We are matching it, usually the same day.'
         : paid
           ? 'Paid. Your space is held.'
           : lost
