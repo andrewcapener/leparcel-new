@@ -64,7 +64,8 @@ export default async function Account({
     payouts?: string
     /** The item list: the complaint from the last attempt, and what was
      *  typed, so a refused line is never retyped from scratch. */
-    inv?: string; l?: string; p?: string; bq?: string; bp?: string; row?: string; list?: string
+    inv?: string; l?: string; p?: string; row?: string; list?: string
+    bq0?: string; bp0?: string; bq1?: string; bp1?: string; bq2?: string; bp2?: string
   }>
 }) {
   const show = await activeShow()
@@ -79,8 +80,14 @@ export default async function Account({
      Computed up here because three of these are about NOT being able to reach
      the list, and the card that used to be the only place they rendered is
      exactly what is missing in those cases. */
+  /* The three multi-buy pairs come back as bq0/bp0 through bq2/bp2, so a
+     refusal over one character never costs a retype of the whole line. */
+  const echoedBreaks = [0, 1, 2].map((i) => ({
+    qty: sp[`bq${i}` as keyof typeof sp] ?? '',
+    price: sp[`bp${i}` as keyof typeof sp] ?? '',
+  }))
   const invNotice = invMessage(sp.inv, {
-    label: sp.l, price: sp.p, bundleQty: sp.bq, bundlePrice: sp.bp,
+    label: sp.l, price: sp.p, breaks: echoedBreaks,
   })
 
   const email = await readSession((await cookies()).get(MAKER_COOKIE)?.value)
@@ -388,14 +395,13 @@ export default async function Account({
             {wantsItems && itemState !== 'not_open' && (
               <Inventory
                 rows={items.map((i) => ({
-                  id: i.id, label: i.label, priceCents: i.priceCents,
-                  bundleQty: i.bundleQty, bundleCents: i.bundleCents,
+                  id: i.id, label: i.label, priceCents: i.priceCents, breaks: i.breaks,
                 }))}
                 state={itemState}
                 send={itemSend}
                 dueAt={show.inventoryDueAt}
                 notice={invNotice ?? undefined}
-                echo={{ l: sp.l, p: sp.p, bq: sp.bq, bp: sp.bp, list: sp.list }}
+                echo={{ l: sp.l, p: sp.p, breaks: echoedBreaks, list: sp.list }}
               />
             )}
 

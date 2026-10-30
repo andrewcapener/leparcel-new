@@ -1,8 +1,11 @@
 import {
   priceFromDollars, tag, readLine, formatLine, makerBlock, readPastedList,
-  oddCentsNote, listState, listNotice, listDone, sendState, sendLabel, sendNotice,
+  oddCentsNote, listState, listNotice, listDone, sendState, sendLabel, sendNotice, MAX_BREAKS,
   type Line, type LineInput,
 } from './lines'
+
+/** Multi-buy pairs the way the form posts them. */
+const B = (...pairs: [string, string][]) => pairs.map(([qty, price]) => ({ qty, price }))
 
 let failures = 0
 const check = (n: string, ok: boolean) => { if (!ok) { failures++; console.error(`FAIL: ${n}`) } }
@@ -42,7 +45,7 @@ check('thousands are grouped', tag(120000) === '$1,200')
 /* ── a line ──────────────────────────────────────────────────────────── */
 
 const line = (l: Partial<LineInput> = {}) =>
-  readLine({ label: 'Maps', price: '5', bundleQty: '', bundlePrice: '', ...l })
+  readLine({ label: 'Maps', price: '5', breaks: B(['', '']), ...l })
 const ok = (l: Partial<LineInput> = {}) => 'line' in line(l)
 const bad = (l: Partial<LineInput> = {}) => {
   const r = line(l)
@@ -57,49 +60,49 @@ check('inner whitespace is collapsed',
   'line' in collapsed && collapsed.line.label === 'Table cloths')
 
 /* Hillary's own example, start to finish. */
-const maps = readLine({ label: 'Maps', price: '5', bundleQty: '2', bundlePrice: '8' })
-check('a bundle parses', 'line' in maps && maps.line.bundleQty === 2 && maps.line.bundleCents === 800)
+const maps = readLine({ label: 'Maps', price: '5', breaks: B(['2', '8']) })
+check('a bundle parses', 'line' in maps && maps.line.breaks[0]!.qty === 2 && maps.line.breaks[0]!.cents === 800)
 check('a bundle formats the way she writes it',
   'line' in maps && formatLine(maps.line) === 'Maps: $5 or buy 2/$8')
 
-const cloths = readLine({ label: 'Table cloths / Backpacks', price: '20', bundleQty: '2', bundlePrice: '36' })
+const cloths = readLine({ label: 'Table cloths / Backpacks', price: '20', breaks: B(['2', '36']) })
 check('the second example too',
   'line' in cloths && formatLine(cloths.line) === 'Table cloths / Backpacks: $20 or buy 2/$36')
 
-const stickers = readLine({ label: 'Stickers/Maps/gift tags', price: '7', bundleQty: '', bundlePrice: '' })
+const stickers = readLine({ label: 'Stickers/Maps/gift tags', price: '7', breaks: B(['', '']) })
 check('and the one with no bundle',
   'line' in stickers && formatLine(stickers.line) === 'Stickers/Maps/gift tags: $7')
 
 /* Half a bundle is the likeliest mistake on the form. */
-check('a quantity with no price is refused', bad({ bundleQty: '2' }) !== null)
-check('a price with no quantity is refused', bad({ bundlePrice: '8' }) !== null)
+check('a quantity with no price is refused', bad({ breaks: B(['2', '']) }) !== null)
+check('a price with no quantity is refused', bad({ breaks: B(['', '8']) }) !== null)
 /* Not refused, saved. "Buy 1 for $12" is what anybody types who reads those
    two boxes as "how many have you got": there is no multi-buy in a quantity
    of one, so the line is kept at its single price rather than thrown back.
    Drew hit the old dead end three times running. */
-const one = readLine({ label: 'Ceramic Mug', price: '12', bundleQty: '1', bundlePrice: '12' })
+const one = readLine({ label: 'Ceramic Mug', price: '12', breaks: B(['1', '12']) })
 check('a quantity of one saves as a plain price',
-  'line' in one && one.line.bundleQty === null && one.line.bundleCents === null)
+  'line' in one && one.line.breaks.length === 0)
 check('and reads back as just the price',
   'line' in one && formatLine(one.line) === 'Ceramic Mug: $12')
 check('a quantity of zero does the same',
-  'line' in readLine({ label: 'Mug', price: '12', bundleQty: '0', bundlePrice: '' }))
-check('a fractional quantity is refused', bad({ bundleQty: '2.5', bundlePrice: '8' }) !== null)
+  'line' in readLine({ label: 'Mug', price: '12', breaks: B(['0', '']) }))
+check('a fractional quantity is refused', bad({ breaks: B(['2.5', '8']) }) !== null)
 
 /* The quiet one: a bundle that is not a discount is a typo every time, and
    nobody notices until a shopper does the sum at the counter. */
-check('a bundle dearer than singles is refused', bad({ bundleQty: '2', bundlePrice: '12' }) !== null)
-check('a bundle equal to singles is refused', bad({ bundleQty: '2', bundlePrice: '10' }) !== null)
-check('a bundle a cent cheaper is allowed', ok({ bundleQty: '2', bundlePrice: '9.99' }))
+check('a bundle dearer than singles is refused', bad({ breaks: B(['2', '12']) }) !== null)
+check('a bundle equal to singles is refused', bad({ breaks: B(['2', '10']) }) !== null)
+check('a bundle a cent cheaper is allowed', ok({ breaks: B(['2', '9.99']) }))
 check('the refusal does the arithmetic for them',
-  (bad({ bundleQty: '2', bundlePrice: '12' }) ?? '').includes('$10'))
+  (bad({ breaks: B(['2', '12']) }) ?? '').includes('$10'))
 
 /* ── the whole block ─────────────────────────────────────────────────── */
 
 const lines: Line[] = [
-  { label: 'Maps', priceCents: 500, bundleQty: 2, bundleCents: 800 },
-  { label: 'Stickers/Maps/gift tags', priceCents: 700, bundleQty: null, bundleCents: null },
-  { label: 'Table cloths / Backpacks', priceCents: 2000, bundleQty: 2, bundleCents: 3600 },
+  { label: 'Maps', priceCents: 500, breaks: [{ qty: 2, cents: 800 }] },
+  { label: 'Stickers/Maps/gift tags', priceCents: 700, breaks: [] },
+  { label: 'Table cloths / Backpacks', priceCents: 2000, breaks: [{ qty: 2, cents: 3600 }] },
 ]
 check('the block is exactly what staff already read',
   makerBlock('MM15', "Maggie's Maps", lines) ===
@@ -109,11 +112,11 @@ check('a maker with no code still gets a heading',
 
 check('round prices draw no note', oddCentsNote(lines) === null)
 check('odd cents draw one note',
-  (oddCentsNote([{ label: 'A', priceCents: 750, bundleQty: null, bundleCents: null }]) ?? '').includes('One of your prices'))
+  (oddCentsNote([{ label: 'A', priceCents: 750, breaks: [] }]) ?? '').includes('One of your prices'))
 check('several odd prices are counted',
   (oddCentsNote([
-    { label: 'A', priceCents: 750, bundleQty: null, bundleCents: null },
-    { label: 'B', priceCents: 199, bundleQty: null, bundleCents: null },
+    { label: 'A', priceCents: 750, breaks: [] },
+    { label: 'B', priceCents: 199, breaks: [] },
   ]) ?? '').includes('2 of your prices'))
 /* It is a preference, not a rule: a maker whose tags are printed is right. */
 check('the note never refuses anything', ok({ price: '7.99' }))
@@ -165,12 +168,60 @@ const copy = [
   listNotice('locked', 0), listNotice('locked', 3),
   sendNotice('unsent') ?? '', sendNotice('sent', T0) ?? '', sendNotice('changed') ?? '',
   sendLabel('unsent') ?? '', sendLabel('changed') ?? '',
-  oddCentsNote([{ label: 'A', priceCents: 750, bundleQty: null, bundleCents: null }]) ?? '',
-  bad({ bundleQty: '2', bundlePrice: '12' }) ?? '',
+  oddCentsNote([{ label: 'A', priceCents: 750, breaks: [] }]) ?? '',
+  bad({ breaks: B(['2', '12']) }) ?? '',
 ]
 check('no fancy dashes and no exclamations in anything a maker reads',
   copy.every((t) => !t.includes('!')
     && !t.includes(String.fromCharCode(0x2014)) && !t.includes(String.fromCharCode(0x2013))))
+
+/* ── more than one multi-buy on a line ───────────────────────────────── */
+
+/* Drew, 30 October: "one for $10, two for $15, three for $20... it's the
+   same product, like in a register you click into it and it's got three
+   variants." The single price is one of them, so this is two breaks. */
+const ladder = readLine({ label: 'Candles', price: '10', breaks: B(['2', '15'], ['3', '20']) })
+check('a product carries more than one multi-buy',
+  'line' in ladder && ladder.line.breaks.length === 2)
+check('and reads back as one product with its variants',
+  'line' in ladder && formatLine(ladder.line) === 'Candles: $10 or buy 2/$15 or 3/$20')
+check('the single price is untouched',
+  'line' in ladder && ladder.line.priceCents === 1000)
+
+/* Fewest first, whatever order they were typed in: that is how a shelf card
+   reads and how the register lists the variants. */
+const jumbled = readLine({ label: 'Candles', price: '10', breaks: B(['3', '20'], ['2', '15']) })
+check('breaks are ordered fewest first',
+  'line' in jumbled && jumbled.line.breaks.map((b) => b.qty).join() === '2,3')
+
+/* The quiet one. $7.50 each then $8.33 each is a ladder that goes the wrong
+   way: a shopper buying three is better off buying two and one, and nobody
+   notices until she does the sum at the counter. */
+const backwards = readLine({ label: 'Candles', price: '10', breaks: B(['2', '15'], ['3', '25']) })
+check('a multi-buy that is dearer each than the one above it is refused',
+  'bad' in backwards)
+check('and the refusal names both of them',
+  'bad' in backwards && backwards.bad.includes('3 for $25') && backwards.bad.includes('2 for $15'))
+
+check('every break still has to beat the single price',
+  'bad' in readLine({ label: 'Candles', price: '10', breaks: B(['2', '15'], ['3', '31']) }))
+check('the same quantity priced twice is refused',
+  'bad' in readLine({ label: 'Candles', price: '10', breaks: B(['2', '15'], ['2', '16']) }))
+check('a half filled second break is refused, not dropped',
+  'bad' in readLine({ label: 'Candles', price: '10', breaks: B(['2', '15'], ['3', '']) }))
+check('an untouched second break is simply ignored',
+  'line' in readLine({ label: 'Candles', price: '10', breaks: B(['2', '15'], ['', '']) }))
+check('gaps between the rows do not matter',
+  'line' in readLine({ label: 'Candles', price: '10', breaks: B(['', ''], ['2', '15']) }))
+
+/* And the whole ladder survives a round trip through the paste box, which is
+   how a maker who already has it written out will enter it. */
+const pasted = readPastedList('Candles: $10 or buy 2/$15 or 3/$20\nMugs: $12')
+check('a ladder pastes in', pasted.lines[0]!.breaks.length === 2)
+check('without disturbing the line under it', pasted.lines[1]!.label === 'Mugs')
+check('and what the register shows can be pasted back',
+  formatLine(pasted.lines[0]!) === 'Candles: $10 or buy 2/$15 or 3/$20')
+check('three breaks is the ceiling the form offers', MAX_BREAKS === 3)
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('inventory lines: a price never comes from a float, and a bundle is always a discount')
@@ -215,8 +266,8 @@ const loose = readPastedList([
 check('bullets, dashes and a missing dollar sign all read', loose.lines.length === 5)
 check('a dash instead of a colon keeps the label', loose.lines[0]!.label === 'Mugs')
 check('no separator at all still reads', loose.lines[1]!.label === 'Prints')
-check('"2 for $50" is a multi-buy', loose.lines[3]!.bundleQty === 2)
-check('"buy 3/$10" is too', loose.lines[4]!.bundleCents === 1000)
+check('"2 for $50" is a multi-buy', loose.lines[3]!.breaks[0]!.qty === 2)
+check('"buy 3/$10" is too', loose.lines[4]!.breaks[0]!.cents === 1000)
 
 /* Nothing reaches the register from here that the form would have refused. */
 const refused = readPastedList([
@@ -229,5 +280,5 @@ check('and the other two come back', refused.bad.length === 2)
 check('each with the line as they typed it',
   refused.bad[0]!.raw === 'No price on this one')
 check('a bulk price that is not a discount is refused here too',
-  refused.bad[1]!.why.includes('should cost less'))
+  refused.bad[1]!.why.includes('has to cost less'))
 check('blank lines are not errors', readPastedList('\n\n  \n').bad.length === 0)

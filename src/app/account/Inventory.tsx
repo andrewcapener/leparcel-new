@@ -3,7 +3,7 @@ import {
   addInventoryItem, addPastedList, saveInventoryItem, removeInventoryItem, submitInventory,
 } from './inventory-actions'
 import {
-  formatLine, listNotice, oddCentsNote, tag, sendLabel, sendNotice,
+  formatLine, listNotice, oddCentsNote, tag, sendLabel, sendNotice, MAX_BREAKS,
   type Line, type ListState, type SendState,
 } from '@/server/modules/inventory/lines'
 import { fmtDateTime } from '@/lib/dates'
@@ -32,13 +32,12 @@ export type Row = {
   id: string
   label: string
   priceCents: number
-  bundleQty: number | null
-  bundleCents: number | null
+  /** The product's other variants, fewest first. */
+  breaks: { qty: number; cents: number }[]
 }
 
 const asLine = (r: Row): Line => ({
-  label: r.label, priceCents: r.priceCents,
-  bundleQty: r.bundleQty, bundleCents: r.bundleCents,
+  label: r.label, priceCents: r.priceCents, breaks: r.breaks,
 })
 
 /**
@@ -80,29 +79,67 @@ function Money({ children }: { children: React.ReactNode }) {
  * Open on a line that already has one, so nothing is hidden from the maker
  * who set it.
  */
-function MultiBuy({ qty, price }: { qty: string; price: string }) {
-  const has = qty !== '' || price !== ''
+/**
+ * The multi-buys, folded away until somebody wants one.
+ *
+ * Drew, 30 October: "people sometimes wanna offer one for $10, two for $15,
+ * three for $20... it's essentially a different SKU, but if it's the same
+ * product I think it should live under one thing, one product, like in a
+ * register you click into it and it's got three variants."
+ *
+ * So the product keeps its single price on the row above and these are its
+ * other variants. Three of them, which with the single price is the four a
+ * register shows: "I don't think people are gonna get past three."
+ *
+ * All three rows are always in the document and all three are optional,
+ * because adding a row on demand needs JavaScript and this form works
+ * without any. They cost nothing visually: the whole block is shut unless a
+ * line already has one, and a maker who wants a second break has it in front
+ * of her the moment she opens the first.
+ */
+function MultiBuy({ breaks }: { breaks: { qty: string; price: string }[] }) {
+  const filled = breaks.filter((b) => b.qty !== '' || b.price !== '').length
   return (
-    <details className="mk-item__opt" open={has}>
-      <summary>{has ? 'Multi-buy' : 'Add a multi-buy'}</summary>
+    <details className="mk-item__opt" open={filled > 0}>
+      <summary>
+        {filled === 0 ? 'Add a multi-buy'
+          : filled === 1 ? 'Multi-buy'
+          : `Multi-buys (${filled})`}
+      </summary>
       <span className="mk-item__optf">
-        <label className="mk-item__f mk-item__f--sm">
-          <span className="lb">Buy</span>
-          <input className="inp" type="text" inputMode="numeric" name="bundleQty"
-            defaultValue={qty} placeholder="2" />
-        </label>
-        <label className="mk-item__f">
-          <span className="lb">For</span>
-          <Money>
-            <input className="inp" type="text" inputMode="decimal" name="bundlePrice"
-              defaultValue={price} placeholder="8" />
-          </Money>
-        </label>
-        <span className="mk-item__opth">Two or more, for less than they cost singly.</span>
+        {breaks.map((b, i) => (
+          <span className="mk-item__tier" key={i}>
+            <label className="mk-item__f mk-item__f--sm">
+              <span className="lb">Buy</span>
+              <input className="inp" type="text" inputMode="numeric" name={`bq${i}`}
+                defaultValue={b.qty} placeholder={i === 0 ? '2' : ''} />
+            </label>
+            <label className="mk-item__f">
+              <span className="lb">For</span>
+              <Money>
+                <input className="inp" type="text" inputMode="decimal" name={`bp${i}`}
+                  defaultValue={b.price} placeholder={i === 0 ? '8' : ''} />
+              </Money>
+            </label>
+          </span>
+        ))}
+        <span className="mk-item__opth">
+          Two or more, for less than they cost singly. Add a second or a third
+          for a bigger lot, each one cheaper each than the one above it.
+        </span>
       </span>
     </details>
   )
 }
+
+/** Three pairs of boxes, filled from whatever the line already has. */
+const tierBoxes = (
+  breaks: { qty: number; cents: number }[],
+): { qty: string; price: string }[] =>
+  Array.from({ length: MAX_BREAKS }, (_, i) => {
+    const b = breaks[i]
+    return b ? { qty: String(b.qty), price: dollars(b.cents) } : { qty: '', price: '' }
+  })
 
 /** Dollars for an input box: no symbol, and no .00 nobody typed. */
 const dollars = (cents: number) =>
@@ -120,7 +157,7 @@ export function Inventory({
   /** The complaint from the last attempt, already in the maker's words. */
   notice?: string
   /** What they typed when it was refused, so nothing is retyped. */
-  echo?: { l?: string; p?: string; bq?: string; bp?: string; list?: string }
+  echo?: { l?: string; p?: string; breaks?: { qty: string; price: string }[]; list?: string }
 }) {
   const lines = rows.map(asLine)
   const odd = oddCentsNote(lines)
@@ -169,9 +206,7 @@ export function Inventory({
                   <span className="mk-item__do">
                     <button className="btn btn--quiet" type="submit">Save</button>
                   </span>
-                  <MultiBuy
-                    qty={r.bundleQty !== null ? String(r.bundleQty) : ''}
-                    price={r.bundleCents !== null ? dollars(r.bundleCents) : ''} />
+                  <MultiBuy breaks={tierBoxes(r.breaks)} />
                 </form>
               ) : (
                 <p className="mk-item__read">{formatLine(asLine(r))}</p>
@@ -219,7 +254,7 @@ export function Inventory({
           <span className="mk-item__do">
             <button className="btn btn--primary" type="submit">Add</button>
           </span>
-          <MultiBuy qty={echo?.bq ?? ''} price={echo?.bp ?? ''} />
+          <MultiBuy breaks={echo?.breaks ?? tierBoxes([])} />
         </form>
       )}
 

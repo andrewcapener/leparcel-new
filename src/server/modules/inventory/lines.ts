@@ -64,19 +64,40 @@ export function tag(cents: number): string {
 
 /* ────────────────────────────── a line ────────────────────────────── */
 
+/**
+ * How many multi-buys one line may carry.
+ *
+ * Drew, 30 October: "I don't think people are gonna get past three to be
+ * honest, that would be pretty rare, but maybe we build it to go up to three
+ * or four." Three breaks plus the single price is four variants on a
+ * product, which is what a register shows when you click into it.
+ *
+ * A form decision, not a database one: inventory_breaks holds as many as it
+ * is given, so raising this is a change to the boxes on screen.
+ */
+export const MAX_BREAKS = 3
+
+/** "2" and "15" means buy 2 for $15. Both blank is no break. */
+export type BreakInput = { qty: string; price: string }
+
 export type LineInput = {
   label: string
   price: string
-  /** Both blank, or both filled. "2" and "8" means buy 2 for $8. */
-  bundleQty: string
-  bundlePrice: string
+  /** In the order the maker typed them. Blank pairs are ignored; a half
+   *  filled pair is refused, because half a multi-buy is a price nobody can
+   *  ring up. */
+  breaks: BreakInput[]
 }
+
+/** One multi-buy: a quantity and what that lot costs. */
+export type Break = { qty: number; cents: number }
 
 export type Line = {
   label: string
   priceCents: number
-  bundleQty: number | null
-  bundleCents: number | null
+  /** Cheapest per item last, which is the order a shelf card reads in.
+   *  Empty when the line is simply a thing at a price. */
+  breaks: Break[]
 }
 
 export const MAX_LABEL = 80
@@ -95,56 +116,86 @@ export function readLine(input: LineInput): { line: Line } | { bad: string } {
   const price = priceFromDollars(input.price)
   if ('bad' in price) return { bad: price.bad }
 
-  const qRaw = (input.bundleQty ?? '').trim()
-  const bRaw = (input.bundlePrice ?? '').trim()
+  const breaks: Break[] = []
+  for (const raw of input.breaks ?? []) {
+    const qRaw = (raw?.qty ?? '').trim()
+    const bRaw = (raw?.price ?? '').trim()
 
-  if (!qRaw && !bRaw) {
-    return { line: { label, priceCents: price.cents, bundleQty: null, bundleCents: null } }
+    /* An untouched pair of boxes. Most lines are a thing and a price. */
+    if (!qRaw && !bRaw) continue
+
+    /* "Buy 1 for $12" is not a multi-buy, it is the price, and it is what
+       anybody types who reads those boxes as "how many have you got". That
+       was a dead end Drew hit three times running with lines he had every
+       right to expect to save. A quantity below two carries no multi-buy, so
+       it is dropped rather than thrown back. Checked before the half-a-break
+       rules below, so a lone 0 or 1 is answered the same way whatever sits
+       beside it. */
+    if (/^\d+$/.test(qRaw) && Number(qRaw) < 2) continue
+
+    /* Half a multi-buy is the likeliest mistake on this form, and silently
+       dropping it would put the wrong price on the shelf. */
+    if (!qRaw) return { bad: 'How many for that multi-buy price?' }
+    if (!bRaw) return { bad: 'What does that multi-buy cost?' }
+    if (!/^\d+$/.test(qRaw)) return { bad: 'A multi-buy quantity is a whole number, like 2.' }
+
+    const qty = Number(qRaw)
+    if (qty > 99) return { bad: 'That is a lot. Keep a multi-buy under 100.' }
+
+    const lot = priceFromDollars(bRaw)
+    if ('bad' in lot) return { bad: lot.bad }
+
+    /* A multi-buy that costs more per item than buying them singly is a typo
+       every time, and the kind nobody notices until a shopper does the sum at
+       the counter. Compared by cross multiplication so there is no division
+       and no float anywhere near a price. */
+    if (lot.cents >= price.cents * qty) {
+      return { bad: `At ${tag(price.cents)} each, ${qty} would be ${tag(price.cents * qty)}. A multi-buy has to cost less.` }
+    }
+
+    if (breaks.some((b) => b.qty === qty)) {
+      return { bad: `There are two prices for buying ${qty}. Keep one.` }
+    }
+    breaks.push({ qty, cents: lot.cents })
   }
-  /* "Buy 1 for $12" is not a multi-buy, it is the price, and it is what
-     anybody types who reads those two boxes as "how many have you got".
-     That was a dead end, and Drew hit it three times running with lines he
-     had every right to expect to save. A quantity below two carries no
-     multi-buy, so the line is kept at its single price instead of being
-     thrown back. Checked before the half-a-bundle rules below, so a lone 0
-     or 1 in the quantity box is answered the same way whatever is beside it.
-     What the register ends up with is on the card, under "What the register
-     will see". */
-  if (/^\d+$/.test(qRaw) && Number(qRaw) < 2) {
-    return { line: { label, priceCents: price.cents, bundleQty: null, bundleCents: null } }
+
+  if (breaks.length > MAX_BREAKS) {
+    return { bad: `Up to ${MAX_BREAKS} multi-buys on one line.` }
   }
 
-  /* Half a bundle is the most likely mistake on this form, and silently
-     dropping it would put the wrong price on the shelf. */
-  if (!qRaw) return { bad: 'How many for that bundle price?' }
-  if (!bRaw) return { bad: 'What does the bundle cost?' }
+  /* Fewest first, which is how a shelf card reads and how the register will
+     show the variants: the single price, then each better deal under it. */
+  breaks.sort((a, b) => a.qty - b.qty)
 
-  if (!/^\d+$/.test(qRaw)) return { bad: 'The bundle quantity is a whole number, like 2.' }
-  const bundleQty = Number(qRaw)
-  if (bundleQty > 99) return { bad: 'That is a lot. Keep bundles under 100.' }
-
-  const bundle = priceFromDollars(bRaw)
-  if ('bad' in bundle) return { bad: bundle.bad }
-
-  /* A "bundle" that costs more per item than buying them singly is a typo
-     every time, and it is the kind that nobody notices until a shopper does
-     the sum at the counter. Compared by cross multiplication so there is no
-     division and no float anywhere near a price. */
-  if (bundle.cents >= price.cents * bundleQty) {
-    return { bad: `At ${tag(price.cents)} each, ${bundleQty} would be ${tag(price.cents * bundleQty)}. The bundle should cost less.` }
+  /* And each one has to actually be a better deal than the one above it.
+     "2 for $15, 3 for $25" is $7.50 each then $8.33 each, which is a ladder
+     that goes the wrong way: a shopper buying three is better off buying two
+     and one, and nobody notices until she works it out at the counter.
+     Cross multiplied again, so no division touches a price. */
+  for (let i = 1; i < breaks.length; i++) {
+    const lower = breaks[i - 1]!
+    const higher = breaks[i]!
+    if (higher.cents * lower.qty >= lower.cents * higher.qty) {
+      return {
+        bad: `${higher.qty} for ${tag(higher.cents)} is not a better deal than`
+          + ` ${lower.qty} for ${tag(lower.cents)}. Each one has to work out cheaper each.`,
+      }
+    }
   }
 
-  return {
-    line: { label, priceCents: price.cents, bundleQty, bundleCents: bundle.cents },
-  }
+  return { line: { label, priceCents: price.cents, breaks } }
 }
 
 /** One line the way Hillary writes it. `Maps: $5 or buy 2/$8` */
 export function formatLine(line: Line): string {
   const base = `${line.label}: ${tag(line.priceCents)}`
-  return line.bundleQty && line.bundleCents
-    ? `${base} or buy ${line.bundleQty}/${tag(line.bundleCents)}`
-    : base
+  if (line.breaks.length === 0) return base
+  /* "Maps: $5 or buy 2/$8 or 3/$10". The word "buy" once, because repeating
+     it on every break reads as three separate offers rather than one price
+     ladder on one product. */
+  const [first, ...rest] = line.breaks
+  const tail = rest.map((b) => ` or ${b.qty}/${tag(b.cents)}`).join('')
+  return `${base} or buy ${first!.qty}/${tag(first!.cents)}${tail}`
 }
 
 /**
@@ -347,16 +398,20 @@ export function readPastedList(text: string): PastedList {
     /* Bullets and dashes people paste out of Notes and Docs. */
     let rest = raw.replace(BULLET, '').trim()
 
-    let bundleQty = ''
-    let bundlePrice = ''
-    const bundle = rest.match(BUNDLE_AT_END)
-    if (bundle) {
-      bundleQty = bundle[1]!
-      bundlePrice = bundle[2]!
-      rest = rest.slice(0, bundle.index).trim()
+    /* Every multi-buy on the line, taken off the end one at a time.
+       "Maps: $5 or buy 2/$8 or 3/$10" strips "or 3/$10", then "or buy 2/$8",
+       and what remains is the product and its single price. Collected back
+       to front, so they are reversed before use. */
+    const found: BreakInput[] = []
+    for (let guard = 0; guard < MAX_BREAKS + 1; guard++) {
+      const m = rest.match(BUNDLE_AT_END)
+      if (!m) break
+      found.push({ qty: m[1]!, price: m[2]! })
+      rest = rest.slice(0, m.index).trim()
       /* What is left of "Maps: $5 or". */
-      rest = rest.replace(/[,;]?\s*\bor\b\s*$/i, '').trim()
+      rest = rest.replace(/[,;]?\s*\b(?:or|and)\b\s*$/i, '').trim()
     }
+    found.reverse()
 
     const price = rest.match(PRICE_AT_END) ?? rest.match(BARE_PRICE_AT_END)
     if (!price) {
@@ -368,9 +423,7 @@ export function readPastedList(text: string): PastedList {
       .replace(TRAILING_SEP, '')
       .trim()
 
-    const read = readLine({
-      label, price: price[1]!, bundleQty, bundlePrice,
-    })
+    const read = readLine({ label, price: price[1]!, breaks: found })
     if ('bad' in read) out.bad.push({ raw, why: read.bad })
     else out.lines.push(read.line)
   }

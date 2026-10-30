@@ -647,7 +647,7 @@ export default async function MakerDetail({
                 <pre className="adm-pre" style={{ maxWidth: 760 }}>
                   {items.map((i) => formatLine({
                     label: i.label, priceCents: i.priceCents,
-                    bundleQty: i.bundleQty, bundleCents: i.bundleCents,
+                    breaks: i.breaks,
                   })).join('\n')}
                 </pre>
               )}

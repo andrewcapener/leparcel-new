@@ -7,9 +7,9 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { bookings, inventoryItems, vendors } from '@/db/schema'
+import { bookings, inventoryBreaks, inventoryItems, vendors } from '@/db/schema'
 import { MAKER_COOKIE, readSession } from '@/lib/makerAuth'
-import { listState, readLine, readPastedList } from '@/server/modules/inventory/lines'
+import { MAX_BREAKS, listState, readLine, readPastedList } from '@/server/modules/inventory/lines'
 import type { InvCode } from '@/server/modules/inventory/notices'
 
 /**
@@ -83,6 +83,45 @@ function back(why?: InvCode | 'bad', echo?: Record<string, string>): never {
 const field = (fd: FormData, k: string) => String(fd.get(k) ?? '')
 
 /**
+ * The multi-buy rows, as the form posts them.
+ *
+ * Three pairs of boxes, named bq0/bp0 through bq2/bp2, all optional. Blank
+ * pairs are dropped by readLine; a half filled one is refused there, which
+ * is where every other rule about a price already lives.
+ */
+const breaksFrom = (fd: FormData) =>
+  Array.from({ length: MAX_BREAKS }, (_, i) => ({
+    qty: field(fd, `bq${i}`),
+    price: field(fd, `bp${i}`),
+  }))
+
+/** What they typed, echoed back so a refusal never costs a retype. */
+const echoBreaks = (typed: { qty: string; price: string }[]) =>
+  Object.fromEntries(typed.flatMap((b, i) => [[`bq${i}`, b.qty], [`bp${i}`, b.price]]))
+
+/**
+ * Write a line's multi-buys, replacing whatever it had.
+ *
+ * Deleted and re-inserted rather than reconciled: there are at most three of
+ * them, they carry nothing a maker would miss, and a diff against three rows
+ * is more code than it saves. The unique index on (item_id, qty) is what
+ * stops the same quantity being priced twice.
+ */
+async function writeBreaks(
+  tx: typeof db, itemId: string, breaks: { qty: number; cents: number }[],
+): Promise<void> {
+  await tx.delete(inventoryBreaks).where(eq(inventoryBreaks.itemId, itemId))
+  if (breaks.length === 0) return
+  await tx.insert(inventoryBreaks).values(breaks.map((b, i) => ({
+    id: randomUUID(),
+    itemId,
+    qty: b.qty,
+    priceCents: b.cents,
+    sortOrder: i,
+  })))
+}
+
+/**
  * Nothing in here may throw.
  *
  * A server action that throws returns an error response, and the browser's
@@ -124,8 +163,7 @@ export async function addInventoryItem(fd: FormData): Promise<void> {
     const typed = {
       label: field(fd, 'label'),
       price: field(fd, 'price'),
-      bundleQty: field(fd, 'bundleQty'),
-      bundlePrice: field(fd, 'bundlePrice'),
+      breaks: breaksFrom(fd),
     }
     const read = readLine(typed)
     /* Values come back with the complaint, the way /apply does it. Retyping
@@ -133,7 +171,7 @@ export async function addInventoryItem(fd: FormData): Promise<void> {
        how a form teaches somebody to give up on it. */
     if ('bad' in read) {
       back('bad', {
-        l: typed.label, p: typed.price, bq: typed.bundleQty, bp: typed.bundlePrice,
+        l: typed.label, p: typed.price, ...echoBreaks(typed.breaks),
       })
     }
 
@@ -142,24 +180,24 @@ export async function addInventoryItem(fd: FormData): Promise<void> {
       .from(inventoryItems)
       .where(and(eq(inventoryItems.bookingId, who.bookingId), isNull(inventoryItems.voidedAt)))
 
+    const id = randomUUID()
     try {
       await db.insert(inventoryItems).values({
-        id: randomUUID(),
+        id,
         bookingId: who.bookingId,
         label: read.line.label,
         priceCents: read.line.priceCents,
-        bundleQty: read.line.bundleQty,
-        bundleCents: read.line.bundleCents,
-          sortOrder: Number(n) + 1,
+        sortOrder: Number(n) + 1,
         createdBy: 'maker',
       })
+      await writeBreaks(db, id, read.line.breaks)
     } catch (err) {
       /* A throw here used to surface as a server action that failed, which the
          browser shows as nothing at all: the maker presses Add, the page sits
          there, and the line is gone. Say it, and keep what they typed. */
       console.error(`[inventory] add for ${who.bookingId}:`, err)
       back('dberr', {
-        l: typed.label, p: typed.price, bq: typed.bundleQty, bp: typed.bundlePrice,
+        l: typed.label, p: typed.price, ...echoBreaks(typed.breaks),
       })
     }
 
@@ -192,16 +230,19 @@ export async function addPastedList(fd: FormData): Promise<void> {
         .from(inventoryItems)
         .where(and(eq(inventoryItems.bookingId, who.bookingId), isNull(inventoryItems.voidedAt)))
 
-      await db.insert(inventoryItems).values(read.lines.map((line, i) => ({
-        id: randomUUID(),
-        bookingId: who.bookingId,
-        label: line.label,
-        priceCents: line.priceCents,
-        bundleQty: line.bundleQty,
-        bundleCents: line.bundleCents,
-        sortOrder: Number(n) + 1 + i,
-        createdBy: 'maker',
-      })))
+      const made = read.lines.map((line, i) => ({
+        row: {
+          id: randomUUID(),
+          bookingId: who.bookingId,
+          label: line.label,
+          priceCents: line.priceCents,
+          sortOrder: Number(n) + 1 + i,
+          createdBy: 'maker',
+        },
+        breaks: line.breaks,
+      }))
+      await db.insert(inventoryItems).values(made.map((m) => m.row))
+      for (const m of made) await writeBreaks(db, m.row.id, m.breaks)
     } catch (err) {
       console.error(`[inventory] paste for ${who.bookingId}:`, err)
       back('dberr', { list: raw })
@@ -240,8 +281,7 @@ export async function saveInventoryItem(fd: FormData): Promise<void> {
     const read = readLine({
       label: field(fd, 'label'),
       price: field(fd, 'price'),
-      bundleQty: field(fd, 'bundleQty'),
-      bundlePrice: field(fd, 'bundlePrice'),
+      breaks: breaksFrom(fd),
     })
     /* The typed values come back so an edit refused over one character is not
        retyped from scratch, and the row is named so the complaint is attached
@@ -249,7 +289,7 @@ export async function saveInventoryItem(fd: FormData): Promise<void> {
     if ('bad' in read) {
       back('bad', {
         row: id, l: field(fd, 'label'), p: field(fd, 'price'),
-        bq: field(fd, 'bundleQty'), bp: field(fd, 'bundlePrice'),
+        ...echoBreaks(breaksFrom(fd)),
       })
     }
 
@@ -257,10 +297,9 @@ export async function saveInventoryItem(fd: FormData): Promise<void> {
       await db.update(inventoryItems).set({
         label: read.line.label,
         priceCents: read.line.priceCents,
-        bundleQty: read.line.bundleQty,
-        bundleCents: read.line.bundleCents,
-          updatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       }).where(eq(inventoryItems.id, row.id))
+      await writeBreaks(db, row.id, read.line.breaks)
     } catch (err) {
       console.error(`[inventory] save ${row.id}:`, err)
       back('dberr')

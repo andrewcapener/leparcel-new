@@ -51,7 +51,7 @@ export function invMessage(
   if (raw === 'bad') {
     const read = readLine({
       label: typed?.label ?? '', price: typed?.price ?? '',
-      bundleQty: typed?.bundleQty ?? '', bundlePrice: typed?.bundlePrice ?? '',
+      breaks: typed?.breaks ?? [],
     })
     /* Led by what happened, because the complaint on its own does not read
        as one. Drew typed a price, pressed Add, and got "A bundle is two or

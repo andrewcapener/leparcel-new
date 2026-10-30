@@ -1,6 +1,6 @@
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { db as Db } from '@/db'
-import { inventoryItems } from '@/db/schema'
+import { inventoryBreaks, inventoryItems } from '@/db/schema'
 
 type DbHandle = typeof Db
 
@@ -18,15 +18,41 @@ type DbHandle = typeof Db
  * is the shape use-server-exports.test.ts was written about: the page renders,
  * the button is there, and the failure only appears when somebody presses it.
  */
-export async function inventoryFor(db: DbHandle, bookingId: string) {
-  return db
+export type ItemRow = typeof inventoryItems.$inferSelect & {
+  /** The product's other variants, fewest first. */
+  breaks: { qty: number; cents: number }[]
+}
+
+export async function inventoryFor(db: DbHandle, bookingId: string): Promise<ItemRow[]> {
+  const items = await db
     .select()
     .from(inventoryItems)
     .where(and(eq(inventoryItems.bookingId, bookingId), isNull(inventoryItems.voidedAt)))
     .orderBy(asc(inventoryItems.sortOrder), asc(inventoryItems.createdAt))
+  if (items.length === 0) return []
+
+  /* One query for every line's multi-buys, not one per line. A maker with
+     forty lines is forty round trips done the other way, on a page she is
+     waiting for. */
+  const rows = await db
+    .select()
+    .from(inventoryBreaks)
+    .where(inArray(inventoryBreaks.itemId, items.map((i) => i.id)))
+    .orderBy(asc(inventoryBreaks.qty))
+
+  const byItem = new Map<string, { qty: number; cents: number }[]>()
+  for (const r of rows) {
+    byItem.set(r.itemId, [...(byItem.get(r.itemId) ?? []), { qty: r.qty, cents: r.priceCents }])
+  }
+  return items.map((i) => ({ ...i, breaks: byItem.get(i.id) ?? [] }))
 }
 
-/** How many lines a booking has, for the checklist and the roster. */
+/** How many lines a booking has, for the checklist and the roster. Counts
+ *  products, not variants: a line with three multi-buys is still one line. */
 export async function inventoryCount(db: DbHandle, bookingId: string): Promise<number> {
-  return (await inventoryFor(db, bookingId)).length
+  const [row] = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(inventoryItems)
+    .where(and(eq(inventoryItems.bookingId, bookingId), isNull(inventoryItems.voidedAt)))
+  return Number(row?.n ?? 0)
 }

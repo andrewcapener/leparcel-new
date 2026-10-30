@@ -3049,6 +3049,11 @@ a.mk-dir__cell:focus-visible{outline:2px solid #BC9658;outline-offset:3px}
 .mk-item__optf {
   display: flex; align-items: flex-end; gap: .6em; flex-wrap: wrap; margin-top: .55em;
 }
+/* One multi-buy per row, stacked, so three of them read as a price ladder
+   rather than as six boxes in a line. */
+.mk-item__tier { display: flex; align-items: flex-end; gap: .6em; flex: 1 1 100%; }
+.mk-item__tier + .mk-item__tier { margin-top: .45em; }
+.mk-item__tier + .mk-item__tier .lb { display: none; }
 .mk-item__opth { font-size: .88em; opacity: .66; flex: 1 1 14em; }
 
 /* The whole list at once, in the format Elise already asks for. */

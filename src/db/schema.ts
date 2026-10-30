@@ -475,6 +475,23 @@ export const inventoryItems = pgTable('inventory_items', {
   voidReason: text('void_reason'),
 }, (t) => [index('inventory_items_booking').on(t.bookingId)])
 
+/**
+ * The multi-buys on one line, one row each.
+ *
+ * The item is the product and carries the single price; these are its other
+ * variants. 0058 held one, in two columns on the item, which could not
+ * express "2 for $15 and 3 for $20" at all.
+ */
+export const inventoryBreaks = pgTable('inventory_breaks', {
+  id: text('id').primaryKey(),
+  itemId: text('item_id').notNull().references(() => inventoryItems.id, { onDelete: 'cascade' }),
+  /** How many. Always two or more; one of something is its own price. */
+  qty: integer('qty').notNull(),
+  /** What the lot costs, in integer cents (rule 1). */
+  priceCents: integer('price_cents').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+}, (t) => [index('inventory_breaks_item').on(t.itemId)])
+
 export const bookingCharges = pgTable('booking_charges', {
   id: text('id').primaryKey(),
   bookingId: text('booking_id').notNull().references(() => bookings.id),
