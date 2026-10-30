@@ -1174,3 +1174,16 @@
   display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
   margin: 0 0 .9rem;
 }
+
+/* Reference that is read once and then is furniture: the email preview, the
+   list of who was left out. Shut by default, one click away, and styled like
+   a heading so the page still says what is inside it. */
+.adm .adm-fold { margin: 1.4rem 0 0; }
+.adm .adm-fold > summary {
+  cursor: pointer; list-style: none;
+  font-family: var(--font-c); font-weight: 600; text-transform: uppercase;
+  letter-spacing: .13em; font-size: var(--t-cap); color: var(--ad-ink);
+}
+.adm .adm-fold > summary::-webkit-details-marker { display: none }
+.adm .adm-fold > summary::before { content: '\25B8\00a0'; }
+.adm .adm-fold[open] > summary::before { content: '\25BE\00a0'; }

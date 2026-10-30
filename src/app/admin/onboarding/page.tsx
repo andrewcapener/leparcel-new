@@ -106,7 +106,7 @@ export default async function OnboardingPage({
         </p>
       )}
 
-      <h2 className="adm-h2">Where everyone has got to</h2>
+      <div className="adm-sec" style={{ marginTop: 28 }}><h2>Where everyone has got to</h2></div>
       <Stats>
         <Stat label="Inventory in" icon="queue"
           value={pct(progress.itemsDone, progress.total)} unit="%"
@@ -120,15 +120,18 @@ export default async function OnboardingPage({
           note={progressNotice(progress)} />
       </Stats>
 
-      <h2 className="adm-h2">Who still needs the email</h2>
-      <Stats>
-        <Stat label="Getting an email" icon="clock" value={plan.send.length}
-          note={`${fresh} who have never had one.`} />
-        <Stat label="Asked for both" icon="roster" value={askedBoth}
-          note={`${askedItems} for inventory, ${askedPayouts} for payouts.`} />
-        <Stat label="Left out" icon="tent" value={plan.held.length}
-          note="Outdoor makers, undecided applications, and anyone already done." />
-      </Stats>
+      {/* The three cards that used to sit here said what the line under the
+          page title already says: how many are getting one, how many are
+          asked for both, how many are left out. Two of everything is not
+          twice as clear. The one thing they carried that the heading does
+          not is how many have never had one, which is what separates a first
+          send from a chase. */}
+      <div className="adm-sec"><h2>Who still needs the email</h2></div>
+      <p className="adm-sub2">
+        {fresh === plan.send.length
+          ? 'None of them have had one of these yet.'
+          : `${fresh} of the ${plan.send.length} have never had one of these.`}
+      </p>
 
       <InviteForm
         rows={plan.send.map((s) => ({
@@ -147,8 +150,8 @@ export default async function OnboardingPage({
       />
 
       {plan.held.length > 0 && (
-        <>
-          <h2 className="adm-h2">Left out, and why</h2>
+        <details className="adm-fold">
+          <summary>Left out, and why ({plan.held.length})</summary>
           <table className="adm-tbl">
             <caption className="adm-sr">Makers who will not receive this email</caption>
             <thead>
@@ -166,7 +169,7 @@ export default async function OnboardingPage({
               ))}
             </tbody>
           </table>
-        </>
+        </details>
       )}
     </>
   )

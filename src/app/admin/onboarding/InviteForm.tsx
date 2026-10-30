@@ -138,16 +138,22 @@ export function InviteForm({
         <SendButton n={ticked.size} />
       </p>
 
-      <h2 className="adm-h2">What arrives</h2>
-      <p className="adm-note">
-        A maker who owes only one of the two gets a shorter version naming only
-        that one. This is the full version.
-      </p>
-      <div className="adm-preview">
-        <p><strong>{subjectBoth}</strong></p>
-        <ul>{lines.map((l) => <li key={l}>{l}</li>)}</ul>
-        <p>Open your account</p>
-      </div>
+      {/* Folded. It is read once, carefully, the first time somebody uses
+          this screen, and after that it is a paragraph of furniture between
+          the Send button and the bottom of the page. Shut by default, still
+          one click from anybody about to mail forty people. */}
+      <details className="adm-fold">
+        <summary>What arrives</summary>
+        <p className="adm-note">
+          A maker who owes only one of the two gets a shorter version naming only
+          that one. This is the full version.
+        </p>
+        <div className="adm-preview">
+          <p><strong>{subjectBoth}</strong></p>
+          <ul>{lines.map((l) => <li key={l}>{l}</li>)}</ul>
+          <p>Open your account</p>
+        </div>
+      </details>
     </form>
   )
 }

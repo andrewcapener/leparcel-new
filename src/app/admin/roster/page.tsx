@@ -692,6 +692,14 @@ export default async function Roster({
           : `${rows.length} ${rows.length === 1 ? 'space held' : 'spaces held'} for ${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${show.venueName}`}
       />
 
+      {/* Adding a maker by hand used to take a row in the left column, which
+          is a lot of permanent furniture for something done a handful of
+          times a season. It belongs here, on the roster it adds to, which is
+          also where somebody is standing when they find they need it. */}
+      <p className="adm-sub2" style={{ margin: '0 0 1rem' }}>
+        Somebody missing? <Link href="/admin/roster/add">Add a maker by hand</Link>.
+      </p>
+
       {/* Two strips that compose: pick a track, pick a fee state, and each
           link keeps the other where it is. Counts come from the whole show,
           so a filter never hides how much it is hiding. */}

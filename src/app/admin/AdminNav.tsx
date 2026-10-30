@@ -29,24 +29,52 @@ export type NavCounts = {
 }
 
 const MAIN: Array<{
-  href: string; label: string; icon: IconName; count?: keyof NavCounts
+  /** A heading, not a link: the rows under it until the next one. */
+  sec?: string
+  href?: string; label?: string; icon?: IconName; count?: keyof NavCounts
   /** Other paths that belong to this row. */
   owns?: string
 }> = [
+  /* Grouped, because fourteen rows in one column is a list you read rather
+     than a place you aim at.
+     
+     Drew, 30 October: "we've built a lot of one-off tools here, it's very
+     comprehensive, however it's just kind of bloated, especially on the
+     navigation to the left." He is right, and the cause is visible in the
+     order: every screen was appended as it was built, so the column is a
+     build log rather than a day's work.
+     
+     The groups are the actual sequence of a season. Deciding who is in,
+     then running the roster, then the fortnight before the doors open, then
+     the plumbing. A section heading is free (the same adm-nav-sec the
+     Preview and Session blocks already use) and turns one list of fourteen
+     into four lists of three or four, which is the difference between
+     reading and aiming. */
   { href: '/admin', label: 'Dashboard', icon: 'grid' },
+
+  { sec: 'Deciding' },
   { href: '/admin/jury', label: 'Review queue', icon: 'queue', count: 'undecided', owns: '/admin/applications' },
+  { href: '/admin/import', label: 'Accept from the sheet', icon: 'queue' },
+
+  { sec: 'The roster' },
+  /* Add a maker by hand is NOT here. It is one button's worth of work that
+     belongs on the roster it adds to, which is also where somebody is
+     standing when they discover they need it, and it was taking a row of
+     this column to say so. */
   { href: '/admin/roster', label: 'Roster', icon: 'roster', count: 'needsPerson' },
+  { href: '/admin/codes', label: 'Maker numbers', icon: 'queue' },
+  { href: '/admin/chase', label: 'Chase the booth fee', icon: 'clock' },
+
+  { sec: 'Before the show' },
+  { href: '/admin/onboarding', label: 'Inventory and payouts', icon: 'money' },
   { href: '/admin/thumbnails', label: 'Maker pictures', icon: 'photo' },
   { href: '/admin/lineup', label: 'The lineup', icon: 'grid' },
-  { href: '/admin/import', label: 'Accept from the sheet', icon: 'queue' },
-  { href: '/admin/chase', label: 'Chase the booth fee', icon: 'clock' },
-  { href: '/admin/roster/add', label: 'Add a maker by hand', icon: 'roster' },
-  { href: '/admin/codes', label: 'Maker numbers', icon: 'queue' },
-  { href: '/admin/onboarding', label: 'Inventory and payouts', icon: 'money' },
-  { href: '/admin/sheet', label: 'Send to Google Sheet', icon: 'external' },
+
+  { sec: 'Settings' },
   { href: '/admin/show', label: 'Show settings', icon: 'settings' },
   { href: '/admin/outbox', label: 'Outbox', icon: 'mail' },
   { href: '/admin/emails', label: 'Emails', icon: 'bell' },
+  { href: '/admin/sheet', label: 'Send to Google Sheet', icon: 'external' },
 ]
 
 const PREVIEWS: Array<{
@@ -89,20 +117,21 @@ export function AdminNav({ counts, onNavigate }: { counts: NavCounts; onNavigate
   return (
     <nav className="adm-nav" aria-label="Admin">
       {MAIN.map((t) => {
+        if (t.sec) return <p className="adm-nav-sec" key={t.sec}>{t.sec}</p>
         const on =
           path === t.href ||
-          (t.href !== '/admin' && path.startsWith(`${t.href}/`)) ||
+          (t.href !== '/admin' && path.startsWith(`${t.href!}/`)) ||
           (t.owns !== undefined && path.startsWith(t.owns))
         const n = t.count ? counts[t.count] : 0
         return (
           <Link
             key={t.href}
-            href={t.href}
+            href={t.href!}
             className="adm-nav-row"
             aria-current={on ? 'page' : undefined}
             onClick={onNavigate}
           >
-            <Icon name={t.icon} />
+            <Icon name={t.icon!} />
             <span className="t">{t.label}</span>
             {t.count && n > 0 && (
               <span className="adm-nav-badge">
