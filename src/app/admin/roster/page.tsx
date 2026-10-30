@@ -218,6 +218,9 @@ export default async function Roster({
      is. Counting her own empty columns would report a gap that nobody can
      close, because there is nothing for her to do. */
   const owners = new Map(rows.map((r) => [r.vendor.id, r.vendor] as const))
+  /* The MM number to print for an account's owner. It lives on the booking,
+     not the vendor, because a maker's number is per show. */
+  const codeOf = new Map(rows.map((r) => [r.vendor.id, r.booking.vendorCode] as const))
   const payoutOf = (v: typeof rows[number]['vendor']): ConnectState =>
     connectState(payingAccount(v, owners))
   const payable = owedMoney.filter((r) => payoutOf(r.vendor) === 'ready')
@@ -559,11 +562,19 @@ export default async function Roster({
                 maker who sold all weekend and cannot be sent their share. */}
             {asking && owesPayoutSetup(space.track) && (() => {
               const st = payoutOf(vendor)
-              if (st === 'ready') return <span className="adm-tag">Payouts ready</span>
-              if (st === 'in_review') return <span className="adm-tag">Payouts in review</span>
-              if (st === 'disabled') return <span className="adm-tag" data-warn="1">Payouts on hold</span>
-              if (st === 'unfinished') return <span className="adm-tag" data-warn="1">Payouts unfinished</span>
-              return <span className="adm-tag" data-warn="1">No payout account</span>
+              /* Whose account it is, when it is not hers. Said on the row and
+                 not only on the page behind it, because a staff member who
+                 has just set this up wants to see that it took without
+                 opening anybody, and because "Payouts ready" on a maker who
+                 never connected anything reads as a bug otherwise. */
+              const via = vendor.payoutsViaVendorId
+                ? ` via ${codeOf.get(vendor.payoutsViaVendorId) ?? 'another maker'}`
+                : ''
+              if (st === 'ready') return <span className="adm-tag">Payouts ready{via}</span>
+              if (st === 'in_review') return <span className="adm-tag">Payouts in review{via}</span>
+              if (st === 'disabled') return <span className="adm-tag" data-warn="1">Payouts on hold{via}</span>
+              if (st === 'unfinished') return <span className="adm-tag" data-warn="1">Payouts unfinished{via}</span>
+              return <span className="adm-tag" data-warn="1">No payout account{via}</span>
             })()}
           </span>
           {permit && (

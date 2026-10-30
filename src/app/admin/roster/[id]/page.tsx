@@ -328,6 +328,12 @@ export default async function MakerDetail({
   const lineupSaid = lineupNotice(lineup ?? '')
   const spaceSaid = spaceNotice(spaceMsg ?? '')
   const settleSaid = settleNotice(settleMsg ?? '')
+  /* Whether this maker has a Getting paid section at all. Named rather than
+     inlined because what sharing a payout account reported back belongs in
+     that section, beside the control that was pressed, and has to fall back
+     to the top of the page when there is no section to put it in. */
+  const payoutsShown = owesPayoutSetup(space.track)
+    && show?.payoutSetup === 'on' && paymentsConfigured()
   const offLineup = Boolean(booking.lineupHiddenAt)
   const permit = permitState({
     /* The booked space, not the application: an outdoor maker owes a permit
@@ -380,7 +386,10 @@ export default async function MakerDetail({
           It said: {payoutError.detail}
         </p>
       )}
-      {shareMsg && <p className="adm-note" role="status">{shareMsg}</p>}
+      {/* Only as a fallback. Normally this prints inside Getting paid, beside
+          the control that was pressed; up here it is a long way from it, and
+          a refusal nobody reads is a write nobody knows did not happen. */}
+      {shareMsg && !payoutsShown && <p className="adm-note" role="status">{shareMsg}</p>}
       {resendSaid && <p className="adm-note" role="status">{resendSaid}</p>}
       {addonSaid && <p className="adm-note" role="status">{addonSaid}</p>}
       {moveSaid && <p className="adm-note" role="status">{moveSaid}</p>}
@@ -758,7 +767,7 @@ export default async function MakerDetail({
               explicit refresh write: payouts_enabled is Stripe's verdict and
               nothing here stands in for it. Outdoor makers are never asked,
               because they take their own money. */}
-          {owesPayoutSetup(space.track) && show?.payoutSetup === 'on' && paymentsConfigured() && (() => {
+          {payoutsShown && (() => {
             /* The account that actually pays this maker: theirs, or the one
                they are paid through. */
             const acct = payoutOwner ?? vendor
@@ -778,10 +787,11 @@ export default async function MakerDetail({
             const wants = requirementsInPlainWords(requirementList(acct.connectRequirements))
             return (
               <>
-                <div className="adm-sec" style={{ marginTop: 26 }}>
+                <div className="adm-sec" id="paid" style={{ marginTop: 26 }}>
                   <h2>Getting paid</h2>
                   <span className="c">{state.replace(/_/g, ' ')}</span>
                 </div>
+                {shareMsg && <p className="adm-note" role="status">{shareMsg}</p>}
                 <p className="adm-note" role="status">{says[state]}</p>
                 {wants.length > 0 && (
                   <>
