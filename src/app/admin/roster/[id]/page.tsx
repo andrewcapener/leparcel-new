@@ -20,6 +20,10 @@ import {
   NOTE_MAX, addonNotice, resendNotice, resendProblem,
 } from '@/app/admin/roster/resend-lines'
 import { moveNotice, lineupNotice } from '@/server/modules/roster/track'
+import {
+  connectState, owesPayoutSetup, requirementList, requirementsInPlainWords,
+} from '@/server/modules/payments/connect'
+import { paymentsConfigured } from '@/server/modules/payments/config'
 import { inventoryFor } from '@/server/modules/inventory/read'
 import { formatLine } from '@/server/modules/inventory/lines'
 import { spaceNotice } from '@/server/modules/roster/spaces'
@@ -668,6 +672,61 @@ export default async function MakerDetail({
               )}
             </>
           )}
+
+          {/* Where this maker stands on getting PAID.
+              
+              Drew, 30 October, having just finished his own Connect
+              onboarding and watched the roster list say "Payouts ready":
+              "I'm not seeing this reflected when I click into the profile."
+              He was not. The list carried a chip and the page it opens
+              carried nothing at all, except a refusal if there had ever been
+              one, which is the worst half of the story on its own.
+              
+              Read from our own columns, which only the webhook and an
+              explicit refresh write: payouts_enabled is Stripe's verdict and
+              nothing here stands in for it. Outdoor makers are never asked,
+              because they take their own money. */}
+          {owesPayoutSetup(space.track) && show?.payoutSetup === 'on' && paymentsConfigured() && (() => {
+            const state = connectState({
+              stripeAccountId: vendor.stripeAccountId,
+              payoutsEnabled: vendor.payoutsEnabled,
+              connectRequirements: vendor.connectRequirements,
+              connectDisabledReason: vendor.connectDisabledReason,
+            })
+            const says: Record<string, string> = {
+              ready: 'Ready. Their share reaches them automatically after the show.',
+              in_review: 'Stripe is checking what they sent. Nothing for anybody to do.',
+              unfinished: 'They started and Stripe wants more before it will pay them.',
+              disabled: 'Stripe has put payouts on hold for this account.',
+              not_started: 'They have not started. Nothing can be paid out to them yet.',
+            }
+            const wants = requirementsInPlainWords(requirementList(vendor.connectRequirements))
+            return (
+              <>
+                <div className="adm-sec" style={{ marginTop: 26 }}>
+                  <h2>Getting paid</h2>
+                  <span className="c">{state.replace(/_/g, ' ')}</span>
+                </div>
+                <p className="adm-note" role="status">{says[state]}</p>
+                {wants.length > 0 && (
+                  <>
+                    <p className="adm-sub2">Stripe is still waiting on:</p>
+                    <ul className="adm-probs">
+                      {wants.map((w) => <li key={w}>{w}</li>)}
+                    </ul>
+                  </>
+                )}
+                {vendor.connectDisabledReason && (
+                  <p className="adm-sub2">Stripe gave the reason: {vendor.connectDisabledReason}</p>
+                )}
+                <p className="adm-sub2">
+                  {vendor.connectUpdatedAt
+                    ? `Stripe last told us on ${fmtDateTime(vendor.connectUpdatedAt)}.`
+                    : 'Stripe has never reported on this account.'}
+                </p>
+              </>
+            )
+          })()}
 
           <div className="adm-sec" style={{ marginTop: 26 }}>
             <h2>What they have at this show</h2>
