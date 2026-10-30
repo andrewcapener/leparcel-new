@@ -191,8 +191,23 @@ export default async function MakerDetail({
     ))
     .orderBy(desc(auditLog.at))
     .limit(1)
+  /* A refusal is news until Stripe says otherwise, and then it is history.
+     
+     Drew, 30 October, looking at his own row: "this is not true, I swear to
+     god I connected it." He had. What he was reading was yesterday's
+     platform-profile refusal, written to the audit log when it happened and
+     printed at the top of his page ever since, because nothing asked whether
+     it was still so. Stripe had reported on that account several times
+     since.
+     
+     connect_updated_at is written every time Stripe tells us anything about
+     the account, by the webhook or by a refresh. Anything Stripe has said
+     after the refusal supersedes it. */
   const payoutError = (() => {
     if (!payoutTrouble?.after) return null
+    const toldSince = vendor.connectUpdatedAt && payoutTrouble.at
+      && new Date(vendor.connectUpdatedAt) > new Date(payoutTrouble.at)
+    if (toldSince) return null
     try {
       const v = JSON.parse(payoutTrouble.after) as { during?: string; detail?: string }
       return v.detail ? { during: v.during ?? 'setting up payouts', detail: v.detail } : null

@@ -205,6 +205,28 @@ export async function ensureConnectAccount(
  * A fresh onboarding link. They expire in minutes and are single use, so one
  * is minted per visit rather than stored: a saved link is a broken link.
  */
+/**
+ * Add a query to a url that may already carry a fragment.
+ *
+ * Both callers send a maker back to '/account#payouts', because the card
+ * being set up is half way down a long page. Appending '?payouts=back' to
+ * that gives '/account#payouts?payouts=back', where the query sits INSIDE
+ * the fragment: the browser treats the whole thing after the hash as an
+ * anchor and the page is handed no parameters at all.
+ *
+ * Which is exactly what Drew hit, having finished onboarding at Stripe:
+ * "it sent me back here, no confirmation." There was none to show. The page
+ * never saw payouts=back, so it neither said welcome back nor did the one
+ * thing that return is for, which is asking Stripe what just happened.
+ * Every maker would have had the same silence.
+ */
+function withQuery(url: string, query: string): string {
+  const hash = url.indexOf('#')
+  const base = hash === -1 ? url : url.slice(0, hash)
+  const frag = hash === -1 ? '' : url.slice(hash)
+  return `${base}${base.includes('?') ? '&' : '?'}${query}${frag}`
+}
+
 export async function onboardingLink(
   accountId: string, back: string,
 ): Promise<{ url: string } | { error: string }> {
@@ -217,7 +239,7 @@ export async function onboardingLink(
       /* Both point back to the same page. Stripe uses refresh_url when its
          own link has expired, and the page simply mints another. */
       refresh_url: `${siteUrl()}${back}`,
-      return_url: `${siteUrl()}${back}?payouts=back`,
+      return_url: withQuery(siteUrl() + back, 'payouts=back'),
     })
     return { url: link.url }
   } catch (err) {
