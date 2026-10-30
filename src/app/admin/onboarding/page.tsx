@@ -6,6 +6,9 @@ import {
   inviteSubject, needLines, planNotice,
 } from '@/server/modules/email/onboarding-invite'
 import { paymentsConfigured } from '@/server/modules/payments/config'
+import { progressOf, pct, progressNotice } from '@/server/modules/email/onboarding-progress'
+import { asc, eq, isNotNull, and } from 'drizzle-orm'
+import { bookings } from '@/db/schema'
 import { PageHead, Stats, Stat } from '../ui'
 import { InviteForm } from './InviteForm'
 
@@ -49,6 +52,23 @@ export default async function OnboardingPage({
   const payoutsLive = show.payoutSetup === 'on' && paymentsConfigured()
   const itemsLive = Boolean(show.inventoryDueAt)
 
+  /* How far the room has got. Drew, an hour after the send: "I just want to
+     know when the first successful one hits so I feel a little more
+     comfortable." Counting rows on the roster is how that gets answered
+     otherwise, and it is the sort of thing nobody does twice. */
+  const progress = progressOf(candidates)
+
+  /* When the first inventory landed, which is the moment he is waiting for.
+     Only inventory carries a time of its own: a payout account becomes ready
+     when Stripe says so, and we record that it is rather than when it
+     became so. */
+  const [firstIn] = await db
+    .select({ at: bookings.inventorySubmittedAt })
+    .from(bookings)
+    .where(and(eq(bookings.showId, show.id), isNotNull(bookings.inventorySubmittedAt)))
+    .orderBy(asc(bookings.inventorySubmittedAt))
+    .limit(1)
+
   const askedBoth = plan.send.filter((s) => s.needs.length === 2).length
   const askedItems = plan.send.filter((s) => s.needs.includes('items')).length
   const askedPayouts = plan.send.filter((s) => s.needs.includes('payouts')).length
@@ -86,6 +106,21 @@ export default async function OnboardingPage({
         </p>
       )}
 
+      <h2 className="adm-h2">Where everyone has got to</h2>
+      <Stats>
+        <Stat label="Inventory in" icon="queue"
+          value={pct(progress.itemsDone, progress.total)} unit="%"
+          note={`${progress.itemsDone} of ${progress.total} sent their list.${
+            firstIn?.at ? ` First in ${fmtDateTime(firstIn.at)}.` : ''}`} />
+        <Stat label="Payouts ready" icon="money"
+          value={pct(progress.payoutsDone, progress.total)} unit="%"
+          note={`${progress.payoutsDone} of ${progress.total} can be paid automatically.`} />
+        <Stat label="Done with us" icon="roster"
+          value={pct(progress.bothDone, progress.total)} unit="%"
+          note={progressNotice(progress)} />
+      </Stats>
+
+      <h2 className="adm-h2">Who still needs the email</h2>
       <Stats>
         <Stat label="Getting an email" icon="clock" value={plan.send.length}
           note={`${fresh} who have never had one.`} />
