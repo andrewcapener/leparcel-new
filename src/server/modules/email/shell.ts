@@ -210,6 +210,60 @@ export function button(cta: { href: string; label: string }): string {
   </td></tr>`
 }
 
+/**
+ * What we need from you, as the checklist it is.
+ *
+ * Drew, 30 October: "should look like a checklist. very well designed too."
+ * Two asks set as two grey paragraphs is a wall. Nothing counts them, which
+ * is the one fact the subject line promised, and the deadline ends up a
+ * clause in the middle of a sentence rather than a date.
+ *
+ * Deliberately the same object as the one on the account page the button
+ * opens: an empty box, the thing named in tracked caps, a line saying what
+ * it is, and its own date. A maker who reads this and then lands on her
+ * dashboard sees the list she has just read, with the same two rows on it,
+ * and knows she is in the right place.
+ *
+ * Drawn with tables and borders rather than a character or an image. A
+ * checkbox glyph renders as a different shape in every client and as tofu in
+ * some, and an image is a request that half of them block. A bordered cell
+ * is a square everywhere, Outlook's Word renderer included.
+ */
+export function checklist(
+  items: { title: string; body: string; dateLabel?: string; date?: string }[],
+): string {
+  const box = `<table role="presentation" width="20" cellpadding="0" cellspacing="0" border="0" style="width:20px;border-collapse:separate;">
+    <tr><td height="20" style="width:20px;height:20px;border:2px solid #d4d9de;border-radius:3px;font-size:0;line-height:0;">&nbsp;</td></tr>
+  </table>`
+
+  const rows = items.map((it, i) => `
+    <tr><td style="padding:${i === 0 ? '0' : '18px'} 0 18px;${i === items.length - 1 ? '' : `border-bottom:1px solid ${RULE};`}">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td width="34" valign="top" style="padding:2px 14px 0 0;">${box}</td>
+          <td valign="top">
+            <div style="font-family:${HEAD_FONT};font-size:13px;font-weight:600;letter-spacing:0.13em;text-transform:uppercase;color:${INK};">${esc(it.title)}</div>
+            <div style="font-family:${BODY_FONT};font-size:15px;line-height:1.6;color:${BODY};padding-top:8px;">${esc(it.body)}</div>
+            ${it.date ? `<div style="padding-top:11px;">
+              <span style="font-family:${HEAD_FONT};font-size:10px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:${MUTED};">${esc(it.dateLabel ?? 'Due')}</span>
+              <span style="font-family:${BODY_FONT};font-size:15px;font-weight:600;color:${INK};padding-left:9px;">${esc(it.date)}</span>
+            </div>` : ''}
+          </td>
+        </tr>
+      </table>
+    </td></tr>`).join('')
+
+  return `<tr><td class="mm-pad" style="padding:0 32px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="border-top:2px solid ${INK};">
+      <tr><td style="padding:14px 0 0;">
+        <div style="font-family:${HEAD_FONT};font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:${MUTED};padding-bottom:16px;">What we need from you</div>
+      </td></tr>
+      ${rows}
+    </table>
+  </td></tr>`
+}
+
 export function rule(): string {
   return `<tr><td class="mm-pad" style="padding:22px 32px 0;"><div style="height:1px;background:${RULE};line-height:1px;font-size:0;">&nbsp;</div></td></tr>`
 }
@@ -299,7 +353,12 @@ export function shell({
   <tr><td align="center" style="padding:28px 0;">
     <!-- No border and no card. The paper is the paper; the rules do the
          structure, which is what §4 asks for. -->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:${PAPER};">
+    <!-- align as an ATTRIBUTE as well as a margin. width="100%" fills the
+         centred cell, so align="center" on the cell has nothing left to
+         centre and the paper sat against one edge in Gmail on a wide
+         window. Outlook's Word renderer ignores margin:auto and reads the
+         attribute; everything else reads the margin. -->
+    <table role="presentation" align="center" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;margin:0 auto;background:${PAPER};">
 
       <!-- Masthead. A hairline, not the system's 2px ink rule: at the very
            top of an email that rule stops reading as structure and starts

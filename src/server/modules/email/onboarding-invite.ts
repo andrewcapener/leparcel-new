@@ -1,4 +1,4 @@
-import { shell, button, paragraphs, rule, esc, BODY_FONT, MUTED } from './shell'
+import { shell, button, checklist, rule, esc, BODY_FONT, MUTED } from './shell'
 import type { ConnectState } from '@/server/modules/payments/connect'
 
 /**
@@ -145,6 +145,36 @@ export function needLines(needs: Need[], itemsDue: string | null): string[] {
 }
 
 /**
+ * The same two asks, in parts rather than as sentences.
+ *
+ * needLines stays for the plain-text half and for the screen, where a
+ * sentence is the right shape. The email wants them broken up: a name you
+ * can scan, a line that explains it, and the date on its own where there is
+ * one, because a deadline buried mid-sentence is a deadline somebody misses.
+ */
+export function needAsks(
+  needs: Need[], itemsDue: string | null,
+): { title: string; body: string; dateLabel?: string; date?: string }[] {
+  const out: { title: string; body: string; dateLabel?: string; date?: string }[] = []
+  if (needs.includes('items')) {
+    out.push({
+      title: 'Your item list',
+      body: 'What you are bringing and what it costs, so the register knows your work.'
+        + ' One line per price, not one line per item: forty stickers at $7 is a single line.',
+      ...(itemsDue ? { dateLabel: 'Due', date: itemsDue } : {}),
+    })
+  }
+  if (needs.includes('payouts')) {
+    out.push({
+      title: 'Your payout account',
+      body: 'Set it up once and your share of what sells lands in your own account'
+        + ' after the show, with nothing to chase. It takes about ten minutes.',
+    })
+  }
+  return out
+}
+
+/**
  * The email.
  *
  * Short on purpose. It is a page of two tasks with a button to the page that
@@ -170,14 +200,19 @@ export function inviteHtml({
       ? 'Both live on your account page, and the button below opens it.'
       : 'It lives on your account page, and the button below opens it.',
     inner:
-      paragraphs(needLines(needs, itemsDue))
-      + button({ href: url, label: 'Open your account' })
+      checklist(needAsks(needs, itemsDue))
+      + button({ href: url, label: both ? 'Open your account' : 'Open your account' })
       + rule()
-      + `<p style="margin:0;font:400 13px/1.6 ${BODY_FONT};color:${MUTED};">`
+      /* A row, not a bare <p>. The shell's inner is a run of <tr>, and a
+         paragraph dropped among them is not in the table at all: every
+         renderer hoists it out, so this line was printing above the
+         masthead, outside the paper, on its own in the grey. */
+      + `<tr><td class="mm-pad" style="padding:14px 32px 4px;">`
+      + `<div style="font-family:${BODY_FONT};font-size:13px;line-height:1.6;color:${MUTED};">`
       + (vendorCode
         ? `Your Mermade ID is ${esc(vendorCode)}. Keep it on anything you send us.`
         : 'Reply to this email if anything here looks wrong.')
-      + '</p>',
+      + '</div></td></tr>',
     footer: 'Mermade Market · Dana Point, California',
   })
 }
