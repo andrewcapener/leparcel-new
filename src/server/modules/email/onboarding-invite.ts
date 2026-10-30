@@ -135,8 +135,8 @@ export function needLines(needs: Need[], itemsDue: string | null): string[] {
   const out: string[] = []
   if (needs.includes('items')) {
     out.push(itemsDue
-      ? `Your inventory. What you are bringing and what each thing costs. One line per price, not one line per item, and we do not need quantities. New this season: it goes in your account rather than in an email, and we cannot take a spreadsheet, an attachment or a list typed into a reply. Due ${itemsDue}.`
-      : 'Your inventory. What you are bringing and what each thing costs. One line per price, not one line per item, and we do not need quantities. New this season: it goes in your account rather than in an email, and we cannot take a spreadsheet, an attachment or a list typed into a reply.')
+      ? `Your inventory. What you are bringing and what each thing costs. One line per price, not one line per item, and we do not need quantities. Add it in your account: we cannot take a spreadsheet, an attachment or a list typed into a reply. Due ${itemsDue}.`
+      : 'Your inventory. What you are bringing and what each thing costs. One line per price, not one line per item, and we do not need quantities. Add it in your account: we cannot take a spreadsheet, an attachment or a list typed into a reply.')
   }
   if (needs.includes('payouts')) {
     out.push('Automatic payouts. Set this up once and your share of what sells lands in your own account automatically after the show, with nothing to chase.')
@@ -167,15 +167,14 @@ export function needAsks(
       body: 'What you are bringing and what each thing costs. One line per price,'
         + ' not one line per item, and we do not need quantities: forty stickers'
         + ' at $7 is a single line.',
-      /* "HERE'S A NEW SYSTEM WE ARE USING, PLEASE TAKE NOTE ESPECIALLY IF YOU
-         ARE A RETURNING MAKER" is how Elise opens, in capitals, and she is
-         right to: the makers most likely to reply with a spreadsheet are the
-         ones who did exactly that last season and were thanked for it. The
-         instruction alone does not explain why it changed, so it reads as
-         fussy; said as new, it reads as news. */
-      note: 'New this season: it goes in your account rather than in an email.'
-        + ' We cannot take a spreadsheet, an attachment, or a list typed into a'
-        + ' reply, because every price is keyed into the register by hand.',
+      /* Elise opens hers with "here's a new system we are using". Drew, 30
+         October: "don't tell them it's a new system." He is right. Calling it
+         new invites the question of what was wrong with the old way, and
+         tells a maker the ground moves between shows. Say how it works and
+         it simply is how it works. */
+      note: 'Add it in your account. We cannot take a spreadsheet, an attachment,'
+        + ' or a list typed into a reply, because every price is keyed into the'
+        + ' register by hand.',
       ...(itemsDue ? { dateLabel: 'Due', date: itemsDue } : {}),
     })
   }
