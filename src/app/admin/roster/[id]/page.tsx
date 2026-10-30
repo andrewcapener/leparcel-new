@@ -16,8 +16,9 @@ import { moveBoothTrack } from '@/app/admin/roster/move-track'
 import { setLineupVisibility } from '@/app/admin/roster/lineup'
 import { grantBoothSpace, revokeBoothSpace } from '@/app/admin/roster/spaces'
 import { resendBoothInvoice } from '@/app/admin/roster/resend'
+import { settleBoothBalance } from '@/app/admin/roster/settle'
 import {
-  NOTE_MAX, addonNotice, resendNotice, resendProblem,
+  NOTE_MAX, addonNotice, resendNotice, resendProblem, settleNotice,
 } from '@/app/admin/roster/resend-lines'
 import { moveNotice, lineupNotice } from '@/server/modules/roster/track'
 import {
@@ -110,10 +111,13 @@ export default async function MakerDetail({
     space?: string
     /** What sharing a payout account reported back. */
     share?: string
+    /** What closing a balance that is not owed reported back. */
+    settle?: string
   }>
 }) {
   const { id } = await params
-  const { add, resend, addon, move, lineup, space: spaceMsg, share: shareMsg } = await searchParams
+  const { add, resend, addon, move, lineup, space: spaceMsg, share: shareMsg,
+    settle: settleMsg } = await searchParams
 
   const [row] = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
@@ -323,6 +327,7 @@ export default async function MakerDetail({
   const moveSaid = moveNotice(move ?? '')
   const lineupSaid = lineupNotice(lineup ?? '')
   const spaceSaid = spaceNotice(spaceMsg ?? '')
+  const settleSaid = settleNotice(settleMsg ?? '')
   const offLineup = Boolean(booking.lineupHiddenAt)
   const permit = permitState({
     /* The booked space, not the application: an outdoor maker owes a permit
@@ -532,6 +537,41 @@ export default async function MakerDetail({
               <span><strong>Still to pay</strong></span>
               <span className="adm-money"><strong>{usd(invoice.amountDueCents)}</strong></span>
             </p>
+            {/* A confirmed booking that still reads as owing. Usually real
+                debt: she added a day and has not paid for it, and the invoice
+                is right to ask. Sometimes not: the fee was corrected after
+                she paid, or her space was put on the booking once the money
+                had already been matched by hand. Until this control there was
+                no way to say the second thing, because markPaid refuses a
+                booking that is already confirmed, so the only way off a page
+                reading "There is more to pay" was taking money nobody owed. */}
+            {isPaid(booking.status) && invoice.amountDueCents > 0 && (
+              <details className="adm-fold" style={{ marginTop: 12 }}>
+                <summary>Nothing more is owed</summary>
+                <p className="adm-note">
+                  They have paid {usd(invoice.paidCents)} against an invoice that
+                  now totals {usd(invoice.totalCents)}, so their page is asking for
+                  the {usd(invoice.amountDueCents)} difference. Use this only if that
+                  difference is not theirs to pay. It records what arrived as the
+                  full invoice and takes the ask off their page. It moves no money
+                  and refunds nothing.
+                </p>
+                <form action={settleBoothBalance}>
+                  <input type="hidden" name="bookingId" value={booking.id} />
+                  <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
+                  <label className="adm-field">
+                    <span className="lb">Why is it not owed?</span>
+                    <input className="inp" name="reason" type="text" required
+                      maxLength={NOTE_MAX} autoComplete="off"
+                      placeholder="Fee corrected after she paid" />
+                  </label>
+                  <button className="btn btn--primary" type="submit">
+                    Mark nothing more owed
+                  </button>
+                </form>
+              </details>
+            )}
+            {settleSaid && <p className="adm-note">{settleSaid}</p>}
             {standing(ledger) === 'overpaid' && (
               <p className="adm-note">
                 {usd(-ledger.balanceCents)} more has arrived than this invoice now asks for.

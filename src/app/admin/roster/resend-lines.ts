@@ -314,3 +314,24 @@ export function addonNotice(code: string): string | null {
   }
 }
 
+
+/** What the screen says afterwards. */
+export function settleNotice(code: string): string | null {
+  switch (code) {
+    case 'settled':
+      return 'Marked as nothing more owed. Their page no longer asks for the '
+        + 'difference, and what arrived now reads as the full invoice.'
+    case 'noreason':
+      return 'Nothing was changed. Say why the difference is not owed, so the '
+        + 'next person reading this booking knows.'
+    case 'unpaid':
+      return 'Nothing was changed. This booking has not been paid at all, so '
+        + 'record how the money came instead.'
+    case 'already':
+      return 'Nothing was changed. This booking already owes nothing.'
+    case 'missing':
+      return 'Nothing was changed. That booking could not be found.'
+    default:
+      return null
+  }
+}
