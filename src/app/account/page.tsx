@@ -30,7 +30,7 @@ import { CONTACT_EMAIL } from '@/lib/agreement'
 import { boothInvoice } from '@/server/modules/payments/booth'
 import { vendorCodeWords } from '@/server/modules/payments/vendor-code'
 import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
-import { connectState, owesPayoutSetup, requirementList, requirementsInPlainWords } from '@/server/modules/payments/connect'
+import { connectState, owesPayoutSetup, refreshAccount, requirementList, requirementsInPlainWords } from '@/server/modules/payments/connect'
 import { bookings } from '@/db/schema'
 
 export const dynamic = 'force-dynamic'
@@ -84,7 +84,7 @@ export default async function Account({
   })
 
   const email = await readSession((await cookies()).get(MAKER_COOKIE)?.value)
-  const vendor = email
+  let vendor = email
     ? await db.query.vendors.findFirst({ where: eq(vendors.email, email) })
     : undefined
 
@@ -182,6 +182,25 @@ export default async function Account({
      Undefined unless the Show says to ask and Stripe is configured here. Both
      halves matter: the switch is off until Connect is live on the Stripe
      account, and a button that cannot work is worse than no button. */
+  /* Just back from Stripe. Ask Stripe outright rather than waiting.
+     
+     The webhook stays the reliable path and the only thing that catches a
+     change made later, when nobody is looking: Stripe disabling an account,
+     a document expiring, a requirement appearing in December. But it is a
+     different system arriving on its own schedule, and the maker standing on
+     this page finished ten seconds ago. If the endpoint is not subscribed to
+     account.updated at all, waiting for it means she finishes onboarding and
+     is told to go and do it, forever.
+     
+     So the one moment we know she has just come back, we read it from Stripe
+     directly. Costs one call per maker per onboarding, swallows its own
+     failures, and writes only what Stripe said. */
+  if (sp.payouts === 'back' && vendor.stripeAccountId) {
+    await refreshAccount(db, vendor.stripeAccountId)
+    const fresh = await db.query.vendors.findFirst({ where: eq(vendors.id, vendor.id) })
+    if (fresh) vendor = fresh
+  }
+
   const payouts = show.payoutSetup === 'on' && paymentsConfigured() && owesPayoutSetup(track)
     ? connectState({
         stripeAccountId: vendor.stripeAccountId,
