@@ -1,3 +1,5 @@
+import type { ConnectFacts } from './connect'
+
 /**
  * Paying one maker through another maker's account.
  *
@@ -10,9 +12,10 @@
  * The breakdown and the bank account are different questions and the schema
  * already answers them separately. A statement is per booking, so two booths
  * keep two sets of commission maths no matter what. Where the money lands is
- * one id on the vendor, so two vendors holding the same id is the whole
- * mechanism: the webhook writes by account id and updates both rows, and
- * ensureConnectAccount returns an id it finds rather than minting a second.
+ * one id on the vendor, and the mechanism is a POINTER at the maker who owns
+ * that account, never a copy of the id: vendors carries a unique index on
+ * stripe_account_id, which is what makes a webhook about one account write
+ * exactly one row.
  *
  * Note what this is NOT. It does not mark anybody as ready, and it cannot:
  * payouts_enabled is Stripe's verdict and nothing here stands in for it
@@ -90,4 +93,32 @@ export function sharedWords(owner: { shopName: string; vendorCode: string | null
 export function sharedForMaker(owner: { shopName: string }): string {
   return `Your share goes to the account ${owner.shopName} set up. There is`
     + ' nothing for you to do here, and nothing more to fill in.'
+}
+
+/* ═══════════════ reading it back, everywhere money is counted ═══════════════
+
+   One maker's readiness is another's, which every screen that counts payouts
+   has to know or it reports a gap that does not exist and writes to a maker
+   asking her to set up what her mother already did. So the resolution lives
+   here once rather than in each screen's own select. */
+
+/** The Connect columns a screen reads. The same shape connectState wants,
+ *  by name, so resolving the account cannot quietly change what is read. */
+export type PayoutColumns = ConnectFacts
+
+/**
+ * The account that actually pays this maker: her own, or the one she was
+ * pointed at. One hop and no further, which readShare guarantees by refusing
+ * to point anybody at a maker who is herself paid through somebody else.
+ *
+ * Falls back to her own columns when the owner is not in the map, which is
+ * the honest answer: a screen that only loaded this show's makers would
+ * otherwise report an owner it cannot see as ready.
+ */
+export function payingAccount<T extends PayoutColumns>(
+  me: T & { payoutsViaVendorId: string | null },
+  owners: ReadonlyMap<string, T>,
+): T {
+  if (!me.payoutsViaVendorId) return me
+  return owners.get(me.payoutsViaVendorId) ?? me
 }

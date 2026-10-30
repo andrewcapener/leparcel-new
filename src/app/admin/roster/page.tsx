@@ -12,6 +12,7 @@ import { PayLink } from './PayLink'
 import { siteUrl } from '@/lib/site-url'
 import { usd, splitCommission, bpsLabel } from '@/lib/money'
 import { holdsSpace, isPaid, isForfeitable, needsChasing } from '@/server/modules/payments/booking-status'
+import { payingAccount } from '@/server/modules/payments/share-payouts'
 import { viaLabel, makerSignal, type MakerSignal } from '@/server/modules/payments/paid-via'
 import { permitState, permitCleared } from '@/server/modules/compliance/permit'
 import { connectState, owesPayoutSetup, type ConnectState } from '@/server/modules/payments/connect'
@@ -213,12 +214,12 @@ export default async function Roster({
      Indoor only. An outdoor maker takes their own money at their own tent and
      is never owed a cent, so counting them would report a gap that is not one. */
   const owedMoney = rows.filter((r) => holdsSpace(r.booking.status) && owesPayoutSetup(r.space.track))
-  const payoutOf = (v: typeof rows[number]['vendor']): ConnectState => connectState({
-    stripeAccountId: v.stripeAccountId,
-    payoutsEnabled: v.payoutsEnabled,
-    connectRequirements: v.connectRequirements,
-    connectDisabledReason: v.connectDisabledReason,
-  })
+  /* A maker paid through another maker's account is as ready as that account
+     is. Counting her own empty columns would report a gap that nobody can
+     close, because there is nothing for her to do. */
+  const owners = new Map(rows.map((r) => [r.vendor.id, r.vendor] as const))
+  const payoutOf = (v: typeof rows[number]['vendor']): ConnectState =>
+    connectState(payingAccount(v, owners))
   const payable = owedMoney.filter((r) => payoutOf(r.vendor) === 'ready')
   /* Only counted while makers are actually being asked. Off, this tile would
      read "0 of 9" every day and teach staff to ignore a number that is going

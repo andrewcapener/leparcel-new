@@ -7,6 +7,8 @@ import { siteUrl } from '@/lib/site-url'
 import { BATCH_LINK_TTL_MS, signLinkToken } from '@/lib/makerAuth'
 import { connectState, owesPayoutSetup } from '@/server/modules/payments/connect'
 import { paymentsConfigured } from '@/server/modules/payments/config'
+import { payingAccount } from '@/server/modules/payments/share-payouts'
+import type { PayoutColumns } from '@/server/modules/payments/share-payouts'
 import { fmtDateTime } from '@/lib/dates'
 import { mail } from './send'
 import {
@@ -59,6 +61,7 @@ export async function inviteCandidates(
       payoutsEnabled: vendors.payoutsEnabled,
       connectRequirements: vendors.connectRequirements,
       connectDisabledReason: vendors.connectDisabledReason,
+      payoutsViaVendorId: vendors.payoutsViaVendorId,
       track: spaceTypes.track,
       applicationStatus: applications.status,
     })
@@ -105,6 +108,28 @@ export async function inviteCandidates(
       .map((r) => r.to.toLowerCase()),
   )
 
+  /* A maker paid through somebody else's account reads THAT account's state.
+     Hers is empty and always will be, so without this she is asked, by email,
+     to set up a payout account her mother has already set up for her. The
+     owners are looked up rather than joined because the pointer is rare: no
+     row to find means no query. */
+  const ownerIds = [...new Set(rows.flatMap((r) => (r.payoutsViaVendorId ? [r.payoutsViaVendorId] : [])))]
+  const owners = new Map<string, PayoutColumns>(
+    (ownerIds.length
+      ? await db
+          .select({
+            id: vendors.id,
+            stripeAccountId: vendors.stripeAccountId,
+            payoutsEnabled: vendors.payoutsEnabled,
+            connectRequirements: vendors.connectRequirements,
+            connectDisabledReason: vendors.connectDisabledReason,
+          })
+          .from(vendors)
+          .where(inArray(vendors.id, ownerIds))
+      : []
+    ).map((o) => [o.id, o] as const),
+  )
+
   /* Undefined unless the Show says to ask and Stripe is live here. A button
      that cannot work is worse than no button, and an email pointing at one
      is worse again. */
@@ -120,12 +145,7 @@ export async function inviteCandidates(
     bookingStatus: r.bookingStatus,
     applicationStatus: r.applicationStatus,
     payoutState: payoutsOn && owesPayoutSetup(r.track)
-      ? connectState({
-          stripeAccountId: r.stripeAccountId,
-          payoutsEnabled: r.payoutsEnabled,
-          connectRequirements: r.connectRequirements,
-          connectDisabledReason: r.connectDisabledReason,
-        })
+      ? connectState(payingAccount(r, owners))
       : undefined,
     itemCount: countOf.get(r.bookingId) ?? 0,
     itemsSent: Boolean(r.inventorySubmittedAt),

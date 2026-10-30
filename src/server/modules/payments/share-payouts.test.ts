@@ -1,4 +1,8 @@
-import { readShare, sharedWords, sharedForMaker, type PayoutParty } from './share-payouts'
+import {
+  readShare, sharedWords, sharedForMaker, payingAccount,
+  type PayoutParty, type PayoutColumns,
+} from './share-payouts'
+import { connectState } from './connect'
 
 let failures = 0
 const check = (n: string, ok: boolean) => { if (!ok) { failures++; console.error(`FAIL: ${n}`) } }
@@ -56,6 +60,30 @@ check('the maker is told there is nothing for her to do',
   sharedForMaker(mum).includes('nothing for you to do'))
 check('and is never asked to undo it',
   !sharedForMaker(mum).toLowerCase().includes('change'))
+
+/* ── reading it back ──
+   The half that was missing the first time this shipped: the write landed,
+   and every screen that counts payouts went on reading her own empty column,
+   so she still showed as owing one and would have been emailed about it. */
+const cols = (over: Partial<PayoutColumns> = {}): PayoutColumns => ({
+  stripeAccountId: null, payoutsEnabled: false,
+  connectRequirements: '', connectDisabledReason: null, ...over,
+})
+const hers = { ...cols(), payoutsViaVendorId: 'v2' }
+const mums = cols({ stripeAccountId: 'acct_123', payoutsEnabled: true })
+const owners = new Map<string, PayoutColumns>([['v2', mums]])
+
+check('a maker pointed at another account reads that account',
+  payingAccount(hers, owners) === mums)
+check('so she counts as ready once it is',
+  connectState(payingAccount(hers, owners)) === 'ready')
+check('a maker on her own account is left alone',
+  payingAccount({ ...cols(), payoutsViaVendorId: null }, owners).stripeAccountId === null)
+/* An owner outside the loaded set is the one case where guessing would be
+   worse than saying nothing: she is reported as not set up, which is what
+   her own row says, rather than as ready on an account nobody checked. */
+check('an owner who was not loaded never reads as ready',
+  connectState(payingAccount({ ...cols(), payoutsViaVendorId: 'nobody' }, owners)) === 'not_started')
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('shared payouts: one hop only, to an account that exists, and never a claim that Stripe is ready')
