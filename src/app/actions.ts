@@ -1756,7 +1756,21 @@ export async function updateShow(prev: FormState, fd: FormData): Promise<FormSta
     onboardingSlotsOutdoor: d.onboardingSlotsOutdoor,
     /* Noon Pacific, not midnight: a date rendered back in another timezone
        slips to the day before from midnight and never does from noon. */
-    inventoryDueAt: d.inventoryDueAt ? laWallToIso(`${d.inventoryDueAt}T12:00`) : null,
+    /* The END of the chosen day, like the booth fee deadline two lines
+       down, and unlike the noon this used to pick.
+       
+       Drew, 30 October, about to set it: "should I set it for the 4th of
+       November, since there's no midnight setting?" He had to ask because
+       the field takes a date and the system was quietly turning it into
+       midday, so Nov 3 meant lunchtime on the 3rd and Nov 4 meant lunchtime
+       on the 4th, and Elise had told forty makers 11:59 PM on the 3rd.
+       Neither date could say what she had promised them.
+       
+       A date somebody is given to work to means the end of that day. That
+       is what paymentDueAt has always done, and what CLAUDE.md rule 8 is
+       about: "deadlines are 11:59pm PT and that has broken every event
+       system ever built." */
+    inventoryDueAt: d.inventoryDueAt ? laWallToIso(`${d.inventoryDueAt}T23:59`) : null,
     rosterAnnouncedOn: laWallToIso(d.rosterAnnouncedOn),
     commissionBps: Math.round(d.commissionPct * 100),
     paymentWindowHours: d.paymentWindowHours,

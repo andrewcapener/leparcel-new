@@ -264,7 +264,7 @@ export function SettingsForm({ show }: { show: Show }) {
         <div className="adm-row2">
           <Field
             name="inventoryDueAt" label="Inventory due" error={e.inventoryDueAt}
-            hint="Indoor makers only: Mermade rings those sales, so Mermade needs the catalogue, and an outdoor maker runs their own register. This date is the gate on the whole thing. Set it and inventory opens on every indoor maker's account page and can be asked for from /admin/onboarding; leave it empty and there is no list for anyone to fill in. Makers add and change lines freely until the date, and after it the list is read-only for them and still editable by staff."
+            hint="Indoor makers only: Mermade rings those sales, so Mermade needs the catalogue, and an outdoor maker runs their own register. This date is the gate on the whole thing. Set it and inventory opens on every indoor maker's account page and can be asked for from /admin/onboarding; leave it empty and there is no list for anyone to fill in. The deadline is 11:59pm Pacific on the day you pick, so choose the last day makers may change anything. They add and change lines freely until then, and afterwards it is read-only for them and still editable by staff."
           >
             <input className="inp" id="inventoryDueAt" name="inventoryDueAt" type="date"
               {...keep('inventoryDueAt', show.inventoryDueAt ? isoToLaWall(show.inventoryDueAt).slice(0, 10) : '')} />
