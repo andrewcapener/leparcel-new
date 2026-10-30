@@ -135,8 +135,8 @@ export function needLines(needs: Need[], itemsDue: string | null): string[] {
   const out: string[] = []
   if (needs.includes('items')) {
     out.push(itemsDue
-      ? `Your inventory. What you are bringing and what it costs, so the register knows your work. One line per price, not one line per item. Due ${itemsDue}.`
-      : 'Your inventory. What you are bringing and what it costs, so the register knows your work. One line per price, not one line per item.')
+      ? `Your inventory. What you are bringing and what each thing costs. One line per price, not one line per item, and we do not need quantities. Add it in your account: we cannot take a spreadsheet, an attachment, or a list in an email. Due ${itemsDue}.`
+      : 'Your inventory. What you are bringing and what each thing costs. One line per price, not one line per item, and we do not need quantities. Add it in your account: we cannot take a spreadsheet, an attachment, or a list in an email.')
   }
   if (needs.includes('payouts')) {
     out.push('Automatic payouts. Set this up once and your share of what sells lands in your own account automatically after the show, with nothing to chase.')
@@ -154,13 +154,22 @@ export function needLines(needs: Need[], itemsDue: string | null): string[] {
  */
 export function needAsks(
   needs: Need[], itemsDue: string | null,
-): { title: string; body: string; dateLabel?: string; date?: string }[] {
-  const out: { title: string; body: string; dateLabel?: string; date?: string }[] = []
+): { title: string; body: string; note?: string; dateLabel?: string; date?: string }[] {
+  const out: { title: string; body: string; note?: string; dateLabel?: string; date?: string }[] = []
   if (needs.includes('items')) {
     out.push({
       title: 'Your inventory',
-      body: 'What you are bringing and what it costs, so the register knows your work.'
-        + ' One line per price, not one line per item: forty stickers at $7 is a single line.',
+      /* Elise's two rules, in the order she shouts them. Hers is in capitals
+         and underlined three times because both get got wrong every season:
+         somebody sends a spreadsheet, and somebody sends stock counts. Said
+         plainly once each, in the place the asking happens, rather than
+         loudly in a separate email. */
+      body: 'What you are bringing and what each thing costs. One line per price,'
+        + ' not one line per item, and we do not need quantities: forty stickers'
+        + ' at $7 is a single line.',
+      note: 'Add it in your account. We cannot take a spreadsheet, an attachment,'
+        + ' or a list written in an email, because every price is keyed into the'
+        + ' register by hand.',
       ...(itemsDue ? { dateLabel: 'Due', date: itemsDue } : {}),
     })
   }

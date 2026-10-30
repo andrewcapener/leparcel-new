@@ -230,7 +230,12 @@ export function button(cta: { href: string; label: string }): string {
  * is a square everywhere, Outlook's Word renderer included.
  */
 export function checklist(
-  items: { title: string; body: string; dateLabel?: string; date?: string }[],
+  items: {
+    title: string; body: string; dateLabel?: string; date?: string
+    /** One line of small print under the ask, for the thing people get
+     *  wrong rather than the thing they are being asked for. */
+    note?: string
+  }[],
 ): string {
   const box = `<table role="presentation" width="20" cellpadding="0" cellspacing="0" border="0" style="width:20px;border-collapse:separate;">
     <tr><td height="20" style="width:20px;height:20px;border:2px solid #d4d9de;border-radius:3px;font-size:0;line-height:0;">&nbsp;</td></tr>
@@ -244,6 +249,7 @@ export function checklist(
           <td valign="top">
             <div style="font-family:${HEAD_FONT};font-size:13px;font-weight:600;letter-spacing:0.13em;text-transform:uppercase;color:${INK};">${esc(it.title)}</div>
             <div style="font-family:${BODY_FONT};font-size:15px;line-height:1.6;color:${BODY};padding-top:8px;">${esc(it.body)}</div>
+            ${it.note ? `<div style="font-family:${BODY_FONT};font-size:14px;line-height:1.55;color:${MUTED};padding-top:9px;">${esc(it.note)}</div>` : ''}
             ${it.date ? `<div style="padding-top:11px;">
               <span style="font-family:${HEAD_FONT};font-size:10px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:${MUTED};">${esc(it.dateLabel ?? 'Due')}</span>
               <span style="font-family:${BODY_FONT};font-size:15px;font-weight:600;color:${INK};padding-left:9px;">${esc(it.date)}</span>
