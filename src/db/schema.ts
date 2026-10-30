@@ -191,6 +191,10 @@ export const vendors = pgTable('vendors', {
   connectRequirements: text('connect_requirements').notNull().default('[]'),
   connectDisabledReason: text('connect_disabled_reason'),
   connectUpdatedAt: text('connect_updated_at'),
+  /** Whose account this maker is paid through, when it is not their own.
+   *  stripe_account_id still carries the id that does the work; this records
+   *  that it belongs to somebody else, and to whom. */
+  payoutsViaVendorId: text('payouts_via_vendor_id'),
 
   showsAttended: integer('shows_attended').notNull().default(0),
   isFlagged: boolean('is_flagged').notNull().default(false),

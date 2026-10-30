@@ -31,6 +31,7 @@ import { boothInvoice } from '@/server/modules/payments/booth'
 import { vendorCodeWords } from '@/server/modules/payments/vendor-code'
 import { paymentsConfigured, isTestMode } from '@/server/modules/payments/config'
 import { connectState, owesPayoutSetup, refreshAccount, requirementList, requirementsInPlainWords } from '@/server/modules/payments/connect'
+import { sharedForMaker } from '@/server/modules/payments/share-payouts'
 import { bookings } from '@/db/schema'
 
 export const dynamic = 'force-dynamic'
@@ -208,7 +209,23 @@ export default async function Account({
     if (fresh) vendor = fresh
   }
 
-  const payouts = show.payoutSetup === 'on' && paymentsConfigured() && owesPayoutSetup(track)
+  /* Somebody else's account, by a staff decision: one household running two
+     booths, or a parent holding the account for a child's table.
+     
+     She is told, and she is given nothing to press. The button would send
+     her into Stripe onboarding for an account that is not hers, which at
+     best confuses her and at worst has the wrong person answering identity
+     questions about somebody else's bank. The checklist stops asking for
+     the same reason: it is not her turn, and it never will be. */
+  const [paidVia] = vendor.payoutsViaVendorId
+    ? await db
+        .select({ shopName: vendors.shopName })
+        .from(vendors)
+        .where(eq(vendors.id, vendor.payoutsViaVendorId))
+        .limit(1)
+    : []
+
+  const payouts = !paidVia && show.payoutSetup === 'on' && paymentsConfigured() && owesPayoutSetup(track)
     ? connectState({
         stripeAccountId: vendor.stripeAccountId,
         payoutsEnabled: vendor.payoutsEnabled,
@@ -283,7 +300,11 @@ export default async function Account({
         onboardingSlot: billing?.booking.onboardingSlot,
         inventoryDueAt: show.inventoryDueAt,
         inventorySend: itemSend,
-        payoutState: payouts,
+        /* Handled by somebody else's account, so the row is done rather
+           than missing: a maker who sees nothing about getting paid wonders
+           whether we forgot. */
+        payoutState: paidVia ? 'ready' : payouts,
+        payoutVia: paidVia?.shopName,
         nowIso: new Date().toISOString(),
         contactEmail: CONTACT_EMAIL,
         startOnly: !settlesInsideWindow(show.paymentMethods),
@@ -374,6 +395,12 @@ export default async function Account({
                 is ever owed anything, and only once accepted: onboarding
                 before there is a space to be paid for is an identity check
                 asked of somebody who may yet be declined. */}
+            {paidVia && app?.status === 'accepted' && owesPayoutSetup(track) && (
+              <Card title="Automatic payouts" id="payouts" wide>
+                <p className="rte">{sharedForMaker(paidVia)}</p>
+              </Card>
+            )}
+
             {payouts && app?.status === 'accepted' && (
               <PayoutSetup
                 state={payouts}

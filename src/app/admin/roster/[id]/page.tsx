@@ -24,6 +24,8 @@ import {
   connectState, owesPayoutSetup, requirementList, requirementsInPlainWords,
 } from '@/server/modules/payments/connect'
 import { paymentsConfigured } from '@/server/modules/payments/config'
+import { sharePayoutAccount, unsharePayoutAccount } from '@/app/admin/roster/share-payouts'
+import { sharedWords } from '@/server/modules/payments/share-payouts'
 import { inventoryFor } from '@/server/modules/inventory/read'
 import { formatLine } from '@/server/modules/inventory/lines'
 import { spaceNotice } from '@/server/modules/roster/spaces'
@@ -106,10 +108,12 @@ export default async function MakerDetail({
   searchParams: Promise<{
     add?: string; resend?: string; addon?: string; move?: string; lineup?: string
     space?: string
+    /** What sharing a payout account reported back. */
+    share?: string
   }>
 }) {
   const { id } = await params
-  const { add, resend, addon, move, lineup, space: spaceMsg } = await searchParams
+  const { add, resend, addon, move, lineup, space: spaceMsg, share: shareMsg } = await searchParams
 
   const [row] = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
@@ -195,6 +199,33 @@ export default async function MakerDetail({
     ))
     .orderBy(desc(auditLog.at))
     .limit(1)
+  /* Whose account this maker is paid through, when it is somebody else's.
+     Drew, 30 October: one mother, two daughters, two booths, and she should
+     fill the form in once. The breakdown stays per booking; only the bank
+     account is shared. */
+  const [payoutOwner] = vendor.payoutsViaVendorId
+    ? await db
+        .select({
+          shopName: vendors.shopName,
+          vendorCode: bookings.vendorCode,
+          /* Her readiness IS the owner's readiness, because the account is
+             the owner's. Reading her own columns would say "not started"
+             for ever, under a line saying she is paid through somebody
+             else: two true-looking sentences contradicting each other. */
+          stripeAccountId: vendors.stripeAccountId,
+          payoutsEnabled: vendors.payoutsEnabled,
+          connectRequirements: vendors.connectRequirements,
+          connectDisabledReason: vendors.connectDisabledReason,
+          connectUpdatedAt: vendors.connectUpdatedAt,
+        })
+        .from(vendors)
+        .leftJoin(bookings, and(
+          eq(bookings.vendorId, vendors.id), eq(bookings.showId, booking.showId),
+        ))
+        .where(eq(vendors.id, vendor.payoutsViaVendorId))
+        .limit(1)
+    : []
+
   /* A refusal is news until Stripe says otherwise, and then it is history.
      
      Drew, 30 October, looking at his own row: "this is not true, I swear to
@@ -344,6 +375,7 @@ export default async function MakerDetail({
           It said: {payoutError.detail}
         </p>
       )}
+      {shareMsg && <p className="adm-note" role="status">{shareMsg}</p>}
       {resendSaid && <p className="adm-note" role="status">{resendSaid}</p>}
       {addonSaid && <p className="adm-note" role="status">{addonSaid}</p>}
       {moveSaid && <p className="adm-note" role="status">{moveSaid}</p>}
@@ -687,11 +719,14 @@ export default async function MakerDetail({
               nothing here stands in for it. Outdoor makers are never asked,
               because they take their own money. */}
           {owesPayoutSetup(space.track) && show?.payoutSetup === 'on' && paymentsConfigured() && (() => {
+            /* The account that actually pays this maker: theirs, or the one
+               they are paid through. */
+            const acct = payoutOwner ?? vendor
             const state = connectState({
-              stripeAccountId: vendor.stripeAccountId,
-              payoutsEnabled: vendor.payoutsEnabled,
-              connectRequirements: vendor.connectRequirements,
-              connectDisabledReason: vendor.connectDisabledReason,
+              stripeAccountId: acct.stripeAccountId,
+              payoutsEnabled: acct.payoutsEnabled,
+              connectRequirements: acct.connectRequirements,
+              connectDisabledReason: acct.connectDisabledReason,
             })
             const says: Record<string, string> = {
               ready: 'Ready. Their share reaches them automatically after the show.',
@@ -700,7 +735,7 @@ export default async function MakerDetail({
               disabled: 'Stripe has put payouts on hold for this account.',
               not_started: 'They have not started. Nothing can be paid out to them yet.',
             }
-            const wants = requirementsInPlainWords(requirementList(vendor.connectRequirements))
+            const wants = requirementsInPlainWords(requirementList(acct.connectRequirements))
             return (
               <>
                 <div className="adm-sec" style={{ marginTop: 26 }}>
@@ -716,14 +751,76 @@ export default async function MakerDetail({
                     </ul>
                   </>
                 )}
-                {vendor.connectDisabledReason && (
-                  <p className="adm-sub2">Stripe gave the reason: {vendor.connectDisabledReason}</p>
+                {acct.connectDisabledReason && (
+                  <p className="adm-sub2">Stripe gave the reason: {acct.connectDisabledReason}</p>
                 )}
                 <p className="adm-sub2">
-                  {vendor.connectUpdatedAt
-                    ? `Stripe last told us on ${fmtDateTime(vendor.connectUpdatedAt)}.`
+                  {acct.connectUpdatedAt
+                    ? `Stripe last told us on ${fmtDateTime(acct.connectUpdatedAt)}.`
                     : 'Stripe has never reported on this account.'}
                 </p>
+
+                {/* One account, two booths. The statements stay separate,
+                    because a statement is per booking; only where the money
+                    lands is shared. Said plainly here so that a maker with
+                    no Stripe setup and a payout anyway is never a mystery in
+                    December. */}
+                {payoutOwner ? (
+                  <>
+                    <p className="adm-note" role="status">
+                      <strong>{sharedWords(payoutOwner)}</strong> The state above is
+                      that account&rsquo;s. This maker has none of her own and is not
+                      asked for one; her statements stay separate.
+                    </p>
+                    <details className="adm-fold">
+                      <summary>Put them back on their own account</summary>
+                      <form action={unsharePayoutAccount} className="adm-form">
+                        <input type="hidden" name="bookingId" value={booking.id} />
+                        <label className="adm-field">
+                          <span className="lb">Why</span>
+                          <input className="inp" name="reason" required minLength={3}
+                            maxLength={200} placeholder="Why?" />
+                        </label>
+                        <p className="adm-sub2">
+                          They will have no payout account again and will be asked
+                          to set one up. {payoutOwner.shopName}&rsquo;s account is
+                          untouched.
+                        </p>
+                        <button className="btn btn--quiet" type="submit">
+                          Back to their own account
+                        </button>
+                      </form>
+                    </details>
+                  </>
+                ) : (
+                  <details className="adm-fold">
+                    <summary>Pay them through another maker&rsquo;s account</summary>
+                    <form action={sharePayoutAccount} className="adm-form">
+                      <input type="hidden" name="bookingId" value={booking.id} />
+                      <p className="adm-sub2">
+                        For a maker whose money belongs with somebody else&rsquo;s:
+                        two booths run by one household, or a parent holding the
+                        account for a child&rsquo;s table. They are paid into that
+                        maker&rsquo;s account and never asked to set one up. The
+                        statements stay separate, so each booth keeps its own
+                        sales and its own commission.
+                      </p>
+                      <label className="adm-field">
+                        <span className="lb">Whose account</span>
+                        <input className="inp" name="code" required maxLength={10}
+                          placeholder="MM18" />
+                      </label>
+                      <label className="adm-field">
+                        <span className="lb">Why</span>
+                        <input className="inp" name="reason" required minLength={3}
+                          maxLength={200} placeholder="Why?" />
+                      </label>
+                      <button className="btn btn--quiet" type="submit">
+                        Pay through that account
+                      </button>
+                    </form>
+                  </details>
+                )}
               </>
             )
           })()}

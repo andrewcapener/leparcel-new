@@ -1,0 +1,27 @@
+-- One payout account, two booths.
+--
+-- Drew, 30 October, off the phone with Elise: "MM19 and MM18 are essentially
+-- the same mom, but she has two different daughters who are selling things.
+-- They want payouts to go to the same account, but they do need a breakdown
+-- between MM19 and 18."
+--
+-- Both halves of that are already right in the schema and neither should
+-- move. The breakdown is per BOOKING, because a statement is per booking, so
+-- two booths keep two sets of commission maths whatever happens here. And
+-- where the money lands is stripe_account_id on the VENDOR, so two vendors
+-- pointing at one account is simply two rows holding the same id: the
+-- webhook writes by account id and updates both, and ensureConnectAccount
+-- hands back an id it finds rather than making a second.
+--
+-- What is missing is the WHY. Two rows carrying the same id looks like a
+-- bug to the next person who reads it, and the maker who never onboarded
+-- looks like one who never got round to it. So this column records whose
+-- account it is, which is the question somebody actually asks in December:
+-- why does this maker have no Stripe setup and a payout anyway.
+--
+-- Nothing here decides whether payouts work. payouts_enabled is Stripe's
+-- word and stays the only thing that writes it (rule 5); this is provenance.
+--
+-- Forward-only and idempotent (rule 11).
+
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS payouts_via_vendor_id text;

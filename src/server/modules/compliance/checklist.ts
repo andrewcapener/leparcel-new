@@ -94,6 +94,11 @@ export type ChecklistInput = {
    *  which is the one case where the row must not appear: a button that
    *  cannot work is worse than no row. */
   payoutState?: ConnectState
+  /* Set to the shop name of the maker whose account pays this one, when a
+     parent has connected once for two booths. The row is done either way;
+     only the sentence under it differs, because "your own account" is not
+     true for her and she would read it as a mistake. */
+  payoutVia?: string
   nowIso: string
   /** Where to send a document there is no upload for yet. Passed in rather
    *  than imported so this file stays pure and testable. */
@@ -213,7 +218,9 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
         state: 'todo',
       },
       ready: {
-        detail: 'Set up. Your share of what sells lands in your own account after the show.',
+        detail: input.payoutVia
+          ? `Set up. Your share of what sells goes to the account ${input.payoutVia} set up, after the show.`
+          : 'Set up. Your share of what sells lands in your own account after the show.',
         state: 'done',
       },
     }
