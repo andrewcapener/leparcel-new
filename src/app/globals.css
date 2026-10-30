@@ -1168,3 +1168,9 @@
   padding: .6rem .8rem;
   font-weight: 600;
 }
+
+/* Tick everybody / nobody, above the invite table. */
+.adm .adm-pick {
+  display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+  margin: 0 0 .9rem;
+}

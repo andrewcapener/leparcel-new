@@ -69,6 +69,24 @@ export function InviteForm({
 
   return (
     <form action={sendOnboardingInvites}>
+      {/* Sending to one maker meant clearing forty one boxes by hand, and the
+          one maker worth sending to first is yourself: a real send, through
+          the real mail provider, before forty people get it. Drew, 30
+          October, with the roster ready and no way to rehearse it. */}
+      <p className="adm-pick">
+        <button type="button" className="btn btn--quiet"
+          onClick={() => setTicked(new Set(rows.map((r) => r.bookingId)))}>
+          Tick everybody
+        </button>
+        <button type="button" className="btn btn--quiet"
+          onClick={() => setTicked(new Set())}>
+          Tick nobody
+        </button>
+        <span className="adm-sub2">
+          {ticked.size} of {rows.length} ticked. Send one to yourself first.
+        </span>
+      </p>
+
       <table className="adm-tbl">
         <caption className="adm-sr">Makers who will receive this email</caption>
         <thead>
