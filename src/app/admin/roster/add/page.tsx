@@ -148,7 +148,7 @@ export default async function AddMakerPage({
       <p className="adm-note">
         No email is sent. They will not hear anything until you send their
         invoice from their roster page, or include them in a send from{' '}
-        <Link href="/admin/onboarding">item lists and payouts</Link>.
+        <Link href="/admin/onboarding">inventory and payouts</Link>.
       </p>
     </>
   )

@@ -220,7 +220,7 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
     const row = PAYOUT[st]
     items.push({
       key: 'payouts',
-      title: 'How you get paid',
+      title: 'Automatic payouts',
       detail: accepted ? row.detail : 'Set up once you are accepted, so your money has somewhere to go.',
       state: accepted ? row.state : 'waiting',
       href: '#payouts',
@@ -350,7 +350,7 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
     const done = listDone(sent)
     items.push({
       key: 'items',
-      title: 'Your item list',
+      title: 'Your inventory',
       detail: sent === 'sent'
         ? 'Sent to us. Change it any time before the date below and we will pick it up.'
         : sent === 'changed'

@@ -127,7 +127,7 @@ export function Inventory({
   const open = state === 'open'
 
   return (
-    <Card title="Your item list" id="items" wide>
+    <Card title="Your inventory" id="items" wide>
       <p className="mk-card__lede">
         What you are bringing, with prices, so the register knows your work.
         One line per price, not one line per item: forty stickers at $7 is a

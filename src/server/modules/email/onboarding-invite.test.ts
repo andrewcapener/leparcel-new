@@ -107,7 +107,10 @@ check('an empty cohort says so plainly',
 /* ── the words ───────────────────────────────────────────────────────── */
 
 check('two things reads as two', inviteSubject(['items', 'payouts'], 'Fall 2026') === 'Two things before Fall 2026')
-check('one thing names the thing', inviteSubject(['items'], 'Fall 2026') === 'Your item list for Fall 2026')
+/* "Inventory", because that is what the girls have always called it when
+   they ask for it. Not "item list", which was this codebase's own coinage
+   and a word no maker had ever been asked for. */
+check('one thing names the thing', inviteSubject(['items'], 'Fall 2026') === 'Your inventory for Fall 2026')
 check('and the other one too', inviteSubject(['payouts'], 'Fall 2026').includes('payouts'))
 
 check('the list line carries the date when there is one',
@@ -121,7 +124,7 @@ check('the list is explained as prices, not stock',
 
 const text = inviteText({ url: 'https://x.test/a', showName: 'Fall 2026', needs: ['items', 'payouts'], itemsDue: null })
 check('the text version carries the link', text.includes('https://x.test/a'))
-check('and both asks', text.includes('item list') && text.includes('payout account'))
+check('and both asks', text.includes('inventory') && text.includes('Automatic payouts'))
 
 /* ── one press, one delivery ─────────────────────────────────────────── */
 

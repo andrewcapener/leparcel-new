@@ -126,7 +126,7 @@ export function invitePlan(
 export function inviteSubject(needs: Need[], showName: string): string {
   if (needs.length === 2) return `Two things before ${showName}`
   return needs[0] === 'items'
-    ? `Your item list for ${showName}`
+    ? `Your inventory for ${showName}`
     : `Setting up your payouts for ${showName}`
 }
 
@@ -135,11 +135,11 @@ export function needLines(needs: Need[], itemsDue: string | null): string[] {
   const out: string[] = []
   if (needs.includes('items')) {
     out.push(itemsDue
-      ? `Your item list. What you are bringing and what it costs, so the register knows your work. One line per price, not one line per item. Due ${itemsDue}.`
-      : 'Your item list. What you are bringing and what it costs, so the register knows your work. One line per price, not one line per item.')
+      ? `Your inventory. What you are bringing and what it costs, so the register knows your work. One line per price, not one line per item. Due ${itemsDue}.`
+      : 'Your inventory. What you are bringing and what it costs, so the register knows your work. One line per price, not one line per item.')
   }
   if (needs.includes('payouts')) {
-    out.push('Your payout account. Set it up once and your share of what sells lands in your own account after the show, with nothing to chase.')
+    out.push('Automatic payouts. Set this up once and your share of what sells lands in your own account automatically after the show, with nothing to chase.')
   }
   return out
 }
@@ -158,7 +158,7 @@ export function needAsks(
   const out: { title: string; body: string; dateLabel?: string; date?: string }[] = []
   if (needs.includes('items')) {
     out.push({
-      title: 'Your item list',
+      title: 'Your inventory',
       body: 'What you are bringing and what it costs, so the register knows your work.'
         + ' One line per price, not one line per item: forty stickers at $7 is a single line.',
       ...(itemsDue ? { dateLabel: 'Due', date: itemsDue } : {}),
@@ -166,9 +166,16 @@ export function needAsks(
   }
   if (needs.includes('payouts')) {
     out.push({
-      title: 'Your payout account',
-      body: 'Set it up once and your share of what sells lands in your own account'
-        + ' after the show, with nothing to chase. It takes about ten minutes.',
+      /* Drew, 30 October: "what about configure Automatic payouts, so you can
+         get paid automatically after the show." He is right that "your payout
+         account" is the system's name for it rather than the maker's: it
+         names the thing we need set up, not the thing she gets out of it.
+         The same words now appear on her dashboard, because the email's list
+         is supposed to be the list she lands on. */
+      title: 'Automatic payouts',
+      body: 'Set this up once and your share of what sells lands in your own'
+        + ' account automatically after the show, with nothing to chase.'
+        + ' It takes about ten minutes.',
     })
   }
   return out
@@ -196,9 +203,16 @@ export function inviteHtml({
     webFonts: true,
     eyebrow: `${showName} · ${shopName}`,
     heading: both ? 'Two things before the show' : 'One thing before the show',
+    /* The line an inbox prints beside the subject, which is where somebody
+       decides whether to open it. It used to describe the mechanics, "both
+       live on your account page and the button below opens it", at the one
+       moment the mechanics are not the question. It names the two things
+       now, because the subject deliberately does not. */
     sub: both
-      ? 'Both live on your account page, and the button below opens it.'
-      : 'It lives on your account page, and the button below opens it.',
+      ? 'Your inventory, and setting up automatic payouts.'
+      : needs.includes('items')
+        ? 'What you are bringing, and what each thing costs.'
+        : 'So your share of what sells reaches you after the show.',
     inner:
       checklist(needAsks(needs, itemsDue))
       + button({ href: url, label: both ? 'Open your account' : 'Open your account' })

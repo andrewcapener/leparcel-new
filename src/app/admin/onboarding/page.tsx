@@ -81,7 +81,7 @@ export default async function OnboardingPage({
               : 'Stripe is not configured on this deployment'}. Nobody will be asked for it.{' '}</>
           )}
           {!itemsLive && (
-            <>No item list date is set on /admin/show, so the list is not open and nobody will be asked for it.</>
+            <>No inventory date is set on /admin/show, so it is not open and nobody will be asked for it.</>
           )}
         </p>
       )}
@@ -90,7 +90,7 @@ export default async function OnboardingPage({
         <Stat label="Getting an email" icon="clock" value={plan.send.length}
           note={`${fresh} who have never had one.`} />
         <Stat label="Asked for both" icon="roster" value={askedBoth}
-          note={`${askedItems} for the item list, ${askedPayouts} for payouts.`} />
+          note={`${askedItems} for inventory, ${askedPayouts} for payouts.`} />
         <Stat label="Left out" icon="tent" value={plan.held.length}
           note="Outdoor makers, undecided applications, and anyone already done." />
       </Stats>

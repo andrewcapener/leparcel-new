@@ -42,7 +42,7 @@ const MAIN: Array<{
   { href: '/admin/chase', label: 'Chase the booth fee', icon: 'clock' },
   { href: '/admin/roster/add', label: 'Add a maker by hand', icon: 'roster' },
   { href: '/admin/codes', label: 'Maker numbers', icon: 'queue' },
-  { href: '/admin/onboarding', label: 'Item lists and payouts', icon: 'money' },
+  { href: '/admin/onboarding', label: 'Inventory and payouts', icon: 'money' },
   { href: '/admin/sheet', label: 'Send to Google Sheet', icon: 'external' },
   { href: '/admin/show', label: 'Show settings', icon: 'settings' },
   { href: '/admin/outbox', label: 'Outbox', icon: 'mail' },

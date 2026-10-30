@@ -62,7 +62,7 @@ export async function sendOnboardingInvites(fd: FormData): Promise<void> {
       ticked: only.size, sent: res.sent, logged: res.logged,
       skipped: res.skipped, failed: res.failed.length, again,
     }),
-    reason: 'item list and payout setup invite',
+    reason: 'inventory and payout setup invite',
   })
 
   revalidatePath('/admin/onboarding')

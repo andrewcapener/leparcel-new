@@ -114,7 +114,7 @@ export function InviteForm({
                 {r.already && <span className="adm-sub2"> · had one already</span>}
               </td>
               <td>
-                {r.needs.includes('items') && 'Item list'}
+                {r.needs.includes('items') && 'Inventory'}
                 {r.needs.length === 2 && ' and '}
                 {r.needs.includes('payouts') && 'Payouts'}
               </td>

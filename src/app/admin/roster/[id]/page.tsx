@@ -629,7 +629,7 @@ export default async function MakerDetail({
           {space.track !== 'outdoor' && (
             <>
               <div className="adm-sec" style={{ marginTop: 26 }}>
-                <h2>Their item list</h2>
+                <h2>Their inventory</h2>
                 <span className="c">
                   {items.length === 0
                     ? 'nothing yet'
