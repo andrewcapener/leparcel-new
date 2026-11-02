@@ -264,13 +264,18 @@ export async function recordAccount(db: DbHandle, account: Stripe.Account): Prom
 
 /** Ask Stripe directly. Used when a maker comes back from onboarding, because
  *  the webhook may not have landed yet and they want to see it worked. */
-export async function refreshAccount(db: DbHandle, accountId: string): Promise<void> {
+export async function refreshAccount(db: DbHandle, accountId: string): Promise<boolean> {
   const s = stripe()
-  if (!s) return
+  if (!s) return false
   try {
     await recordAccount(db, await s.accounts.retrieve(accountId))
+    return true
   } catch {
     /* A failed refresh is not worth a broken page: the webhook is the
-       reliable path and this is only ever the impatient one. */
+       reliable path and this is only ever the impatient one. Whether it
+       worked is returned rather than thrown, because a staff member who
+       pressed Check with Stripe and got silence cannot tell a reachable
+       account that has not moved from an unreachable one. */
+    return false
   }
 }

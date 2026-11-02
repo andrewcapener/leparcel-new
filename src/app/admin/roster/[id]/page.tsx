@@ -17,8 +17,9 @@ import { setLineupVisibility } from '@/app/admin/roster/lineup'
 import { grantBoothSpace, revokeBoothSpace } from '@/app/admin/roster/spaces'
 import { resendBoothInvoice } from '@/app/admin/roster/resend'
 import { settleBoothBalance } from '@/app/admin/roster/settle'
+import { checkPayoutAccount } from '@/app/admin/roster/check-payouts'
 import {
-  NOTE_MAX, addonNotice, resendNotice, resendProblem, settleNotice,
+  NOTE_MAX, addonNotice, checkNotice, resendNotice, resendProblem, settleNotice,
 } from '@/app/admin/roster/resend-lines'
 import { moveNotice, lineupNotice } from '@/server/modules/roster/track'
 import {
@@ -113,11 +114,13 @@ export default async function MakerDetail({
     share?: string
     /** What closing a balance that is not owed reported back. */
     settle?: string
+    /** What asking Stripe about the payout account reported back. */
+    checked?: string
   }>
 }) {
   const { id } = await params
   const { add, resend, addon, move, lineup, space: spaceMsg, share: shareMsg,
-    settle: settleMsg } = await searchParams
+    settle: settleMsg, checked: checkedMsg } = await searchParams
 
   const [row] = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
@@ -328,6 +331,7 @@ export default async function MakerDetail({
   const lineupSaid = lineupNotice(lineup ?? '')
   const spaceSaid = spaceNotice(spaceMsg ?? '')
   const settleSaid = settleNotice(settleMsg ?? '')
+  const checkSaid = checkNotice(checkedMsg ?? '')
   /* Whether this maker has a Getting paid section at all. Named rather than
      inlined because what sharing a payout account reported back belongs in
      that section, beside the control that was pressed, and has to fall back
@@ -792,6 +796,7 @@ export default async function MakerDetail({
                   <span className="c">{state.replace(/_/g, ' ')}</span>
                 </div>
                 {shareMsg && <p className="adm-note" role="status">{shareMsg}</p>}
+                {checkSaid && <p className="adm-note" role="status">{checkSaid}</p>}
                 <p className="adm-note" role="status">{says[state]}</p>
                 {wants.length > 0 && (
                   <>
@@ -809,6 +814,18 @@ export default async function MakerDetail({
                     ? `Stripe last told us on ${fmtDateTime(acct.connectUpdatedAt)}.`
                     : 'Stripe has never reported on this account.'}
                 </p>
+
+                {/* Because everything above is whatever the last webhook left
+                    behind, and for the one maker who is stuck that is a
+                    snapshot of the moment she got stuck. The person helping
+                    her needs today's answer and the requirement list that
+                    comes with it. */}
+                <form action={checkPayoutAccount}>
+                  <input type="hidden" name="bookingId" value={booking.id} />
+                  <button className="btn btn--quiet" type="submit">
+                    Check with Stripe now
+                  </button>
+                </form>
 
                 {/* One account, two booths. The statements stay separate,
                     because a statement is per booking; only where the money

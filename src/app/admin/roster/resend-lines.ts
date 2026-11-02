@@ -335,3 +335,23 @@ export function settleNotice(code: string): string | null {
       return null
   }
 }
+
+/** What asking Stripe reported back. The state itself is printed right under
+ *  this line and is fresh by the time it renders, so this says only whether
+ *  the question reached Stripe at all. */
+export function checkNotice(code: string): string | null {
+  switch (code) {
+    case 'ok':
+      return 'Checked with Stripe just now. What follows is what Stripe says today.'
+    case 'failed':
+      return 'Stripe could not be reached, so what follows is whatever it last '
+        + 'told us. Try again in a minute.'
+    case 'none':
+      return 'There is no account to check. They have not started payout setup, '
+        + 'and only they can: send them their link from Inventory and payouts.'
+    case 'missing':
+      return 'That booking could not be found.'
+    default:
+      return null
+  }
+}
