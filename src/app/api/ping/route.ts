@@ -56,5 +56,11 @@ export async function GET() {
   return NextResponse.json({
     selectCold, selectWarm, rawExecute, fiveSerial, fiveParallel,
     region: process.env.VERCEL_REGION ?? 'local',
+    /* Which region the database is in, and nothing else about it. A round
+       trip of 65ms is two coasts; knowing which two is what decides where
+       this function should run. Supabase names the region in the pooler
+       host, so it comes out of the host and the host itself never does:
+       the project reference beside it identifies the database (rule 9). */
+    dbRegion: (process.env.DATABASE_URL ?? '').match(/(?:aws|gcp)-\d+-([a-z]+-[a-z]+-\d+)/)?.[1] ?? 'unknown',
   }, { headers: { 'cache-control': 'no-store' } })
 }
