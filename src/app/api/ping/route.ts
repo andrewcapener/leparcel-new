@@ -1,54 +1,60 @@
 import { NextResponse } from 'next/server'
-import { sql } from 'drizzle-orm'
+import { desc, sql } from 'drizzle-orm'
 import { db } from '@/db'
+import { shows } from '@/db/schema'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 20
 
 /**
- * How long the database link actually takes, from inside the deployment.
+ * Where the time goes on the database link, from inside the deployment.
  *
  * Drew, 2 November: "the site is loading VERY slow."
  *
- * Nothing on this deployment could answer the first question that matters,
- * which is whether a slow page is slow because of what it asks for or
- * because every question costs a round trip to another region. /api/health
- * runs a dozen queries and reports one number, so it cannot tell those
- * apart, and a page cannot either.
+ * The first version of this ran twenty-two trivial queries and hung past
+ * seventy seconds in iad1 while /api/health, which runs a dozen real ones,
+ * answered in about a second. That is not a slow link, it is one path that
+ * stalls and another that does not, and the only way to tell them apart is
+ * to time each shape separately and let none of them wait for ever.
  *
- * This runs the cheapest query there is, twice. The first pays whatever the
- * connection costs if the pool had gone idle; the second is the round trip
- * alone. One slow and one fast means the connection is being re-established
- * and the fix is the pool. Both slow means the link itself is slow, which is
- * a region problem and no amount of query tidying will help. Both fast means
- * the page is at fault and the queries it runs are worth counting.
+ * So: every probe is raced against a short timeout and reports its own
+ * number or the word timeout. Nothing here can hang the route, which matters
+ * because a public route that hangs holds a function open for a minute and
+ * makes the thing it was meant to diagnose worse.
  *
- * No data, no names, no counts: two durations and the region this ran in.
+ * No data, no names, no counts: durations and a region.
  */
+const LIMIT_MS = 4_000
+
+async function timed<T>(fn: () => Promise<T>): Promise<number | 'timeout' | 'error'> {
+  const t = Date.now()
+  try {
+    const out = await Promise.race([
+      fn().then(() => 'ok' as const),
+      new Promise<'timeout'>((r) => setTimeout(() => r('timeout'), LIMIT_MS)),
+    ])
+    return out === 'timeout' ? 'timeout' : Date.now() - t
+  } catch {
+    return 'error'
+  }
+}
+
 export async function GET() {
-  const t0 = Date.now()
-  await db.execute(sql`select 1`)
-  const first = Date.now() - t0
-
-  const t1 = Date.now()
-  await db.execute(sql`select 1`)
-  const second = Date.now() - t1
-
-  /* Ten in a row, to separate a steady cost from one unlucky query. */
-  const t2 = Date.now()
-  for (let i = 0; i < 10; i++) await db.execute(sql`select 1`)
-  const tenSerial = Date.now() - t2
-
-  /* The same ten at once. On a link where each question costs a round trip,
-     the gap between these two is what parallelising a page would win. */
-  const t3 = Date.now()
-  await Promise.all(Array.from({ length: 10 }, () => db.execute(sql`select 1`)))
-  const tenParallel = Date.now() - t3
+  /* The shape every page uses. */
+  const selectCold = await timed(() => db.select().from(shows).orderBy(desc(shows.startsOn)).limit(1))
+  const selectWarm = await timed(() => db.select().from(shows).orderBy(desc(shows.startsOn)).limit(1))
+  /* The shape /api/ping used, and the one that hung. */
+  const rawExecute = await timed(() => db.execute(sql`select 1`))
+  /* Five of the ordinary shape in a row: a page's worth of round trips. */
+  const fiveSerial = await timed(async () => {
+    for (let i = 0; i < 5; i++) await db.select().from(shows).limit(1)
+  })
+  /* And the same five at once, which is what parallelising a page would buy. */
+  const fiveParallel = await timed(() =>
+    Promise.all(Array.from({ length: 5 }, () => db.select().from(shows).limit(1))))
 
   return NextResponse.json({
-    firstMs: first,
-    secondMs: second,
-    tenSerialMs: tenSerial,
-    tenParallelMs: tenParallel,
+    selectCold, selectWarm, rawExecute, fiveSerial, fiveParallel,
     region: process.env.VERCEL_REGION ?? 'local',
   }, { headers: { 'cache-control': 'no-store' } })
 }
