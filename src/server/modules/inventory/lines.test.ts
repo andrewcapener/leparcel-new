@@ -223,6 +223,43 @@ check('and what the register shows can be pasted back',
   formatLine(pasted.lines[0]!) === 'Candles: $10 or buy 2/$15 or 3/$20')
 check('three breaks is the ceiling the form offers', MAX_BREAKS === 3)
 
+/* ── a multi-buy, however it was punctuated ──
+   Valentina sent three promos and one saved. The one that saved was the one
+   she wrote with a comma, which happened to be the only separator the parser
+   knew; the rest left punctuation on the line, the price then had something
+   after it, and the whole line came back as having no price. She lost two
+   promos and could not have guessed why. Each of these is a way somebody
+   actually wrote one. */
+const promo = (text: string) => {
+  const r = readPastedList(text)
+  const l = r.lines[0]
+  return l ? `${l.label} ${l.priceCents} ${JSON.stringify(l.breaks)}` : `BAD ${r.bad[0]?.why}`
+}
+const JACKET = 'Jackets 15500 [{"qty":2,"cents":29600}]'
+check('a comma', promo('Jackets $155, buy 2 for $296') === JACKET)
+check('a dash', promo('Jackets $155 - buy 2 for $296') === JACKET)
+const EM = String.fromCharCode(0x2014)
+check('a long dash', promo(`Jackets $155 ${EM} buy 2 for $296`) === JACKET)
+check('brackets round the promo', promo('Jackets - $155 (buy 2 for $296)') === JACKET)
+check('square brackets', promo('Jackets $155 [buy 2 for $296]') === JACKET)
+check('a slash', promo('Jackets $155 / 2 for $296') === JACKET)
+check('a full stop, and never inside the price',
+  promo('Jackets: $155. Buy 2 for $296.') === JACKET)
+/* The way a list gets written by hand, which used to save the jacket at full
+   price and throw the promo away with an error about the promo line. */
+check('the promo on its own line underneath',
+  promo('Jackets $155\nBuy 2 for $296') === JACKET)
+
+/* What must NOT change: a line with no price is still an error, and a stray
+   multi-buy with nothing above it has nothing to attach to. */
+check('a line with no price is still refused',
+  readPastedList('Jackets').bad[0]?.why === 'We could not find a price on that line.')
+check('a multi-buy with nothing above it is refused',
+  readPastedList('Buy 2 for $296').lines.length === 0)
+/* And a promo that is not a discount is still caught, on any punctuation. */
+check('a multi-buy that costs more is still refused',
+  readPastedList('Jackets $100 - buy 2 for $250').lines.length === 0)
+
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('inventory lines: a price never comes from a float, and a bundle is always a discount')
 

@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import type Stripe from 'stripe'
 import { vendors } from '@/db/schema'
 import { stripe } from './config'
+import { makerLink } from '@/server/modules/roster/maker-link'
 import { siteUrl } from '@/lib/site-url'
 import type { DbHandle } from './booth'
 
@@ -114,6 +115,31 @@ const SAYS: Record<string, string> = {
   'relationship.owner': 'Who owns the business',
 }
 
+/**
+ * The maker's site, in a form Stripe will take.
+ *
+ * Drew, 2 November, reading MM16's page: "Stripe refused their payout setup
+ * while creating the account. It said: Not a valid URL."
+ *
+ * It was not her fault and it was not Stripe being strict. The website field
+ * on the application is a free-text box and makers type what people type:
+ * besodelsolboutique.com, www.something.com, an Instagram handle. We sent
+ * that string to Stripe untouched, Stripe rejected the whole account, and
+ * because the account is created before anything else she could not start at
+ * all. One maker stuck while ninety were fine is exactly this: ninety of them
+ * happened to type https://.
+ *
+ * makerLink already turns what people type into a URL or nothing, and the
+ * site has used it for the maker tiles since September. The same answer, the
+ * same tests, now also where it actually blocks money: a bare domain gets its
+ * scheme, an Instagram handle becomes her Instagram, and anything that is
+ * still not a URL is left out rather than sent. Stripe asks her for it during
+ * onboarding if it wants one, which is a question she can answer.
+ */
+export function businessUrl(v: { website?: string | null; instagram?: string | null }): string | null {
+  return makerLink({ website: v.website, instagram: v.instagram })
+}
+
 /** Stripe's requirement keys, in the maker's words. Deduplicated: several
  *  keys map to one sentence and nobody needs to read it twice. */
 export function requirementsInPlainWords(keys: string[]): string[] {
@@ -165,7 +191,7 @@ export async function ensureConnectAccount(
       email: v.email,
       business_profile: {
         name: v.shopName,
-        ...(v.website ? { url: v.website } : {}),
+        ...(businessUrl(v) ? { url: businessUrl(v)! } : {}),
       },
       capabilities: { transfers: { requested: true } },
       metadata: { vendorId: v.id, shopName: v.shopName },

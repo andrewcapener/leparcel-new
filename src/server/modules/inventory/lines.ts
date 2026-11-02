@@ -376,7 +376,27 @@ export type PastedList = {
    them as prose, and here they are punctuation somebody else typed. */
 const LONG_DASHES = String.fromCharCode(0x2013) + String.fromCharCode(0x2014)
 /* A trailing multi-buy: "or buy 2/$8", "buy 2/$8", "2 for $8", "2/$8". */
-const BUNDLE_AT_END = /[,;]?\s*(?:or\s+)?(?:buy\s+)?(\d+)\s*(?:\/|\s+for\s+)\s*\$?\s*([\d.,]+)\s*$/i
+/* The multi-buy at the end of a line, however it was punctuated.
+   
+   Valentina, 30 October: "I submitted the list but only the duffle bag promo
+   was saved for some reason." She had written three. The one that saved was
+   the one she happened to write with a comma, which was the only separator
+   this knew: a dash, a full stop, a slash or a pair of brackets left their
+   punctuation behind on the line, the price then had something after it, and
+   the whole line was thrown back as having no price at all. Seven of the
+   nine ways a person actually writes a multi-buy failed, most of them losing
+   the item too, and the maker had no way to tell which one we wanted. */
+const BUNDLE_AT_END = new RegExp(
+  `[-,;./(\\[${LONG_DASHES}]?\\s*(?:or\\s+)?(?:buy\\s+)?[(\\[]?\\s*`
+  /* The amount, and never the full stop after it: [\d.,]+ happily swallowed
+     the one ending "Buy 2 for $90." and handed "90." on to be read as money. */
+  + '(\\d+)\\s*(?:/|\\s+for\\s+)\\s*\\$?\\s*([\\d,]+(?:\\.\\d{1,2})?)\\s*[)\\]]?\\s*\\.?\\s*$',
+  'i',
+)
+/* Whatever the multi-buy left behind: "Jackets $155 - ", "Tote Bag $48 (". */
+const DANGLING_SEP = new RegExp(`[\\s,;./(\\[${LONG_DASHES}-]+$`)
+/* And a trailing full stop on the price itself: "Tote Bag: $48." */
+const TRAILING_STOP = /\.\s*$/
 /* The price: the last dollar amount left on the line. The sign is optional,
    because plenty of pasted lists read "Cards: 7". */
 const PRICE_AT_END = /\$\s*([\d.,]+)\s*$/
@@ -388,6 +408,10 @@ const TRAILING_SEP = new RegExp(`[\\s:$${LONG_DASHES}-]+$`)
 
 export function readPastedList(text: string): PastedList {
   const out: PastedList = { lines: [], bad: [] }
+  /* What each saved line was read FROM, so a multi-buy written underneath it
+     can be added and the line read again from the top. Kept beside out.lines
+     and the same length, because a continuation edits the line it follows. */
+  const priced: LineInput[] = []
 
   for (const rawLine of (text ?? '').split(/\r?\n/)) {
     const raw = rawLine.trim()
@@ -410,11 +434,34 @@ export function readPastedList(text: string): PastedList {
       rest = rest.slice(0, m.index).trim()
       /* What is left of "Maps: $5 or". */
       rest = rest.replace(/[,;]?\s*\b(?:or|and)\b\s*$/i, '').trim()
+      /* And of "Jackets $155 -" or "Tote Bag $48 (". */
+      rest = rest.replace(DANGLING_SEP, '').trim()
     }
     found.reverse()
 
     const price = rest.match(PRICE_AT_END) ?? rest.match(BARE_PRICE_AT_END)
     if (!price) {
+      /* A multi-buy on a line of its own, under the thing it belongs to:
+         
+             Jackets $155
+             Buy 2 for $296
+         
+         Which is how anybody writes a list by hand, and which used to be
+         thrown back as a line with no price while the jacket above it saved
+         at full price only. Nothing is left on the line but the multi-buy,
+         and there is something above it to attach to, so attach it. Anything
+         else without a price is still an error. */
+      if (found.length > 0 && !rest && priced.length > 0) {
+        const prev = priced[priced.length - 1]!
+        const merged = { ...prev, breaks: [...prev.breaks, ...found] }
+        const again = readLine(merged)
+        if ('bad' in again) out.bad.push({ raw, why: again.bad })
+        else {
+          out.lines[out.lines.length - 1] = again.line
+          priced[priced.length - 1] = merged
+        }
+        continue
+      }
       out.bad.push({ raw, why: 'We could not find a price on that line.' })
       continue
     }
@@ -423,9 +470,13 @@ export function readPastedList(text: string): PastedList {
       .replace(TRAILING_SEP, '')
       .trim()
 
-    const read = readLine({ label, price: price[1]!, breaks: found })
+    const input: LineInput = { label, price: price[1]!, breaks: found }
+    const read = readLine(input)
     if ('bad' in read) out.bad.push({ raw, why: read.bad })
-    else out.lines.push(read.line)
+    else {
+      out.lines.push(read.line)
+      priced.push(input)
+    }
   }
 
   return out

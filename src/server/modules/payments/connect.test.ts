@@ -1,5 +1,6 @@
 import {
   connectState, canBePaid, owesPayoutSetup, requirementList, requirementsInPlainWords,
+  businessUrl,
   type ConnectFacts,
 } from './connect'
 
@@ -103,6 +104,26 @@ check('every requirement produces a line',
   requirementsInPlainWords(['individual.first_name', 'individual.last_name']).length === 2)
 /* Nothing outstanding must render nothing, not an empty bullet. */
 check('no requirements means no lines', requirementsInPlainWords([]).length === 0)
+
+
+/* ── what we send Stripe as the maker's site ──
+   The account is created before a maker can do anything, so a string Stripe
+   refuses here does not degrade her setup, it blocks it entirely. MM16 typed
+   a bare domain and could not start at all. */
+check('a bare domain is sent with a scheme',
+  businessUrl({ website: 'besodelsolboutique.com' }) === 'https://besodelsolboutique.com/')
+check('and so is one with www',
+  businessUrl({ website: 'www.brookelbm.com' }) === 'https://www.brookelbm.com/')
+check('a real URL is left alone',
+  businessUrl({ website: 'https://shop.example.com/store' }) === 'https://shop.example.com/store')
+check('an Instagram handle becomes her Instagram',
+  businessUrl({ website: '', instagram: '@brookelbm' }) === 'https://instagram.com/brookelbm')
+check('nothing typed sends nothing', businessUrl({ website: null, instagram: '' }) === null)
+/* The point of the whole thing: never hand Stripe something it will refuse. */
+check('a phone number is not a URL', businessUrl({ website: '(949) 555-1021' }) === null)
+check('a sentence is not a URL', businessUrl({ website: 'I sell at markets' }) === null)
+check('and a scheme we do not allow is never passed on',
+  businessUrl({ website: 'javascript:alert(1)' }) === null)
 
 if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('connect: payouts_enabled is Stripe’s verdict, and only ready can be paid')
