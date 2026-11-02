@@ -3,6 +3,9 @@ import { redact } from '@/server/modules/sheets/transport'
 import {
   LINK_COLUMNS, PAYMENT_COLUMNS, linkValues, paymentValues, paymentRows,
 } from './payment-export'
+import {
+  INVENTORY_COLUMNS, MAKER_LIST_COLUMNS, inventoryExport, inventoryValues, makerListValues,
+} from './inventory-export'
 import type { db as Db } from '@/db'
 
 /**
@@ -29,6 +32,10 @@ type DbHandle = typeof Db
 
 export const LINKS_TAB = 'Pay links'
 export const PAYMENTS_TAB = 'Payments'
+/* One row per price, which is the tab that gets printed, and one row per
+   maker, which is the one that gets chased. */
+export const INVENTORY_TAB = 'Inventory'
+export const MAKER_LIST_TAB = 'Who has filed'
 
 const TIMEOUT_MS = 15_000
 /* Shorter for the automatic path. Stripe gives a webhook ten seconds before
@@ -232,5 +239,77 @@ export async function pushPaymentTabsIfConnected(
   } catch {
     /* Swallowed on purpose. See above: the money is already recorded, and
        nothing about this is worth failing that for. */
+  }
+}
+
+/* ──────────────────── the inventory half ──────────────────── */
+
+/**
+ * What every indoor maker says she is bringing, and who has not said yet.
+ *
+ * Drew: "Elise needs to print inventory out." The register reads these
+ * prices off a screen on the day; everybody else reads them off paper, and
+ * none of those people are going to open the admin to do it.
+ *
+ * Separate from the payment push rather than bolted onto it, because the two
+ * change at different moments. Money moves and the payment tabs want
+ * rewriting; a maker adds a line and these do. Pushing all four every time
+ * either happens is four Google writes for one changed cell.
+ */
+export async function pushInventoryTabs(
+  db: DbHandle, showId: string, spreadsheetId: string,
+): Promise<PushResult> {
+  const sa = serviceAccount()
+  if (!sa) {
+    return {
+      ok: false,
+      detail: 'No Google service account on this deployment, so nothing can be '
+        + 'written to a sheet. GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY '
+        + 'are what the application sync already uses.',
+    }
+  }
+
+  let token: string
+  try {
+    token = await accessToken(sa, { timeoutMs: TIMEOUT_MS })
+  } catch (err) {
+    return { ok: false, detail: redact(err instanceof Error ? err.message : 'Google would not issue a token.') }
+  }
+
+  const { items, makers } = await inventoryExport(db, showId)
+
+  const one = await writeTab(
+    spreadsheetId, token, INVENTORY_TAB, INVENTORY_COLUMNS, items.map(inventoryValues), sa.email,
+  )
+  if (one !== true) return { ok: false, detail: one }
+
+  const two = await writeTab(
+    spreadsheetId, token, MAKER_LIST_TAB, MAKER_LIST_COLUMNS, makers.map(makerListValues), sa.email,
+  )
+  if (two !== true) return { ok: false, detail: two }
+
+  return { ok: true, rows: items.length, tabs: [INVENTORY_TAB, MAKER_LIST_TAB], email: sa.email }
+}
+
+/**
+ * The same, on the way past, from a maker adding or filing her list.
+ *
+ * Never allowed to fail her save and never allowed to hold it up: what she
+ * typed is already recorded, and a sheet that is a minute behind is worth
+ * none of that. The same bargain the payment push makes on a webhook.
+ */
+export async function pushInventoryTabsIfConnected(
+  db: DbHandle, showId: string, sheetId: string | null | undefined,
+): Promise<void> {
+  const id = (sheetId ?? '').trim()
+  if (!id) return
+  if (!serviceAccount()) return
+  try {
+    await Promise.race([
+      pushInventoryTabs(db, showId, id),
+      new Promise((resolve) => setTimeout(resolve, LIVE_TIMEOUT_MS)),
+    ])
+  } catch {
+    /* Swallowed on purpose. See above. */
   }
 }

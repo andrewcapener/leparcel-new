@@ -6,7 +6,7 @@ import { db } from '@/db'
 import { shows } from '@/db/schema'
 import { activeShow, forgetShowConfig } from '@/db/queries'
 import { siteUrl } from '@/lib/site-url'
-import { pushPaymentTabs, spreadsheetIdFrom } from '@/server/modules/roster/sheet-push'
+import { pushInventoryTabs, pushPaymentTabs, spreadsheetIdFrom } from '@/server/modules/roster/sheet-push'
 import { redact } from '@/server/modules/sheets/transport'
 import type { PushState } from './state'
 
@@ -48,6 +48,13 @@ async function push(link: string): Promise<PushState> {
   const res = await pushPaymentTabs(db, show.id, id, siteUrl())
   if (!res.ok) return { link, ok: false, message: res.detail }
 
+  /* And the inventory, in the same press. Two separate pushes because they
+     change at different moments and neither should rewrite the other's tabs
+     for nothing, but one button, because nobody wants to remember which
+     half of their sheet is stale. */
+  const inv = await pushInventoryTabs(db, show.id, id)
+  if (!inv.ok) return { link, ok: false, message: inv.detail }
+
   /* Remembered, and that is what makes it live. From here on every payment
      that lands, every Venmo matched by hand and every space released pushes
      these tabs on its way past, so nobody has to remember to press this
@@ -66,7 +73,9 @@ async function push(link: string): Promise<PushState> {
     link,
     ok: true,
     message: `Written. "${res.tabs[0]}" and "${res.tabs[1]}" now hold ${res.rows} makers, `
-      + 'and they will keep themselves up to date: every payment, every Venmo you match and '
-      + 'every space you release refreshes them. Press this again any time to force it.',
+      + `and "${inv.tabs[0]}" holds ${inv.rows} priced lines with "${inv.tabs[1]}" beside it `
+      + 'showing who has not filed yet. They keep themselves up to date: every payment, every '
+      + 'Venmo you match and every space you release refreshes the money tabs, and a maker '
+      + 'filing her list refreshes the inventory ones. Press this again any time to force it.',
   }
 }

@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto'
 import { and, asc, eq, isNull, sql } from 'drizzle-orm'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
+import { pushInventoryTabsIfConnected } from '@/server/modules/roster/sheet-push'
 import { redirect } from 'next/navigation'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
@@ -29,7 +30,14 @@ import type { InvCode } from '@/server/modules/inventory/notices'
  * shared lookup below is a plain local and not an export.
  */
 
-type Who = { bookingId: string; open: boolean }
+type Who = {
+  bookingId: string
+  open: boolean
+  /** Carried so filing a list can refresh the team's sheet without a second
+   *  read of the Show record. */
+  showId: string
+  sheetId: string | null
+}
 
 /**
  * Who is asking, or the sentence saying why nothing can be saved.
@@ -62,6 +70,8 @@ async function whoIsAsking(): Promise<Who | { no: InvCode }> {
   return {
     bookingId: booking.id,
     open: listState(show.inventoryDueAt, new Date().toISOString()) !== 'locked',
+    showId: show.id,
+    sheetId: show.paymentSheetId ?? null,
   }
 }
 
@@ -380,6 +390,12 @@ export async function submitInventory(): Promise<void> {
         inventorySubmittedBy: 'maker',
       })
       .where(eq(bookings.id, who.bookingId))
+
+    /* And onto the team's sheet, so Elise can print what she just filed
+       without anybody opening the admin. Capped and swallowed inside: her
+       list is already saved and a sheet a minute behind is not worth
+       failing a save for. */
+    await pushInventoryTabsIfConnected(db, who.showId, who.sheetId)
 
     revalidatePath('/account')
     revalidatePath('/admin/roster')
