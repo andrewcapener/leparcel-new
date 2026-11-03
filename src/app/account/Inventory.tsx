@@ -161,7 +161,10 @@ export function Inventory({
 }) {
   const lines = rows.map(asLine)
   const odd = oddCentsNote(lines)
-  const open = state === 'open'
+  /* Late is open. The deadline chases, it does not shut the form: a maker
+     who gets here on the Tuesday types her prices in rather than emailing
+     them to somebody to key by hand. */
+  const open = state === 'open' || state === 'late'
 
   return (
     <Card title="Your inventory" id="items" wide>

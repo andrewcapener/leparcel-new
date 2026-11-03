@@ -158,11 +158,12 @@ export async function invitePlanFor(
   showOpenedAt?: string | null,
 ): Promise<{ plan: InvitePlan; candidates: Candidate[] }> {
   const candidates = await inviteCandidates(db, showId, showPayoutSetup, showOpenedAt)
-  /* Open means the date has not passed, not merely that somebody set one.
-     Asking twelve makers for a list the page will then refuse to take is
-     worse than not asking: it is a deadline we set, two days late, with a
-     button that does nothing. */
-  const itemsOpen = listState(inventoryDueAt, new Date().toISOString()) === 'open'
+  /* Anything the page will still take, which is everything but a real
+     cutoff. This read 'open', meaning the due date had not passed, back when
+     the date shut the form: asking twelve makers for a list the page would
+     then refuse was worse than not asking. The date no longer shuts it, so
+     the people who are late are exactly the people worth writing to. */
+  const itemsOpen = listState(inventoryDueAt, new Date().toISOString()) !== 'locked'
   return {
     plan: invitePlan(candidates, { itemsOpen }),
     candidates,

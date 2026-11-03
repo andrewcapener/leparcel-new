@@ -127,13 +127,24 @@ const now = '2026-11-01T12:00:00.000Z'
 check('no date means nothing is being asked', listState(null, now) === 'not_open')
 check('rubbish is treated as no date', listState('not a date', now) === 'not_open')
 check('before the date it is open', listState('2026-11-05T07:59:00.000Z', now) === 'open')
-check('after the date it is shut', listState('2026-10-28T07:59:00.000Z', now) === 'locked')
+/* Late, not shut. MM40 hit the old behaviour the afternoon the date passed
+   and emailed twenty five price lines in by hand, which is the exact thing
+   the list exists to stop. A deadline here chases; it does not refuse. */
+check('after the date it is late, not shut', listState('2026-10-28T07:59:00.000Z', now) === 'late')
+check('and nothing returns locked off a due date',
+  listState('2020-01-01T00:00:00.000Z', now) !== 'locked')
 check('the date itself is still open', listState(now, now) === 'open')
 
 check('a shut list with prices says what the register has',
   listNotice('locked', 4).includes('what the register has'))
 check('a shut empty list offers a way through',
   listNotice('locked', 0).includes('by hand'))
+check('a late list says the date has gone and still invites the work',
+  listNotice('late', 0).includes('due already') && listNotice('late', 0).includes('still reaches the register'))
+check('and never tells a late maker to send it another way',
+  !listNotice('late', 0).includes('Write to us'))
+check('a late list with prices says what the register has',
+  listNotice('late', 4).includes('what the register has'))
 check('an open empty list explains the shape',
   listNotice('open', 0).includes('One line per price'))
 

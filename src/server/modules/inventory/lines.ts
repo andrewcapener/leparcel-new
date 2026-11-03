@@ -234,7 +234,9 @@ export type ListState =
   | 'not_open'
   /** Their turn, and they can still change it. */
   | 'open'
-  /** The date has passed. Staff can still edit, the maker asks us. */
+  /** The date has passed and they can still change it. Chased, not shut out. */
+  | 'late'
+  /** Shut. Nothing returns this today; kept for a real cutoff at load-in. */
   | 'locked'
 
 /**
@@ -244,17 +246,30 @@ export type ListState =
  * and we should allow them to do that... there should be a due date on like,
  * here's your final inventory."
  *
- * So it is open right up to the date and shut after it, and the date is the
- * Show's, not a per maker invention. Staff are never locked out: somebody
- * will always turn up on the Thursday with one more thing, and the answer to
- * that is a person deciding, not a form refusing.
+ * That was built as open until the date and shut after it, and shut was the
+ * wrong half. MM40, 3 November, the afternoon the date passed: "I've tried to
+ * resubmit but the system online will not let me. If I may, I'm including the
+ * breakdown of our pricelist." Twenty five lines, by hand, in an email, to be
+ * keyed in by somebody else. That is the exact failure the list exists to
+ * prevent, and the deadline caused it.
+ *
+ * A due date here is a request, not a gate. The register wants prices; a
+ * maker typing hers in late is strictly better for everybody than her not
+ * having any, and nothing downstream breaks because a line arrived on the
+ * Tuesday. So the date now moves the list from open to LATE, which says the
+ * same thing in the UI and refuses nothing.
+ *
+ * 'locked' is left in the type for a cutoff that is real, which is load-in,
+ * when the register is built and paper is printed. Nothing returns it today.
+ * When something does it should come off its own field on the Show record,
+ * not off this one, because the two answer different questions.
  */
 export function listState(dueAtIso: string | null | undefined, nowIso: string): ListState {
   const due = dueAtIso ? Date.parse(dueAtIso) : NaN
   if (!Number.isFinite(due)) return 'not_open'
   const now = Date.parse(nowIso)
   if (!Number.isFinite(now)) return 'open'
-  return now > due ? 'locked' : 'open'
+  return now > due ? 'late' : 'open'
 }
 
 /** What the maker is told about the state of their list. */
@@ -266,6 +281,13 @@ export function listNotice(state: ListState, count: number): string {
     return count === 0
       ? 'The list is closed. Write to us and we will add your prices by hand.'
       : 'The list is closed and this is what the register has. Write to us if something needs changing.'
+  }
+  /* Late, and still open. Says the date has gone without suggesting the
+     chance has: somebody reading this has already decided to do the thing. */
+  if (state === 'late') {
+    return count === 0
+      ? 'This was due already. Add it now and it still reaches the register, so please do not send it to us another way.'
+      : 'This was due already, and this is what the register has. You can still add, change or remove anything.'
   }
   return count === 0
     ? 'Add every kind of thing you are bringing, with its price. One line per price, not one line per item.'
