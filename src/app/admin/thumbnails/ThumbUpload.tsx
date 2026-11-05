@@ -12,10 +12,18 @@ import { useRef, useState, useTransition } from 'react'
  * serverless function.
  */
 export function ThumbUpload({
-  applicationId, shopName, action,
+  applicationId, shopName, hasPicture, action,
 }: {
   applicationId: string
   shopName: string
+  /** Whether this maker has a square at all today.
+   *
+   *  Drew, 5 November: "there just isn't a button to click to add one from
+   *  scratch." There was, on every maker, and it said Replace. On the makers
+   *  who need it most, the ones with no picture at all, that is a word for
+   *  something there is none of, so the control read as belonging to somebody
+   *  else's row and the queue looked like it had no way to work it. */
+  hasPicture: boolean
   /** The server action that stores the URL. */
   action: (fd: FormData) => Promise<void>
 }) {
@@ -91,8 +99,8 @@ export function ThumbUpload({
         disabled={busy}
         onClick={() => input.current?.click()}
       >
-        {busy ? `Uploading ${pct}%` : 'Replace'}
-        <span className="adm-sr"> the photo for {shopName}</span>
+        {busy ? `Uploading ${pct}%` : hasPicture ? 'Replace' : 'Add a picture'}
+        <span className="adm-sr"> for {shopName}</span>
       </button>
       {error && <p className="thumb-err" role="alert">{error}</p>}
     </div>

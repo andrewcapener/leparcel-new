@@ -180,6 +180,7 @@ export default async function Thumbnails({
                   <ThumbUpload
                     applicationId={r.applicationId}
                     shopName={r.shopName}
+                    hasPicture={r.thumb.source !== 'none'}
                     action={setThumbnail}
                   />
                   {r.thumb.source === 'chosen' && (
