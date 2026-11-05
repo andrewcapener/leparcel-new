@@ -1,7 +1,7 @@
 'use server'
 
 import { randomUUID } from 'crypto'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -37,39 +37,56 @@ async function staffActor(): Promise<string> {
  */
 export async function grantBoothSpace(fd: FormData): Promise<void> {
   const bookingId = String(fd.get('bookingId') ?? '')
-  const spaceTypeId = String(fd.get('spaceTypeId') ?? '')
+  /* Several at once. Drew, 5 November: an outdoor maker doing Friday and
+     Saturday was two visits to this form, and a maker doing all three was
+     three. Deduplicated, because two ticks of one day is one day. */
+  const wanted = [...new Set(fd.getAll('spaceTypeIds').map((v) => String(v).trim()).filter(Boolean))]
   const reason = String(fd.get('reason') ?? '').trim()
   const back = String(fd.get('back') ?? '/admin/roster')
   const price = priceFromDollars(String(fd.get('dollars') ?? ''))
+  const n = wanted.length
+
+  if (n === 0) redirect(backTo(back, 'space', 'none'))
 
   const b = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
   if (!b) redirect(backTo(back, 'space', 'missing'))
 
-  const [booked, want, held] = await Promise.all([
+  const [booked, found, held] = await Promise.all([
     db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, b.spaceTypeId) }),
-    db.query.spaceTypes.findFirst({ where: eq(spaceTypes.id, spaceTypeId) }),
+    db.select({ id: spaceTypes.id, label: spaceTypes.label, track: spaceTypes.track })
+      .from(spaceTypes).where(inArray(spaceTypes.id, wanted)),
     db.select({ spaceTypeId: bookingSpaces.spaceTypeId })
       .from(bookingSpaces)
       .where(and(eq(bookingSpaces.bookingId, bookingId), isNull(bookingSpaces.voidedAt))),
   ])
 
-  const problem = grantProblem({
-    holdsSpace: holdsSpace(b.status),
-    bookingTrack: booked?.track,
-    spaceTrack: want?.track,
-    alreadyHas: held.some((h) => h.spaceTypeId === spaceTypeId),
-    priceCents: price,
-  })
-  if (problem) redirect(backTo(back, 'space', problem))
+  /* Checked in the order they were ticked, and ALL of them before anything is
+     written. A half applied grant is indistinguishable from a whole one in
+     the notice afterwards, and the cost of that is a maker standing at a
+     table on a day nobody put her on. */
+  const want = wanted.map((id) => found.find((f) => f.id === id))
+  for (let i = 0; i < want.length; i++) {
+    const problem = grantProblem({
+      holdsSpace: holdsSpace(b.status),
+      bookingTrack: booked?.track,
+      spaceTrack: want[i]?.track,
+      alreadyHas: held.some((h) => h.spaceTypeId === wanted[i]),
+      priceCents: price,
+    })
+    if (problem) redirect(backTo(back, 'space', problem, n))
+  }
 
   const who = await staffActor()
-  await db.insert(bookingSpaces).values({
+  /* One row each. priceCents is per space rather than split across them: it
+     lands on the invoice as its own line, and splitting a total would mean
+     rounding, which has a rule of its own and no business here. */
+  await db.insert(bookingSpaces).values(wanted.map((spaceTypeId) => ({
     id: randomUUID(),
     bookingId,
     spaceTypeId,
     priceCents: price as number | null,
     createdBy: who,
-  })
+  })))
 
   /* Only when it costs something. A free day changes what she has access to
      and not what she owes, so there is no stale checkout to kill and no
@@ -80,22 +97,24 @@ export async function grantBoothSpace(fd: FormData): Promise<void> {
     await dropLiveCheckout(db, bookingId)
   }
 
-  await db.insert(auditLog).values({
+  /* One line each, so the history reads as the days it actually added rather
+     than as a single entry somebody has to unpack later. */
+  await db.insert(auditLog).values(want.map((w) => ({
     id: randomUUID(),
     entity: 'booking',
     entityId: bookingId,
     action: 'space_granted',
     before: null,
-    after: JSON.stringify({ space: want?.label ?? '', priceCents: price }),
+    after: JSON.stringify({ space: w?.label ?? '', priceCents: price }),
     reason: reason || 'no reason given',
     actor: who,
-  })
+  })))
 
   revalidatePath('/makers')
   revalidatePath('/admin/lineup')
   revalidatePath('/admin/roster')
   revalidatePath('/account')
-  redirect(backTo(back, 'space', price === null ? 'free' : 'granted'))
+  redirect(backTo(back, 'space', price === null ? 'free' : 'granted', n))
 }
 
 /**

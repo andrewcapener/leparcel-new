@@ -61,33 +61,43 @@ export function priceFromDollars(raw: string): number | null | 'bad' {
 }
 
 /** What the screen says about a space. */
-export function spaceNotice(code: string): string | null {
+export function spaceNotice(code: string, n = 1): string | null {
+  /* Several can be added at once, so the sentence has to read for one and for
+     four. Nothing here invents a number: n is how many were actually written,
+     and a refusal is all or nothing, so a refusal never reports a count. */
+  const many = n > 1
+  const them = many ? `those ${n} spaces` : 'that space'
   switch (code) {
     case 'granted':
-      return 'Added. They are on that space now and it shows on the public lineup. '
-        + 'If you gave it a price it is on their invoice as its own line, and you can '
-        + 'send them the invoice again from here.'
+      return `Added. They are on ${them} now and ${many ? 'they show' : 'it shows'} on the `
+        + 'public lineup. Anything you priced is on their invoice as its own line, and you '
+        + 'can send them the invoice again from here.'
     case 'free':
-      return 'Added at no charge. They are on that space now and it shows on the public '
-        + 'lineup. Nothing was added to their invoice.'
+      return `Added at no charge. They are on ${them} now and ${many ? 'they show' : 'it shows'} `
+        + 'on the public lineup. Nothing was added to their invoice.'
     case 'removed':
       return 'Taken off. It stays on the record with who removed it and why. If they '
         + 'paid for it, this does not refund them: send the money back and note it here.'
     case 'already':
-      return 'They are already on that space, so nothing changed.'
+      return many
+        ? 'They are already on one of those spaces, so nothing was added. Untick it and try again.'
+        : 'They are already on that space, so nothing changed.'
     case 'wrong_track':
-      return 'That space is on the other track. Indoor and outdoor are different '
-        + 'agreements, so use Put them somewhere else to change track.'
+      return `${many ? 'One of those spaces is' : 'That space is'} on the other track. Indoor `
+        + 'and outdoor are different agreements, so use Put them somewhere else to change track.'
     case 'released':
       return 'They are not holding a space, so there is nothing to add to.'
     case 'bad_price':
-      return 'That price is not a number of dollars. Leave it empty to add the space '
+      return `That price is not a number of dollars. Leave it empty to add ${many ? 'them' : 'the space'} `
         + 'at no charge.'
     case 'last_one':
       return 'That is the only space they hold. Remove them from the show instead, or '
         + 'move them somewhere else.'
+    case 'none':
+      return 'Nothing was ticked, so nothing was added.'
     case 'missing':
-      return 'That space is no longer there. Nothing was changed.'
+      return `${many ? 'One of those spaces is' : 'That space is'} no longer there. `
+        + 'Nothing was changed.'
     default:
       return null
   }

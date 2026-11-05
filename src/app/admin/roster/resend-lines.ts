@@ -217,9 +217,14 @@ export function centsFromDollars(typed: string): number | null {
  * Only our own admin paths: `back` arrives in a form field, and a redirect
  * that follows anything a form says is an open redirect.
  */
-export function backTo(back: string, key: string, outcome: string): string {
+export function backTo(back: string, key: string, outcome: string, n?: number): string {
   const safe = back.startsWith('/admin/') && !back.startsWith('//') ? back : '/admin/roster'
-  return `${safe}${safe.includes('?') ? '&' : '?'}${key}=${encodeURIComponent(outcome)}`
+  const q = `${key}=${encodeURIComponent(outcome)}`
+  /* How many the outcome was about, when it was about more than one. Its own
+     parameter rather than packed into the outcome, so every existing code
+     still reads exactly as it did and a page that ignores it is unchanged. */
+  const count = n !== undefined && n > 1 ? `&${key}n=${Math.trunc(n)}` : ''
+  return `${safe}${safe.includes('?') ? '&' : '?'}${q}${count}`
 }
 
 /* ═══════════════════════ what the screen says ═══════════════════════ */

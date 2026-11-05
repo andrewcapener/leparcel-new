@@ -110,6 +110,8 @@ export default async function MakerDetail({
   searchParams: Promise<{
     add?: string; resend?: string; addon?: string; move?: string; lineup?: string
     space?: string
+    /** How many spaces the outcome above was about. */
+    spacen?: string
     /** What sharing a payout account reported back. */
     share?: string
     /** What closing a balance that is not owed reported back. */
@@ -120,7 +122,7 @@ export default async function MakerDetail({
 }) {
   const { id } = await params
   const { add, resend, addon, move, lineup, space: spaceMsg, share: shareMsg,
-    settle: settleMsg, checked: checkedMsg } = await searchParams
+    settle: settleMsg, checked: checkedMsg, spacen } = await searchParams
 
   const [row] = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
@@ -329,7 +331,7 @@ export default async function MakerDetail({
   const addonSaid = addonNotice(addon ?? '')
   const moveSaid = moveNotice(move ?? '')
   const lineupSaid = lineupNotice(lineup ?? '')
-  const spaceSaid = spaceNotice(spaceMsg ?? '')
+  const spaceSaid = spaceNotice(spaceMsg ?? '', Number(spacen) || 1)
   const settleSaid = settleNotice(settleMsg ?? '')
   const checkSaid = checkNotice(checkedMsg ?? '')
   /* Whether this maker has a Getting paid section at all. Named rather than
@@ -351,6 +353,9 @@ export default async function MakerDetail({
       {/* Scoped to this page. The preset strip is the one shape the admin does
           not already have, and globals.css is not mine to edit. */}
       <style>{`
+        .adm-spaces { border: 0; padding: 0; margin-bottom: 20px; }
+        .adm-spaces > legend { padding: 0; margin-bottom: 7px; }
+        .adm-spaces .adm-check { margin-bottom: 6px; }
         .mk-quick { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
         .mk-quick a { text-decoration: none; }
         .mk-quick a[aria-current="true"] {
@@ -949,21 +954,25 @@ export default async function MakerDetail({
               <form action={grantBoothSpace} className="mk-add">
                 <input type="hidden" name="bookingId" value={booking.id} />
                 <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
-                <label className="adm-field" htmlFor="gs">
-                  <span className="lb">Add a {space.track === 'outdoor' ? 'day' : 'space'}</span>
-                  <select className="inp" id="gs" name="spaceTypeId" defaultValue="">
-                    <option value="" disabled>Pick one</option>
-                    {grantable.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.label} (lists at {usd(t.priceCents)})
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <fieldset className="adm-field adm-spaces">
+                  <legend className="lb">
+                    Add {space.track === 'outdoor' ? 'days' : 'spaces'}
+                  </legend>
+                  {grantable.map((t) => (
+                    <label className="adm-check" key={t.id}>
+                      <input type="checkbox" name="spaceTypeIds" value={t.id} />
+                      <span>{t.label} (lists at {usd(t.priceCents)})</span>
+                    </label>
+                  ))}
+                </fieldset>
                 <label className="adm-field" htmlFor="gd">
                   <span className="lb">Charge them</span>
                   <input className="inp" id="gd" name="dollars" type="text" inputMode="decimal"
                     autoComplete="off" placeholder="Leave empty for no charge" />
+                  <span className="hint">
+                    Per {space.track === 'outdoor' ? 'day' : 'space'}, not for the lot.
+                    Tick three and type 50 and that is three lines of $50.
+                  </span>
                 </label>
                 <label className="adm-field" htmlFor="gr">
                   <span className="lb">Why</span>

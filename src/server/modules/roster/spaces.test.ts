@@ -54,5 +54,30 @@ check('every notice is dash free and unexcited',
   }))
 check('an unknown code says nothing', spaceNotice('nope') === null)
 
+/* ── several at once ──
+   Drew, 5 November: adding Friday and Saturday to an outdoor maker was two
+   visits to the form, and all three days was three. The sentence afterwards
+   has to read for one and for four without inventing a number. */
+check('one space still reads as one',
+  (spaceNotice('granted') ?? '').includes('that space'))
+check('and never says a count for one',
+  !/\b[2-9]\b/.test(spaceNotice('granted') ?? ''))
+check('several say how many', (spaceNotice('granted', 3) ?? '').includes('those 3 spaces'))
+check('and agree with themselves', (spaceNotice('granted', 3) ?? '').includes('they show'))
+check('free reads for several too', (spaceNotice('free', 2) ?? '').includes('those 2 spaces'))
+check('nothing ticked says so', (spaceNotice('none') ?? '').includes('Nothing was ticked'))
+
+/* A refusal is all or nothing, so it must not claim a count, and it must
+   point at the one that is wrong rather than leaving staff to guess. */
+check('already, with several, names one of them',
+  (spaceNotice('already', 3) ?? '').includes('one of those spaces'))
+check('already, with one, stays as it was',
+  (spaceNotice('already') ?? '').includes('already on that space'))
+check('wrong track, with several, names one of them',
+  (spaceNotice('wrong_track', 2) ?? '').includes('One of those spaces'))
+check('no refusal claims anything was added',
+  ['already', 'wrong_track', 'released', 'bad_price', 'missing', 'none']
+    .every((c) => !(spaceNotice(c, 3) ?? '').startsWith('Added')))
+
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('booking spaces: a day can be granted free or priced, and cents never come from a float')
