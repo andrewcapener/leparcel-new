@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import type { db as Db } from '@/db'
 import {
   applications, auditLog, bookings, bookingSpaces, spaceTypes, vendors,
@@ -40,8 +40,10 @@ export type NewMaker = {
   shopName: string
   contactName: string
   email: string
-  spaceTypeId: string
-  /** Dollars as typed. Empty means the space's list price. */
+  /** Every space they are taking. Outdoor spaces are per day, so this is
+   *  how somebody takes Friday and Saturday but not Sunday. */
+  spaceTypeIds: string[]
+  /** Dollars as typed. Empty means the list price of everything picked. */
   fee: string
   instagram: string
   phone: string
@@ -52,8 +54,11 @@ export type Ready = {
   shopName: string
   contactName: string
   email: string
-  spaceTypeId: string
-  /** Null means "use the list price", resolved against the space on write. */
+  /** In the order they were picked, deduplicated. The first is the booking's
+   *  primary space; all of them get a booking_spaces row. */
+  spaceTypeIds: string[]
+  /** Null means "use the list price", which for several spaces is the sum of
+   *  them, resolved on write. */
   priceCents: number | null
   instagram: string | null
   phone: string | null
@@ -73,6 +78,10 @@ export function feeFromDollars(raw: string): { cents: number } | null | { bad: s
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+/* More than this is somebody ticking every box by accident rather than a
+   maker taking that many spaces. */
+export const MAX_SPACES = 8
+
 /** The form, checked, or the first thing wrong with it. */
 export function readNewMaker(input: NewMaker): { ready: Ready } | { bad: string } {
   const shopName = (input.shopName ?? '').trim().replace(/\s+/g, ' ')
@@ -85,7 +94,11 @@ export function readNewMaker(input: NewMaker): { ready: Ready } | { bad: string 
   const email = (input.email ?? '').trim().toLowerCase()
   if (!EMAIL.test(email)) return { bad: 'That does not look like an email address.' }
 
-  if (!(input.spaceTypeId ?? '').trim()) return { bad: 'Pick the space they are taking.' }
+  /* One or several. Deduplicated, because a double submit or a stale form
+     should not buy somebody Saturday twice. */
+  const spaceTypeIds = [...new Set((input.spaceTypeIds ?? []).map((v) => (v ?? '').trim()).filter(Boolean))]
+  if (spaceTypeIds.length === 0) return { bad: 'Pick at least one space.' }
+  if (spaceTypeIds.length > MAX_SPACES) return { bad: `Pick no more than ${MAX_SPACES} spaces.` }
 
   const fee = feeFromDollars(input.fee)
   if (fee && 'bad' in fee) return { bad: fee.bad }
@@ -98,7 +111,7 @@ export function readNewMaker(input: NewMaker): { ready: Ready } | { bad: string 
   return {
     ready: {
       shopName, contactName, email,
-      spaceTypeId: input.spaceTypeId.trim(),
+      spaceTypeIds,
       priceCents: fee ? fee.cents : null,
       instagram: (input.instagram ?? '').trim().replace(/^@/, '') || null,
       phone: (input.phone ?? '').trim() || null,
@@ -124,15 +137,37 @@ export async function addMaker(
   const show = await db.query.shows.findFirst({ where: (s, { eq: e }) => e(s.id, showId) })
   if (!show) return { ok: false, because: 'No active show.' }
 
-  const [space] = await db
+  const found = await db
     .select({
       id: spaceTypes.id, label: spaceTypes.label,
       track: spaceTypes.track, priceCents: spaceTypes.priceCents,
     })
     .from(spaceTypes)
-    .where(eq(spaceTypes.id, ready.spaceTypeId))
-    .limit(1)
-  if (!space) return { ok: false, because: 'That space no longer exists.' }
+    .where(inArray(spaceTypes.id, ready.spaceTypeIds))
+  /* Back into the order they were picked, so the first one picked is the
+     booking's primary space rather than whatever the database returned. */
+  const spaces = ready.spaceTypeIds
+    .map((id) => found.find((f) => f.id === id))
+    .filter((f): f is typeof found[number] => Boolean(f))
+  if (spaces.length !== ready.spaceTypeIds.length) {
+    return { ok: false, because: 'One of those spaces no longer exists.' }
+  }
+  const space = spaces[0]!
+
+  /* One booking, one track, because one booking carries one commission rate
+     and that rate is snapshotted at creation and immutable from then on
+     (rule 6). Indoor is consignment at the central register; outdoor is a
+     booth they run themselves and keep everything from. A booking that was
+     somehow both would have to be one or the other on statement day, and
+     whichever it turned out to be would be wrong for half the spaces. */
+  if (spaces.some((s) => (s.track === 'outdoor') !== (space.track === 'outdoor'))) {
+    return {
+      ok: false,
+      because: 'Those spaces are not all on the same track. Indoor is consignment '
+        + 'and outdoor is their own booth, and one booking can only be one of them. '
+        + 'Add them twice if they are doing both.',
+    }
+  }
 
   /* The address is the account, here as everywhere else. A maker who applied
      to a previous show keeps her vendor row, her MM code and her history. */
@@ -170,7 +205,7 @@ export async function addMaker(
     vendorId: vendor.id,
     track: space.track === 'outdoor' ? 'outdoor' : 'indoor',
     status: 'accepted',
-    requestedSpaceIds: JSON.stringify([space.id]),
+    requestedSpaceIds: JSON.stringify(spaces.map((s) => s.id)),
     category: 'Other',
     description: `Added to the roster by hand. ${ready.reason}`,
     priceLowCents: 0,
@@ -202,7 +237,11 @@ export async function addMaker(
 
   const bookingId = randomUUID()
   const payToken = randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '')
-  const priceCents = ready.priceCents ?? space.priceCents
+  /* The list price of everything picked, which for three outdoor days is
+     three days' worth. A typed fee replaces the whole total, not each space,
+     so 0 comps the lot. */
+  const listCents = spaces.reduce((t, s) => t + s.priceCents, 0)
+  const priceCents = ready.priceCents ?? listCents
 
   await db.insert(bookings).values({
     id: bookingId, showId, vendorId: vendor.id, applicationId,
@@ -221,11 +260,14 @@ export async function addMaker(
   })
 
   /* The lineup reads booking_spaces, not bookings.space_type_id. A booking
-     without this row is a maker nobody can see on the website. */
-  await db.insert(bookingSpaces).values({
-    id: randomUUID(), bookingId, spaceTypeId: space.id, priceCents: null,
+     without these rows is a maker nobody can see on the website, and one row
+     short is a maker missing from the day she is actually standing there.
+     priceCents null throughout means "covered by the booking fee", which it
+     is: the fee above already counts every one of them. */
+  await db.insert(bookingSpaces).values(spaces.map((s) => ({
+    id: randomUUID(), bookingId, spaceTypeId: s.id, priceCents: null,
     createdBy: 'added by hand',
-  })
+  })))
 
   await db.insert(auditLog).values({
     id: randomUUID(),
@@ -236,11 +278,12 @@ export async function addMaker(
     before: null,
     after: JSON.stringify({
       shopName: ready.shopName, email: ready.email,
-      vendorCode: code, priceCents, space: space.label, reusedVendor: reused,
+      vendorCode: code, priceCents, reusedVendor: reused,
+      spaces: spaces.map((s) => s.label),
     }),
     reason: ready.priceCents === null
       ? `added by hand, list price: ${ready.reason}`
-      : `added by hand, fee set to ${priceCents} rather than the list ${space.priceCents}: ${ready.reason}`,
+      : `added by hand, fee set to ${priceCents} rather than the list ${listCents}: ${ready.reason}`,
   })
 
   return { ok: true, bookingId, vendorCode: code, payToken, reused }

@@ -5,7 +5,7 @@ const check = (n: string, ok: boolean) => { if (!ok) { failures++; console.error
 
 const form = (over: Partial<NewMaker> = {}): NewMaker => ({
   shopName: 'Holy Sits', contactName: 'Allison', email: 'allison@holysits.com',
-  spaceTypeId: 'sp-3x6', fee: '', instagram: '', phone: '',
+  spaceTypeIds: ['sp-3x6'], fee: '', instagram: '', phone: '',
   reason: 'paid before we had her on a list',
   ...over,
 })
@@ -43,7 +43,7 @@ check('absurd is refused', 'bad' in (feeFromDollars('200000') as object))
 check('a complete form is accepted', ok())
 check('no shop name is refused', bad({ shopName: '  ' }) !== null)
 check('no contact is refused', bad({ contactName: '' }) !== null)
-check('no space is refused', (bad({ spaceTypeId: '' }) ?? '').includes('space'))
+check('no space is refused', (bad({ spaceTypeIds: [] }) ?? '').includes('space'))
 
 check('a bad address is refused', bad({ email: 'allison' }) !== null)
 check('an address with no dot is refused', bad({ email: 'allison@localhost' }) !== null)
@@ -68,12 +68,36 @@ check('inner whitespace is collapsed',
    to be seen at speed. */
 const copy = [
   bad({ shopName: '' }), bad({ contactName: '' }), bad({ email: 'x' }),
-  bad({ spaceTypeId: '' }), bad({ reason: '' }), bad({ fee: 'lots' }),
+  bad({ spaceTypeIds: [] }), bad({ reason: '' }), bad({ fee: 'lots' }),
 ].filter((x): x is string => x !== null)
 check('every refusal says what to do', copy.length === 6)
 check('no fancy dashes and no exclamations',
   copy.every((t) => !t.includes('!')
     && !t.includes(String.fromCharCode(0x2014)) && !t.includes(String.fromCharCode(0x2013))))
+
+/* ── several spaces ──
+   Drew, 5 November: "allow us to pick and choose how they're going to
+   participate in the show, so it could be anywhere from one to all of them."
+   Outdoor spaces are per day, so this is how somebody takes Friday and
+   Saturday and not Sunday. */
+check('one space still works', ready().spaceTypeIds.length === 1)
+check('several are kept, in the order they were picked',
+  ready({ spaceTypeIds: ['sp-fri', 'sp-sat', 'sp-sun'] }).spaceTypeIds.join() === 'sp-fri,sp-sat,sp-sun')
+/* A double submit or a stale form must not buy somebody Saturday twice: the
+   second row would be a second space held and a second line on the invoice. */
+check('the same space twice is one space',
+  ready({ spaceTypeIds: ['sp-sat', 'sp-sat'] }).spaceTypeIds.length === 1)
+check('blanks among them are dropped',
+  ready({ spaceTypeIds: ['sp-fri', '', '  '] }).spaceTypeIds.length === 1)
+check('nothing but blanks is refused',
+  (bad({ spaceTypeIds: ['', '  '] }) ?? '').includes('space'))
+check('a silly number is refused',
+  (bad({ spaceTypeIds: Array.from({ length: 20 }, (_, i) => `sp-${i}`) }) ?? '').includes('more than'))
+/* Comping stays one field: 0 covers everything ticked, not one space of it. */
+check('a zero fee survives several spaces',
+  ready({ spaceTypeIds: ['sp-fri', 'sp-sat'], fee: '0' }).priceCents === 0)
+check('an empty fee still means the list price',
+  ready({ spaceTypeIds: ['sp-fri', 'sp-sat'] }).priceCents === null)
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('add a maker: the fee never comes from a float, and nobody joins the roster without a reason')

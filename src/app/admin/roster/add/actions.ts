@@ -35,7 +35,7 @@ export async function addMakerByHand(fd: FormData): Promise<void> {
     shopName: field(fd, 'shopName'),
     contactName: field(fd, 'contactName'),
     email: field(fd, 'email'),
-    spaceTypeId: field(fd, 'spaceTypeId'),
+    spaceTypeIds: fd.getAll('spaceTypeIds').map((v) => String(v)),
     fee: field(fd, 'fee'),
     instagram: field(fd, 'instagram'),
     phone: field(fd, 'phone'),
@@ -43,7 +43,13 @@ export async function addMakerByHand(fd: FormData): Promise<void> {
   }
 
   const echo = new URLSearchParams()
-  for (const [k, v] of Object.entries(typed)) if (v) echo.set(k, v)
+  for (const [k, v] of Object.entries(typed)) {
+    /* The ticked spaces are several values under one name, so they are
+       appended rather than set: setting would keep only the last one and a
+       rejected form would come back with every other tick lost. */
+    if (Array.isArray(v)) for (const one of v) echo.append(k, one)
+    else if (v) echo.set(k, v)
+  }
 
   const read = readNewMaker(typed)
   if ('bad' in read) {

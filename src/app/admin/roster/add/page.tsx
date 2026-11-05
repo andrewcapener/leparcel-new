@@ -28,9 +28,14 @@ export const metadata = { title: 'Add a maker' }
 export default async function AddMakerPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | undefined>>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const sp = await searchParams
+  /* Which boxes were ticked, echoed back when the form is rejected. One
+     checkbox arrives as a string and several as an array, so both shapes
+     have to be read or a rejected form loses every tick but the last. */
+  const raw = sp.spaceTypeIds
+  const picked = Array.isArray(raw) ? raw : raw ? [raw] : []
   const show = await activeShow()
   if (!show) throw new Error('No active show.')
 
@@ -42,10 +47,22 @@ export default async function AddMakerPage({
     .from(spaceTypes)
     .orderBy(asc(spaceTypes.sortOrder))
 
-  const keep = (k: string) => ({ defaultValue: sp[k] ?? '' })
+  const keep = (k: string) => {
+    const v = sp[k]
+    return { defaultValue: typeof v === 'string' ? v : '' }
+  }
 
   return (
     <>
+      {/* Scoped to this page, the way the maker detail page does it: a
+          fieldset carries a browser border and padding that nothing else in
+          the admin has, and globals.css is shared with every other screen. */}
+      <style>{`
+        .adm-spaces { border: 0; padding: 0; margin-bottom: 20px; }
+        .adm-spaces > legend { padding: 0; margin-bottom: 7px; }
+        .adm-spaces .adm-check { margin-bottom: 6px; }
+        .adm-spaces .hint { display: block; margin-top: 8px; }
+      `}</style>
       <PageHead
         title="Add a maker"
         sub={`${show.name} · for somebody who never went through the form`}
@@ -94,29 +111,35 @@ export default async function AddMakerPage({
         </div>
 
         <div className="adm-row2">
-          <label className="adm-field">
-            <span className="lb">Space</span>
-            <select className="inp" name="spaceTypeId" required
-              defaultValue={sp.spaceTypeId ?? ''}>
-              <option value="" disabled>Pick a space</option>
-              {spaces.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label} · {usd(s.priceCents)} · {s.track}
-                </option>
-              ))}
-            </select>
+          <fieldset className="adm-field adm-spaces">
+            <legend className="lb">Spaces</legend>
+            {spaces.map((s) => (
+              <label className="adm-check" key={s.id}>
+                <input
+                  type="checkbox"
+                  name="spaceTypeIds"
+                  value={s.id}
+                  defaultChecked={picked.includes(s.id)}
+                />
+                <span>{s.label} · {usd(s.priceCents)} · {s.track}</span>
+              </label>
+            ))}
             <span className="hint">
-              Indoor is consignment at the central register. Outdoor is a booth
-              they staff themselves. Make sure they know which one they agreed to.
+              Tick everything they are taking. Outdoor spaces are per day, so
+              this is how somebody does Friday and Saturday but not Sunday.
+              Indoor is consignment at the central register, outdoor is a booth
+              they staff themselves, and one maker cannot be both on one
+              booking: add them twice if they are doing both.
             </span>
-          </label>
+          </fieldset>
           <label className="adm-field">
             <span className="lb">Fee</span>
             <input className="inp" type="text" inputMode="decimal" name="fee"
               placeholder="list price" {...keep('fee')} />
             <span className="hint">
-              Leave it empty for the list price above. Type a number to charge
-              something else. It is snapshotted onto the booking and cannot be
+              Leave it empty for the list price of everything ticked, added up.
+              Type a number to charge something else, or 0 for a maker who is
+              here for free. It is snapshotted onto the booking and cannot be
               changed afterwards.
             </span>
           </label>
