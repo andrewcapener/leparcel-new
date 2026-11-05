@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { eq, and, asc } from 'drizzle-orm'
+import { eq, and, asc, inArray } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { bookings, vendors, applications, spaceTypes } from '@/db/schema'
@@ -58,8 +58,21 @@ export default async function Thumbnails({
   const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
-  /* Booked makers only. An applicant who was never accepted has no place on
-     a page about what the public will see. */
+  /* Exactly the people the public page shows, which is the whole point of
+     this screen.
+     
+     Drew, 5 November: "it's people who were accepted but are not showing up
+     in the thumbnail section." Two screens about the same makers were asking
+     two different questions. The lineup and /makers take every booking that
+     holds a space and never look at the application; this took every
+     application marked accepted and never looked at the booking. So a maker
+     holding a space whose application row was never flipped appeared on the
+     public page with no row here, and therefore no way to give her a
+     picture, which is the one failure this page exists to prevent.
+     
+     Now it asks the lineup's question. A released or forfeited booking drops
+     off too, which is right: nobody needs a photograph of a table that is
+     back in the pool. */
   const rows = await db
     .select({
       applicationId: applications.id,
@@ -74,7 +87,12 @@ export default async function Thumbnails({
     .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
     .innerJoin(applications, eq(bookings.applicationId, applications.id))
     .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
-    .where(and(eq(bookings.showId, show.id), eq(applications.status, 'accepted')))
+    .where(and(
+      eq(bookings.showId, show.id),
+      /* The same three the lineup uses. holdsSpace() is the same rule in
+         TypeScript; this is it in SQL, and the two must not drift. */
+      inArray(bookings.status, ['confirmed', 'payment_processing', 'awaiting_payment']),
+    ))
     .orderBy(asc(vendors.shopName))
 
   const withThumb = rows.map((r) => ({ ...r, thumb: thumbnailFor(r) }))
