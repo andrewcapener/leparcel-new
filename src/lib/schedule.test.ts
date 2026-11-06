@@ -67,10 +67,24 @@ assert.equal(hasExtras(extrasFor('Friday 13 November')), true)
 for (const day of extras) {
   /* Nothing blank: a blank name renders as a stray separator on the page,
      which reads as a thing that is on and has no name. */
-  for (const name of [...day.food, ...day.allDay]) {
-    assert.equal(name, name.trim())
-    assert.ok(name.length > 0, `${day.slug} has a nameless entry`)
+  for (const thing of [...day.food, ...day.allDay]) {
+    assert.equal(thing.name, thing.name.trim())
+    assert.ok(thing.name.length > 0, `${day.slug} has a nameless entry`)
+    /* A link that is not a link is a dead button on a public page, and a
+       link to somewhere that is not Instagram is not what any of these are. */
+    if (thing.href !== undefined) {
+      const u = new URL(thing.href)
+      assert.equal(u.protocol, 'https:', `${thing.name} is not https`)
+      assert.equal(u.host, 'www.instagram.com', `${thing.name} points at ${u.host}`)
+    }
   }
+  /* Coffee opens the food list on every day. Elise: "Start with coffee. Cuz
+     its a morning thing." The order was Hillary's seating chart, which is not
+     a sequence, so the day used to open with lunch. */
+  assert.ok(day.food[0]?.name.includes('Coffee'), `${day.slug} does not open on coffee`)
+  /* The one link Elise asked for by name. */
+  const ohd = day.allDay.find((a) => a.name.startsWith('Oh Happy Day'))
+  assert.ok(ohd?.href, `${day.slug} has Oh Happy Day with no link`)
   /* A set time without a performer, or a performer without a time, is the
      one way this page can lie to somebody who drove down for it. */
   for (const slot of day.music) {

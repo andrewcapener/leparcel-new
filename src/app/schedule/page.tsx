@@ -4,7 +4,7 @@ import { googleCalendarUrl } from '@/server/modules/calendar/ics'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
 import { PageTitle, RichText, FactTable, Banner, type FactRow } from '@/components/theme/Sections'
-import { bookends, extrasFor, hasExtras, splitDay, TBA } from '@/lib/schedule'
+import { bookends, extrasFor, hasExtras, type Named, splitDay, TBA } from '@/lib/schedule'
 
 /* Cached and re-rendered at most once a minute. Read-only, nothing
  * per-request, and the Show record it reads changes a few times a season.
@@ -20,9 +20,32 @@ export const metadata = {
   alternates: { canonical: '/schedule' },
 }
 
-/** The day name without the date, for "See Friday's tents". */
+/** The day name without the date, for "See Friday's makers". */
 function justDay(day: string): string {
   return day.split(' ')[0] ?? day
+}
+
+/**
+ * A day's food or all-day list, with a link on anything that has one.
+ *
+ * Elise, 6 November: "Oh happy hair lounge needs a link." A shopper who does
+ * not recognise a name has nowhere to go, and a maker reposting the day wants
+ * the handle. Separated by the middle dot the rest of the site uses, and the
+ * separators are not links, so a mis-tap does not take anybody off the page.
+ */
+function NamedList({ items }: { items: readonly Named[] }) {
+  return (
+    <>
+      {items.map((item, i) => (
+        <span key={item.name}>
+          {i > 0 && ' · '}
+          {item.href
+            ? <a href={item.href} rel="noopener noreferrer" target="_blank">{item.name}</a>
+            : item.name}
+        </span>
+      ))}
+    </>
+  )
 }
 
 /**
@@ -79,6 +102,21 @@ export default async function Schedule() {
             const x = extrasFor(day)
             const rows: FactRow[] = [{ label: 'Open', value: when }]
 
+            /* Food, then what is on all day, then the music, then the
+               makers.
+            
+               Elise: "can you move music down below each thing?" The music
+               sat directly under the opening time, which put six set times
+               between a shopper and the two rows telling her what is actually
+               there. The music is the longest row and the one she reads last,
+               so it goes last of the things that are on, with the makers link
+               closing the day. */
+            if (hasExtras(x) && x.food.length > 0) {
+              rows.push({ label: 'Food and drink', value: <NamedList items={x.food} /> })
+            }
+            if (hasExtras(x) && x.allDay.length > 0) {
+              rows.push({ label: 'All day', value: <NamedList items={x.allDay} /> })
+            }
             if (hasExtras(x) && x.music.length > 0) {
               rows.push({
                 label: 'Live music',
@@ -99,17 +137,15 @@ export default async function Schedule() {
                 ),
               })
             }
-            if (hasExtras(x) && x.food.length > 0) {
-              rows.push({ label: 'Food and drink', value: x.food.join(' · ') })
-            }
-            if (hasExtras(x) && x.allDay.length > 0) {
-              rows.push({ label: 'All day', value: x.allDay.join(' · ') })
-            }
+            /* "Tents" was ours, not theirs. Elise: 'Instead of "see Fridays
+               tents" can you say "see Fridays makers!"' A shopper is coming
+               to see the people, and inside makers are on this page too and
+               have never been in a tent. */
             rows.push({
               label: 'Outside today',
               value: (
                 <Link href={`/makers#${justDay(day).toLowerCase()}`}>
-                  See {justDay(day)}&#39;s tents
+                  See {justDay(day)}&#39;s makers!
                 </Link>
               ),
             })
@@ -141,11 +177,19 @@ export default async function Schedule() {
             ]}
           />
 
-          {/* The timetable answers when. This answers what it is like: one
-              long room, racks and shelves, and enough space to look twice. */}
+          {/* The page answers when. This answers what you are turning up to,
+              and it has to be the picture this page is actually about.
+            
+              It was a rack of clothes indoors, which is a fine photograph of
+              shopping and a poor one of a day: no sky, no tents, nobody in
+              it. Elise, 6 November, wanted it changed immediately and she is
+              right. The row of white tents under a blue sky with a crowd in
+              it is the day this page times out, and it is the half of the
+              show the music, the trucks and the daily lineup above all
+              belong to. */}
           <Banner
             id="section-schedule-plate"
-            image="/photos/racks.jpg"
+            image="/photos/tents.jpg"
             title=""
             heightMobile={420}
             heightDesktop={560}

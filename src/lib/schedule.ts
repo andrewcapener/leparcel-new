@@ -20,13 +20,29 @@ export type Slot = { time: string; what: string }
 /** An hour Hillary has held but not booked. Printed, never guessed at. */
 export const TBA = 'TBA'
 
+/**
+ * Something on for the day, and where to look it up.
+ *
+ * Elise, 6 November: "Oh happy hair lounge needs a link." She is right, and
+ * it generalises: a shopper reading a name she does not know has nowhere to
+ * go, and a maker reposting the day wants the handle. The href is optional
+ * because most of these are a truck in a car park with nothing to link to.
+ */
+export type Named = { name: string; href?: string }
+
 export type DayExtras = {
   /** Matches the first word of the day in the Show record's hoursNote. */
   slug: string
-  /** The trucks, the trailers and the coffee cart, in the order they read. */
-  food: string[]
+  /**
+   * The coffee, the trucks and the trailers, in the order a day is eaten.
+   *
+   * Elise: "Start with coffee. Cuz its a morning thing." The order was the
+   * order they sat in Hillary's plan, which is a seating chart and not a
+   * sequence, so it opened with lunch.
+   */
+  food: Named[]
   /** Things that run from open to close. */
-  allDay: string[]
+  allDay: Named[]
   /** The live-music set times. */
   music: Slot[]
 }
@@ -59,13 +75,16 @@ export const extras: DayExtras[] = [
   {
     slug: 'Friday',
     food: [
-      'EatsyJoon empanadas',
-      'Stix & Cones',
-      'Sweet’n Cloud Co.',
-      'Alohana Acai',
-      'JC Beans Coffee',
+      { name: 'JC Beans Coffee', href: 'https://www.instagram.com/jc_beanscoffee/' },
+      { name: 'EatsyJoon empanadas' },
+      { name: 'Stix & Cones', href: 'https://www.instagram.com/stixcones/' },
+      { name: 'Sweet’n Cloud Co.', href: 'https://www.instagram.com/sweetncloudco/' },
+      { name: 'Alohana Acai', href: 'https://www.instagram.com/alohanaacaibowls/' },
     ],
-    allDay: ['Oh Happy Day Hair Lounge', 'Face painting'],
+    allDay: [
+      { name: 'Oh Happy Day Hair Lounge', href: 'https://www.instagram.com/ohhappydayhairlounge/' },
+      { name: 'Face painting' },
+    ],
     music: [
       { time: '9 to 10am', what: TBA },
       { time: '10:15 to 11:15am', what: TBA },
@@ -78,13 +97,16 @@ export const extras: DayExtras[] = [
   {
     slug: 'Saturday',
     food: [
-      'Baby’s Badass Burgers',
-      'Stix & Cones',
-      'Sweet’n Cloud Co.',
-      'Alohana Acai',
-      'JC Beans Coffee',
+      { name: 'JC Beans Coffee', href: 'https://www.instagram.com/jc_beanscoffee/' },
+      { name: 'Baby’s Badass Burgers' },
+      { name: 'Stix & Cones', href: 'https://www.instagram.com/stixcones/' },
+      { name: 'Sweet’n Cloud Co.', href: 'https://www.instagram.com/sweetncloudco/' },
+      { name: 'Alohana Acai', href: 'https://www.instagram.com/alohanaacaibowls/' },
     ],
-    allDay: ['Oh Happy Day Hair Lounge', 'Face painting'],
+    allDay: [
+      { name: 'Oh Happy Day Hair Lounge', href: 'https://www.instagram.com/ohhappydayhairlounge/' },
+      { name: 'Face painting' },
+    ],
     music: [
       { time: '9 to 10am', what: TBA },
       { time: '10:15am to 12:15pm', what: 'Still Summer' },
@@ -96,13 +118,16 @@ export const extras: DayExtras[] = [
   {
     slug: 'Sunday',
     food: [
-      'Baby’s Badass Burgers',
-      'Stix & Cones',
-      'Sweet’n Cloud Co.',
-      'Alohana Acai',
-      'JC Beans Coffee',
+      { name: 'JC Beans Coffee', href: 'https://www.instagram.com/jc_beanscoffee/' },
+      { name: 'Baby’s Badass Burgers' },
+      { name: 'Stix & Cones', href: 'https://www.instagram.com/stixcones/' },
+      { name: 'Sweet’n Cloud Co.', href: 'https://www.instagram.com/sweetncloudco/' },
+      { name: 'Alohana Acai', href: 'https://www.instagram.com/alohanaacaibowls/' },
     ],
-    allDay: ['Oh Happy Day Hair Lounge', 'Face painting'],
+    allDay: [
+      { name: 'Oh Happy Day Hair Lounge', href: 'https://www.instagram.com/ohhappydayhairlounge/' },
+      { name: 'Face painting' },
+    ],
     music: [
       { time: '9 to 10am', what: 'Piper Kuhn' },
       { time: '10:15 to 11:15am', what: 'Hector Lavin' },
