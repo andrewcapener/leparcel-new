@@ -54,6 +54,22 @@ export default async function Home() {
   const daysLeft = daysUntil(show.applicationsCloseAt)
   const open = new Date(show.applicationsCloseAt).getTime() > Date.now()
 
+  /* The one button above the fold, pointed at whatever the visitor can
+     actually do today.
+
+     It said APPLY NOW all year. Applications for Fall closed on 18 September
+     and the show opens on 13 November, so for the eight weeks that matter
+     most, the first thing a shopper saw was an invitation to do the one
+     thing she cannot. Drew, a week out: "change the button on the homepage to
+     view schedule."
+
+     Read off the same `open` the apply band below uses, so the two can never
+     disagree and nobody has to remember to change it back the morning Spring
+     opens. */
+  const heroCta = open
+    ? { href: '/apply', label: 'APPLY NOW' }
+    : { href: '/schedule', label: 'VIEW SCHEDULE' }
+
   return (
     <SiteShell show={show} template="index" transparentHeader>
       {/* The show as an Event, so a search result can carry the dates and the
@@ -68,7 +84,7 @@ export default async function Home() {
             video={C.heroVideoId}
             subheading="HAND CURATED"
             title={<>SHOP SMALL <br /> MAKERS MARKET</>}
-            cta={{ href: '/apply', label: 'APPLY NOW' }}
+            cta={heroCta}
           >
             {/* docs/08-DESIGN-SYSTEM.md §6 rule 1: dates, venue and "free"
                 above the fold. "Free" appeared nowhere on the home page — only
