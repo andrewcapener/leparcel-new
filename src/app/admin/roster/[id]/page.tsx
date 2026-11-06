@@ -18,9 +18,11 @@ import { grantBoothSpace, revokeBoothSpace } from '@/app/admin/roster/spaces'
 import { resendBoothInvoice } from '@/app/admin/roster/resend'
 import { settleBoothBalance } from '@/app/admin/roster/settle'
 import { pasteInventoryForMaker } from '@/app/admin/roster/inventory'
+import { renameShop } from '@/app/admin/roster/rename'
 import { checkPayoutAccount } from '@/app/admin/roster/check-payouts'
 import {
-  NOTE_MAX, addonNotice, checkNotice, invNotice, resendNotice, resendProblem, settleNotice,
+  MAX_SHOP, NOTE_MAX, addonNotice, checkNotice, invNotice, nameNotice,
+  resendNotice, resendProblem, settleNotice,
 } from '@/app/admin/roster/resend-lines'
 import { moveNotice, lineupNotice } from '@/server/modules/roster/track'
 import {
@@ -116,6 +118,8 @@ export default async function MakerDetail({
     /** What pasting a list in for a maker reported back, and how many lines. */
     inv?: string
     invn?: string
+    /** What correcting the shop name reported back. */
+    name?: string
     /** What sharing a payout account reported back. */
     share?: string
     /** What closing a balance that is not owed reported back. */
@@ -126,7 +130,8 @@ export default async function MakerDetail({
 }) {
   const { id } = await params
   const { add, resend, addon, move, lineup, space: spaceMsg, share: shareMsg,
-    settle: settleMsg, checked: checkedMsg, spacen, inv: invMsg, invn } = await searchParams
+    settle: settleMsg, checked: checkedMsg, spacen, inv: invMsg, invn,
+    name: nameMsg } = await searchParams
 
   const [row] = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
@@ -339,6 +344,7 @@ export default async function MakerDetail({
   const settleSaid = settleNotice(settleMsg ?? '')
   const checkSaid = checkNotice(checkedMsg ?? '')
   const invSaid = invNotice(invMsg ?? '', Number(invn) || 0)
+  const nameSaid = nameNotice(nameMsg ?? '')
   /* Whether this maker has a Getting paid section at all. Named rather than
      inlined because what sharing a payout account reported back belongs in
      that section, beside the control that was pressed, and has to fall back
@@ -434,6 +440,33 @@ export default async function MakerDetail({
               Their application <span aria-hidden="true">→</span>
             </Link>
           </div>
+          {nameSaid && <p className="adm-note" role="status">{nameSaid}</p>}
+
+          {/* Chelsy, 3 November: "you have both booths listed as Little Yoked
+              Creations. Mine for my potpourri is just Yoked Creations." Two
+              booths, two addresses, and the row behind one of them carried
+              the other's name. Nothing in here could change it. */}
+          <details className="adm-fold" style={{ maxWidth: 760, marginTop: 0 }}>
+            <summary>Correct the shop name</summary>
+            <p className="adm-note">
+              This is what the public lineup shows, what every email from here
+              on says, and what goes on their statement. It belongs to the
+              maker rather than to this booth, so a maker holding two booths
+              under one address would see it on both.
+            </p>
+            <form action={renameShop}>
+              <input type="hidden" name="bookingId" value={booking.id} />
+              <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
+              <label className="adm-field" htmlFor="shopname">
+                <span className="lb">Shop name</span>
+                <input className="inp" id="shopname" name="shopName" type="text"
+                  defaultValue={vendor.shopName} maxLength={MAX_SHOP}
+                  autoComplete="off" required />
+              </label>
+              <button className="adm-btn" type="submit">Save the name</button>
+            </form>
+          </details>
+
           <div className="mk-id">
             {thumb.url
               /* eslint-disable-next-line @next/next/no-img-element */

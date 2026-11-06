@@ -78,6 +78,10 @@ export function resendProblem(c: ResendCheck): ResendRefusal | null {
 /** Longest staff note that goes on a maker's invoice. */
 export const NOTE_MAX = 300
 
+/* A shop name, bounded. Here rather than in the action, so the rule and the
+   sentence that explains it cannot drift apart. */
+export const MAX_SHOP = 120
+
 /**
  * A staff note, fit to put in front of a maker.
  *
@@ -376,6 +380,26 @@ export function invNotice(code: string, n = 0): string | null {
         + 'an amount on it, and a name only if you want one.'
     case 'missing':
       return 'That booking could not be found. Nothing was added.'
+    default:
+      return null
+  }
+}
+
+/** What correcting a shop name reported back. */
+export function nameNotice(code: string): string | null {
+  switch (code) {
+    case 'renamed':
+      return 'Shop name changed. It is what the public lineup shows, what every '
+        + 'email from here on says, and what goes on their statement. The old name '
+        + 'is in the history.'
+    case 'same':
+      return 'That is already the name, so nothing changed.'
+    case 'empty':
+      return 'A shop needs a name. Nothing was changed.'
+    case 'long':
+      return `Keep the shop name under ${MAX_SHOP} characters. Nothing was changed.`
+    case 'missing':
+      return 'That maker could not be found. Nothing was changed.'
     default:
       return null
   }
