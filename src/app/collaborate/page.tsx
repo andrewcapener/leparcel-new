@@ -86,9 +86,20 @@ export default async function Collaborate() {
               what you can source, because one soft number inverts the whole
               effect of the rest.
 
-              Two carry a caveat worth keeping next to them. The Instagram
-              count is "I think we have 19k" and wants ten seconds in the app
-              to confirm. The attendance figure is Elise's "4-5k" with no label
+              Two were updated by Drew on 6 Nov 2026, from the accounts
+              themselves rather than from memory: 19.6k on Instagram, which
+              settles the "I think we have 19k" that sat here with a caveat,
+              and 11,328 email subscribers.
+
+              The subscriber figure moved DOWN, from a round 12,000 carried
+              over from the Shopify site to the count the list actually holds.
+              That is the right direction. A sponsor reading 11,328 can tell it
+              was counted; a sponsor reading 12,000 cannot tell whether it was
+              counted or hoped for, and one soft number inverts the effect of
+              the rest. So it is not rounded here, and it should be re-read off
+              the list rather than left to drift.
+
+              The attendance figure is still Elise's "4-5k" with no label
               attached; it is rendered as attendance per show because that is
               what a range of that size describes, and the old label said
               "repeat attendees", which is a different and larger claim. */}
@@ -96,7 +107,7 @@ export default async function Collaborate() {
             id="section-merstats-1"
             stats={[
               { value: '4,000-5,000', label: 'Attendance per show' },
-              { value: '19k', label: 'Followers on Instagram' },
+              { value: '19.6k', label: 'Followers on Instagram' },
               { value: '13', label: 'Years deep' },
             ]}
           />
@@ -105,7 +116,7 @@ export default async function Collaborate() {
             stats={[
               { value: '100+', label: 'Makers per show' },
               { value: '23', label: 'Past shows' },
-              { value: '12,000', label: 'Email subscribers' },
+              { value: '11,328', label: 'Email subscribers' },
             ]}
           />
 
