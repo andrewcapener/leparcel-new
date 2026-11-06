@@ -47,6 +47,10 @@ export async function pasteInventoryForMaker(fd: FormData): Promise<void> {
   const bookingId = String(fd.get('bookingId') ?? '')
   const back = String(fd.get('back') ?? '/admin/roster')
   const raw = String(fd.get('list') ?? '')
+  /* Default on: the ordinary case is a maker who emailed her whole list, and
+     she has sent it whoever did the typing. Left unticked for a partial list
+     with more to come, which keeps her on the chase list on purpose. */
+  const markFiled = String(fd.get('markFiled') ?? '') === '1'
 
   const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) })
   if (!booking) redirect(backTo(back, 'inv', 'missing'))
@@ -89,6 +93,24 @@ export async function pasteInventoryForMaker(fd: FormData): Promise<void> {
     })))
   }
 
+  /* Marked as sent, or she is chased for a list we are holding.
+     
+     Drew, 6 November, after pasting Spurs & Saddles' prices in: "some of the
+     inventory we've updated, so I just want to be sure we know exactly who
+     needs a follow up." He was right to ask. Pasting wrote her fifteen lines
+     and left inventory_submitted_at null, so every screen read her as
+     started-not-finished and the reminder would have asked her for the list
+     she had already sent us. Submitting is the maker's act, and she did it:
+     the email she sent is the act, and the typing was ours.
+     
+     Recorded as staff rather than maker, the same as the lines themselves. */
+  if (markFiled) {
+    await db.update(bookings).set({
+      inventorySubmittedAt: new Date().toISOString(),
+      inventorySubmittedBy: who,
+    }).where(eq(bookings.id, bookingId))
+  }
+
   await db.insert(auditLog).values({
     id: randomUUID(),
     entity: 'booking',
@@ -100,6 +122,7 @@ export async function pasteInventoryForMaker(fd: FormData): Promise<void> {
       added: made.length,
       refused: read.bad.length,
       labels: made.map((m) => m.row.label || '(no name)').slice(0, 40),
+      markedFiled: markFiled,
     }),
     reason: 'pasted in on the maker’s behalf from something she sent',
   })

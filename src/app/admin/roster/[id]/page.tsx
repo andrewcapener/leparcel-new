@@ -820,6 +820,18 @@ export default async function MakerDetail({
                     <textarea className="inp" id="invpaste" name="list" rows={8}
                       placeholder={'Belt $45\nKeychain $20, 2 for $35\n$12.50'} />
                   </label>
+                  <p className="adm-note">
+                    <label>
+                      <input type="checkbox" name="markFiled" value="1" defaultChecked />
+                      {' '}Mark their list as sent
+                    </label>
+                    <span className="adm-sub2">
+                      Leave this on for a whole list somebody emailed in: they
+                      sent it, you only did the typing, and it stops them being
+                      chased for a list you are holding. Turn it off if more is
+                      still coming.
+                    </span>
+                  </p>
                   <button className="adm-btn" type="submit">Add these lines</button>
                 </form>
               </details>

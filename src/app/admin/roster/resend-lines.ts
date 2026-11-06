@@ -370,7 +370,8 @@ export function invNotice(code: string, n = 0): string | null {
   switch (code) {
     case 'all':
       return `Added ${n} ${n === 1 ? 'line' : 'lines'} to their list. It is on their own `
-        + 'page now and on the sheet, and the history records that staff typed it.'
+        + 'page now and on the sheet, the history records that staff typed it, and if you '
+        + 'marked it sent they will not be chased for it.'
     case 'some':
       return `Added ${n} ${n === 1 ? 'line' : 'lines'}, and some of what you pasted could not `
         + 'be read. A line needs a price; a name is optional. Check what was left out before '
