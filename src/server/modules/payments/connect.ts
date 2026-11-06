@@ -102,6 +102,23 @@ const SAYS: Record<string, string> = {
   'business_profile.mcc': 'What you sell',
   'business_profile.product_description': 'What you sell',
   'tos_acceptance.date': 'Accepting Stripe’s terms',
+  /* The same single act as the date, recorded three ways. Unmapped, the last
+     of these rendered as "Ip" on a list a maker reads as things she must go
+     and find, and an IP address is not something anybody can go and find. It
+     is written down when she presses accept. Deduplicated into one line by
+     requirementsInPlainWords. */
+  'tos_acceptance.ip': 'Accepting Stripe’s terms',
+  'tos_acceptance.user_agent': 'Accepting Stripe’s terms',
+  /* The rest of a date of birth and an address. Stripe asks for each part
+     separately and would otherwise list "Day", "Month", "Postal code" as
+     four errands rather than one. */
+  'individual.dob.month': 'Your date of birth',
+  'individual.dob.year': 'Your date of birth',
+  'individual.address.city': 'Your address',
+  'individual.address.state': 'Your address',
+  'individual.address.postal_code': 'Your address',
+  'individual.address.line2': 'Your address',
+  'business_type': 'Whether you are trading as yourself or as a business',
   'individual.verification.additional_document': 'A second document, such as a utility bill',
   'business_profile.support_phone': 'A phone number your customers could reach',
   'settings.payments.statement_descriptor': 'The name that should show on a bank statement',

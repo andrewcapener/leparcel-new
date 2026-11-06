@@ -125,6 +125,33 @@ check('a sentence is not a URL', businessUrl({ website: 'I sell at markets' }) =
 check('and a scheme we do not allow is never passed on',
   businessUrl({ website: 'javascript:alert(1)' }) === null)
 
+
+/* ── nothing on this list is ever a mystery ──
+   Drew, 6 November, reading MM?? after Stripe put payouts on hold: a list
+   that ended "Ip". That is tos_acceptance.ip falling through to its last
+   word, and an IP address is not an errand anybody can run: Stripe writes it
+   down when she presses accept. A maker reads this list as things to go and
+   find, so a line she cannot act on is worse than no line. */
+check('accepting the terms is one line, however Stripe asks for it',
+  requirementsInPlainWords(['tos_acceptance.date', 'tos_acceptance.ip', 'tos_acceptance.user_agent'])
+    .length === 1)
+check('and it reads as the act, not the field',
+  requirementsInPlainWords(['tos_acceptance.ip'])[0]?.includes('terms') === true)
+check('a date of birth is one errand, not three',
+  requirementsInPlainWords(['individual.dob.day', 'individual.dob.month', 'individual.dob.year'])
+    .length === 1)
+check('and so is an address',
+  requirementsInPlainWords(['individual.address.line1', 'individual.address.city',
+    'individual.address.state', 'individual.address.postal_code']).length === 1)
+/* The guard that matters: no line may come back as a bare Stripe field name
+   dressed up, because that is what "Ip" was. */
+const SHOWN = requirementsInPlainWords([
+  'tos_acceptance.ip', 'tos_acceptance.user_agent', 'business_type',
+  'individual.dob.month', 'individual.address.postal_code', 'external_account',
+])
+check('every line is a sentence a maker could act on',
+  SHOWN.every((t) => t.split(' ').length > 1))
+
 if (failures) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('connect: payouts_enabled is Stripe’s verdict, and only ready can be paid')
 export {}
