@@ -109,8 +109,18 @@ export const MAX_LABEL = 80
  * tells somebody what to do; "invalid input" tells them they are stupid.
  */
 export function readLine(input: LineInput): { line: Line } | { bad: string } {
+  /* A name is optional.
+     
+     Drew, 6 November: "we actually don't need a title, we can just go off of
+     their prices." At a central register the cashier picks the maker and then
+     the amount, so the name is for the human and not for the till, and this
+     list has always been one line per price rather than one line per item.
+     Spurs & Saddles sent fifteen bare prices and was right to: naming them
+     would have been work for us, not for the register.
+     
+     So an empty name is a line, and anything typed is still kept and still
+     bounded. */
   const label = (input.label ?? '').trim().replace(/\s+/g, ' ')
-  if (!label) return { bad: 'Say what it is.' }
   if (label.length > MAX_LABEL) return { bad: `Keep it under ${MAX_LABEL} characters.` }
 
   const price = priceFromDollars(input.price)
@@ -188,7 +198,9 @@ export function readLine(input: LineInput): { line: Line } | { bad: string } {
 
 /** One line the way Hillary writes it. `Maps: $5 or buy 2/$8` */
 export function formatLine(line: Line): string {
-  const base = `${line.label}: ${tag(line.priceCents)}`
+  /* No name means the price IS the line. Never "": $45", which reads as a
+     thing whose name we lost rather than one that never had one. */
+  const base = line.label ? `${line.label}: ${tag(line.priceCents)}` : tag(line.priceCents)
   if (line.breaks.length === 0) return base
   /* "Maps: $5 or buy 2/$8 or 3/$10". The word "buy" once, because repeating
      it on every break reads as three separate offers rather than one price

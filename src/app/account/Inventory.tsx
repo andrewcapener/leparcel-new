@@ -197,7 +197,7 @@ export function Inventory({
                   <label className="mk-item__f mk-item__f--grow">
                     <span className="lb">What it is</span>
                     <input className="inp" type="text" name="label"
-                      defaultValue={r.label} maxLength={80} required />
+                      defaultValue={r.label} maxLength={80} />
                   </label>
                   <label className="mk-item__f">
                     <span className="lb">Price each</span>
@@ -231,7 +231,8 @@ export function Inventory({
           the form in has already stopped reading. */}
       {open && (
         <p className="mk-item__hint">
-          A thing and what one of them costs. That is all most lines need.
+          A price is enough. Name it if the name helps you, and leave it off
+          if it does not: the register rings the price.
         </p>
       )}
 
@@ -243,9 +244,9 @@ export function Inventory({
       {open && (
         <form action={addInventoryItem} className="mk-item__form mk-item__form--new">
           <label className="mk-item__f mk-item__f--grow">
-            <span className="lb">What it is</span>
+            <span className="lb">What it is, if you want</span>
             <input className="inp" type="text" name="label" defaultValue={echo?.l ?? ''}
-              placeholder="Stickers" maxLength={80} required />
+              placeholder="Stickers" maxLength={80} />
           </label>
           <label className="mk-item__f">
             <span className="lb">Price each</span>

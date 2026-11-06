@@ -53,7 +53,9 @@ const bad = (l: Partial<LineInput> = {}) => {
 }
 
 check('a plain line', ok())
-check('a line with no name is refused', bad({ label: '  ' }) !== null)
+/* A name is optional now: at a central register the cashier picks the maker
+   and then the amount, so the price alone is a line. */
+check('a line with no name is kept', ok({ label: '  ' }))
 check('a long name is refused', bad({ label: 'x'.repeat(81) }) !== null)
 const collapsed = line({ label: 'Table   cloths' })
 check('inner whitespace is collapsed',
@@ -270,6 +272,33 @@ check('a multi-buy with nothing above it is refused',
 /* And a promo that is not a discount is still caught, on any punctuation. */
 check('a multi-buy that costs more is still refused',
   readPastedList('Jackets $100 - buy 2 for $250').lines.length === 0)
+
+/* ── a price with no name ──
+   Drew, 6 November: "we actually don't need a title, we can just go off of
+   their prices." At a central register the cashier picks the maker and then
+   the amount. Spurs & Saddles sent fifteen bare prices and was right to. */
+check('a price on its own is a line', ok({ label: '', price: '45' }))
+check('and so is a price with a sign', readPastedList('$45').lines.length === 1)
+check('a whole list of bare prices reads',
+  readPastedList('$20.00\n$25.00\n\n$120.00').lines.length === 3)
+const shown = (l: Partial<LineInput>) => {
+  const r = line(l)
+  return 'line' in r ? formatLine(r.line) : `BAD ${r.bad}`
+}
+check('an unnamed line shows as the price alone',
+  shown({ label: '', price: '45', breaks: B(['', '']) }) === '$45')
+check('and keeps its multi-buys',
+  shown({ label: '', price: '45', breaks: B(['2', '80']) }) === '$45 or buy 2/$80')
+/* Named lines are untouched, and the two mix in one paste. */
+check('a named line still reads as it did',
+  shown({ label: 'Belt', price: '45', breaks: B(['', '']) }) === 'Belt: $45')
+check('named and unnamed mix', readPastedList('Belt $45\n20').lines.length === 2)
+/* What must still be refused: a price is a line, a word is not. */
+check('words with no price are still refused', readPastedList('thanks!').lines.length === 0)
+check('a maker heading is still not a line', readPastedList('Spurs & Saddles').lines.length === 0)
+check('an MM code is still not a price', readPastedList('MM40').lines.length === 0)
+check('a name too long is still refused',
+  bad({ label: 'x'.repeat(200), price: '7' }) !== null)
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('inventory lines: a price never comes from a float, and a bundle is always a discount')

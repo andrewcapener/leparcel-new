@@ -17,9 +17,10 @@ import { setLineupVisibility } from '@/app/admin/roster/lineup'
 import { grantBoothSpace, revokeBoothSpace } from '@/app/admin/roster/spaces'
 import { resendBoothInvoice } from '@/app/admin/roster/resend'
 import { settleBoothBalance } from '@/app/admin/roster/settle'
+import { pasteInventoryForMaker } from '@/app/admin/roster/inventory'
 import { checkPayoutAccount } from '@/app/admin/roster/check-payouts'
 import {
-  NOTE_MAX, addonNotice, checkNotice, resendNotice, resendProblem, settleNotice,
+  NOTE_MAX, addonNotice, checkNotice, invNotice, resendNotice, resendProblem, settleNotice,
 } from '@/app/admin/roster/resend-lines'
 import { moveNotice, lineupNotice } from '@/server/modules/roster/track'
 import {
@@ -112,6 +113,9 @@ export default async function MakerDetail({
     space?: string
     /** How many spaces the outcome above was about. */
     spacen?: string
+    /** What pasting a list in for a maker reported back, and how many lines. */
+    inv?: string
+    invn?: string
     /** What sharing a payout account reported back. */
     share?: string
     /** What closing a balance that is not owed reported back. */
@@ -122,7 +126,7 @@ export default async function MakerDetail({
 }) {
   const { id } = await params
   const { add, resend, addon, move, lineup, space: spaceMsg, share: shareMsg,
-    settle: settleMsg, checked: checkedMsg, spacen } = await searchParams
+    settle: settleMsg, checked: checkedMsg, spacen, inv: invMsg, invn } = await searchParams
 
   const [row] = await db
     .select({ booking: bookings, vendor: vendors, app: applications, space: spaceTypes })
@@ -334,6 +338,7 @@ export default async function MakerDetail({
   const spaceSaid = spaceNotice(spaceMsg ?? '', Number(spacen) || 1)
   const settleSaid = settleNotice(settleMsg ?? '')
   const checkSaid = checkNotice(checkedMsg ?? '')
+  const invSaid = invNotice(invMsg ?? '', Number(invn) || 0)
   /* Whether this maker has a Getting paid section at all. Named rather than
      inlined because what sharing a payout account reported back belongs in
      that section, beside the control that was pressed, and has to fall back
@@ -760,6 +765,31 @@ export default async function MakerDetail({
                   })).join('\n')}
                 </pre>
               )}
+
+              {invSaid && <p className="adm-note" role="status">{invSaid}</p>}
+
+              {/* For a list that arrived another way. Two makers in four days
+                  emailed theirs rather than typing them in, and the answer
+                  until now was to tell them to go and do it themselves. */}
+              <details className="adm-fold" style={{ maxWidth: 760 }}>
+                <summary>Paste a list in for them</summary>
+                <p className="adm-note">
+                  For prices they sent by email or text. Same box as the one on
+                  their own page, so one line per price and a name only if you
+                  want one. It adds to what they already have rather than
+                  replacing it, and the history records that you typed it.
+                </p>
+                <form action={pasteInventoryForMaker}>
+                  <input type="hidden" name="bookingId" value={booking.id} />
+                  <input type="hidden" name="back" value={`/admin/roster/${booking.id}`} />
+                  <label className="adm-field" htmlFor="invpaste">
+                    <span className="lb">Their list</span>
+                    <textarea className="inp" id="invpaste" name="list" rows={8}
+                      placeholder={'Belt $45\nKeychain $20, 2 for $35\n$12.50'} />
+                  </label>
+                  <button className="adm-btn" type="submit">Add these lines</button>
+                </form>
+              </details>
             </>
           )}
 

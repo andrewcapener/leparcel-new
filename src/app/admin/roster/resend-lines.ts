@@ -360,3 +360,23 @@ export function checkNotice(code: string): string | null {
       return null
   }
 }
+
+/** What pasting a maker's prices in for her reported back. */
+export function invNotice(code: string, n = 0): string | null {
+  switch (code) {
+    case 'all':
+      return `Added ${n} ${n === 1 ? 'line' : 'lines'} to their list. It is on their own `
+        + 'page now and on the sheet, and the history records that staff typed it.'
+    case 'some':
+      return `Added ${n} ${n === 1 ? 'line' : 'lines'}, and some of what you pasted could not `
+        + 'be read. A line needs a price; a name is optional. Check what was left out before '
+        + 'you assume it went in.'
+    case 'nolines':
+      return 'Nothing in that could be read as a price, so nothing was added. A line needs '
+        + 'an amount on it, and a name only if you want one.'
+    case 'missing':
+      return 'That booking could not be found. Nothing was added.'
+    default:
+      return null
+  }
+}
