@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { bookends, extras, extrasFor, hasExtras, splitDay, tidyDayHours, tidyHoursNote } from './schedule'
+import { bookends, extras, extrasFor, hasExtras, splitDay, TBA, tidyDayHours, tidyHoursNote } from './schedule'
 
 /**
  * The hours note is typed by a person at /admin/show, and the one thing every
@@ -85,5 +85,14 @@ for (const day of extras) {
   const times = day.music.map((m) => m.time)
   assert.equal(new Set(times).size, times.length, `${day.slug} double-books a slot`)
 }
+
+/* Every day's music starts at nine, which is when the doors do. An hour
+   nobody is booked for says so; it is never simply missing, which read as
+   the music starting at lunchtime. */
+for (const day of extras) {
+  assert.equal(day.music[0]?.time, '9 to 10am', `${day.slug} has no nine o'clock`)
+}
+assert.ok(extrasFor('Friday 13 November')!.music.some((m) => m.what === TBA))
+assert.ok(extrasFor('Sunday 15 November')!.music.every((m) => m.what !== TBA))
 
 console.log('schedule: a bare opening time reads as the hour a person meant')

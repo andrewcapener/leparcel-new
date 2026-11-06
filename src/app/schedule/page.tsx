@@ -3,7 +3,7 @@ import { activeShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
 import { PageTitle, RichText, FactTable, Banner, type FactRow } from '@/components/theme/Sections'
-import { bookends, extrasFor, hasExtras, splitDay } from '@/lib/schedule'
+import { bookends, extrasFor, hasExtras, splitDay, TBA } from '@/lib/schedule'
 
 /* Cached and re-rendered at most once a minute. Read-only, nothing
  * per-request, and the Show record it reads changes a few times a season.
@@ -86,7 +86,12 @@ export default async function Schedule() {
                     {x.music.map((slot) => (
                       <div className="sched-sets__set" key={slot.time + slot.what}>
                         <dt>{slot.time}</dt>
-                        <dd>{slot.what}</dd>
+                        {/* An hour that is held and not booked is set back a
+                            shade, so a row of real names is not read as
+                            having a band called TBA in it. */}
+                        <dd className={slot.what === TBA ? 'sched-sets__tba' : undefined}>
+                          {slot.what}
+                        </dd>
                       </div>
                     ))}
                   </dl>

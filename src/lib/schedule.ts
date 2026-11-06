@@ -17,6 +17,9 @@
 
 export type Slot = { time: string; what: string }
 
+/** An hour Hillary has held but not booked. Printed, never guessed at. */
+export const TBA = 'TBA'
+
 export type DayExtras = {
   /** Matches the first word of the day in the Show record's hoursNote. */
   slug: string
@@ -37,9 +40,15 @@ export type DayExtras = {
  * so no name is typed twice.
  *
  * The music is as Hillary scheduled it. Friday's three morning slots and
- * Saturday's nine o'clock were still open when this went up, so they are not
- * here: an empty slot is a slot, not a performer, and the page says nothing
- * rather than promising one. Fill a slot in and it appears.
+ * Saturday's nine o'clock were still open when this went up, and they are
+ * here as TBA rather than missing: Drew, 6 November, "maybe we fill 1. with
+ * TBA on those sections?" He is right that a gap reads worse than an
+ * admission. A shopper looking at ten o'clock on Friday can see there is a
+ * slot and that we have not named it yet, instead of guessing whether the
+ * music starts at lunchtime. Put a name in and the TBA goes.
+ *
+ * TBA is a constant and not a typed string, so the page can tell a booked
+ * set from an open one without matching on words.
  *
  * The carts are the same three every day and the truck changes, which is why
  * they are one list per day rather than a truck field and a shared tail: the
@@ -58,6 +67,9 @@ export const extras: DayExtras[] = [
     ],
     allDay: ['Oh Happy Day Hair Lounge', 'Face painting'],
     music: [
+      { time: '9 to 10am', what: TBA },
+      { time: '10:15 to 11:15am', what: TBA },
+      { time: '11:30am to 1pm', what: TBA },
       { time: '1:15 to 2:45pm', what: 'Emily Halverson' },
       { time: '3 to 4:30pm', what: 'Andrew Lavin' },
       { time: '4:45 to 6pm', what: 'Hector Lavin' },
@@ -74,6 +86,7 @@ export const extras: DayExtras[] = [
     ],
     allDay: ['Oh Happy Day Hair Lounge', 'Face painting'],
     music: [
+      { time: '9 to 10am', what: TBA },
       { time: '10:15am to 12:15pm', what: 'Still Summer' },
       { time: '12:30 to 2:30pm', what: 'Ella Wu' },
       { time: '2:45 to 3:45pm', what: 'Katie Miller' },

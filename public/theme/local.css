@@ -328,6 +328,7 @@ h3, .h3 { line-height: 1.15; }
   text-transform: none;
 }
 .sched-sets dd { margin: 0; }
+.sched-sets__tba { color: rgb(var(--text-color) / 0.45); }
 @media (max-width: 600px) {
   .sched-sets { gap: 0.5em 0; }
   .sched-sets__set { grid-template-columns: 1fr; gap: 0; }
