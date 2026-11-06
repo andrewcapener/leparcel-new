@@ -1,7 +1,10 @@
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
-import { bookings, inventoryBreaks, inventoryItems, spaceTypes, vendors } from '@/db/schema'
+import { bookings, inventoryBreaks, inventoryItems, shows, spaceTypes, vendors } from '@/db/schema'
 import { fmtDateTime } from '@/lib/dates'
 import { holdsSpace } from '@/server/modules/payments/booking-status'
+import { connectState, owesPayoutSetup, type ConnectState } from '@/server/modules/payments/connect'
+import { paymentsConfigured } from '@/server/modules/payments/config'
+import { payingAccount, type PayoutColumns } from '@/server/modules/payments/share-payouts'
 import type { db as Db } from '@/db'
 
 /**
@@ -52,6 +55,34 @@ export type MakerListRow = {
   dearest: string
   listStatus: string
   lastTouched: string
+  /** Where she stands on getting paid, in the same words the admin uses, plus
+   *  whose account it is when it is not her own. */
+  payouts: string
+}
+
+/**
+ * Getting paid, in a column.
+ *
+ * Drew, 6 November, chasing inventory: "I guess also in that list whether
+ * payouts have been configured as well for them." One tab, both answers, so
+ * nobody cross-references two screens to work out who to ring.
+ *
+ * The shared case is named rather than flattened: a maker paid through her
+ * mother reads "Ready via MM18", which is the difference between somebody who
+ * finished and somebody who never has to.
+ */
+function payoutWords(
+  state: ConnectState, asking: boolean, viaCode: string | null,
+): string {
+  if (!asking) return 'not asked yet'
+  const said: Record<ConnectState, string> = {
+    ready: 'Ready',
+    in_review: 'Stripe checking',
+    unfinished: 'Started, not finished',
+    disabled: 'On hold',
+    not_started: 'Nothing yet',
+  }
+  return viaCode ? `${said[state]} via ${viaCode}` : said[state]
 }
 
 /** Dollars from cents, for a spreadsheet: never a float, never a symbol. */
@@ -114,6 +145,27 @@ export async function inventoryExport(
         .orderBy(asc(inventoryBreaks.qty))
     : []
 
+  /* Whose account pays each maker, and what Stripe says about it. Every
+     booking at this show is already loaded, so the owner of a shared account
+     is usually in hand; the few that are not fall back to the maker's own
+     columns, which reads as not set up rather than as a guess. */
+  const byVendor = new Map<string, PayoutColumns>()
+  const codeOf = new Map<string, string>()
+  for (const r of rows) {
+    byVendor.set(r.vendor.id, {
+      stripeAccountId: r.vendor.stripeAccountId,
+      payoutsEnabled: r.vendor.payoutsEnabled,
+      connectRequirements: r.vendor.connectRequirements,
+      connectDisabledReason: r.vendor.connectDisabledReason,
+    })
+    codeOf.set(r.vendor.id, r.booking.vendorCode)
+  }
+  /* Only while the Show says to ask and Stripe is live here, or the column
+     would read "Nothing yet" against ninety makers nobody has asked. */
+  const [showRow] = await db.select({ payoutSetup: shows.payoutSetup })
+    .from(shows).where(eq(shows.id, showId)).limit(1)
+  const asking = showRow?.payoutSetup === 'on' && paymentsConfigured()
+
   const breaksOf = new Map<string, { qty: number; cents: number }[]>()
   for (const b of breaks) {
     breaksOf.set(b.itemId, [...(breaksOf.get(b.itemId) ?? []), { qty: b.qty, cents: b.priceCents }])
@@ -159,6 +211,14 @@ export async function inventoryExport(
       cheapest: prices.length ? money(Math.min(...prices)) : '',
       dearest: prices.length ? money(Math.max(...prices)) : '',
       listStatus: state,
+      payouts: payoutWords(
+        connectState(payingAccount(
+          { ...byVendor.get(r.vendor.id)!, payoutsViaVendorId: r.vendor.payoutsViaVendorId },
+          byVendor,
+        )),
+        asking && owesPayoutSetup(r.space.track),
+        r.vendor.payoutsViaVendorId ? codeOf.get(r.vendor.payoutsViaVendorId) ?? 'another maker' : null,
+      ),
       lastTouched: touched ? fmtDateTime(touched) : '',
     })
   }
@@ -177,8 +237,10 @@ export const inventoryValues = (r: InventoryRow) =>
 
 /* The chase one. */
 export const MAKER_LIST_COLUMNS = [
-  'Mermade ID', 'Shop', 'Maker', 'Email', 'Lines', 'Cheapest', 'Dearest', 'List', 'Last touched',
+  'Mermade ID', 'Shop', 'Maker', 'Email', 'Lines', 'Cheapest', 'Dearest', 'List',
+  'Payouts', 'Last touched',
 ] as const
 
 export const makerListValues = (r: MakerListRow) =>
-  [r.code, r.shop, r.contact, r.email, r.lines, r.cheapest, r.dearest, r.listStatus, r.lastTouched]
+  [r.code, r.shop, r.contact, r.email, r.lines, r.cheapest, r.dearest, r.listStatus,
+    r.payouts, r.lastTouched]
