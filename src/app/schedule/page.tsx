@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { activeShow } from '@/db/queries'
+import { googleCalendarUrl } from '@/server/modules/calendar/ics'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
 import { PageTitle, RichText, FactTable, Banner, type FactRow } from '@/components/theme/Sections'
@@ -113,7 +114,7 @@ export default async function Schedule() {
               ),
             })
 
-            return <FactTable key={day} title={day} rows={rows} />
+            return <FactTable key={day} title={day} titleAs="heading" rows={rows} />
           })}
 
           <FactTable
@@ -125,7 +126,19 @@ export default async function Schedule() {
               { label: 'Dogs', value: 'Well-mannered dogs on leash are welcome. Keep them close and pick up after them.' },
               { label: 'How it works inside', value: 'Grab a basket, shop the whole room, pay once at the front.' },
             ]}
-            cta={{ href: `/api/calendar/${show.slug}`, label: 'Add to calendar', external: true }}
+            /* Two, because one was not enough.
+            
+               Drew, 6 November: "the add to calendar button is broken on the
+               schedule page." The route answered and the file downloaded; what
+               was broken was the file (see the calendar module) and, on a
+               phone, the gesture. An .ics is a download, and a download on a
+               phone lands in Files and looks exactly like nothing happening.
+               So Google first, which opens a filled-in event a person can see
+               and save, and the file second for Apple and Outlook. */
+            cta={[
+              { href: googleCalendarUrl(show), label: 'Add to Google Calendar', external: true },
+              { href: `/api/calendar/${show.slug}`, label: 'Download for Apple or Outlook', external: true },
+            ]}
           />
 
           {/* The timetable answers when. This answers what it is like: one

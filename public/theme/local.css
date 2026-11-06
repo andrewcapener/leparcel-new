@@ -272,6 +272,14 @@ h3, .h3 { line-height: 1.15; }
 
 /* The facts block above the maker rules. A definition list, ruled, with the
    label quiet and small and the value carrying the weight. */
+/* A day heading above a fact table. The eyebrow is right when the table is a
+   summary under a page that is already named; it is wrong when three tables
+   run down a page and the title is what you are navigating by, which is the
+   schedule. At h3 the day sits a clear level above the OPEN and ALL DAY
+   labels under it instead of matching them. */
+.fact-table__heading { margin: 0 0 0.5em; }
+@media (max-width: 600px) { .fact-table__heading { margin-bottom: 0.4em; } }
+
 .fact-table { margin: 0; }
 .fact-table__row {
   display: grid;

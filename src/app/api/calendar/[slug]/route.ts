@@ -1,11 +1,17 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { shows } from '@/db/schema'
+import { icsForShow } from '@/server/modules/calendar/ics'
 
 /**
  * Add to calendar. One route, real attendance impact — the content audit ranks
  * it #2 of the things missing that cost money, because intent decays over the
  * twelve weeks between "I saw this on Instagram" and the show.
+ *
+ * The file itself is built in src/server/modules/calendar/ics.ts, where it can
+ * be tested: it was written here as a template and shipped with unfolded lines
+ * and half-escaped text, which some calendars accept and others drop on the
+ * floor without a word. This handler is the thin part (CLAUDE.md rule 10).
  */
 export async function GET(
   _req: Request,
@@ -15,30 +21,7 @@ export async function GET(
   const show = await db.query.shows.findFirst({ where: eq(shows.slug, slug) })
   if (!show) return new Response('Not found', { status: 404 })
 
-  const ymd = (iso: string) => iso.slice(0, 10).replace(/-/g, '')
-  // DTEND is exclusive for all-day events, so add a day to the last show day.
-  const end = new Date(show.endsOn)
-  end.setUTCDate(end.getUTCDate() + 1)
-
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Mermade Market//EN',
-    'CALSCALE:GREGORIAN',
-    'BEGIN:VEVENT',
-    `UID:${show.slug}@mermademarket.com`,
-    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '')}`,
-    `DTSTART;VALUE=DATE:${ymd(show.startsOn)}`,
-    `DTEND;VALUE=DATE:${ymd(end.toISOString())}`,
-    `SUMMARY:Mermade Market · ${show.name}`,
-    `LOCATION:${show.venueAddress.replace(/,/g, '\\,')}`,
-    `DESCRIPTION:${`A juried market of independent makers. Free admission. ${show.hoursNote}`.replace(/,/g, '\\,')}`,
-    'URL:https://mermademarket.com',
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ]
-
-  return new Response(lines.join('\r\n'), {
+  return new Response(icsForShow(show), {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
       'Content-Disposition': `attachment; filename="mermade-${show.slug}.ics"`,

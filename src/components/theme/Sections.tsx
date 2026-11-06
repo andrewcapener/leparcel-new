@@ -759,20 +759,38 @@ export type FactRow = { label: string; value: React.ReactNode }
  *
  * The rules below it are unchanged. This is a summary, not a replacement.
  */
+export type FactCta = { href: string; label: string; external?: boolean }
+
 export function FactTable({
-  id, title, rows, cta,
+  id, title, titleAs = 'eyebrow', rows, cta,
 }: {
   id?: string
   title?: string
+  /**
+   * How loudly the title is set.
+   *
+   * `eyebrow` is the tracked uppercase kicker this block has always used, and
+   * is right when the table is a summary under a page that is already named.
+   * `heading` is a real h2 at h3 size, for a run of tables where the title is
+   * the thing being navigated by. Drew on the schedule page, where three days
+   * each carried a table: "make the days bigger so we know what we're looking
+   * at." At eyebrow size FRIDAY 13 NOVEMBER was the same weight as OPEN and
+   * ALL DAY directly beneath it, so the day did not read as the level above.
+   */
+  titleAs?: 'eyebrow' | 'heading'
   rows: FactRow[]
-  /** `external` renders a plain anchor, for routes that are a download. */
-  cta?: { href: string; label: string; external?: boolean }
+  /** `external` renders a plain anchor, for routes that are a download. One
+   *  or several: several render side by side, the first one primary. */
+  cta?: FactCta | FactCta[]
 }) {
+  const ctas = cta ? (Array.isArray(cta) ? cta : [cta]) : []
   return (
     <div className="shopify-section section-rich-text" id={id}>
       <div className="fully-spaced-row--medium" data-cc-animate="">
         <div className="container container--reading-width">
-          {title && <div className="subheading subheading--over lightish-spaced-row-above">{title}</div>}
+          {title && (titleAs === 'heading'
+            ? <h2 className="h3 fact-table__heading">{title}</h2>
+            : <div className="subheading subheading--over lightish-spaced-row-above">{title}</div>)}
           <dl className="fact-table">
             {rows.map((r) => (
               <div className="fact-table__row" key={r.label}>
@@ -781,11 +799,26 @@ export function FactTable({
               </div>
             ))}
           </dl>
-          {cta && (
+          {ctas.length > 0 && (
             <div className="lightly-spaced-row button-row">
-              {cta.external
-                ? <a className="btn btn--primary button-row__btn" href={cta.href}>{cta.label}</a>
-                : <Link className="btn btn--primary button-row__btn" href={cta.href}>{cta.label}</Link>}
+              {ctas.map((c, i) => {
+                const kind = i === 0 ? 'btn--primary' : 'btn--secondary'
+                /* Somebody else's site opens in its own tab, with the
+                   opener severed. Our own download does not. */
+                const away = /^https?:\/\//.test(c.href)
+                return c.external
+                  ? (
+                    <a
+                      className={`btn ${kind} button-row__btn`}
+                      href={c.href}
+                      key={c.href}
+                      {...(away ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    >
+                      {c.label}
+                    </a>
+                  )
+                  : <Link className={`btn ${kind} button-row__btn`} href={c.href} key={c.href}>{c.label}</Link>
+              })}
             </div>
           )}
         </div>
