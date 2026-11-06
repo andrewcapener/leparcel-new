@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { GROUP_KEYS, bySection } from './group-order'
 import Image from 'next/image'
 
@@ -49,6 +49,21 @@ const GROUPS: Array<{ key: string; label: string }> = [
 
 export function MakerGrid({ makers }: { makers: MakerCard[] }) {
   const [group, setGroup] = useState('all')
+
+  /* Arrive at /makers#friday and Friday is the list you land on.
+  
+     The schedule page gives each day a "See Friday's tents" link, and a link
+     that drops a shopper into Everyone has not answered the question she
+     clicked on. Read from the hash rather than a query string on purpose:
+     this page is prerendered and cached, and a search param would make every
+     visit render on demand to change one piece of client state.
+  
+     After mount, so the markup a crawler and a cold visitor get is still the
+     whole lineup, and only a hash that names a real list is honoured. */
+  useEffect(() => {
+    const want = window.location.hash.replace('#', '').toLowerCase()
+    if (want && GROUPS.some((g) => g.key === want)) setGroup(want)
+  }, [])
 
   /* Only the lists that have somebody in them. A show with no junior makers
      should not offer a tab that leads to an empty grid. */

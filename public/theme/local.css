@@ -301,6 +301,37 @@ h3, .h3 { line-height: 1.15; }
   font-variant-numeric: tabular-nums;
 }
 .fact-table dd strong { font-weight: 700; }
+
+/* The music set times inside a schedule day. A definition list nested in a
+   fact row, because that is what it is: the time is the term and the
+   performer is the definition. Two columns so the times make a column of
+   their own, one line each on a phone. */
+.sched-sets { margin: 0; display: grid; gap: 0.2em 0; }
+.sched-sets__set {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, max-content) 1fr;
+  gap: 0 1rem;
+  align-items: baseline;
+}
+.sched-sets dt {
+  margin: 0;
+  color: rgb(var(--text-color) / 0.7);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  /* The fact table shouts its labels, which is right for ADMISSION and wrong
+     for a clock time: `.fact-table dt` reaches in here and turned
+     "10:15am to 12:15pm" into "10:15AM TO 12:15PM". */
+  font-family: inherit;
+  font-size: var(--base-text-size);
+  font-weight: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.sched-sets dd { margin: 0; }
+@media (max-width: 600px) {
+  .sched-sets { gap: 0.5em 0; }
+  .sched-sets__set { grid-template-columns: 1fr; gap: 0; }
+}
 @media (max-width: 600px) {
   .fact-table__row { grid-template-columns: 1fr; gap: 0.3em; padding: 0.75em 0; }
 }

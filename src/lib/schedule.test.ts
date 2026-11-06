@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { bookends, splitDay, tidyDayHours, tidyHoursNote } from './schedule'
+import { bookends, extras, extrasFor, hasExtras, splitDay, tidyDayHours, tidyHoursNote } from './schedule'
 
 /**
  * The hours note is typed by a person at /admin/show, and the one thing every
@@ -46,5 +46,44 @@ assert.equal(once.split(' · ').length, 3)
 
 /* And the split the pages do still finds the same days. */
 assert.equal(splitDay(once.split(' · ')[0]!).day, 'Friday 13 November')
+
+/* ---------------------------------------------------------------------------
+   The lineup itself. This is typed off Hillary's plan once a season and read
+   by a page a few thousand people see in the same week, so the shape is
+   checked here rather than in a browser the day before the show. */
+
+/* One entry a day, and the slug is what the page looks a day up by. */
+assert.deepEqual(extras.map((d) => d.slug), ['Friday', 'Saturday', 'Sunday'])
+assert.equal(new Set(extras.map((d) => d.slug)).size, extras.length)
+for (const row of 'Friday 13 November · Saturday 14 November · Sunday 15 November'.split(' · ')) {
+  assert.ok(extrasFor(splitDay(row).day), `no extras for ${row}`)
+}
+/* A day nobody has booked anything for prints no block, rather than a block
+   of empty rows. */
+assert.equal(hasExtras(undefined), false)
+assert.equal(hasExtras({ slug: 'Monday', food: [], allDay: [], music: [] }), false)
+assert.equal(hasExtras(extrasFor('Friday 13 November')), true)
+
+for (const day of extras) {
+  /* Nothing blank: a blank name renders as a stray separator on the page,
+     which reads as a thing that is on and has no name. */
+  for (const name of [...day.food, ...day.allDay]) {
+    assert.equal(name, name.trim())
+    assert.ok(name.length > 0, `${day.slug} has a nameless entry`)
+  }
+  /* A set time without a performer, or a performer without a time, is the
+     one way this page can lie to somebody who drove down for it. */
+  for (const slot of day.music) {
+    assert.ok(slot.time.trim().length > 0, `${day.slug} has a set with no time`)
+    assert.ok(slot.what.trim().length > 0, `${day.slug} has a time with no performer`)
+    /* "to", never a dash: src/lib/dashes.test.ts bans the long ones outright
+       and a hyphen between two clock times reads as a subtraction. */
+    assert.ok(!/\d\s*-\s*\d/.test(slot.time), `${day.slug} ${slot.time} needs "to"`)
+  }
+  /* Two performers cannot hold the same slot. Back-to-back sets by the same
+     name are fine and Sunday has two. */
+  const times = day.music.map((m) => m.time)
+  assert.equal(new Set(times).size, times.length, `${day.slug} double-books a slot`)
+}
 
 console.log('schedule: a bare opening time reads as the hour a person meant')

@@ -3,12 +3,12 @@
  * out: each day is a heading, a set of timed rows, the things that run all
  * day, the music, and a closing time.
  *
- * The live page is edited by hand every season and its lineup lands about a
- * week out. So this module carries the shape and the fixed rows, and the
- * variable ones — the food truck, the musicians, the extras — stay empty
- * until they are booked. Nothing here is invented: an empty `music` array
- * renders as "posted closer to the show", which is what the live outdoor page
- * promises.
+ * The lineup lands about a week out, which is when Hillary finishes booking
+ * the music and the trucks, so this module holds one season's worth and the
+ * page reads it. Nothing here is invented and nothing is a placeholder: a
+ * day with nothing booked prints no block at all, and a slot nobody is
+ * playing yet is simply absent, because a shopper reading a name on this page
+ * will drive down for it.
  *
  * No dates or hours live in this file. The day headings come off the Show
  * record's hoursNote (CLAUDE.md rule 6); `slug` matches its first word so a
@@ -20,8 +20,8 @@ export type Slot = { time: string; what: string }
 export type DayExtras = {
   /** Matches the first word of the day in the Show record's hoursNote. */
   slug: string
-  /** "Food Truck: Baby's Badass Burgers" — one truck a day on the live site. */
-  foodTruck?: string
+  /** The trucks, the trailers and the coffee cart, in the order they read. */
+  food: string[]
   /** Things that run from open to close. */
   allDay: string[]
   /** The live-music set times. */
@@ -29,13 +29,76 @@ export type DayExtras = {
 }
 
 /**
- * Fall 2026. Empty on purpose — the trucks and the musicians are not booked
- * yet. Fill a day in here as it is confirmed and the page picks it up.
+ * Fall 2026, from Hillary's outdoor plan, 6 November.
+ *
+ * Three things a shopper plans a day around: who is playing and when, what
+ * there is to eat, and what is there from open to close. Everything else on
+ * the day, which is to say the makers, is generated from bookings on /makers,
+ * so no name is typed twice.
+ *
+ * The music is as Hillary scheduled it. Friday's three morning slots and
+ * Saturday's nine o'clock were still open when this went up, so they are not
+ * here: an empty slot is a slot, not a performer, and the page says nothing
+ * rather than promising one. Fill a slot in and it appears.
+ *
+ * The carts are the same three every day and the truck changes, which is why
+ * they are one list per day rather than a truck field and a shared tail: the
+ * day is the unit a shopper reads, and a shared tail would have read as
+ * "today, plus some other things" on every day of the show.
  */
 export const extras: DayExtras[] = [
-  { slug: 'Friday', allDay: [], music: [] },
-  { slug: 'Saturday', allDay: [], music: [] },
-  { slug: 'Sunday', allDay: [], music: [] },
+  {
+    slug: 'Friday',
+    food: [
+      'EatsyJoon empanadas',
+      'Stix & Cones',
+      'Sweet’n Cloud Co.',
+      'Alohana Acai',
+      'JC Beans Coffee',
+    ],
+    allDay: ['Oh Happy Day Hair Lounge', 'Face painting'],
+    music: [
+      { time: '1:15 to 2:45pm', what: 'Emily Halverson' },
+      { time: '3 to 4:30pm', what: 'Andrew Lavin' },
+      { time: '4:45 to 6pm', what: 'Hector Lavin' },
+    ],
+  },
+  {
+    slug: 'Saturday',
+    food: [
+      'Baby’s Badass Burgers',
+      'Stix & Cones',
+      'Sweet’n Cloud Co.',
+      'Alohana Acai',
+      'JC Beans Coffee',
+    ],
+    allDay: ['Oh Happy Day Hair Lounge', 'Face painting'],
+    music: [
+      { time: '10:15am to 12:15pm', what: 'Still Summer' },
+      { time: '12:30 to 2:30pm', what: 'Ella Wu' },
+      { time: '2:45 to 3:45pm', what: 'Katie Miller' },
+      { time: '4 to 5pm', what: 'Paul & Maylee Giddings' },
+    ],
+  },
+  {
+    slug: 'Sunday',
+    food: [
+      'Baby’s Badass Burgers',
+      'Stix & Cones',
+      'Sweet’n Cloud Co.',
+      'Alohana Acai',
+      'JC Beans Coffee',
+    ],
+    allDay: ['Oh Happy Day Hair Lounge', 'Face painting'],
+    music: [
+      { time: '9 to 10am', what: 'Piper Kuhn' },
+      { time: '10:15 to 11:15am', what: 'Hector Lavin' },
+      { time: '11:30am to 1pm', what: 'Ella Wu' },
+      { time: '1:15 to 2:30pm', what: 'Andrew Lavin' },
+      { time: '2:45 to 3:45pm', what: 'Paul Jackson' },
+      { time: '4 to 5pm', what: 'Paul Jackson' },
+    ],
+  },
 ]
 
 /** Splits "Friday 13 November, 5-9pm" into its day and its hours. */
@@ -142,4 +205,9 @@ export function tidyHoursNote(note: string): string {
 export function extrasFor(day: string): DayExtras | undefined {
   const first = day.split(' ')[0]?.toLowerCase()
   return extras.find((e) => e.slug.toLowerCase() === first)
+}
+
+/** True when a day has something of its own to print. */
+export function hasExtras(x: DayExtras | undefined): x is DayExtras {
+  return !!x && (x.food.length > 0 || x.allDay.length > 0 || x.music.length > 0)
 }
