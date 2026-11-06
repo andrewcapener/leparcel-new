@@ -3,7 +3,7 @@ import { activeShow } from '@/db/queries'
 import { googleCalendarUrl } from '@/server/modules/calendar/ics'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
-import { PageTitle, RichText, FactTable, Banner, type FactRow } from '@/components/theme/Sections'
+import { PageTitle, FactTable, Banner, type FactRow } from '@/components/theme/Sections'
 import { bookends, extrasFor, hasExtras, type Named, splitDay, TBA } from '@/lib/schedule'
 
 /* Cached and re-rendered at most once a minute. Read-only, nothing
@@ -49,8 +49,7 @@ function NamedList({ items }: { items: readonly Named[] }) {
 }
 
 /**
- * /schedule — the venue, then one block a day, then what to know before you
- * come.
+ * /schedule — what to know before you come, then one block a day.
  *
  * Elise, 6 November, a week out: "I actually usually do it two weeks before
  * the show and since it's one week I think we should do it today." What she
@@ -89,9 +88,59 @@ export default async function Schedule() {
             </p>
           </PageTitle>
 
-          <RichText title={`@ The Dana Point ${show.venueName}`}>
-            <p>{show.venueAddress}</p>
-          </RichText>
+          {/* The questions, first, because they are the questions.
+            
+              Elise, 6 November: "maybe have this at the top because its FAQ.
+              With the address added somewhere." She is right twice. Free
+              admission, parking and whether the dog can come are what a
+              person wants settled before she reads a single set time, and
+              they were four screens down under three days of listings. And
+              the address was in a heading of its own above them, which is
+              where a page puts a thing it is proud of rather than where a
+              person looks for it.
+            
+              So the venue block is gone and the address is the first row of
+              this table, linked to directions, which is what anybody does
+              with an address on a phone. */}
+          <FactTable
+            title="Before you come"
+            rows={[
+              {
+                label: 'Where',
+                value: (
+                  <>
+                    The Dana Point {show.venueName}
+                    <br />
+                    <a
+                      href={`https://maps.google.com?daddr=${encodeURIComponent(show.venueAddress)}`}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {show.venueAddress}
+                    </a>
+                  </>
+                ),
+              },
+              { label: 'Admission', value: 'Free. No ticket, no line.' },
+              { label: 'Parking', value: 'Free lot on site, plus street parking on San Juan and Del Prado. It fills by late morning on Saturday.' },
+              { label: 'Strollers', value: 'Yes. A single stroller or a carrier is easiest in the morning crowd.' },
+              { label: 'Dogs', value: 'Well-mannered dogs on leash are welcome. Keep them close and pick up after them.' },
+              { label: 'How it works inside', value: 'Grab a basket, shop the whole room, pay once at the front.' },
+            ]}
+            /* Two, because one was not enough.
+            
+               Drew, 6 November: "the add to calendar button is broken on the
+               schedule page." The route answered and the file downloaded; what
+               was broken was the file (see the calendar module) and, on a
+               phone, the gesture. An .ics is a download, and a download on a
+               phone lands in Files and looks exactly like nothing happening.
+               So Google first, which opens a filled-in event a person can see
+               and save, and the file second for Apple and Outlook. */
+            cta={[
+              { href: googleCalendarUrl(show), label: 'Add to Google Calendar', external: true },
+              { href: `/api/calendar/${show.slug}`, label: 'Download for Apple or Outlook', external: true },
+            ]}
+          />
 
           {days.map((row) => {
             const { day, hours } = splitDay(row)
@@ -152,30 +201,6 @@ export default async function Schedule() {
 
             return <FactTable key={day} title={day} titleAs="heading" rows={rows} />
           })}
-
-          <FactTable
-            title="Before you come"
-            rows={[
-              { label: 'Admission', value: 'Free. No ticket, no line.' },
-              { label: 'Parking', value: 'Free lot on site, plus street parking on San Juan and Del Prado. It fills by late morning on Saturday.' },
-              { label: 'Strollers', value: 'Yes. A single stroller or a carrier is easiest in the morning crowd.' },
-              { label: 'Dogs', value: 'Well-mannered dogs on leash are welcome. Keep them close and pick up after them.' },
-              { label: 'How it works inside', value: 'Grab a basket, shop the whole room, pay once at the front.' },
-            ]}
-            /* Two, because one was not enough.
-            
-               Drew, 6 November: "the add to calendar button is broken on the
-               schedule page." The route answered and the file downloaded; what
-               was broken was the file (see the calendar module) and, on a
-               phone, the gesture. An .ics is a download, and a download on a
-               phone lands in Files and looks exactly like nothing happening.
-               So Google first, which opens a filled-in event a person can see
-               and save, and the file second for Apple and Outlook. */
-            cta={[
-              { href: googleCalendarUrl(show), label: 'Add to Google Calendar', external: true },
-              { href: `/api/calendar/${show.slug}`, label: 'Download for Apple or Outlook', external: true },
-            ]}
-          />
 
           {/* The page answers when. This answers what you are turning up to,
               and it has to be the picture this page is actually about.
