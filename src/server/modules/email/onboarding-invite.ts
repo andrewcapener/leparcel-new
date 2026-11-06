@@ -127,7 +127,12 @@ export function inviteSubject(needs: Need[], showName: string): string {
   if (needs.length === 2) return `Two things before ${showName}`
   return needs[0] === 'items'
     ? `Your inventory for ${showName}`
-    : `Setting up your payouts for ${showName}`
+    /* Not "setting up your payouts". Drew, 6 November: "there was some
+       confusion for people around payouts, they thought oh I already paid."
+       A maker who has just paid a booth fee reads any subject line about
+       payments as being about money going out. This one can only be read one
+       way: the money is coming to her. */
+    : `So we can pay you after ${showName}`
 }
 
 /** One line per thing, in the maker's terms rather than ours. */
@@ -139,7 +144,9 @@ export function needLines(needs: Need[], itemsDue: string | null): string[] {
       : 'Your inventory. What you are bringing and what each thing costs. One line per price, not one line per item, and we do not need quantities. Add it in your account: we cannot take a spreadsheet, an attachment or a list typed into a reply.')
   }
   if (needs.includes('payouts')) {
-    out.push('Automatic payouts. Set this up once and your share of what sells lands in your own account automatically after the show, with nothing to chase.')
+    out.push('How we pay you. This is money coming to you, not another thing to pay: '
+      + 'we sell at the register, keep 20%, and send you the rest after the show. '
+      + 'Setting it up takes about ten minutes and then it arrives on its own.')
   }
   return out
 }
@@ -185,11 +192,22 @@ export function needAsks(
          account" is the system's name for it rather than the maker's: it
          names the thing we need set up, not the thing she gets out of it.
          The same words now appear on her dashboard, because the email's list
-         is supposed to be the list she lands on. */
-      title: 'Automatic payouts',
-      body: 'Set this up once and your share of what sells lands in your own'
-        + ' account automatically after the show, with nothing to chase.'
-        + ' It takes about ten minutes.',
+         is supposed to be the list she lands on.
+         
+         Drew again, 6 November: "there was some confusion for people around
+         payouts, they thought oh I already paid." Which is the obvious
+         reading. These makers paid a booth fee a few weeks ago, "payout" and
+         "payment" are one word apart, and a line that opens by asking them to
+         set something up sounds like another invoice. So the title is the
+         direction the money travels, and the first six words say the thing
+         they got wrong before anything else is asked of them. */
+      title: 'How we pay you',
+      body: 'This is money coming to you, not another thing to pay. We sell at'
+        + ' the register, keep 20%, and send you the rest after the show.'
+        + ' Setting it up takes about ten minutes and then it arrives on its'
+        + ' own, with nothing to chase.',
+      note: 'Leave it and nothing is lost, but we cannot send your money until'
+        + ' it is done, so it waits for you rather than reaching you.',
     })
   }
   return out

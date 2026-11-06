@@ -202,7 +202,8 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
     const st = input.payoutState
     const PAYOUT: Record<ConnectState, { detail: string; state: ItemState }> = {
       not_started: {
-        detail: 'Tell Stripe who you are and where your money goes. About ten minutes, and you only do it once.',
+        detail: 'This is money coming to you, not another thing to pay. Tell Stripe who '
+          + 'you are and where your money goes. About ten minutes, and you only do it once.',
         state: 'todo',
       },
       unfinished: {
@@ -227,12 +228,16 @@ export function checklistFor(input: ChecklistInput): ChecklistItem[] {
     const row = PAYOUT[st]
     items.push({
       key: 'payouts',
-      title: 'Automatic payouts',
+      /* Drew, 6 November: "there was some confusion for people around
+         payouts, they thought oh I already paid." A maker who paid a booth
+         fee last month reads "payouts" as "payments". The title now says
+         which way the money is going. */
+      title: 'How we pay you',
       detail: accepted ? row.detail : 'Set up once you are accepted, so your money has somewhere to go.',
       state: accepted ? row.state : 'waiting',
       href: '#payouts',
       action: accepted && row.state === 'todo'
-        ? { label: st === 'not_started' ? 'Set up payouts' : 'Finish payout setup', href: '#payouts' }
+        ? { label: st === 'not_started' ? 'Set up how I get paid' : 'Finish payout setup', href: '#payouts' }
         : undefined,
       /* Never. A maker with no payout account still sells; the money simply
          waits for them. Holding somebody off the floor over it would cost

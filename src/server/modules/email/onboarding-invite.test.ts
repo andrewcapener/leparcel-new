@@ -1,5 +1,5 @@
 import {
-  inviteFor, invitePlan, inviteSubject, needLines, inviteText,
+  inviteFor, invitePlan, inviteSubject, needLines, needAsks, inviteText,
   inviteIdempotencyKey, planNotice, type InviteMaker,
 } from './onboarding-invite'
 
@@ -111,20 +111,31 @@ check('two things reads as two', inviteSubject(['items', 'payouts'], 'Fall 2026'
    they ask for it. Not "item list", which was this codebase's own coinage
    and a word no maker had ever been asked for. */
 check('one thing names the thing', inviteSubject(['items'], 'Fall 2026') === 'Your inventory for Fall 2026')
-check('and the other one too', inviteSubject(['payouts'], 'Fall 2026').includes('payouts'))
+/* Not "setting up your payouts". Drew, 6 November: "there was some confusion
+   for people around payouts, they thought oh I already paid." A maker who
+   settled a booth fee last month reads a subject about payments as money
+   going out, so this one has to be unmistakable about the direction. */
+check('and the other says who is paying whom',
+  inviteSubject(['payouts'], 'Fall 2026') === 'So we can pay you after Fall 2026')
+check('and never asks her to set something up in the subject',
+  !/\bset(ting)? up\b/i.test(inviteSubject(['payouts'], 'Fall 2026')))
 
 check('the list line carries the date when there is one',
   needLines(['items'], 'November 6')[0]!.includes('November 6'))
 check('and reads fine without one',
   needLines(['items'], null)[0]!.includes('One line per price'))
 check('the payout line says what it buys them',
-  needLines(['payouts'], null)[0]!.includes('nothing to chase'))
+  needLines(['payouts'], null)[0]!.includes('arrives on its own'))
+/* The correction has to come before anything is asked of her, because the
+   wrong reading is the one she already has. */
+check('and corrects the misreading first',
+  needLines(['payouts'], null)[0]!.includes('money coming to you'))
 check('the list is explained as prices, not stock',
   needLines(['items'], null)[0]!.includes('not one line per item'))
 
 const text = inviteText({ url: 'https://x.test/a', showName: 'Fall 2026', needs: ['items', 'payouts'], itemsDue: null })
 check('the text version carries the link', text.includes('https://x.test/a'))
-check('and both asks', text.includes('inventory') && text.includes('Automatic payouts'))
+check('and both asks', text.includes('inventory') && text.includes('How we pay you'))
 
 /* ── one press, one delivery ─────────────────────────────────────────── */
 
@@ -150,6 +161,20 @@ const copy = [
 check('no fancy dashes and no exclamations in anything a maker reads',
   copy.every((t) => !t.includes('!')
     && !t.includes(String.fromCharCode(0x2014)) && !t.includes(String.fromCharCode(0x2013))))
+
+/* ── which way the money goes ──
+   Every payout-facing string a maker reads. The failure this guards is not a
+   typo, it is a maker deciding she has already done this because she paid her
+   booth fee, and never setting up the only way we can send her money. */
+const PAYOUT_COPY = [
+  inviteSubject(['payouts'], 'Fall 2026'),
+  ...needLines(['payouts'], null),
+  ...needAsks(['payouts'], null).flatMap((a) => [a.title, a.body, a.note ?? '']),
+]
+check('nothing in it reads as money going out',
+  PAYOUT_COPY.every((t) => !/\byou (?:pay|owe)\b|\bpayment\b|\binvoice\b/i.test(t)))
+check('and the title says the direction',
+  needAsks(['payouts'], null)[0]?.title === 'How we pay you')
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('onboarding invite: nobody is asked for what they already did, and no outdoor maker is asked at all')
