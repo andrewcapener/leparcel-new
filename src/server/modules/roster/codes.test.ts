@@ -293,5 +293,58 @@ check('two shops sharing a name are left to a person',
     ],
   )[0]!.kind === 'nomaker')
 
+/* ── A line somebody typed, not a sheet somebody copied ───────────────────
+
+   Drew, 9 November, moving one maker to MM22 out of a text message. The
+   screen answered "No numbered rows with an email address in them" about a
+   line that visibly had both, because it had no tab and no comma in it. This
+   screen was built for forty two rows out of a spreadsheet and the common job
+   turns out to be one maker, typed by hand. */
+{
+  const one = parseCodeSheet('MM22 hillarysalway@gmail.com \u00b7 9492463033')
+  check('a typed line has no problems', one.problems.length === 0)
+  check('a typed line is one row', one.rows.length === 1)
+  check('a typed line keeps its code', one.rows[0]?.code === 'MM22')
+  check('a typed line keeps its address', one.rows[0]?.email === 'hillarysalway@gmail.com')
+  /* A phone number is a phone number, not a shop. */
+  check('a phone number is not a shop name', one.rows[0]?.shop === '')
+}
+
+/* Every other way a person writes that same line. Order is not fixed,
+   because a line somebody types has no columns. */
+for (const text of [
+  'MM22 hillarysalway@gmail.com',
+  'mm22  hillarysalway@gmail.com  9492463033',
+  'MM22 | BROS INK | hillarysalway@gmail.com',
+  'hillarysalway@gmail.com MM22',
+  'MM22 BROS INK Dane Salway hillarysalway@gmail.com',
+]) {
+  const r = parseCodeSheet(text)
+  check(`read: ${text}`, r.rows.length === 1
+    && r.rows[0]?.code === 'MM22'
+    && r.rows[0]?.email === 'hillarysalway@gmail.com')
+}
+
+/* The sheet's own shape is untouched. Columns still win where there are
+   columns, so a shop name with a space in it stays one shop name. */
+{
+  const sheet = parseCodeSheet('MM3\tLittle Yoked Creations\tChelsy Erickson\tchelsy@example.com')
+  check('columns still win', sheet.rows[0]?.shop === 'Little Yoked Creations'
+    && sheet.rows[0]?.contact === 'Chelsy Erickson')
+}
+
+/* And a line with no code, or no address, is still nothing. The paste carries
+   several hundred lines of other tables under the roster, and loosening the
+   reading must not start letting those in. */
+for (const junk of [
+  'Sales report for spring',
+  'MM22',
+  'hillarysalway@gmail.com',
+  'Total 42 makers 9492463033',
+  'Rejected 2026 waitlist notes',
+]) {
+  check(`ignored: ${junk}`, parseCodeSheet(junk).rows.length === 0)
+}
+
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1) }
 console.log('maker numbers: only the roster rows are read, and nothing ambiguous is ever written')

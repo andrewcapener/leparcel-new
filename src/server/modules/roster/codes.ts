@@ -54,6 +54,40 @@ const norm = (s: string) => (s ?? '').trim()
 const normEmail = (s: string) => norm(s).toLowerCase()
 
 /**
+ * A line somebody typed rather than copied out of a sheet.
+ *
+ * Drew, 9 November, needing to move one maker to MM22, typed the line the way
+ * a person types a line:
+ *
+ *     MM22 hillarysalway@gmail.com · 9492463033
+ *
+ * and the screen answered "No numbered rows with an email address in them."
+ * It had a number in it and it had an email address in it. The paste had no
+ * tab and no comma, so the separator came back as a comma, every line was one
+ * cell, and the cell that had to match a code was the whole line.
+ *
+ * That is this screen refusing the easy case while handling the hard one. It
+ * was built for forty two rows out of a spreadsheet and the common job turns
+ * out to be one maker, typed by hand, from a text message.
+ *
+ * So a line that yields nothing through the separator is split again on
+ * whitespace, a middle dot or a pipe, which covers every way a person writes
+ * one of these. The code and the address are picked out by what they look
+ * like rather than by where they sit, because a hand-typed line has no column
+ * order. Whatever is left over becomes the shop name, minus anything that is
+ * only digits, which is a phone number and not a shop.
+ */
+function looseCells(line: string): string[] {
+  const parts = line.split(/[\s\u00b7|]+/).map(norm).filter(Boolean)
+  const code = parts.find((c) => CODE.test(c))
+  const email = parts.find((c) => c.includes('@'))
+  if (!code || !email) return []
+  const rest = parts.filter((c) => c !== code && c !== email && !/^[\d()+-]+$/.test(c))
+  // Shop, then contact, in the shape the strict path produces.
+  return [code, rest.join(' '), '', email]
+}
+
+/**
  * Pull the numbered rows out of a paste, and ignore everything else in it.
  *
  * The sheet Drew pasted carries the roster at the top and then several
@@ -67,8 +101,14 @@ export function parseCodeSheet(text: string): CodeParse {
   const grid = parseCsv(text ?? '', separator(text ?? ''))
   const seen = new Map<string, number>()
 
-  grid.forEach((cells, i) => {
+  grid.forEach((row, i) => {
     const line = i + 1
+    /* The sheet's own columns first. A line that does not start with a code
+       gets read again as something a person typed, which is the only way one
+       maker on one line has ever worked. */
+    const strict = CODE.test(norm(row[0] ?? '').toUpperCase())
+    const cells = strict ? row : looseCells(row.join(' '))
+
     const code = norm(cells[0] ?? '').toUpperCase()
     if (!CODE.test(code)) return
 
