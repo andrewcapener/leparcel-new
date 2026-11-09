@@ -66,10 +66,26 @@ export type DayExtras = {
  * TBA is a constant and not a typed string, so the page can tell a booked
  * set from an open one without matching on words.
  *
- * The carts are the same three every day and the truck changes, which is why
- * they are one list per day rather than a truck field and a shared tail: the
- * day is the unit a shopper reads, and a shared tail would have read as
- * "today, plus some other things" on every day of the show.
+ * The carts are the same every day and the truck changes, which is why they
+ * are one list per day rather than a truck field and a shared tail: the day
+ * is the unit a shopper reads, and a shared tail would have read as "today,
+ * plus some other things" on every day of the show.
+ *
+ * Two things came off on 9 November, four days out, and both are worth
+ * recording because a thing that leaves a public page has to leave it for a
+ * reason somebody can check later.
+ *
+ * Sweet’n Cloud Co. is out. Hillary: "in response to health department
+ * sweeten cloud is out." The same conversation has her still chasing JC
+ * Beans and Bread by Anna on the same question, so those two are here on the
+ * understanding that they clear it; if they do not, they come off the same
+ * way rather than being left up and hoped for.
+ *
+ * Face painting is gone. Hillary: "no one got back to us for face painting;
+ * right? :(" It was only ever on this page on Elise’s word that it would be
+ * there, which was the right call in the moment and is now wrong. It was also
+ * the one thing on the page with no name and no link behind it, which is a
+ * fair description of why it never happened.
  */
 export const extras: DayExtras[] = [
   {
@@ -78,12 +94,10 @@ export const extras: DayExtras[] = [
       { name: 'JC Beans Coffee', href: 'https://www.instagram.com/jc_beanscoffee/' },
       { name: 'EatsyJoon empanadas' },
       { name: 'Stix & Cones', href: 'https://www.instagram.com/stixcones/' },
-      { name: 'Sweet’n Cloud Co.', href: 'https://www.instagram.com/sweetncloudco/' },
       { name: 'Alohana Acai', href: 'https://www.instagram.com/alohanaacaibowls/' },
     ],
     allDay: [
       { name: 'Oh Happy Day Hair Lounge', href: 'https://www.instagram.com/ohhappydayhairlounge/' },
-      { name: 'Face painting' },
     ],
     music: [
       { time: '9 to 10am', what: TBA },
@@ -100,12 +114,10 @@ export const extras: DayExtras[] = [
       { name: 'JC Beans Coffee', href: 'https://www.instagram.com/jc_beanscoffee/' },
       { name: 'Baby’s Badass Burgers' },
       { name: 'Stix & Cones', href: 'https://www.instagram.com/stixcones/' },
-      { name: 'Sweet’n Cloud Co.', href: 'https://www.instagram.com/sweetncloudco/' },
       { name: 'Alohana Acai', href: 'https://www.instagram.com/alohanaacaibowls/' },
     ],
     allDay: [
       { name: 'Oh Happy Day Hair Lounge', href: 'https://www.instagram.com/ohhappydayhairlounge/' },
-      { name: 'Face painting' },
     ],
     music: [
       { time: '9 to 10am', what: TBA },
@@ -121,12 +133,10 @@ export const extras: DayExtras[] = [
       { name: 'JC Beans Coffee', href: 'https://www.instagram.com/jc_beanscoffee/' },
       { name: 'Baby’s Badass Burgers' },
       { name: 'Stix & Cones', href: 'https://www.instagram.com/stixcones/' },
-      { name: 'Sweet’n Cloud Co.', href: 'https://www.instagram.com/sweetncloudco/' },
       { name: 'Alohana Acai', href: 'https://www.instagram.com/alohanaacaibowls/' },
     ],
     allDay: [
       { name: 'Oh Happy Day Hair Lounge', href: 'https://www.instagram.com/ohhappydayhairlounge/' },
-      { name: 'Face painting' },
     ],
     music: [
       { time: '9 to 10am', what: 'Piper Kuhn' },
