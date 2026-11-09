@@ -28,6 +28,7 @@ import { photoUploadsEnabled } from '@/server/modules/uploads/config'
 import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
 import { cleanAttribution } from '@/lib/attribution'
 import { spaceAllowed } from '@/server/modules/spaces/eligibility'
+import { readSubmission } from '@/server/modules/contact/spam'
 import { previewingOpenWindow } from '@/lib/preview'
 import { siteUrl } from '@/lib/site-url'
 import { signInLinkHtml, signInLinkText } from '@/server/modules/email/sign-in-link'
@@ -198,6 +199,12 @@ const MessageSchema = z.object({
  * The message lands in the outbox table either way, so nothing is lost when
  * RESEND_API_KEY is unset or delivery fails, and Elise can read every enquiry
  * at /admin/outbox. Reply-to is the sender, so hitting reply works.
+ *
+ * Machine submissions are dropped before any of that, and the visitor is told
+ * the same thing a real one is. A form that says "that looked like spam" is a
+ * form that tells whoever is running the script exactly which rule to change,
+ * and the people sending these are iterating. See the contact spam module for
+ * what counts and, more importantly, for what deliberately does not.
  */
 export async function sendMessage(prev: FormState, fd: FormData): Promise<FormState> {
   const attempt = (prev.attempt ?? 0) + 1
@@ -211,6 +218,39 @@ export async function sendMessage(prev: FormState, fd: FormData): Promise<FormSt
   const d = parsed.data
   const topic = d.topic === 'collaborate' ? 'Collaboration' : 'Contact form'
 
+  /* Said whether or not we send anything, so a script learns nothing from
+     the reply and a person who trips the filter is not accused of anything. */
+  const said = {
+    ok: true as const,
+    message: 'Got it. Someone reads every one of these, usually within a day or two.',
+  }
+
+  const ms = Number(raw.elapsed)
+  const verdict = readSubmission({
+    name: d.name,
+    email: d.email,
+    message: d.message,
+    honeypot: raw.company,
+    elapsedMs: Number.isFinite(ms) ? ms : undefined,
+  })
+  if (verdict.spam) {
+    /* Logged, because the only way to find out this filter is wrong is for
+       somebody to say "I wrote and nobody answered" and for staff to be able
+       to look. The address and the reason, not the message: enough to find a
+       person who was dropped, and no more than that. */
+    await db.insert(auditLog).values({
+      id: randomUUID(),
+      entity: 'contact',
+      entityId: 'form',
+      action: 'contact_dropped_as_spam',
+      actor: 'system',
+      before: null,
+      after: JSON.stringify({ email: d.email, topic: d.topic ?? 'contact', why: verdict.why }),
+      reason: verdict.why,
+    })
+    return said
+  }
+
   await mail(
     process.env.CONTACT_TO ?? 'hello@mermademarket.com',
     `${topic}: ${d.name}`,
@@ -218,10 +258,7 @@ export async function sendMessage(prev: FormState, fd: FormData): Promise<FormSt
     'contact',
     d.email,
   )
-  return {
-    ok: true,
-    message: 'Got it. Someone reads every one of these, usually within a day or two.',
-  }
+  return said
 }
 
 /* ═══════════════════════ maker sign-in ═══════════════════════ */
