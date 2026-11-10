@@ -52,14 +52,23 @@ export type MakerLines = {
   lines: PushLine[]
 }
 
-/** One row of the payload the push route takes. */
-export type PushRow = {
+/** One way to buy a line: singly, or in whatever bundle the maker offers. */
+export type PushVariant = {
   sku: string
-  title: string
+  /** The option value shown at the till. "1", "2", "3". */
+  qty: string
+  /** What the customer pays for THAT many. Not a unit price. */
   priceCents: number
+}
+
+/** One product the push route creates, with a variant per way to buy it. */
+export type PushProduct = {
+  title: string
   vendor: string
   productType: string
   tags: string[]
+  /** Always at least one, and the first is always the single. */
+  variants: PushVariant[]
 }
 
 /** "MM28-7". Not padded, because last season's are not and the register has
@@ -81,22 +90,51 @@ export function titleFor(code: string, label: string, priceCents: number): strin
   return `(${code.toUpperCase()}) ${name || usd(priceCents)}`
 }
 
-/** The whole payload, one row per price line. */
-export function shopifyProducts(makers: MakerLines[]): PushRow[] {
-  const out: PushRow[] = []
+/**
+ * The whole payload: one product per price line, one variant per way to buy it.
+ *
+ * Drew, on the multi-buys: "essentially you click in on an item and it says
+ * one for 10 and three for 15. That should be a variant in Shopify." He is
+ * right, and it is the difference between a register that charges correctly
+ * and a cashier doing arithmetic off a printed sheet at the counter with a
+ * queue behind them.
+ *
+ * The bundle price is the price of the BUNDLE, not of one item in it. A
+ * variant called 2 at $296 is rung up once and takes $296, which is what the
+ * maker promised and what the customer expects. It does mean the unit count
+ * on a report is short: two belts leave the building recorded as one sale of
+ * the two-belt variant. The money is right, which is what the payout is made
+ * of, and Mermade does not track stock on consignment anyway.
+ *
+ * The singles variant is always first and always present, because a maker who
+ * offers three for $15 still sells one to somebody who only wants one.
+ */
+export function shopifyProducts(makers: MakerLines[]): PushProduct[] {
+  const out: PushProduct[] = []
   for (const m of makers) {
+    const code = m.code.toUpperCase()
     m.lines.forEach((line, i) => {
+      const base = skuFor(code, i + 1)
+      const variants: PushVariant[] = [{ sku: base, qty: '1', priceCents: line.priceCents }]
+      /* Cheapest bundle first, which is the order a person reads them in and
+         the order they will be stacked in on the till. */
+      for (const b of [...line.breaks].sort((a, z) => a.qty - z.qty)) {
+        /* A bundle of one, or one that costs the same as buying singly, is
+           not an offer: it is a second button that does nothing, and on a
+           register every extra button is a chance to press the wrong one. */
+        if (b.qty < 2 || b.cents >= line.priceCents * b.qty) continue
+        variants.push({ sku: `${base}x${b.qty}`, qty: String(b.qty), priceCents: b.cents })
+      }
       out.push({
-        sku: skuFor(m.code, i + 1),
-        title: titleFor(m.code, line.label, line.priceCents),
-        priceCents: line.priceCents,
+        title: titleFor(code, line.label, line.priceCents),
         /* The ID alone. A vendor of "MM28 Spurs & Saddles" would not match a
            collection ruled on "MM28", and the rule has to be exact. */
-        vendor: m.code.toUpperCase(),
+        vendor: code,
         productType: m.category || 'Other',
         /* The code again as a tag, so a maker's whole table can be found by
            typing it even if somebody later edits the vendor field. */
-        tags: [m.code.toUpperCase(), m.category || 'Other'].filter(Boolean),
+        tags: [code, m.category || 'Other'].filter(Boolean),
+        variants,
       })
     })
   }
