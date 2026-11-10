@@ -63,6 +63,7 @@ const MAIN: Array<{
      this column to say so. */
   { href: '/admin/roster', label: 'Roster', icon: 'roster', count: 'needsPerson' },
   { href: '/admin/codes', label: 'Maker numbers', icon: 'queue' },
+  { href: '/admin/shopify', label: 'The register', icon: 'queue' },
   { href: '/admin/chase', label: 'Chase the booth fee', icon: 'clock' },
 
   { sec: 'Before the show' },
