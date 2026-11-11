@@ -39,33 +39,33 @@ const css = `
 .inv .inv-cap { font-size: 8.5pt; color: var(--inv-soft); letter-spacing: .1em }
 
 /* ── cover ── */
-.inv .inv-mark { height: 34px; width: auto; display: block; margin-bottom: 26px }
-.inv h1 { font-size: 21pt; line-height: 1.1; letter-spacing: .04em }
-.inv .inv-sub { margin-top: 8px; font-size: 11pt; color: var(--inv-soft) }
-.inv .inv-rule { border: 0; border-top: 1.5px solid var(--inv-ink); margin: 20px 0 }
+.inv .inv-mark { height: 28px; width: auto; display: block; margin-bottom: 18px }
+.inv h1 { font-size: 18pt; line-height: 1.1; letter-spacing: .04em }
+.inv .inv-sub { margin-top: 6px; font-size: 10pt; color: var(--inv-soft) }
+.inv .inv-rule { border: 0; border-top: 1.5px solid var(--inv-ink); margin: 15px 0 }
 .inv .inv-hair { border: 0; border-top: 1px solid var(--ad-line); margin: 0 }
-.inv .inv-tally { display: flex; flex-wrap: wrap; gap: 0 34px; margin: 18px 0 26px }
-.inv .inv-tally div { min-width: 86px }
-.inv .inv-tally b { display: block; font-size: 19pt; font-family: var(--font-c); font-weight: 600 }
-.inv .inv-tally span { font-size: 8.5pt; text-transform: uppercase; letter-spacing: .09em; color: var(--inv-soft) }
+.inv .inv-tally { display: flex; flex-wrap: wrap; gap: 0 30px; margin: 14px 0 18px }
+.inv .inv-tally div { min-width: 80px }
+.inv .inv-tally b { display: block; font-size: 16pt; font-family: var(--font-c); font-weight: 600 }
+.inv .inv-tally span { font-size: 8pt; text-transform: uppercase; letter-spacing: .09em; color: var(--inv-soft) }
 .inv .inv-note {
-  font-size: 9.5pt; line-height: 1.55; color: var(--inv-soft);
-  border-left: 2px solid var(--ad-line); padding-left: 12px; margin: 0 0 24px;
+  font-size: 8.75pt; line-height: 1.5; color: var(--inv-soft);
+  border-left: 2px solid var(--ad-line); padding-left: 11px; margin: 0 0 18px;
 }
 
 /* ── tables ── */
-.inv table { width: 100%; border-collapse: collapse; font-size: 10pt }
+.inv table { width: 100%; border-collapse: collapse; font-size: 9.25pt }
 .inv th { text-align: left; font-family: var(--font-c); font-weight: 600; text-transform: uppercase;
   font-size: 8pt; letter-spacing: .09em; color: var(--inv-soft);
   border-bottom: 1.25px solid var(--inv-ink); padding: 0 8px 5px 0 }
-.inv td { padding: 5.5px 8px 5.5px 0; border-bottom: 1px solid var(--ad-line); vertical-align: top }
+.inv td { padding: 3px 8px 3px 0; border-bottom: 1px solid var(--ad-line); vertical-align: top }
 .inv .inv-n { width: 26px; color: var(--inv-soft); font-variant-numeric: tabular-nums }
 .inv .inv-money { text-align: right; width: 56px; font-variant-numeric: tabular-nums;
   white-space: nowrap; padding-right: 0 }
 /* The index's price range. Wide enough for "Nothing filed", which is the
    longest thing it ever says and the one row that has to be readable. */
 .inv .inv-range { text-align: right; width: 128px; white-space: nowrap;
-  font-variant-numeric: tabular-nums; padding: 5.5px 0 5.5px 18px }
+  font-variant-numeric: tabular-nums; padding: 3px 0 3px 18px }
 .inv th.inv-range { padding: 0 0 5px 18px }
 .inv .inv-code { font-family: var(--font-m); white-space: nowrap; width: 62px }
 .inv .inv-tick { width: 34px; border-left: 1px solid var(--ad-line); padding-left: 10px }
@@ -73,14 +73,26 @@ const css = `
 .inv tr { page-break-inside: avoid }
 
 /* ── a maker's block ── */
-.inv .inv-maker { page-break-before: always; padding-top: 0.15in }
-.inv .inv-maker .inv-hd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap }
-.inv .inv-maker h2 { font-size: 17pt; letter-spacing: .03em }
+/* Not a page each. Most makers list a handful of things, and a page each was
+   thirty-odd sheets that are seven eighths white. They pack instead, and the
+   rule is only that a maker is never split: page-break-inside keeps her block
+   whole and pushes it to the next sheet if it will not fit on this one. A
+   maker whose list is longer than a page cannot be kept whole, so she spills,
+   and the repeating header below is what makes that safe. */
+.inv .inv-maker { page-break-inside: avoid; margin-top: 26px }
+/* A list longer than a sheet cannot be kept whole, and holding it back anyway
+   leaves the sheet before it half empty. So the long ones are allowed to flow
+   and fill that gap. They are only ever broken where they have to be, and the
+   repeating header means the continuation still says whose it is. */
+.inv .inv-long { page-break-inside: auto }
+.inv .inv-long .inv-hd, .inv .inv-long .inv-meta { page-break-after: avoid }
+.inv .inv-maker .inv-hd { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap }
+.inv .inv-maker h2 { font-size: 12.5pt; letter-spacing: .03em }
 .inv .inv-maker .inv-id {
-  font-family: var(--font-m); font-size: 15pt; font-weight: 500;
-  border: 1.5px solid var(--inv-ink); padding: 2px 9px; letter-spacing: 0;
+  font-family: var(--font-m); font-size: 11pt; font-weight: 500;
+  border: 1.25px solid var(--inv-ink); padding: 1px 7px; letter-spacing: 0;
 }
-.inv .inv-meta { margin: 9px 0 16px; font-size: 9.5pt; color: var(--inv-soft) }
+.inv .inv-meta { margin: 4px 0 8px; font-size: 8.5pt; color: var(--inv-soft) }
 .inv .inv-meta b { color: var(--inv-ink); font-weight: 500 }
 /* Repeats at the top of a spilled page, so a loose sheet still says whose it
    is. A maker with sixty lines is the reason this is a thead and not a div. */
@@ -89,21 +101,22 @@ const css = `
   text-transform: uppercase; font-family: var(--font-c); color: var(--inv-soft);
 }
 .inv .inv-none {
-  border: 1.25px solid var(--inv-ink); padding: 16px 18px; margin: 4px 0 0;
-  font-size: 10.5pt; line-height: 1.5;
+  border: 1.25px solid var(--inv-ink); padding: 9px 11px; margin: 2px 0 0;
+  font-size: 9.25pt; line-height: 1.45;
 }
-.inv .inv-sign { margin-top: 30px; page-break-inside: avoid }
-.inv .inv-lines { display: flex; gap: 26px; margin-top: 26px }
-.inv .inv-lines div { flex: 1 }
-.inv .inv-lines .inv-short { flex: 0 0 1.5in }
-.inv .inv-lines i {
-  display: block; border-bottom: 1px solid var(--inv-ink); height: 26px;
-}
-.inv .inv-lines span {
-  display: block; margin-top: 5px; font-size: 8pt; letter-spacing: .09em;
+/* Corrections and the signature on one strip rather than two stacked blocks.
+   The writing room is the ruled space itself, which is the only part of this
+   a pen ever touches. */
+.inv .inv-sign { display: flex; gap: 16px; align-items: flex-end;
+  margin-top: 10px; page-break-inside: avoid }
+.inv .inv-sign div { flex: 1 }
+.inv .inv-sign .inv-short { flex: 0 0 0.95in }
+.inv .inv-sign .inv-wide { flex: 2.2 }
+.inv .inv-sign i { display: block; border-bottom: 1px solid var(--inv-ink); height: 19px }
+.inv .inv-sign span {
+  display: block; margin-top: 3px; font-size: 7pt; letter-spacing: .09em;
   text-transform: uppercase; font-family: var(--font-c); color: var(--inv-soft);
 }
-.inv .inv-box { margin-top: 24px; border: 1px solid var(--ad-line); padding: 10px 12px 44px }
 
 /* ── on paper ── */
 @media print {
@@ -115,7 +128,7 @@ const css = `
 }
 @media screen {
   .inv { padding: 20px 16px 60px }
-  .inv .inv-maker { border-top: 1px solid var(--ad-line); margin-top: 40px; padding-top: 30px }
+  .inv .inv-maker { border-top: 1px solid var(--ad-line); padding-top: 20px }
   .inv .inv-screen {
     position: sticky; top: 0; z-index: 2; background: #fff;
     border-bottom: 1px solid var(--ad-line); margin: -20px -16px 22px;
@@ -125,9 +138,14 @@ const css = `
 }
 `
 
+/* Roughly what fits on one sheet once the maker's heading and signature strip
+   have taken their share. Past this she is going to span pages whatever we do,
+   so she may as well start on the page we are already on. */
+const FITS_A_SHEET = 30
+
 function Maker({ m }: { m: PrintMaker }) {
   return (
-    <section className="inv-maker">
+    <section className={m.lines.length > FITS_A_SHEET ? 'inv-maker inv-long' : 'inv-maker'}>
       <div className="inv-hd">
         <span className="inv-id">{m.code}</span>
         <h2>{m.shop}</h2>
@@ -178,22 +196,17 @@ function Maker({ m }: { m: PrintMaker }) {
       )}
 
       <div className="inv-sign">
-        <div className="inv-box">
-          <span className="inv-cap">Corrections</span>
+        <div className="inv-wide">
+          <i />
+          <span>Corrections</span>
         </div>
-        <div className="inv-lines">
-          <div>
-            <i />
-            <span>Maker signature</span>
-          </div>
-          <div>
-            <i />
-            <span>Reviewed with</span>
-          </div>
-          <div className="inv-short">
-            <i />
-            <span>Date</span>
-          </div>
+        <div>
+          <i />
+          <span>Maker signature</span>
+        </div>
+        <div className="inv-short">
+          <i />
+          <span>Date</span>
         </div>
       </div>
     </section>
