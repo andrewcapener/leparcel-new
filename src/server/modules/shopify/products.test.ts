@@ -56,7 +56,7 @@ assert.equal(products[3]!.variants[0]!.sku, 'MM4-1')
 /* The bundle. Its price is the price of the BUNDLE, not of one item in it:
    rung up once it takes $296, which is what the maker promised. */
 const belt = products[2]!
-assert.equal(belt.title, '(MM28) Tooled belt')
+assert.equal(belt.title, '(MM28) $148')
 assert.deepEqual(belt.variants, [
   { sku: 'MM28-3', qty: '1', priceCents: 14800 },
   { sku: 'MM28-3x2', qty: '2', priceCents: 28000 },
@@ -78,13 +78,22 @@ const many = shopifyProducts([{ code: 'MM9', shop: 'y', category: 'Other',
 assert.deepEqual(many[0]!.variants.map((v) => v.qty), ['1', '2', '3'])
 assert.deepEqual(many[0]!.variants.map((v) => v.priceCents), [1500, 2800, 4000])
 
-/* Titles carry the code first. A maker who sent a bare price gets the price
-   as her title, which is what Drew asked for, and the code is what stops
-   forty of them reading identically. */
-assert.equal(products[0]!.title, '(MM28) Leather keyring')
+/* The title is the maker and the price, and nothing else. The register's own
+   screen settled this: seven rows reading "(MM23) press on nails (cost vary
+   per design)", each wrapped onto two lines, each identical, with the only
+   difference in small grey type underneath. A tag on an item carries a maker
+   number and a price, and that pair is what the person at the till matches. */
+assert.equal(products[0]!.title, '(MM28) $24')
 assert.equal(products[1]!.title, '(MM28) $18')
 assert.equal(titleFor('mm3', '   ', 500), '(MM3) $5')
-assert.equal(titleFor('MM3', 'Potpourri', 500), '(MM3) Potpourri')
+/* Her own words make no difference to the title, at any price. */
+assert.equal(titleFor('MM3', 'Potpourri', 500), '(MM3) $5')
+assert.equal(titleFor('MM23', 'press on nails (cost vary per design)', 4500), '(MM23) $45')
+
+/* They are not lost, though: they ride along as the description, where they
+   are searchable and on the product itself. */
+assert.equal(products[0]!.description, 'Leather keyring')
+assert.equal(products[1]!.description, '')
 assert.equal(skuFor('mm10', 12), 'MM10-12')
 
 /* The category rides along for the register's own filtering, and a maker with

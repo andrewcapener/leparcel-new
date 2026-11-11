@@ -64,6 +64,8 @@ export type PushVariant = {
 /** One product the push route creates, with a variant per way to buy it. */
 export type PushProduct = {
   title: string
+  /** The maker's own words for it, kept off the title and on the product. */
+  description: string
   vendor: string
   productType: string
   tags: string[]
@@ -78,16 +80,26 @@ export function skuFor(code: string, n: number): string {
 }
 
 /**
- * "(MM28) Leather keyring", or "(MM28) $24" when the maker sent a bare price.
+ * "(MM23) $45". The maker and the price, and nothing else.
  *
- * Drew, on the makers who sent nothing but numbers: "we actually don't need a
- * title, we can just go off of their prices." True at the till, where the
- * price is what is being rung up. Not true on a screen listing forty of them,
- * where every row would read the same. The code is what tells them apart.
+ * This used to carry the maker's own words when she gave them, and the first
+ * screenshot from the register settled it. Seven rows of
+ * "(MM23) press on nails (cost vary per design)", each wrapping onto two
+ * lines, each identical, and the only thing telling them apart was the price
+ * printed underneath in smaller grey type.
+ *
+ * Elise and Hillary, 11 November: the title should be the price, because that
+ * is how the counter already works. An item arrives with a tag, the tag has a
+ * maker number and a price, and that pair is what the person at the till is
+ * matching. A product name is a third thing to read that nobody is looking
+ * for, and on a long list it is noise that hides the one number that matters.
+ *
+ * Which also means a maker's own label is not lost so much as moved: it rides
+ * along as the product description, where it is searchable and visible on the
+ * product itself, rather than competing for the line the price needs.
  */
-export function titleFor(code: string, label: string, priceCents: number): string {
-  const name = (label ?? '').trim()
-  return `(${code.toUpperCase()}) ${name || usd(priceCents)}`
+export function titleFor(code: string, _label: string, priceCents: number): string {
+  return `(${code.toUpperCase()}) ${usd(priceCents)}`
 }
 
 /**
@@ -127,6 +139,7 @@ export function shopifyProducts(makers: MakerLines[]): PushProduct[] {
       }
       out.push({
         title: titleFor(code, line.label, line.priceCents),
+        description: (line.label ?? '').trim(),
         /* The ID alone. A vendor of "MM28 Spurs & Saddles" would not match a
            collection ruled on "MM28", and the rule has to be exact. */
         vendor: code,
