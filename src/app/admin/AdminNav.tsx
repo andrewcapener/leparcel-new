@@ -107,6 +107,10 @@ const PREVIEWS: Array<{
   // these existed.
   { href: '/admin/export/paylinks', label: 'Download the pay links', icon: 'clock' },
   { href: '/admin/export/payments', label: 'Download payment tracking', icon: 'clock' },
+  // Elise reads every maker's list back to her before load-in, which happens
+  // at a table with paper on it and not at a screen. A page per maker, with
+  // somewhere to sign.
+  { href: '/admin/inventory/print', label: 'Print the inventory', icon: 'clock' },
   // The people who asked to be told when applications open. The site made that
   // promise; this is how it gets kept on the morning.
   { href: '/admin/subscribers', label: 'Download the waiting list', icon: 'clock' },

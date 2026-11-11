@@ -39,7 +39,10 @@ export function AdminShell({
      preview should look like the thing it previews, not like the thing inside
      a frame. So these routes get no admin chrome at all. They are still
      behind the staff gate, which is in the proxy on /admin and not in here. */
-  const bare = path.startsWith('/admin/preview')
+  /* The printed inventory is the same case for the same reason: it is a
+     document that goes through a printer, and a sidebar on it is either a
+     wasted inch of every sheet or a thing somebody has to notice and hide. */
+  const bare = path.startsWith('/admin/preview') || path === '/admin/inventory/print'
 
   useEffect(() => { setOpen(false) }, [path])
   useEffect(() => {
