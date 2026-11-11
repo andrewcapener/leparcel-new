@@ -2,7 +2,9 @@ import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import { fmtDate, fmtRange } from '@/lib/dates'
 import { inventoryExport } from '@/server/modules/roster/inventory-export'
-import { printMakers, sheetSummary, type PrintMaker } from '@/server/modules/roster/inventory-print'
+import {
+  blankRows, printMakers, sheetSummary, type PrintMaker,
+} from '@/server/modules/roster/inventory-print'
 
 export const dynamic = 'force-dynamic'
 /* Every indoor maker's whole list, two queries plus the payout columns. Well
@@ -104,19 +106,11 @@ const css = `
   border: 1.25px solid var(--inv-ink); padding: 9px 11px; margin: 2px 0 0;
   font-size: 9.25pt; line-height: 1.45;
 }
-/* Corrections and the signature on one strip rather than two stacked blocks.
-   The writing room is the ruled space itself, which is the only part of this
-   a pen ever touches. */
-.inv .inv-sign { display: flex; gap: 16px; align-items: flex-end;
-  margin-top: 10px; page-break-inside: avoid }
-.inv .inv-sign div { flex: 1 }
-.inv .inv-sign .inv-short { flex: 0 0 0.95in }
-.inv .inv-sign .inv-wide { flex: 2.2 }
-.inv .inv-sign i { display: block; border-bottom: 1px solid var(--inv-ink); height: 19px }
-.inv .inv-sign span {
-  display: block; margin-top: 3px; font-size: 7pt; letter-spacing: .09em;
-  text-transform: uppercase; font-family: var(--font-c); color: var(--inv-soft);
-}
+/* The empty rows. Taller than a printed line because somebody is writing in
+   them by hand, and greyed numbers so the filled part of the list still reads
+   as the filled part at a glance. */
+.inv .inv-blank td { height: 20px }
+.inv .inv-blank .inv-n { color: var(--ad-line-2) }
 
 /* ── on paper ── */
 @media print {
@@ -159,14 +153,15 @@ function Maker({ m }: { m: PrintMaker }) {
         {m.filed === 'Filed' ? 'Submitted' : m.filed === 'Started' ? 'Not yet submitted' : 'Nothing submitted'}
       </p>
 
-      {m.lines.length === 0 ? (
+      {m.lines.length === 0 && (
         <p className="inv-none">
           Nothing has come through for this maker yet. Her goods cannot be
           priced or sold at the register until she sends a list, so take it
           down here and we will enter it.
         </p>
-      ) : (
-        <table>
+      )}
+
+      <table>
           <thead>
             <tr className="inv-runner">
               <td colSpan={5}>
@@ -191,24 +186,20 @@ function Maker({ m }: { m: PrintMaker }) {
                 <td className="inv-money">{l.price}</td>
               </tr>
             ))}
+            {/* Room for whatever she names while Elise is sitting with her,
+                numbered on from her last line so it comes back as more of the
+                same list rather than as a note somebody has to interpret. */}
+            {Array.from({ length: blankRows(m.lines.length) }, (_, i) => (
+              <tr className="inv-blank" key={`blank-${i}`}>
+                <td className="inv-n">{m.lines.length + i + 1}</td>
+                <td />
+                <td />
+                <td />
+                <td className="inv-money" />
+              </tr>
+            ))}
           </tbody>
         </table>
-      )}
-
-      <div className="inv-sign">
-        <div className="inv-wide">
-          <i />
-          <span>Corrections</span>
-        </div>
-        <div>
-          <i />
-          <span>Maker signature</span>
-        </div>
-        <div className="inv-short">
-          <i />
-          <span>Date</span>
-        </div>
-      </div>
     </section>
   )
 }

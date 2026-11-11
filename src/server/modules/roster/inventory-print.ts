@@ -111,6 +111,23 @@ export function printMakers(items: InventoryRow[], makers: MakerListRow[]): Prin
     }))
 }
 
+/**
+ * Ruled rows left empty under a maker's list, for the ones she names while
+ * Elise is sitting with her.
+ *
+ * Numbered on from her last line rather than drawn as a loose box, because
+ * what gets written there is more inventory and it has to come back here and
+ * be entered.
+ *
+ * A maker who has filed nothing needs room for a whole list rather than a few
+ * additions. Ten and not more: that is a block two of which still fit on one
+ * sheet, and a maker with more than ten things to declare at a table is a
+ * phone call rather than a form.
+ */
+export function blankRows(lineCount: number): number {
+  return lineCount === 0 ? 10 : 4
+}
+
 /** What the cover page says, counted off the blocks it covers. */
 export function sheetSummary(blocks: PrintMaker[]) {
   const listed = blocks.filter((b) => b.lines.length > 0)

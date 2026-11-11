@@ -1,4 +1,4 @@
-import { byCode, codeOrder, money, printMakers, sheetSummary } from './inventory-print'
+import { blankRows, byCode, codeOrder, money, printMakers, sheetSummary } from './inventory-print'
 import type { InventoryRow, MakerListRow } from './inventory-export'
 
 let failures = 0
@@ -93,6 +93,16 @@ check('lines counted', sum.lines === 3)
 /* Three lines, one of which also sells two for $30: four buttons at the till.
    This is the number that should match the register, so it is worth stating. */
 check('ways to buy counted', sum.variants === 4)
+
+/* ── room to write ───────────────────────────────────────────────────── */
+
+/* A maker who filed a list needs a few spare lines for whatever she names
+   while Elise is sitting with her. A maker who filed nothing needs room for
+   the whole list, because that conversation is the list. */
+check('a filed list gets spare lines', blankRows(12) === 4)
+check('a short list gets the same', blankRows(1) === 4)
+check('nothing filed gets a list\u2019s worth', blankRows(0) === 10)
+check('every maker gets some room', [0, 1, 9, 30, 80].every((n) => blankRows(n) > 0))
 
 const empty = sheetSummary([])
 check('an empty show counts to zero', empty.makers === 0 && empty.lines === 0)
