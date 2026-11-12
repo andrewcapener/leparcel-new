@@ -10,7 +10,7 @@ import { auditLog, inventoryBreaks, inventoryItems } from '@/db/schema'
 import { ADMIN_COOKIE, staffForSession } from '@/lib/adminAuth'
 import { applyPriceEdits, pendingEdits, priceProblem } from '@/server/modules/inventory/edit'
 import { priceFromDollars, readPastedList } from '@/server/modules/inventory/lines'
-import { makerLines, shopifyProducts } from '@/server/modules/shopify/products'
+import { pushAllPrices } from '@/server/modules/shopify/push'
 
 /**
  * Change a price at the show and have the register know, in one press.
@@ -38,44 +38,11 @@ export type SaveState = {
   changed: number
 }
 
-const wiring = () => {
-  const url = process.env.SHOPIFY_API_URL?.replace(/\/$/, '')
-  const key = process.env.SHOPIFY_EXECUTE_KEY
-  return url && key ? { url, key } : null
-}
-
-/**
- * Send every indoor maker's prices to Shopify.
- *
- * Everybody and not just the maker who changed, because the push matches on
- * SKU and rewrites only what differs: sending one maker and sending all of
- * them produce the same store, and sending all of them cannot leave a second
- * edit behind that somebody made while this screen was open.
- */
-async function pushToRegister(): Promise<{ ok: boolean; detail: string }> {
-  const w = wiring()
-  if (!w) return { ok: false, detail: 'the register link is not configured on this app' }
-
+/** The register, or a reason it could not be reached. */
+async function sendToRegister() {
   const show = await activeShow()
-  if (!show) return { ok: false, detail: 'no active show' }
-
-  const products = shopifyProducts(await makerLines(db, show.id))
-  if (products.length === 0) return { ok: false, detail: 'there are no prices to send' }
-
-  try {
-    const res = await fetch(`${w.url}/shopify-products-push`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': w.key },
-      body: JSON.stringify({ client: 'mermade', dryRun: false, products }),
-      cache: 'no-store',
-    })
-    const data = await res.json().catch(() => null)
-    if (!res.ok || data?.error) return { ok: false, detail: String(data?.error ?? 'Shopify refused it') }
-    const c = data?.counts ?? {}
-    return { ok: true, detail: `${c.update ?? 0} updated, ${c.create ?? 0} added` }
-  } catch (err) {
-    return { ok: false, detail: err instanceof Error ? err.message : 'could not reach the register' }
-  }
+  if (!show) return { ok: false as const, detail: 'no active show' }
+  return pushAllPrices(db, show.id)
 }
 
 /**
@@ -114,7 +81,7 @@ export async function savePrices(prev: SaveState, fd: FormData): Promise<SaveSta
     ? await applyPriceEdits(db, edits, await staffActor(), reason)
     : 0
 
-  const push = await pushToRegister()
+  const push = await sendToRegister()
   revalidatePath('/admin/register')
 
   if (!push.ok) {
@@ -202,7 +169,7 @@ export async function addLines(prev: SaveState, fd: FormData): Promise<SaveState
     reason: 'added at the show',
   })
 
-  const push = await pushToRegister()
+  const push = await sendToRegister()
   revalidatePath('/admin/register')
 
   if (!push.ok) {
