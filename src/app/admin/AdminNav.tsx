@@ -64,6 +64,9 @@ const MAIN: Array<{
   { href: '/admin/roster', label: 'Roster', icon: 'roster', count: 'needsPerson' },
   { href: '/admin/codes', label: 'Maker numbers', icon: 'queue' },
   { href: '/admin/shopify', label: 'The register', icon: 'queue' },
+  // At the show, from a phone: change a price or add a line and the register
+  // has it in one press. The two screens above are the October version.
+  { href: '/admin/register', label: 'Register desk', icon: 'money' },
   { href: '/admin/chase', label: 'Chase the booth fee', icon: 'clock' },
 
   { sec: 'Before the show' },
