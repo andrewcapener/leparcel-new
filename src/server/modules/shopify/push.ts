@@ -182,3 +182,120 @@ export async function pushHouseGoods(maker: MakerLines): Promise<PushResult> {
     return { ok: false, detail: err instanceof Error ? err.message : 'could not reach the register' }
   }
 }
+
+/** One price, one button. What the register would keep and what it would lose. */
+export type DedupePlan = {
+  code: string
+  keep: Array<{ sku: string; price: string; item: string }>
+  drop: Array<{ sku: string; price: string; item: string }>
+}
+
+const dollars = (p: string) => {
+  const n = Number(p)
+  return Number.isFinite(n) && n === Math.trunc(n) ? `$${n}` : `$${Number(p).toFixed(2)}`
+}
+
+/** The number on the end of a SKU, so MM8-9 sorts before MM8-10. */
+const skuOrder = (sku: string): number => {
+  const tail = sku.split('-').pop() ?? ''
+  const n = Number(tail.split('x')[0])
+  return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER
+}
+
+/**
+ * One tile per price, instead of one per product.
+ *
+ * Elise, an hour into the first day: "we can take out duplicate pricing, it
+ * just slows the whole process." The register titles every product with its
+ * price, so a maker with five fifteen dollar necklaces is five identical
+ * buttons somebody has to choose between with a queue waiting.
+ *
+ * Nothing is lost by collapsing them, which is the part worth being sure of
+ * before archiving anything. There is no stock count behind a tile, so one
+ * button rings five sales exactly as five buttons do, and every line item
+ * still carries the maker's code, so her takings and her payout are
+ * identical either way. The per product detail that goes was never real: a
+ * cashier facing five identical buttons taps whichever, so the SKU on the
+ * receipt never did say which necklace left the table.
+ *
+ * The keeper at each price is the lowest numbered SKU, so the one that
+ * survives is the one the maker listed first.
+ */
+export async function dedupeMaker(code: string, apply: boolean): Promise<
+  { ok: true; plan: DedupePlan; archived?: number; detail: string }
+  | { ok: false; detail: string }
+> {
+  const w = wiring()
+  if (!w) return { ok: false, detail: 'the register link is not configured on this app' }
+  const vendor = code.trim().toUpperCase()
+
+  try {
+    const res = await fetch(
+      `${w.url}/shopify-admin?client=mermade&path=products.json&limit=250`
+      + `&vendor=${encodeURIComponent(vendor)}&fields=id,title,body_html,status,variants`,
+      { headers: { 'x-api-key': w.key }, cache: 'no-store' },
+    )
+    const data = await res.json().catch(() => null)
+    if (!res.ok || data?.error) {
+      return { ok: false, detail: String(data?.error ?? 'could not read that maker') }
+    }
+    const products: Array<Record<string, unknown>> = data?.data?.products ?? []
+    const live = products.filter((p) => p.status === 'active')
+    if (live.length === 0) return { ok: false, detail: `nothing active under ${vendor}` }
+
+    /* Grouped on the single price and never on a bundle: "2 for $28" is a
+       second way to buy one product, not a tile of its own. */
+    const byPrice = new Map<string, Array<{ sku: string; price: string; item: string }>>()
+    for (const p of live) {
+      const variants = (p.variants ?? []) as Array<Record<string, unknown>>
+      const v = variants.find((x) => x.option1 === '1') ?? variants[0]
+      if (!v?.sku) continue
+      const price = String(v.price)
+      const row = { sku: String(v.sku), price: dollars(price), item: String(p.body_html ?? '') }
+      byPrice.set(price, [...(byPrice.get(price) ?? []), row])
+    }
+
+    const keep: DedupePlan['keep'] = []
+    const drop: DedupePlan['drop'] = []
+    byPrice.forEach((rows) => {
+      const sorted = [...rows].sort((a, b) => skuOrder(a.sku) - skuOrder(b.sku))
+      keep.push(sorted[0])
+      drop.push(...sorted.slice(1))
+    })
+    keep.sort((a, b) => skuOrder(a.sku) - skuOrder(b.sku))
+    drop.sort((a, b) => skuOrder(a.sku) - skuOrder(b.sku))
+
+    const plan: DedupePlan = { code: vendor, keep, drop }
+    if (drop.length === 0) {
+      return { ok: true, plan, detail: `${vendor} already has one product per price` }
+    }
+    if (!apply) {
+      return {
+        ok: true,
+        plan,
+        detail: `would archive ${drop.length}, leaving ${keep.length} tiles. Nothing was changed.`,
+      }
+    }
+
+    const arch = await fetch(`${w.url}/shopify-products-archive`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': w.key },
+      body: JSON.stringify({ client: 'mermade', dryRun: false, skus: drop.map((d) => d.sku) }),
+      cache: 'no-store',
+    })
+    const ad = await arch.json().catch(() => null)
+    if (!arch.ok || ad?.error) {
+      return { ok: false, detail: String(ad?.error ?? 'Shopify refused the archive') }
+    }
+    const failed = Array.isArray(ad?.failed) ? ad.failed.length : 0
+    return {
+      ok: failed === 0,
+      plan,
+      archived: Number(ad?.archived ?? 0),
+      detail: `${ad?.archived ?? 0} archived, ${keep.length} tiles left`
+        + (failed ? `, ${failed} FAILED` : ''),
+    }
+  } catch (err) {
+    return { ok: false, detail: err instanceof Error ? err.message : 'could not reach the register' }
+  }
+}

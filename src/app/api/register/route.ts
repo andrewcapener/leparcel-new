@@ -13,7 +13,9 @@ import { priceFromDollars, readPastedList } from '@/server/modules/inventory/lin
 import { findLine, type ApiLine } from '@/server/modules/inventory/register-api'
 import { byCode } from '@/server/modules/roster/inventory-print'
 import { multiBuyWords } from '@/server/modules/roster/inventory-export'
-import { pushAllPrices, pushCollections, pushHouseGoods } from '@/server/modules/shopify/push'
+import {
+  dedupeMaker, pushAllPrices, pushCollections, pushHouseGoods,
+} from '@/server/modules/shopify/push'
 
 /**
  * Change a price at the show without opening the admin.
@@ -33,6 +35,7 @@ import { pushAllPrices, pushCollections, pushHouseGoods } from '@/server/modules
  *   { "do": "makers" }
  *   { "do": "hours" }
  *   { "do": "collections" }
+ *   { "do": "dedupe", "code": "B36", "apply": true }
  *   { "do": "house", "code": "MM42", "shop": "Mermade Market", "list": "..." }
  *   { "do": "sethours", "text": "Friday 13 November, noon to 6pm \u00b7 ..." }
  *   { "do": "lines",  "code": "MM28" }
@@ -216,6 +219,24 @@ export async function POST(req: NextRequest) {
       register: push.ok ? push.detail : `NOT SENT: ${push.detail}`,
       note: 'House goods carry no commission and no payout, by design.',
     }, push.ok ? 200 : 502)
+  }
+
+  /* One tile per price at the register. A dry run unless apply is true, and
+     the plan names every product either way. */
+  if (act === 'dedupe') {
+    if (!code) return json({ error: 'code required' }, 400)
+    const d = await dedupeMaker(code, body.apply === true)
+    if (!d.ok) return json({ error: d.detail }, 502)
+    return json({
+      code: d.plan.code,
+      applied: body.apply === true,
+      keeping: d.plan.keep.length,
+      removing: d.plan.drop.length,
+      archived: d.archived,
+      keep: d.plan.keep,
+      drop: d.plan.drop,
+      detail: d.detail,
+    })
   }
 
   if (act === 'collections') {
@@ -415,5 +436,5 @@ export async function POST(req: NextRequest) {
     }, push.ok ? 200 : 502)
   }
 
-  return json({ error: 'do must be makers, hours, sethours, collections, house, lines, price or add' }, 400)
+  return json({ error: 'do must be makers, hours, sethours, collections, dedupe, house, lines, price or add' }, 400)
 }
