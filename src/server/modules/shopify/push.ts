@@ -17,10 +17,20 @@ type DbHandle = typeof Db
  * use at the time.
  */
 
+/**
+ * Where the register lives, and the key to write to it.
+ *
+ * The URL has a default and only the key has to be set, which is how the
+ * admin's own push has always read it. Requiring both here was a regression:
+ * SHOPIFY_API_URL has never been set on this app because it never needed to
+ * be, so every write through this module answered "the register is not
+ * configured" while the screen next door worked fine.
+ */
 const wiring = () => {
-  const url = process.env.SHOPIFY_API_URL?.replace(/\/$/, '')
-  const key = process.env.SHOPIFY_EXECUTE_KEY
-  return url && key ? { url, key } : null
+  const url = (process.env.SHOPIFY_API_URL?.trim() || 'https://housework-api.vercel.app/api')
+    .replace(/\/$/, '')
+  const key = process.env.SHOPIFY_EXECUTE_KEY?.trim()
+  return key ? { url, key } : null
 }
 
 export type PushResult = { ok: boolean; detail: string; counts?: Record<string, number> }
