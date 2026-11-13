@@ -4,8 +4,9 @@ import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
 import {
-  auditLog, bookings, inventoryBreaks, inventoryItems, spaceTypes, vendors,
+  auditLog, bookings, inventoryBreaks, inventoryItems, shows, spaceTypes, vendors,
 } from '@/db/schema'
+import { bookends, splitDay } from '@/lib/schedule'
 import { holdsSpace } from '@/server/modules/payments/booking-status'
 import { applyPriceEdits, priceProblem } from '@/server/modules/inventory/edit'
 import { priceFromDollars, readPastedList } from '@/server/modules/inventory/lines'
@@ -30,6 +31,8 @@ import { pushAllPrices } from '@/server/modules/shopify/push'
  *
  * POST /api/register        x-register-key: <key>
  *   { "do": "makers" }
+ *   { "do": "hours" }
+ *   { "do": "sethours", "text": "Friday 13 November, noon to 6pm \u00b7 ..." }
  *   { "do": "lines",  "code": "MM28" }
  *   { "do": "price",  "code": "MM28", "match": "tote", "fromPrice": "5", "toPrice": "6" }
  *   { "do": "add",    "code": "MM28", "list": "Earrings $18\nRings $12, 2 for $20" }
@@ -137,6 +140,69 @@ export async function POST(req: NextRequest) {
   const act = String(body.do ?? '').trim().toLowerCase()
   const code = String(body.code ?? '').trim().toUpperCase()
   const makers = await makersOf(show.id)
+
+  /**
+   * When the doors open, which is the one thing on the public site that
+   * moves on the day.
+   *
+   * Drew, the night before: the outdoor makers build their tents through
+   * Friday morning, so the whole of Friday now starts at noon rather than
+   * nine. That time is on the Show record and not in the code (rule 6), and
+   * it is read by the home page and the schedule page both, so one edit
+   * moves every published mention of it.
+   *
+   * Still a long way from a general admin API: this is one text field of one
+   * record, it is public information, and it carries no money and no PII.
+   */
+  if (act === 'hours') {
+    const [row] = await db.select({ hoursNote: shows.hoursNote })
+      .from(shows).where(eq(shows.id, show.id)).limit(1)
+    return json({ show: show.name, hours: row?.hoursNote ?? '' })
+  }
+
+  if (act === 'sethours') {
+    const text = String(body.text ?? '').trim().replace(/\s+/g, ' ')
+    if (!text) return json({ error: 'text required' }, 400)
+    if (text.length > 500) return json({ error: 'that is too long to be a list of days' }, 400)
+
+    /* Checked against the same reader the pages use, because a line this
+       cannot parse renders as a day with no hours beside it, and nobody
+       looks at the schedule page again before a show opens. */
+    const parts = text.split(' \u00b7 ').map((d) => d.trim()).filter(Boolean)
+    if (parts.length === 0) return json({ error: 'no days in that' }, 400)
+    const bad: string[] = []
+    for (const part of parts) {
+      const { day, hours } = splitDay(part)
+      if (!day.trim() || !hours.trim()) { bad.push(`${part}: no hours after the comma`); continue }
+      const { opens, closes } = bookends(hours)
+      if (!opens || !closes) bad.push(`${part}: could not read an opening and a closing time`)
+    }
+    if (bad.length) return json({ error: 'that would not render', problems: bad }, 400)
+
+    const [before] = await db.select({ hoursNote: shows.hoursNote })
+      .from(shows).where(eq(shows.id, show.id)).limit(1)
+    if ((before?.hoursNote ?? '') === text) {
+      return json({ note: 'The hours already read exactly that.', hours: text, changed: 0 })
+    }
+
+    await db.update(shows).set({ hoursNote: text }).where(eq(shows.id, show.id))
+    await db.insert(auditLog).values({
+      id: randomUUID(),
+      entity: 'show',
+      entityId: show.id,
+      action: 'hours_changed',
+      actor: 'claude:register-api',
+      before: JSON.stringify({ hoursNote: before?.hoursNote ?? '' }),
+      after: JSON.stringify({ hoursNote: text }),
+      reason: String(body.reason ?? '').trim() || 'changed at the show',
+    })
+    return json({
+      changed: 1,
+      was: before?.hoursNote ?? '',
+      now: text,
+      note: 'The home page and the schedule page both read this.',
+    })
+  }
 
   if (act === 'makers') {
     const counts = await db
@@ -280,5 +346,5 @@ export async function POST(req: NextRequest) {
     }, push.ok ? 200 : 502)
   }
 
-  return json({ error: 'do must be makers, lines, price or add' }, 400)
+  return json({ error: 'do must be makers, hours, sethours, lines, price or add' }, 400)
 }

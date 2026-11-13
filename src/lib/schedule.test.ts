@@ -100,13 +100,27 @@ for (const day of extras) {
   assert.equal(new Set(times).size, times.length, `${day.slug} double-books a slot`)
 }
 
-/* Every day's music starts at nine, which is when the doors do. An hour
-   nobody is booked for says so; it is never simply missing, which read as
-   the music starting at lunchtime. */
-for (const day of extras) {
+/* The music starts when the doors do, and an hour nobody is booked for says
+   TBA rather than going missing, which read as the music starting at
+   lunchtime.
+
+   Saturday and Sunday open at nine. Friday does not: the outdoor makers
+   build their tents through the morning, so the doors wait until noon and
+   the three TBA slots that used to sit before them were dropped. A page
+   headed "Open noon to 6pm" above "live music 9 to 10am" reads as a bug. */
+for (const day of [extrasFor('Saturday 14 November')!, extrasFor('Sunday 15 November')!]) {
   assert.equal(day.music[0]?.time, '9 to 10am', `${day.slug} has no nine o'clock`)
 }
-assert.ok(extrasFor('Friday 13 November')!.music.some((m) => m.what === TBA))
+
+const friday = extrasFor('Friday 13 November')!
+assert.ok(friday.music.length > 0, 'Friday lost all of its music')
+/* Nothing before the doors. Every Friday slot is an afternoon one, so none
+   of them may carry an am. */
+assert.ok(
+  friday.music.every((m) => !/\dam\b/.test(m.time)),
+  'Friday has music before its noon opening',
+)
+assert.ok(extrasFor('Saturday 14 November')!.music.some((m) => m.what === TBA))
 assert.ok(extrasFor('Sunday 15 November')!.music.every((m) => m.what !== TBA))
 
 console.log('schedule: a bare opening time reads as the hour a person meant')

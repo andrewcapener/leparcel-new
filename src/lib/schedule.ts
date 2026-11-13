@@ -100,9 +100,12 @@ export const extras: DayExtras[] = [
       { name: 'Oh Happy Day Hair Lounge', href: 'https://www.instagram.com/ohhappydayhairlounge/' },
     ],
     music: [
-      { time: '9 to 10am', what: TBA },
-      { time: '10:15 to 11:15am', what: TBA },
-      { time: '11:30am to 1pm', what: TBA },
+      /* Friday opens at noon, not at nine. The outdoor makers put their
+         tents up through the morning and a shopper arriving at nine walks
+         into a car park mid build, so the doors wait. These were three TBA
+         slots before noon, which on a page headed "Open noon to 6pm" read as
+         a mistake rather than as music. Saturday and Sunday still open at
+         nine and keep their mornings. */
       { time: '1:15 to 2:45pm', what: 'Emily Halverson' },
       { time: '3 to 4:30pm', what: 'Andrew Lavin' },
       { time: '4:45 to 6pm', what: 'Hector Lavin' },
