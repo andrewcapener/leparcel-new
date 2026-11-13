@@ -1,5 +1,5 @@
 import type { db as Db } from '@/db'
-import { collectionsFor, makerLines, shopifyProducts } from './products'
+import { collectionsFor, makerLines, shopifyProducts, type MakerLines } from './products'
 
 type DbHandle = typeof Db
 
@@ -105,6 +105,78 @@ export async function pushCollections(db: DbHandle, showId: string): Promise<Pus
       detail: `${data?.created ?? 0} created, ${data?.fixed ?? 0} fixed, ${c.exists ?? 0} already right`
         + (failed ? `, ${failed} FAILED` : ''),
       counts: { ...c, created: Number(data?.created ?? 0), fixed: Number(data?.fixed ?? 0), failed },
+    }
+  } catch (err) {
+    return { ok: false, detail: err instanceof Error ? err.message : 'could not reach the register' }
+  }
+}
+
+/**
+ * Goods Mermade sells itself, which are not a maker's goods.
+ *
+ * Drew, the night before: "create MM42 as a collection, it's us as admins."
+ * The ribbon and the lifeguard hats on the front table are the market's own
+ * stock, and modelling them as a maker would be wrong in a way that only
+ * shows up in December: a booking snapshots commission_bps the moment it is
+ * made and never changes it, so Mermade would spend the winter holding a
+ * statement saying it owes itself eighty percent of its own ribbon.
+ *
+ * There is nobody to pay, so there is no booking. The goods exist in Shopify
+ * under their own code and nowhere else, which is exactly right: they ring
+ * up, they carry tax, they land on the day's takings, and no payout is ever
+ * computed for them.
+ *
+ * The consequence is that nothing here is managed by the prices push, which
+ * reads bookings. These products are written once and then left alone, so a
+ * later price change to one of them is its own call rather than a side
+ * effect of a maker's edit.
+ */
+export async function pushHouseGoods(maker: MakerLines): Promise<PushResult> {
+  const w = wiring()
+  if (!w) return { ok: false, detail: 'the register link is not configured on this app' }
+
+  const products = shopifyProducts([maker])
+  if (products.length === 0) return { ok: false, detail: 'nothing to send' }
+
+  const send = async (path: string, body: unknown) => {
+    const res = await fetch(`${w.url}/${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': w.key },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+    })
+    const data = await res.json().catch(() => null)
+    return { ok: res.ok && !data?.error, data }
+  }
+
+  try {
+    const goods = await send('shopify-products-push', {
+      client: 'mermade', dryRun: false, products,
+    })
+    if (!goods.ok) {
+      return { ok: false, detail: String(goods.data?.error ?? 'Shopify refused the products') }
+    }
+
+    /* The collection second, because its rule matches on vendor and there is
+       nothing for it to gather until the products carry that vendor. */
+    const group = await send('shopify-collections-push', {
+      client: 'mermade', dryRun: false,
+      makers: [{ code: maker.code, shop: maker.shop }],
+    })
+    const c = (goods.data?.counts ?? {}) as Record<string, number>
+    if (!group.ok) {
+      return {
+        ok: false,
+        detail: `${c.create ?? 0} products added, but the collection failed: `
+          + String(group.data?.error ?? 'refused'),
+        counts: c,
+      }
+    }
+    return {
+      ok: true,
+      detail: `${c.create ?? 0} added, ${c.update ?? 0} updated; collection `
+        + `${group.data?.created ?? 0} created, ${group.data?.fixed ?? 0} fixed`,
+      counts: c,
     }
   } catch (err) {
     return { ok: false, detail: err instanceof Error ? err.message : 'could not reach the register' }

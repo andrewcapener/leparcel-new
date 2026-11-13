@@ -13,7 +13,7 @@ import { priceFromDollars, readPastedList } from '@/server/modules/inventory/lin
 import { findLine, type ApiLine } from '@/server/modules/inventory/register-api'
 import { byCode } from '@/server/modules/roster/inventory-print'
 import { multiBuyWords } from '@/server/modules/roster/inventory-export'
-import { pushAllPrices, pushCollections } from '@/server/modules/shopify/push'
+import { pushAllPrices, pushCollections, pushHouseGoods } from '@/server/modules/shopify/push'
 
 /**
  * Change a price at the show without opening the admin.
@@ -33,6 +33,7 @@ import { pushAllPrices, pushCollections } from '@/server/modules/shopify/push'
  *   { "do": "makers" }
  *   { "do": "hours" }
  *   { "do": "collections" }
+ *   { "do": "house", "code": "MM42", "shop": "Mermade Market", "list": "..." }
  *   { "do": "sethours", "text": "Friday 13 November, noon to 6pm \u00b7 ..." }
  *   { "do": "lines",  "code": "MM28" }
  *   { "do": "price",  "code": "MM28", "match": "tote", "fromPrice": "5", "toPrice": "6" }
@@ -158,6 +159,65 @@ export async function POST(req: NextRequest) {
   /* A collection per maker on the register. Safe to run at any time: it
      creates what is missing and repairs what is wrong, and leaves the rest
      alone. */
+  /**
+   * Mermade's own stock, straight onto the register.
+   *
+   * Deliberately NOT a maker. There is nobody to pay for the market's own
+   * ribbon, so there is no booking, no commission snapshot and no statement:
+   * see pushHouseGoods. The code must be one no maker holds, so this can
+   * never quietly write over somebody's table.
+   */
+  if (act === 'house') {
+    const houseCode = String(body.code ?? '').trim().toUpperCase()
+    if (!/^[A-Z]{1,3}\d{1,4}$/.test(houseCode)) {
+      return json({ error: 'code must be a Mermade ID like MM42' }, 400)
+    }
+    if (makers.some((m) => m.code.toUpperCase() === houseCode)) {
+      return json({
+        error: `${houseCode} belongs to a maker, so it cannot be used for house goods`,
+      }, 409)
+    }
+    const shop = String(body.shop ?? '').trim()
+    if (!shop) return json({ error: 'shop required, e.g. "Mermade Market"' }, 400)
+
+    const read = readPastedList(String(body.list ?? ''))
+    if (read.lines.length === 0) {
+      return json({ error: 'Nothing read from that. One a line, like "Tote $20".' }, 400)
+    }
+    for (const l of read.lines) {
+      const problem = priceProblem(l.priceCents)
+      if (problem) return json({ error: `${l.label || 'That line'}: ${problem}` }, 400)
+    }
+
+    const push = await pushHouseGoods({
+      code: houseCode,
+      shop,
+      category: String(body.category ?? '').trim() || 'Mermade Market',
+      lines: read.lines.map((l) => ({
+        label: l.label, priceCents: l.priceCents, breaks: l.breaks,
+      })),
+    })
+
+    await db.insert(auditLog).values({
+      id: randomUUID(),
+      entity: 'show',
+      entityId: show.id,
+      action: 'house_goods_pushed',
+      actor: 'claude:register-api',
+      before: null,
+      after: JSON.stringify({ code: houseCode, shop, lines: read.lines.length, ok: push.ok }),
+      reason: String(body.reason ?? '').trim() || 'the market\u2019s own stock',
+    })
+
+    return json({
+      code: houseCode,
+      shop,
+      lines: read.lines.map((l) => ({ item: l.label, price: money(l.priceCents) })),
+      register: push.ok ? push.detail : `NOT SENT: ${push.detail}`,
+      note: 'House goods carry no commission and no payout, by design.',
+    }, push.ok ? 200 : 502)
+  }
+
   if (act === 'collections') {
     const r = await pushCollections(db, show.id)
     return json({ register: r.detail, counts: r.counts ?? null }, r.ok ? 200 : 502)
@@ -355,5 +415,5 @@ export async function POST(req: NextRequest) {
     }, push.ok ? 200 : 502)
   }
 
-  return json({ error: 'do must be makers, hours, sethours, collections, lines, price or add' }, 400)
+  return json({ error: 'do must be makers, hours, sethours, collections, house, lines, price or add' }, 400)
 }
