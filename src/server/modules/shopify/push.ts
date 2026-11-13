@@ -1,5 +1,5 @@
 import type { db as Db } from '@/db'
-import { makerLines, shopifyProducts } from './products'
+import { collectionsFor, makerLines, shopifyProducts } from './products'
 
 type DbHandle = typeof Db
 
@@ -58,6 +58,53 @@ export async function pushAllPrices(db: DbHandle, showId: string): Promise<PushR
       ok: true,
       detail: `${c.update ?? 0} updated, ${c.create ?? 0} added`,
       counts: c,
+    }
+  } catch (err) {
+    return { ok: false, detail: err instanceof Error ? err.message : 'could not reach the register' }
+  }
+}
+
+/**
+ * One collection per maker, so the register is organised by who made the
+ * thing rather than by what it is.
+ *
+ * Same wiring and the same reasoning as the prices push: every maker every
+ * time, because the push leaves an existing collection alone and only
+ * creates what is missing, so sending one and sending all produce the same
+ * store.
+ *
+ * It also repairs what is already there. A collection the register cannot
+ * see, or one listing a maker's goods in no useful order, is fixed in place
+ * rather than recreated: see the housework-api route, which sets the field
+ * and then reads it back rather than believing the write.
+ */
+export async function pushCollections(db: DbHandle, showId: string): Promise<PushResult> {
+  const w = wiring()
+  if (!w) return { ok: false, detail: 'the register link is not configured on this app' }
+
+  const makers = collectionsFor(await makerLines(db, showId))
+  if (makers.length === 0) {
+    return { ok: false, detail: 'no maker has filed a price yet, so there is nothing to group' }
+  }
+
+  try {
+    const res = await fetch(`${w.url}/shopify-collections-push`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': w.key },
+      body: JSON.stringify({ client: 'mermade', dryRun: false, makers }),
+      cache: 'no-store',
+    })
+    const data = await res.json().catch(() => null)
+    if (!res.ok || data?.error) {
+      return { ok: false, detail: String(data?.error ?? 'Shopify refused it') }
+    }
+    const c = (data?.counts ?? {}) as Record<string, number>
+    const failed = Array.isArray(data?.failed) ? data.failed.length : 0
+    return {
+      ok: failed === 0,
+      detail: `${data?.created ?? 0} created, ${data?.fixed ?? 0} fixed, ${c.exists ?? 0} already right`
+        + (failed ? `, ${failed} FAILED` : ''),
+      counts: { ...c, created: Number(data?.created ?? 0), fixed: Number(data?.fixed ?? 0), failed },
     }
   } catch (err) {
     return { ok: false, detail: err instanceof Error ? err.message : 'could not reach the register' }

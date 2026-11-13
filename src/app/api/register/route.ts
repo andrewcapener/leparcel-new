@@ -13,7 +13,7 @@ import { priceFromDollars, readPastedList } from '@/server/modules/inventory/lin
 import { findLine, type ApiLine } from '@/server/modules/inventory/register-api'
 import { byCode } from '@/server/modules/roster/inventory-print'
 import { multiBuyWords } from '@/server/modules/roster/inventory-export'
-import { pushAllPrices } from '@/server/modules/shopify/push'
+import { pushAllPrices, pushCollections } from '@/server/modules/shopify/push'
 
 /**
  * Change a price at the show without opening the admin.
@@ -32,6 +32,7 @@ import { pushAllPrices } from '@/server/modules/shopify/push'
  * POST /api/register        x-register-key: <key>
  *   { "do": "makers" }
  *   { "do": "hours" }
+ *   { "do": "collections" }
  *   { "do": "sethours", "text": "Friday 13 November, noon to 6pm \u00b7 ..." }
  *   { "do": "lines",  "code": "MM28" }
  *   { "do": "price",  "code": "MM28", "match": "tote", "fromPrice": "5", "toPrice": "6" }
@@ -154,6 +155,14 @@ export async function POST(req: NextRequest) {
    * Still a long way from a general admin API: this is one text field of one
    * record, it is public information, and it carries no money and no PII.
    */
+  /* A collection per maker on the register. Safe to run at any time: it
+     creates what is missing and repairs what is wrong, and leaves the rest
+     alone. */
+  if (act === 'collections') {
+    const r = await pushCollections(db, show.id)
+    return json({ register: r.detail, counts: r.counts ?? null }, r.ok ? 200 : 502)
+  }
+
   if (act === 'hours') {
     const [row] = await db.select({ hoursNote: shows.hoursNote })
       .from(shows).where(eq(shows.id, show.id)).limit(1)
@@ -346,5 +355,5 @@ export async function POST(req: NextRequest) {
     }, push.ok ? 200 : 502)
   }
 
-  return json({ error: 'do must be makers, hours, sethours, lines, price or add' }, 400)
+  return json({ error: 'do must be makers, hours, sethours, collections, lines, price or add' }, 400)
 }
