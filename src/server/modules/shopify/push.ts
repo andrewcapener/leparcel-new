@@ -299,3 +299,30 @@ export async function dedupeMaker(code: string, apply: boolean): Promise<
     return { ok: false, detail: err instanceof Error ? err.message : 'could not reach the register' }
   }
 }
+
+/**
+ * Take one product off the register, by SKU.
+ *
+ * Archive rather than delete, so a mistake here is a click to undo in the
+ * admin rather than a product somebody has to rebuild from a photograph.
+ */
+export async function archiveSku(sku: string): Promise<{ ok: boolean; detail: string }> {
+  const w = wiring()
+  if (!w) return { ok: false, detail: 'the register link is not configured on this app' }
+  try {
+    const res = await fetch(`${w.url}/shopify-products-archive`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': w.key },
+      body: JSON.stringify({ client: 'mermade', dryRun: false, skus: [sku] }),
+      cache: 'no-store',
+    })
+    const d = await res.json().catch(() => null)
+    if (!res.ok || d?.error) return { ok: false, detail: String(d?.error ?? 'Shopify refused it') }
+    if (Number(d?.archived ?? 0) === 0) {
+      return { ok: false, detail: `${sku} was not found at the register, so nothing was taken off` }
+    }
+    return { ok: true, detail: `${sku} archived` }
+  } catch (err) {
+    return { ok: false, detail: err instanceof Error ? err.message : 'could not reach the register' }
+  }
+}

@@ -14,7 +14,7 @@ import { findLine, type ApiLine } from '@/server/modules/inventory/register-api'
 import { byCode } from '@/server/modules/roster/inventory-print'
 import { multiBuyWords } from '@/server/modules/roster/inventory-export'
 import {
-  dedupeMaker, pushAllPrices, pushCollections, pushHouseGoods,
+  archiveSku, dedupeMaker, pushAllPrices, pushCollections, pushHouseGoods,
 } from '@/server/modules/shopify/push'
 
 /**
@@ -36,6 +36,7 @@ import {
  *   { "do": "hours" }
  *   { "do": "collections" }
  *   { "do": "dedupe", "code": "B36", "apply": true }
+ *   { "do": "undo", "code": "MM35", "expectItem": "...", "expectPrice": "150" }
  *   { "do": "house", "code": "MM42", "shop": "Mermade Market", "list": "..." }
  *   { "do": "sethours", "text": "Friday 13 November, noon to 6pm \u00b7 ..." }
  *   { "do": "lines",  "code": "MM28" }
@@ -317,6 +318,82 @@ export async function POST(req: NextRequest) {
     return json({ code: maker.code, shop: maker.shop, lines: lines.map(shown) })
   }
 
+  /**
+   * Undo the last thing added to a maker's list.
+   *
+   * ONLY the last line, and that restriction is the whole safety of it. The
+   * SKUs the push builds are positional, so MM35-24 means the twenty fourth
+   * line of her list: removing one from the middle renumbers every line
+   * under it and the next push writes her prices onto the wrong products.
+   * Removing the last one renumbers nothing.
+   *
+   * Which is also the case this exists for. An add that should not have
+   * happened is found seconds later, and until now the only way back was a
+   * Shopify login somebody at a counter does not have.
+   *
+   * The caller says what it expects to be removing and is refused if the
+   * list does not agree, because "undo the last one" is a dangerous
+   * instruction to follow blind.
+   */
+  if (act === 'undo') {
+    const all = await linesOf(maker.bookingId)
+    if (all.length === 0) return json({ error: 'she has no lines to undo' }, 409)
+    const last = all[all.length - 1]
+    const sku = `${maker.code.toUpperCase()}-${all.length}`
+
+    const wantItem = String(body.expectItem ?? '').trim().toLowerCase()
+    const wantPrice = String(body.expectPrice ?? '').trim()
+    if (wantItem && !last.label.toLowerCase().includes(wantItem)) {
+      return json({
+        error: `the last line is "${last.label}" at ${money(last.priceCents)}, not "${body.expectItem}"`,
+        lastLine: shown(last),
+      }, 409)
+    }
+    if (wantPrice) {
+      const want = priceFromDollars(wantPrice)
+      if ('bad' in want) return json({ error: `expectPrice: ${want.bad}` }, 400)
+      if (want.cents !== last.priceCents) {
+        return json({
+          error: `the last line is ${money(last.priceCents)}, not ${money(want.cents)}`,
+          lastLine: shown(last),
+        }, 409)
+      }
+    }
+
+    /* The register first. A line voided here while the product is still
+       sellable is the dangerous order: it sells, and no price list is left
+       saying what it was. */
+    const off = await archiveSku(sku)
+    if (!off.ok) return json({ error: off.detail, lastLine: shown(last) }, 502)
+
+    await db
+      .update(inventoryItems)
+      .set({
+        voidedAt: new Date().toISOString(),
+        voidedBy: 'claude:register-api',
+        voidReason: String(body.reason ?? '').trim() || 'added in error',
+      })
+      .where(eq(inventoryItems.id, last.id))
+
+    await db.insert(auditLog).values({
+      id: randomUUID(),
+      entity: 'inventory_item',
+      entityId: last.id,
+      action: 'line_undone',
+      actor: 'claude:register-api',
+      before: JSON.stringify({ label: last.label, priceCents: last.priceCents, sku }),
+      after: null,
+      reason: String(body.reason ?? '').trim() || 'added in error',
+    })
+
+    return json({
+      code: maker.code,
+      removed: { ...shown(last), sku },
+      register: off.detail,
+      remaining: all.length - 1,
+    })
+  }
+
   if (act === 'price') {
     const toRaw = String(body.toPrice ?? '').trim()
     if (!toRaw) return json({ error: 'toPrice required' }, 400)
@@ -436,5 +513,5 @@ export async function POST(req: NextRequest) {
     }, push.ok ? 200 : 502)
   }
 
-  return json({ error: 'do must be makers, hours, sethours, collections, dedupe, house, lines, price or add' }, 400)
+  return json({ error: 'do must be makers, hours, sethours, collections, dedupe, house, lines, price, add or undo' }, 400)
 }
