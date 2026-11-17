@@ -64,6 +64,8 @@ const MAIN: Array<{
   { href: '/admin/roster', label: 'Roster', icon: 'roster', count: 'needsPerson' },
   { href: '/admin/codes', label: 'Maker numbers', icon: 'queue' },
   { href: '/admin/sales', label: 'Sales', icon: 'money' },
+  // What each maker is owed. Reading only: nothing sends and nobody is paid.
+  { href: '/admin/statements', label: 'Statements', icon: 'money' },
   { href: '/admin/shopify', label: 'The register', icon: 'queue' },
   // At the show, from a phone: change a price or add a line and the register
   // has it in one press. The two screens above are the October version.
