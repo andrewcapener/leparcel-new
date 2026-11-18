@@ -14,9 +14,18 @@ check('a markdown on the line', lineDiscountCents({ total_discount: '1.00' }) ==
 check('a share of an order discount', lineDiscountCents({
   total_discount: '0.00', discount_allocations: [{ amount: '1.15' }],
 }) === 115)
-check('both at once', lineDiscountCents({
+/* The bug this file exists to prevent coming back. total_discount is not a
+   second markdown on top of the allocation, it is the SAME money said twice,
+   and Shopify fills it on some lines and not others. Adding them double
+   counted three lines of the Fall 2026 show and would have short paid Emily
+   Davis $6.40. The allocation wins; the line's own figure is only read when
+   there is no allocation at all. */
+check('the same discount said twice is counted once', lineDiscountCents({
+  total_discount: '7.00', discount_allocations: [{ amount: '7.00' }],
+}) === 700)
+check('the allocation is the authority', lineDiscountCents({
   total_discount: '1.00', discount_allocations: [{ amount: '0.34' }],
-}) === 134)
+}) === 34)
 check('several allocations', lineDiscountCents({
   total_discount: '0.00', discount_allocations: [{ amount: '0.50' }, { amount: '0.25' }],
 }) === 75)

@@ -37,18 +37,29 @@ export type MakerSales = {
 /**
  * What a line was discounted by.
  *
- * Shopify puts a per-line markdown in `total_discount` and an order-level
- * one in `discount_allocations`, already prorated across the basket: a five
- * dollar discount on a hundred dollar basket puts $1.15 against the sixty
- * eight dollar candle and 34 cents against the five dollar ring. Reading only
- * one of the two silently keeps the house's commission on money the customer
- * never paid, which is the maker's cent and not ours (rule 2).
+ * `discount_allocations` is the authoritative one: Shopify has already
+ * prorated the basket's discount across the lines, so a five dollar discount
+ * puts $1.15 against the sixty eight dollar candle and 34 cents against the
+ * five dollar ring, and the allocations always add back up to the order's
+ * own total_discounts.
+ *
+ * `total_discount` is NOT a second, separate markdown. It is the same money
+ * said again, and Shopify fills it on some lines and not others for no
+ * reason visible from here. Adding the two was this function's first version
+ * and it double counted three lines of this show: MM8 lost $8 of net sales
+ * and $6.40 of payout, MM42 a dollar it is not paid for anyway. Found by
+ * reconciling the line maths against Shopify's own order subtotal, which is
+ * the check that should be run against every show before anybody is paid.
+ *
+ * So: the allocations where there are any, and the line's own figure only
+ * when there are none.
  */
 export function lineDiscountCents(li: Record<string, unknown>): number {
-  const own = centsFromDecimal(li.total_discount as string)
   const allocs = (li.discount_allocations ?? []) as Array<Record<string, unknown>>
-  const shared = allocs.reduce((n, a) => n + centsFromDecimal(a.amount as string), 0)
-  return own + shared
+  if (allocs.length > 0) {
+    return allocs.reduce((n, a) => n + centsFromDecimal(a.amount as string), 0)
+  }
+  return centsFromDecimal(li.total_discount as string)
 }
 
 /**
