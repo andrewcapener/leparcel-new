@@ -6,8 +6,10 @@ import { usd } from '@/lib/money'
 import { holdsSpace } from '@/server/modules/payments/booking-status'
 import { fetchSales } from '@/server/modules/sales/fetch'
 import {
-  byDay, byHour, byMaker, hourLabel, pacific, totals, HOUSE_CODES,
+  byDay, byHour, hourLabel, pacific, totals, HOUSE_CODES,
 } from '@/server/modules/sales/read'
+import { makerSales } from '@/server/modules/statements/from-sales'
+import { statementTotals } from '@/server/modules/statements/math'
 import { byCode } from '@/server/modules/roster/inventory-print'
 import { PageHead } from '../ui'
 import { Refresh } from './Refresh'
@@ -134,11 +136,27 @@ export default async function SalesDesk() {
 
   const today = PT_TODAY()
   const salesToday = read.sales.filter((s) => pacific(s.at).day === today)
-  const makersToday = byMaker(salesToday, bpsOf, show.commissionBps ?? 2000)
-  const t = totals(salesToday, makersToday)
+  const t = totals(salesToday)
+  const showTotal = totals(read.sales)
 
-  const allMakers = byMaker(read.sales, bpsOf, show.commissionBps ?? 2000)
-  const showTotal = totals(read.sales, allMakers)
+  /* The same reader the statements use, so the two screens cannot disagree
+     about what a maker earned. Discounts and refunds come off before the
+     house takes its share, and this is the only thing that knows it. */
+  const fallbackBps = show.commissionBps ?? 2000
+  const earned = (orders: Array<Record<string, unknown>>) =>
+    makerSales(orders, { bpsOf, fallbackBps, labelOf: read.labels, houseCodes: HOUSE_CODES })
+      .map((m) => ({ code: m.code, units: m.input.itemsSold, t: statementTotals(m.input) }))
+
+  const ordersToday = read.orders.filter((o) => pacific(String(o.created_at ?? '')).day === today)
+  const allMakers = earned(read.orders)
+  const todayMakers = earned(ordersToday)
+  const sumOf = (rows: ReturnType<typeof earned>) => ({
+    commission: rows.reduce((n, r) => n + r.t.commissionCents, 0),
+    due: rows.reduce((n, r) => n + r.t.payoutCents, 0),
+    net: rows.reduce((n, r) => n + r.t.netSalesCents, 0),
+  })
+  const todaySum = sumOf(todayMakers)
+  const showSum = sumOf(allMakers)
   const days = byDay(read.sales)
   const hours = byHour(salesToday)
   const peak = Math.max(1, ...hours.map((h) => h.goodsCents))
@@ -186,11 +204,11 @@ export default async function SalesDesk() {
           <span>Average basket</span>
         </div>
         <div className="sx-fig">
-          <b>{usd(t.commissionCents)}</b>
+          <b>{usd(todaySum.commission)}</b>
           <span>Commission</span>
         </div>
         <div className="sx-fig">
-          <b>{usd(t.netCents)}</b>
+          <b>{usd(todaySum.due)}</b>
           <span>Owed to makers</span>
         </div>
       </div>
@@ -230,12 +248,12 @@ export default async function SalesDesk() {
               <tr>
                 <td className="shop">Commission</td>
                 <td />
-                <td className="m">{usd(showTotal.commissionCents)}</td>
+                <td className="m">{usd(showSum.commission)}</td>
               </tr>
               <tr>
                 <td className="shop">Owed to makers</td>
                 <td />
-                <td className="m">{usd(showTotal.netCents)}</td>
+                <td className="m">{usd(showSum.due)}</td>
               </tr>
             </tbody>
           </table>
@@ -262,8 +280,8 @@ export default async function SalesDesk() {
                     {HOUSE_CODES.has(m.code) ? <span className="house"> &middot; house</span> : null}
                   </td>
                   <td className="m">{m.units}</td>
-                  <td className="m">{usd(m.grossCents)}</td>
-                  <td className="m">{usd(m.netCents)}</td>
+                  <td className="m">{usd(m.t.grossCents)}</td>
+                  <td className="m">{usd(m.t.payoutCents)}</td>
                 </tr>
               ))}
               {quiet.length > 0 ? (

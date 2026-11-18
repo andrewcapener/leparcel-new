@@ -98,50 +98,15 @@ export function pacific(iso: string): { day: string; hour: number } {
   return { day: `${get('year')}-${get('month')}-${get('day')}`, hour }
 }
 
-export type MakerTotal = {
-  code: string
-  grossCents: number
-  commissionCents: number
-  netCents: number
-  units: number
-  orders: number
-}
-
-/**
- * What each maker has sold, and what she is owed for it.
- *
- * The rate is hers, off her own booking, because commission_bps is
- * snapshotted when the booking is made and never changes (rule 6). Reading a
- * single rate off the Show record would be right today and wrong the first
- * time somebody is given different terms.
- */
-export function byMaker(sales: Sale[], bpsOf: Map<string, number>, fallbackBps: number): MakerTotal[] {
-  const gross = new Map<string, number>()
-  const units = new Map<string, number>()
-  const orders = new Map<string, Set<number>>()
-  for (const s of sales) {
-    for (const l of s.lines) {
-      if (!l.code) continue
-      gross.set(l.code, (gross.get(l.code) ?? 0) + l.cents)
-      units.set(l.code, (units.get(l.code) ?? 0) + l.qty)
-      orders.set(l.code, (orders.get(l.code) ?? new Set()).add(s.id))
-    }
-  }
-  const out: MakerTotal[] = []
-  gross.forEach((g, code) => {
-    const bps = HOUSE_CODES.has(code) ? 0 : bpsOf.get(code) ?? fallbackBps
-    const split = splitCommission(g, bps)
-    out.push({
-      code,
-      grossCents: g,
-      commissionCents: split.commissionCents,
-      netCents: split.netCents,
-      units: units.get(code) ?? 0,
-      orders: orders.get(code)?.size ?? 0,
-    })
-  })
-  return out.sort((a, b) => b.grossCents - a.grossCents || (a.code < b.code ? -1 : 1))
-}
+/* byMaker and MakerTotal used to live here, and they were a second opinion
+   about money. They split commission off GROSS, so the sales screen and the
+   statements screen disagreed by $19.41 of commission and $77.61 of payable
+   on one show: discounts and refunds come off BEFORE the house takes its
+   share, and only the statements path knew it.
+   
+   There is one definition of what a maker earned and it is
+   statements/from-sales.ts plus statementTotals. Nothing else computes it,
+   which is rule 2 and is why that rule exists. */
 
 export type HourSlice = { hour: number; orders: number; goodsCents: number }
 
@@ -176,34 +141,27 @@ export function byDay(sales: Sale[]): DaySlice[] {
 
 export type Totals = {
   orders: number
+  /** What the customer was charged for goods, after any discount. */
   goodsCents: number
   taxCents: number
   totalCents: number
-  commissionCents: number
-  netCents: number
   basketCents: number
 }
 
 /**
- * The headline figures.
+ * What the till took: orders, goods, tax and the total charged.
  *
- * Commission is summed off each maker's own split rather than taken as a
- * percentage of the whole, so the number on the screen is the sum of the
- * numbers on the statements and cannot drift from them by a rounding cent.
+ * Deliberately no commission and no maker share. Those are statement
+ * figures, they depend on refunds this function cannot see, and computing
+ * them here is how the two screens came to disagree.
  */
-export function totals(sales: Sale[], makers: MakerTotal[]): Totals {
+export function totals(sales: Sale[]): Totals {
   const goods = sales.reduce((n, s) => n + s.goodsCents, 0)
-  const tax = sales.reduce((n, s) => n + s.taxCents, 0)
-  const total = sales.reduce((n, s) => n + s.totalCents, 0)
-  const commission = makers.reduce((n, m) => n + m.commissionCents, 0)
-  const net = makers.reduce((n, m) => n + m.netCents, 0)
   return {
     orders: sales.length,
     goodsCents: goods,
-    taxCents: tax,
-    totalCents: total,
-    commissionCents: commission,
-    netCents: net,
+    taxCents: sales.reduce((n, s) => n + s.taxCents, 0),
+    totalCents: sales.reduce((n, s) => n + s.totalCents, 0),
     basketCents: sales.length === 0 ? 0 : Math.round(goods / sales.length),
   }
 }

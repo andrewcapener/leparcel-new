@@ -1,5 +1,5 @@
 import {
-  byDay, byHour, byMaker, centsFromDecimal, hourLabel, pacific, readSale, totals, type Sale,
+  byDay, byHour, centsFromDecimal, hourLabel, pacific, readSale, totals, type Sale,
 } from './read'
 
 let failures = 0
@@ -56,10 +56,17 @@ check('noon is not 0pm', hourLabel(12) === '12pm')
 check('midnight is not 0am', hourLabel(0) === '12am')
 check('afternoon', hourLabel(17) === '5pm')
 
-/* ── what each maker is owed ──────────────────────────────────────────── */
+/* What each maker is owed is NOT tested here any more, because it is not
+   computed here any more. It lives in statements/from-sales.ts with its own
+   tests: two opinions about commission is how this screen came to disagree
+   with the statements by $77.61 of payable. */
+
+/* ── the headline ─────────────────────────────────────────────────────── */
 
 const mk = (id: number, at: string, lines: Array<[string, string, number]>): Sale => ({
-  id, name: `#${id}`, at,
+  id,
+  name: `#${id}`,
+  at,
   goodsCents: lines.reduce((n, [, p, q]) => n + centsFromDecimal(p) * q, 0),
   taxCents: 0,
   totalCents: lines.reduce((n, [, p, q]) => n + centsFromDecimal(p) * q, 0),
@@ -68,48 +75,18 @@ const mk = (id: number, at: string, lines: Array<[string, string, number]>): Sal
   })),
 })
 
-const sales = [
+const sales: Sale[] = [
   mk(1, '2026-11-13T14:00:00-05:00', [['MM28', '120.00', 3]]),
   mk(2, '2026-11-13T15:00:00-05:00', [['MM28', '20.00', 1], ['MM9', '82.00', 1]]),
   mk(3, '2026-11-14T13:00:00-05:00', [['MM42', '5.00', 2]]),
 ]
-const bps = new Map([['MM28', 2000], ['MM9', 2000]])
-const makers = byMaker(sales, bps, 2000)
 
-check('ranked by what sold', makers[0].code === 'MM28')
-check('a maker across orders is summed', makers[0].grossCents === 38000)
-check('her orders are counted once each', makers[0].orders === 2)
-check('units counted', makers[0].units === 4)
-check('commission at her own rate', makers[0].commissionCents === 7600)
-/* Rule 2: the split is exact for every input, with nothing lost or invented
-   between the two halves. */
-check('the split is exact', makers.every((m) => m.commissionCents + m.netCents === m.grossCents))
-
-/* The market's own stock has nobody to pay, so it takes no commission.
-   MM42 as an ordinary maker would have Mermade owing itself eight dollars
-   on its own ribbon. */
-const house = makers.find((m) => m.code === 'MM42')!
-check('house goods carry no commission', house.commissionCents === 0)
-check('and all of it is the house', house.netCents === house.grossCents)
-
-/* A maker with no booking still has to appear, or a sale goes missing from
-   the screen entirely. */
-const orphan = byMaker([mk(9, '2026-11-13T14:00:00-05:00', [['MM99', '10.00', 1]])], new Map(), 2000)
-check('an unknown code falls back to the show rate', orphan[0].commissionCents === 200)
-
-/* ── the headline ─────────────────────────────────────────────────────── */
-
-const t = totals(sales, makers)
+const t = totals(sales)
 check('orders counted', t.orders === 3)
 check('goods summed', t.goodsCents === 38000 + 8200 + 1000)
-/* Summed off the per maker splits rather than taken as a flat percentage of
-   the whole, so the screen can never disagree with the statements by a
-   rounding cent. */
-check('commission is the sum of the splits',
-  t.commissionCents === makers.reduce((n, m) => n + m.commissionCents, 0))
-check('and the two halves still make the whole', t.commissionCents + t.netCents === t.goodsCents)
+check('tax is summed', t.taxCents === 0)
 check('basket is an integer', Number.isInteger(t.basketCents))
-check('an empty day does not divide by zero', totals([], []).basketCents === 0)
+check('an empty day does not divide by zero', totals([]).basketCents === 0)
 
 /* ── days and hours ───────────────────────────────────────────────────── */
 
@@ -126,4 +103,4 @@ if (failures) {
   console.error(`${failures} failed`)
   process.exit(1)
 }
-console.log('sales: money leaves the string intact, and every split adds back up')
+console.log('sales: money leaves the decimal string intact, and the day it lands on is Pacific')
