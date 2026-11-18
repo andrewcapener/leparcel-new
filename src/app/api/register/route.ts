@@ -12,6 +12,9 @@ import { applyPriceEdits, priceProblem } from '@/server/modules/inventory/edit'
 import { priceFromDollars, readPastedList } from '@/server/modules/inventory/lines'
 import { findLine, type ApiLine } from '@/server/modules/inventory/register-api'
 import { byCode } from '@/server/modules/roster/inventory-print'
+import {
+  bestSeller, lineLabel, showStatements,
+} from '@/server/modules/statements/show-statements'
 import { multiBuyWords } from '@/server/modules/roster/inventory-export'
 import {
   archiveSku, dedupeMaker, pushAllPrices, pushCollections, pushHouseGoods,
@@ -35,6 +38,7 @@ import {
  *   { "do": "makers" }
  *   { "do": "hours" }
  *   { "do": "collections" }
+ *   { "do": "statements" }
  *   { "do": "dedupe", "code": "B36", "apply": true }
  *   { "do": "undo", "code": "MM35", "expectItem": "...", "expectPrice": "150" }
  *   { "do": "house", "code": "MM42", "shop": "Mermade Market", "list": "..." }
@@ -237,6 +241,53 @@ export async function POST(req: NextRequest) {
       keep: d.plan.keep,
       drop: d.plan.drop,
       detail: d.detail,
+    })
+  }
+
+  /**
+   * Every maker's statement for this show, figures and all.
+   *
+   * Carries contact names and email addresses, which nothing else here does.
+   * That is a deliberate widening and not an accident: drafting forty
+   * statement emails needs forty addresses, and the alternative was somebody
+   * copying them off a screen by hand. Still read only, still this show
+   * only, and still nothing anybody is paid from.
+   */
+  if (act === 'statements') {
+    const set = await showStatements(db, show.id)
+    if (!set.ok) return json({ error: set.detail }, 502)
+    return json({
+      show: show.name,
+      venue: show.venueName,
+      startsOn: show.startsOn,
+      endsOn: show.endsOn,
+      makers: set.makers.map((s) => {
+        const top = bestSeller(s.lines)
+        return {
+          code: s.code,
+          shop: s.shop,
+          contact: s.contact,
+          email: s.email,
+          orders: s.orders,
+          items: s.totals.itemsSold,
+          commissionBps: s.totals.commissionBps,
+          grossCents: s.totals.grossCents,
+          discountsCents: s.totals.discountsCents,
+          refundsCents: s.totals.refundsCents,
+          netSalesCents: s.totals.netSalesCents,
+          commissionCents: s.totals.commissionCents,
+          payoutCents: s.totals.payoutCents,
+          best: top ? { label: lineLabel(top), unitCents: top.unitCents, qty: top.qty } : null,
+          lines: s.lines.map((l) => ({
+            sku: l.sku,
+            item: lineLabel(l),
+            unitCents: l.unitCents,
+            qty: l.qty,
+            grossCents: l.grossCents,
+            discountsCents: l.discountsCents,
+          })),
+        }
+      }),
     })
   }
 
@@ -513,5 +564,5 @@ export async function POST(req: NextRequest) {
     }, push.ok ? 200 : 502)
   }
 
-  return json({ error: 'do must be makers, hours, sethours, collections, dedupe, house, lines, price, add or undo' }, 400)
+  return json({ error: 'do must be makers, hours, sethours, collections, statements, dedupe, house, lines, price, add or undo' }, 400)
 }
