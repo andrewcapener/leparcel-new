@@ -1,8 +1,9 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { activeShow } from '@/db/queries'
-import { bookings, vendors } from '@/db/schema'
+import { bookings, spaceTypes, vendors } from '@/db/schema'
 import { usd } from '@/lib/money'
+import { holdsSpace } from '@/server/modules/payments/booking-status'
 import { fetchSales } from '@/server/modules/sales/fetch'
 import {
   byDay, byHour, byMaker, hourLabel, pacific, totals, HOUSE_CODES,
@@ -109,9 +110,12 @@ export default async function SalesDesk() {
         code: bookings.vendorCode,
         bps: bookings.commissionBps,
         shop: vendors.shopName,
+        status: bookings.status,
+        track: spaceTypes.track,
       })
       .from(bookings)
       .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
+      .innerJoin(spaceTypes, eq(bookings.spaceTypeId, spaceTypes.id))
       .where(eq(bookings.showId, show.id)),
   ])
 
@@ -140,8 +144,19 @@ export default async function SalesDesk() {
   const peak = Math.max(1, ...hours.map((h) => h.goodsCents))
   const nowHour = pacific(new Date().toISOString()).hour
 
+  /**
+   * Who sold nothing, out of those who could have.
+   *
+   * Indoor and still holding a space, which is the same test the register
+   * and the price push use. Built off every booking at the show, this listed
+   * ninety codes: outdoor makers, who take their own money at their own tents
+   * and can never ring through this till, plus released bookings and a
+   * handful of codes nobody uses. A maker who was never going to appear here
+   * reads as a maker who had a bad show, which is alarming and wrong.
+   */
   const sold = new Set(allMakers.map((m) => m.code))
   const quiet = roster
+    .filter((r) => r.track !== 'outdoor' && holdsSpace(r.status))
     .map((r) => r.code.toUpperCase())
     .filter((c) => !sold.has(c))
     .sort(byCode)
@@ -254,7 +269,7 @@ export default async function SalesDesk() {
               {quiet.length > 0 ? (
                 <tr className="quiet">
                   <td colSpan={5}>
-                    Nothing yet: {quiet.join(', ')}
+                    Sold nothing: {quiet.join(', ')}
                   </td>
                 </tr>
               ) : null}
