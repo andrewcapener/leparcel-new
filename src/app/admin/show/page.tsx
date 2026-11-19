@@ -1,10 +1,12 @@
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow, activeAddOns } from '@/db/queries'
+import { activeShow, activeAddOns, showMenu } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SettingsForm } from './SettingsForm'
 import { updateSpace, updateAddOn } from '@/app/actions'
-import { fmtDate, fmtDateTime, fmtRange, applicationWindow } from '@/lib/dates'
+import { fmtDate, fmtDateTime, fmtRange, applicationWindow, isoToLaWall } from '@/lib/dates'
+import { suggestNextShow } from '@/server/modules/shows/clone'
+import { NextShowForm } from './NextShowForm'
 import { bpsLabel, usd } from '@/lib/money'
 import { PageHead, Stats, Stat } from '../ui'
 
@@ -32,6 +34,7 @@ const WINDOW_LABEL = {
 export default async function ShowSettings() {
   const show = await activeShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
+  const menu = await showMenu()
   const spaces = await db.query.spaceTypes.findMany({
     where: eq(spaceTypes.showId, show.id),
     orderBy: [asc(spaceTypes.sortOrder)],
@@ -226,6 +229,8 @@ export default async function ShowSettings() {
           ))}
         </div>
       )}
+
+      <NextShowForm suggestion={suggestNextShow(show, isoToLaWall)} shows={menu} />
 
       <div className="adm-foot">
         <p className="adm-note">

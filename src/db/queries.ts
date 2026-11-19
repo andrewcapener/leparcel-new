@@ -1,5 +1,5 @@
 import { unstable_cache, revalidateTag } from 'next/cache'
-import { eq, and, asc } from 'drizzle-orm'
+import { eq, and, asc, desc } from 'drizzle-orm'
 import { db } from './index'
 import { fillCapacity } from '@/lib/counts'
 import { tidyHoursNote } from '@/lib/schedule'
@@ -236,4 +236,53 @@ async function readActiveSpaceTypes(showId: string): Promise<SpaceType[]> {
   // Resolved here so every caller gets the same sentence and none of them has
   // to remember to do it. src/lib/counts.ts explains why.
   return rows.map((r) => fillCapacity(r))
+}
+
+/* ── looking at a show that is not the active one ───────────────────────── */
+
+/**
+ * Every show, newest first, for the admin's "which show" line.
+ *
+ * Only the fields a picker needs. Cheap enough to run on each admin render
+ * and deliberately uncached: a show planned a minute ago should appear.
+ */
+export async function showMenu(): Promise<
+  Array<{ slug: string; name: string; isActive: boolean; startsOn: string }>
+> {
+  return db
+    .select({
+      slug: shows.slug, name: shows.name,
+      isActive: shows.isActive, startsOn: shows.startsOn,
+    })
+    .from(shows)
+    .orderBy(desc(shows.startsOn))
+}
+
+/** One show by its slug, read the same way activeShow reads the active one. */
+export async function showBySlug(slug: string): Promise<Show | undefined> {
+  const full = await db.query.shows.findFirst({ where: eq(shows.slug, slug) })
+  return full && { ...full, hoursNote: tidyHoursNote(full.hoursNote) }
+}
+
+/**
+ * The show an admin money screen is looking at.
+ *
+ * The roster, sales and statements screens all read activeShow(), which is
+ * right until the day the next show is made active. Fall's statements were
+ * still being reconciled with makers the week Spring 2027 was planned, and
+ * flipping the active show would have emptied all three screens in the
+ * middle of that: the money would still be in the database and simply have
+ * no page left that could show it.
+ *
+ * So those screens ask for a show by slug and fall back to the active one.
+ * An unknown slug falls back too rather than erroring, because a stale
+ * bookmark should show today's show, not a crash.
+ */
+export async function adminShow(slug?: string): Promise<Show | undefined> {
+  const want = (slug ?? '').trim().toLowerCase()
+  if (want) {
+    const named = await showBySlug(want)
+    if (named) return named
+  }
+  return activeShow()
 }

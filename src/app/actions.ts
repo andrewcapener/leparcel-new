@@ -38,6 +38,9 @@ import {
 } from '@/lib/makerAuth'
 import { publicPhotoUrl, verifyPhotoKeys } from '@/server/modules/uploads/storage'
 import { pushSubscriber, dripConfig } from '@/server/modules/drip/client'
+import {
+  clonedAddOns, clonedSpaceTypes, nextNumeral, nextShowRow, showSlug,
+} from '@/server/modules/shows/clone'
 import { startBoothPayment, bookingByPayToken, dropLiveCheckout, boothInvoice } from '@/server/modules/payments/booth'
 import {
   ensureConnectAccount, onboardingLink, refreshAccount, owesPayoutSetup,
@@ -2458,4 +2461,148 @@ export async function forfeitOverdueBookings(): Promise<void> {
   /* Leave rather than re-render: the button lives inside a block that only
      exists while something is overdue, and a successful run empties it. */
   redirect('/admin/roster')
+}
+
+/* ───────────────────────── planning the next show ───────────────────────── */
+
+/**
+ * Create the next show from the current one.
+ *
+ * Until now the only way to point the site at a new season was to edit the
+ * active Show record, and that is the one thing that must not happen:
+ * bookings, applications, statements and payouts are scoped to a `show_id`
+ * (CLAUDE.md rule 6), so retyping Fall's dates as April's would make forty
+ * statements that have already gone out claim to belong to a show in spring.
+ *
+ * So this inserts a NEW row, copies the priced inventory that hangs off a
+ * show, and leaves the new show switched off. Going live is a second,
+ * deliberate action (`activateShow`), because planning April in November
+ * must not take the public site off a show that is still being paid out.
+ */
+export async function planNextShow(prev: FormState, fd: FormData): Promise<FormState> {
+  const attempt = (prev.attempt ?? 0) + 1
+  const from = await activeShow()
+  if (!from) return { ok: false, attempt, message: 'No active show to copy.' }
+
+  const str = (k: string) => String(fd.get(k) ?? '').trim()
+  const season = str('season').toLowerCase()
+  const year = Number(str('year'))
+  const startsOn = str('startsOn')
+  const endsOn = str('endsOn')
+  const opensAt = str('applicationsOpenAt')
+  const closesAt = str('applicationsCloseAt')
+  const announced = str('rosterAnnouncedOn')
+
+  const errors: Record<string, string> = {}
+  const values = Object.fromEntries(
+    Object.entries(Object.fromEntries(fd.entries())).map(([k, v]) => [k, String(v)]),
+  )
+
+  const isSeason = (v: string): v is 'spring' | 'fall' => v === 'spring' || v === 'fall'
+  if (!isSeason(season)) errors.season = 'Spring or fall.'
+  if (!Number.isInteger(year) || year < 2024 || year > 2100) errors.year = 'A four digit year.'
+  for (const [k, v] of [
+    ['startsOn', startsOn], ['endsOn', endsOn], ['rosterAnnouncedOn', announced],
+  ] as const) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) errors[k] = 'Pick a date.'
+  }
+  for (const [k, v] of [
+    ['applicationsOpenAt', opensAt], ['applicationsCloseAt', closesAt],
+  ] as const) {
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) errors[k] = 'Pick a date and time.'
+  }
+  /* The orderings that would be nonsense rather than merely unusual. A window
+     that closes before it opens accepts nobody; one that closes after the
+     doors open is a show you cannot jury. */
+  if (!errors.startsOn && !errors.endsOn && endsOn < startsOn) {
+    errors.endsOn = 'The show cannot end before it starts.'
+  }
+  if (!errors.applicationsOpenAt && !errors.applicationsCloseAt && closesAt <= opensAt) {
+    errors.applicationsCloseAt = 'Applications must close after they open.'
+  }
+  if (!errors.applicationsCloseAt && !errors.startsOn && closesAt.slice(0, 10) > startsOn) {
+    errors.applicationsCloseAt = 'Applications must close before the show opens.'
+  }
+  if (Object.keys(errors).length > 0) return { ok: false, attempt, errors, values }
+
+  const slug = showSlug(season, year)
+  const clash = await db.query.shows.findFirst({ where: eq(shows.slug, slug) })
+  if (clash) {
+    return {
+      ok: false, attempt, values,
+      errors: { year: `${clash.name} already exists.` },
+    }
+  }
+
+  const id = randomUUID()
+  const row = nextShowRow(from, {
+    id,
+    slug,
+    name: `${season === 'spring' ? 'Spring' : 'Fall'} ${year}`,
+    season: season as 'spring' | 'fall',
+    year,
+    numeral: nextNumeral(from.numeral),
+    startsOn,
+    endsOn,
+    applicationsOpenAt: laWallToIso(opensAt),
+    applicationsCloseAt: laWallToIso(closesAt),
+    rosterAnnouncedOn: announced,
+  })
+
+  const [types, extras] = await Promise.all([
+    db.select().from(spaceTypes).where(eq(spaceTypes.showId, from.id)),
+    db.select().from(addOns).where(eq(addOns.showId, from.id)),
+  ])
+
+  /* One transaction: a show with no priced spaces is a show nobody can apply
+     to, and a half-copied one is worse than none because it looks finished. */
+  await db.transaction(async (tx) => {
+    await tx.insert(shows).values(row)
+    const t = clonedSpaceTypes(types, id, () => randomUUID())
+    const a = clonedAddOns(extras, id, () => randomUUID())
+    if (t.length > 0) await tx.insert(spaceTypes).values(t)
+    if (a.length > 0) await tx.insert(addOns).values(a)
+  })
+
+  await log('show', id, 'created', {}, {
+    from: from.slug, slug, startsOn, endsOn,
+    spaceTypes: types.filter((s) => s.isActive).length, addOns: extras.length,
+  }, `copied from ${from.name}`, 'staff')
+
+  revalidatePath('/admin/show')
+  return {
+    ok: true, attempt,
+    message: `${row.name} planned, copied from ${from.name}. It is not live yet.`,
+  }
+}
+
+/**
+ * Make a planned show the live one.
+ *
+ * Separate from planning it on purpose, and the only thing on the site that
+ * changes which show the public sees. Exactly one row may be active, so the
+ * flip is one statement that clears every other show rather than two that
+ * could leave none active if the second failed.
+ */
+export async function activateShow(fd: FormData): Promise<void> {
+  const slug = String(fd.get('slug') ?? '').trim().toLowerCase()
+  if (!slug) return
+  const target = await db.query.shows.findFirst({ where: eq(shows.slug, slug) })
+  if (!target || target.isActive) return
+
+  const was = await activeShow()
+
+  await db.transaction(async (tx) => {
+    await tx.update(shows).set({ isActive: false }).where(eq(shows.isActive, true))
+    await tx.update(shows).set({ isActive: true }).where(eq(shows.id, target.id))
+  })
+
+  await log('show', target.id, 'settings_change',
+    { active: was?.slug ?? null }, { active: target.slug }, 'made the live show', 'staff')
+
+  forgetShowConfig()
+  for (const p of [
+    '/', '/apply', '/schedule', '/makers/indoor', '/makers/outdoor',
+    '/admin', '/admin/show', '/admin/statements',
+  ]) revalidatePath(p)
 }

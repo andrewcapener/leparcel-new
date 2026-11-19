@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { db } from '@/db'
-import { activeShow } from '@/db/queries'
+import { adminShow } from '@/db/queries'
 import { usd } from '@/lib/money'
 import { byCode } from '@/server/modules/roster/inventory-print'
 import { showStatements } from '@/server/modules/statements/show-statements'
 import { PageHead } from '../ui'
+import { ShowScope } from '../ShowScope'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
@@ -43,8 +44,16 @@ const css = `
   border-left: 2px solid var(--ad-line); padding-left: 12px; margin: 22px 0 0; max-width: 62ch }
 `
 
-export default async function Statements() {
-  const show = await activeShow()
+export default async function Statements({
+  searchParams,
+}: {
+  searchParams: Promise<{ show?: string }>
+}) {
+  /* Which show, rather than whichever is active. Fall's statements were
+     still being reconciled the week Spring was planned, and making Spring
+     active would otherwise have emptied this page mid-payout. */
+  const sp = await searchParams
+  const show = await adminShow(sp.show)
   if (!show) throw new Error('No active show.')
 
   const set = await showStatements(db, show.id)
@@ -75,6 +84,7 @@ export default async function Statements() {
 
   return (
     <div className="st">
+      <ShowScope here="/admin/statements" current={show.slug} />
       <PageHead
         title="Statements"
         sub={`${show.name}. ${makers.length} makers sold. Nothing has been sent.`}
