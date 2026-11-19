@@ -1,4 +1,4 @@
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, ArticleRow } from '@/components/theme/Sections'
 import { journal, excerpt } from '@/lib/journal'
@@ -25,7 +25,7 @@ export const metadata = {
 
 /** /blogs/journal — their page title and their article list. */
 export default async function Journal() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   const articles = journal.map((p) => ({

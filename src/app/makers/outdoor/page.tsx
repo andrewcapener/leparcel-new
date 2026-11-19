@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
+import { publicShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import {
@@ -48,7 +48,7 @@ export const metadata = {
  * opens one at a time (docs/08-DESIGN-SYSTEM.md §8). Every word survives.
  */
 export default async function OutdoorMerchants() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   const spaces = await activeSpaceTypes(show.id)

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { Banner, FaqHeader, CollapsibleTabs, RichText, type Tab } from '@/components/theme/Sections'
 
@@ -24,7 +24,7 @@ export const metadata = {
  * on the maker pages, and one of those numbers is stale (CLAUDE.md rule 6).
  */
 export default async function FAQ() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   const shoppers: Tab[] = [

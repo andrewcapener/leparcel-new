@@ -1,4 +1,4 @@
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { RichText, ImageWithText } from '@/components/theme/Sections'
 import { indoorShots, type LookbookShot } from '@/lib/lookbook'
@@ -22,7 +22,7 @@ export const metadata = {
  * `section-image-with-text` per space, alternating sides as theirs does.
  */
 export default async function IndoorLookbook() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   return (

@@ -1,4 +1,4 @@
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
 import { VideoBanner, RichText, MapSection } from '@/components/theme/Sections'
@@ -34,7 +34,7 @@ export const revalidate = 60
  * venue read off the Show record instead of being typed into the section.
  */
 export default async function Home() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
   /* The apply band's numbers, all read rather than written. The cheapest way

@@ -53,8 +53,11 @@ export function NextShowForm({
       <form key={state.attempt ?? 0} action={action} noValidate>
         <p className="adm-note nxt__lede">
           Copies this show's venue, prices, capacities, commission and load-in notes
-          into a new record. Nothing is taken off the current show, and the new one
-          does not go live until you say so.
+          into a new record. <strong>Saving this announces it:</strong> the public site
+          starts showing the new dates straight away, and the button above the fold
+          becomes the waiting list until applications open. Your admin does not move.
+          The roster, the jury, the statements and the payouts all stay on the show
+          you are working now.
         </p>
 
         <div className="nxt__row">
@@ -125,17 +128,22 @@ export function NextShowForm({
 
       {planned.length > 0 && (
         <div className="nxt__list">
-          <p className="adm-note">
-            <strong>Not live.</strong> Making one of these the live show changes every
-            public page at once. The statements and sales screens keep their own
-            show picker, so last season stays readable afterwards.
+          <p className="adm-note nxt__warn">
+            <strong>You almost certainly do not need this.</strong> The public site
+            already announces the show above as soon as it is planned. This button is
+            the other half: it moves the ADMIN onto it too, so the roster, the jury,
+            the onboarding and the payout screens all start showing a show with
+            nobody in it. Nothing is deleted and nothing is lost, but do not press it
+            until the show you are working now is finished and paid out.
           </p>
           {planned.map((s) => (
             <form key={s.slug} action={activateShow} className="nxt__one">
               <input type="hidden" name="slug" value={s.slug} />
               <span className="nxt__nm">{s.name}</span>
               <span className="nxt__dt">{s.startsOn}</span>
-              <button className="adm-btn-q" type="submit">Make this the live show</button>
+              <button className="adm-btn-q" type="submit">
+                Move the admin onto this show
+              </button>
             </form>
           ))}
         </div>
@@ -152,6 +160,7 @@ export function NextShowForm({
 .nxt__e { color: var(--ad-warn); font-style: normal; font-size: var(--t-s) }
 .nxt__ok { color: var(--ad-ink); font-size: var(--t-s); margin-top: 12px }
 .nxt__list { margin-top: 26px }
+.nxt__warn { border-left: 2px solid var(--ad-warn); padding-left: 12px }
 .nxt__one { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   padding: 10px 0; border-top: 1px solid var(--ad-line) }
 .nxt__nm { font-weight: 500 }

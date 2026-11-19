@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { eq, and, asc, inArray, isNull } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { bookings, bookingSpaces, vendors, applications, spaceTypes } from '@/db/schema'
 import { makerLink } from '@/server/modules/roster/maker-link'
 import { MakerGrid, type MakerCard } from './MakerGrid'
@@ -38,7 +38,7 @@ export const metadata = {
  * season's lineup.
  */
 export default async function Makers() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   const roster = await db

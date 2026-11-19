@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
+import { publicShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import {
@@ -57,7 +57,7 @@ export const metadata = {
  * because the price table above it now carries the same list with prices.
  */
 export default async function IndoorMerchants() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   const spaces = await activeSpaceTypes(show.id)

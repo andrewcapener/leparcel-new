@@ -7,7 +7,7 @@ import { cookies, headers } from 'next/headers'
 import { asc, eq, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
-import { activeShow, activeAddOns, activeSpaceTypes, forgetShowConfig, pgCode } from '@/db/queries'
+import { activeShow, publicShow, activeAddOns, activeSpaceTypes, forgetShowConfig, pgCode } from '@/db/queries'
 import {
   shows, vendors, applications, bookings, bookingAddons, bookingSpaces, bookingCharges, spaceTypes, addOns,
   auditLog, emailOutbox, sheetSyncs, subscribers, CATEGORIES, type ApplicationStatus,
@@ -384,7 +384,10 @@ const ApplicationSchema = z.object({
 
 export async function submitApplication(prev: FormState, fd: FormData): Promise<FormState> {
   const attempt = (prev.attempt ?? 0) + 1
-  const show = await activeShow()
+  /* The show being ADVERTISED, not the one staff are working. /apply shows
+     the next show's dates and prices, so an application has to be filed
+     against that show and not against the one still being paid out. */
+  const show = await publicShow()
   if (!show) return { ok: false, attempt, message: 'No active show.' }
 
   /* The window, or a member of staff rehearsing.

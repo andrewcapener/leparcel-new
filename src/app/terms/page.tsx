@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, PageSection } from '@/components/theme/Sections'
 import { LegalBody, LegalContents } from '@/lib/legal-render'
@@ -26,7 +26,7 @@ export const metadata = {
  * its own page for the same reason: it is the one people arrive looking for.
  */
 export default async function Terms() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
   const vars = legalVars(show)
   const sections = TERMS.map((s) => fillSection(s, vars))

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { unlisted } from '@/lib/pages'
 import { marks, palette, typefaces } from '@/lib/brand-assets'
@@ -41,7 +41,7 @@ export const revalidate = 60
  */
 export default async function BrandPage() {
   const base = siteUrl()
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   return (

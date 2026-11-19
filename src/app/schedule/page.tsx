@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { googleCalendarUrl } from '@/server/modules/calendar/ics'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { LdJson, eventLd, organizationLd } from '@/lib/structured-data'
@@ -67,7 +67,7 @@ function NamedList({ items }: { items: readonly Named[] }) {
  * them, which is the one place that cannot go stale when a maker drops.
  */
 export default async function Schedule() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   const days = show.hoursNote.split(' · ')

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { Banner } from '@/components/theme/Sections'
 import { ContactFormSection } from '@/components/theme/ContactFormSection'
@@ -20,7 +20,7 @@ export const metadata = {
 
 /** /pages/contact — their banner and their contact form. */
 export default async function Contact() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   return (

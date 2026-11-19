@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { journal } from '@/lib/journal'
 
@@ -39,7 +39,7 @@ export default async function JournalPost({
   // The list is newest first, so the next entry is the older article.
   const older = journal[at + 1]
   const newer = journal[at - 1]
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   return (

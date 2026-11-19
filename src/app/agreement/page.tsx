@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
+import { publicShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, PageSection, PriceTable, FactTable } from '@/components/theme/Sections'
@@ -43,7 +43,7 @@ export const metadata = {
  * measure the whole way down.
  */
 export default async function Agreement() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   const vars = agreementVars(show)

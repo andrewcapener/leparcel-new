@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { eq, and, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
+import { publicShow, activeAddOns, activeSpaceTypes } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { CollapsibleTabs, PriceTable, type Tab } from '@/components/theme/Sections'
@@ -64,7 +64,7 @@ export default async function Apply({
   // Submission is still enforced server-side in actions.ts, which rejects
   // anything outside the window regardless of how the form was reached.
   const preview = (await searchParams).preview === '1'
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
 
   const spaces = await activeSpaceTypes(show.id)

@@ -286,3 +286,49 @@ export async function adminShow(slug?: string): Promise<Show | undefined> {
   }
   return activeShow()
 }
+
+/**
+ * The show the PUBLIC SITE advertises, which is not always the one staff are
+ * working on.
+ *
+ * `isActive` used to answer both questions at once, and they came apart the
+ * week Spring 2027 was announced: Fall was over and being advertised was
+ * wrong, but Fall was emphatically not finished. Payouts were open, a maker
+ * was disputing her statement, and twenty-four admin screens read the active
+ * show. Flipping the switch would have pointed every one of them at an empty
+ * April. Drew, with the button in front of him: "I cannot afford to have
+ * info lost from this show."
+ *
+ * So the public pages ask this instead: the soonest show that has not ended
+ * yet, and the active one when there is no such thing. Staff keep working
+ * the active show in the admin, on the maker's own account page and at the
+ * payment link, and nobody has to choose between announcing the next show
+ * and finishing the last one.
+ *
+ * Reads every show and picks in JavaScript rather than in SQL. These dates
+ * are ISO strings carrying their own Pacific offset, so comparing them as
+ * text against a UTC now is wrong twice a year, and there are two rows.
+ */
+export const publicShow = unstable_cache(
+  readPublicShow, ['public-show'],
+  { tags: [SHOW_CONFIG_TAG], revalidate: CONFIG_TTL_SECONDS },
+)
+
+async function readPublicShow(): Promise<Show | undefined> {
+  try {
+    const all = await db.query.shows.findMany()
+    const now = Date.now()
+    const live = all
+      .filter((s) => {
+        const ends = new Date(s.endsOn).getTime()
+        return Number.isFinite(ends) && ends >= now
+      })
+      .sort((a, b) => new Date(a.startsOn).getTime() - new Date(b.startsOn).getTime())
+    const pick = live[0] ?? all.find((s) => s.isActive)
+    return pick && { ...pick, hoursNote: tidyHoursNote(pick.hoursNote) }
+  } catch {
+    /* Same reasoning as readActiveShow: deployed code can be ahead of the
+       database, and the site must not go down for a column. */
+    return activeShow()
+  }
+}

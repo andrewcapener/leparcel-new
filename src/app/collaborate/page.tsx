@@ -1,4 +1,4 @@
-import { activeShow } from '@/db/queries'
+import { publicShow } from '@/db/queries'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { Banner, RichText, MultiColumn, ScrollingBanner, StatRow } from '@/components/theme/Sections'
 import { ContactFormSection } from '@/components/theme/ContactFormSection'
@@ -28,7 +28,7 @@ export const metadata = {
  * anywhere, so none is invented here.
  */
 export default async function Collaborate() {
-  const show = await activeShow()
+  const show = await publicShow()
   if (!show) throw new Error('No active show.')
 
   const sponsors = [
