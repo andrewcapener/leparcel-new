@@ -5,7 +5,7 @@ import { VideoBanner, RichText, MapSection } from '@/components/theme/Sections'
 import { PhotoStrip } from '@/components/theme/PhotoStrip'
 import { ApplyBand } from '@/components/theme/ApplyBand'
 import { activeSpaceTypes } from '@/db/queries'
-import { fmtRange, fmtDeadline, daysUntil } from '@/lib/dates'
+import { fmtRange, fmtDeadline, daysUntil, applicationWindow } from '@/lib/dates'
 import { usd, bpsLabel } from '@/lib/money'
 import * as C from '@/lib/content'
 
@@ -52,7 +52,24 @@ export default async function Home() {
      window Elise called fourteen days and the FAQ now states, so the homepage
      would have contradicted the FAQ on day one. See daysUntil and its test. */
   const daysLeft = daysUntil(show.applicationsCloseAt)
-  const open = new Date(show.applicationsCloseAt).getTime() > Date.now()
+
+  /* Three states, not two.
+
+     This used to be `applicationsCloseAt > now`, which reads the closing date
+     and never the opening one. That is right for exactly the case it was
+     written for, a window that has already opened and is counting down, and
+     wrong for the one in front of us: Spring opens in February, so a close
+     date later in the spring makes "is the close date in the future" true
+     all the way through December and January. The homepage would have said
+     APPLY NOW for two months while /apply, which does ask applicationWindow,
+     said applications open in February. The same bug the comment below
+     describes, pointing the other way.
+
+     So ask the function that knows about both ends. (CLAUDE.md rule 6: the
+     dates live on the Show record, and moving them at /admin/show moves
+     this.) */
+  const win = applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt)
+  const open = win === 'open'
 
   /* The one button above the fold, pointed at whatever the visitor can
      actually do today.
@@ -63,12 +80,22 @@ export default async function Home() {
      thing she cannot. Drew, a week out: "change the button on the homepage to
      view schedule."
 
-     Read off the same `open` the apply band below uses, so the two can never
+     Before the window opens the ask is the waiting list rather than the
+     form, which is Drew's call for Spring: "instead of us opening
+     applications right now, we will wait until February ... if somebody
+     wants to sign up to be notified when applications open, I think we
+     should do that as the CTA versus apply now." It lands on /apply#apply,
+     where that invitation and its email field already live, so there is one
+     copy of the waiting-list ask rather than two to keep in step.
+
+     Read off the same `win` the apply band below uses, so the two can never
      disagree and nobody has to remember to change it back the morning Spring
      opens. */
   const heroCta = open
     ? { href: '/apply', label: 'APPLY NOW' }
-    : { href: '/schedule', label: 'VIEW SCHEDULE' }
+    : win === 'before'
+      ? { href: '/apply#apply', label: 'JOIN THE LIST' }
+      : { href: '/schedule', label: 'VIEW SCHEDULE' }
 
   return (
     <SiteShell show={show} template="index" transparentHeader>
