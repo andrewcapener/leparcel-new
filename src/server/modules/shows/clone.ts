@@ -159,28 +159,40 @@ export function showSlug(season: string, year: number): string {
 const AFTER_FALL = 161
 const AFTER_SPRING = 203
 
-/** 'YYYY-MM-DD' plus n days. Parsed as UTC so no timezone can shift a date. */
+/**
+ * The date part plus n days, as 'YYYY-MM-DD'.
+ *
+ * Takes the first ten characters, so it is happy with either a bare date or
+ * a wall-clock stamp like '2026-11-13T12:00'. Every Show date is stored as a
+ * full Pacific ISO string rather than a date (the show "starts" at its first
+ * public hour), so the bare-date version of this quietly returned its own
+ * input and every suggestion came back as last season's.
+ *
+ * Parsed as UTC so that adding a day never crosses a daylight saving
+ * boundary and lands on the same date it started (CLAUDE.md rule 8).
+ */
 export function addDays(date: string, n: number): string {
-  const d = new Date(`${date}T00:00:00Z`)
-  if (Number.isNaN(d.getTime())) return date
+  const d = new Date(`${date.slice(0, 10)}T00:00:00Z`)
+  if (Number.isNaN(d.getTime())) return date.slice(0, 10)
   d.setUTCDate(d.getUTCDate() + n)
   return d.toISOString().slice(0, 10)
 }
 
-/** Whole days between two 'YYYY-MM-DD' dates, b minus a. */
+/** Whole days between two dates, b minus a, ignoring any time of day. */
 export function daysBetween(a: string, b: string): number {
-  const x = new Date(`${a}T00:00:00Z`).getTime()
-  const y = new Date(`${b}T00:00:00Z`).getTime()
+  const x = new Date(`${a.slice(0, 10)}T00:00:00Z`).getTime()
+  const y = new Date(`${b.slice(0, 10)}T00:00:00Z`).getTime()
   if (Number.isNaN(x) || Number.isNaN(y)) return 0
   return Math.round((y - x) / 86_400_000)
 }
 
+/** Every field as LA wall clock, 'YYYY-MM-DDTHH:mm', which is what the
+ *  datetime-local inputs on /admin/show take and what laWallToIso stores. */
 export type Suggestion = {
   season: 'spring' | 'fall'
   year: number
   startsOn: string
   endsOn: string
-  /** LA wall clock, 'YYYY-MM-DDTHH:mm', which is what a datetime-local wants. */
   applicationsOpenAt: string
   applicationsCloseAt: string
   rosterAnnouncedOn: string
@@ -196,9 +208,10 @@ export type Suggestion = {
  * kept them open 11, so Spring is offered the same, which puts it in
  * February. Change any of it in the form.
  *
- * The clock time of day is carried across unchanged, in LA wall time, so a
- * window that opened at 9am opens at 9am and does not drift an hour when the
- * suggestion crosses daylight saving (CLAUDE.md rule 8).
+ * Each field keeps its own time of day, in LA wall time, so a window that
+ * opened at 9am opens at 9am and a show whose first public hour was noon
+ * still starts at noon, with no hour lost when the suggestion crosses
+ * daylight saving (CLAUDE.md rule 8).
  */
 export function suggestNextShow(
   prev: Pick<Show,
@@ -208,16 +221,17 @@ export function suggestNextShow(
 ): Suggestion {
   const season = prev.season === 'fall' ? 'spring' : 'fall'
   const shift = prev.season === 'fall' ? AFTER_FALL : AFTER_SPRING
-  const startsOn = addDays(prev.startsOn, shift)
 
-  const openWall = toWall(prev.applicationsOpenAt)
-  const closeWall = toWall(prev.applicationsCloseAt)
+  const wasStart = toWall(prev.startsOn)
+  const startsOn = `${addDays(wasStart, shift)}${wasStart.slice(10)}`
 
-  /* Each gap kept as it was, measured to the first day of the show. */
-  const moveWall = (wall: string) => {
-    const [date, time] = [wall.slice(0, 10), wall.slice(10)]
-    const lead = daysBetween(date, prev.startsOn)
-    return `${addDays(startsOn, -lead)}${time}`
+  /* Everything else keeps the gap it had to the first day of the show, and
+     its own clock time. A negative gap simply lands after it, which is what
+     the last day of the show is. */
+  const move = (iso: string) => {
+    const w = toWall(iso)
+    const lead = daysBetween(w, wasStart)
+    return `${addDays(startsOn, -lead)}${w.slice(10)}`
   }
 
   return {
@@ -225,11 +239,9 @@ export function suggestNextShow(
     /* Spring follows the fall of the year before it. */
     year: season === 'spring' ? prev.year + 1 : prev.year,
     startsOn,
-    endsOn: addDays(startsOn, daysBetween(prev.startsOn, prev.endsOn)),
-    applicationsOpenAt: moveWall(openWall),
-    applicationsCloseAt: moveWall(closeWall),
-    rosterAnnouncedOn: addDays(
-      startsOn, -daysBetween(prev.rosterAnnouncedOn, prev.startsOn),
-    ),
+    endsOn: move(prev.endsOn),
+    applicationsOpenAt: move(prev.applicationsOpenAt),
+    applicationsCloseAt: move(prev.applicationsCloseAt),
+    rosterAnnouncedOn: move(prev.rosterAnnouncedOn),
   }
 }

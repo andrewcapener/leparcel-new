@@ -144,61 +144,85 @@ check('the add-on gets a fresh id', ao[0].id !== 'ao_1')
 
 /* ── what the form opens prefilled with ────────────────────────────────── */
 
-/* The real Fall 2026 intervals: doors Friday 13 November, applications open
-   Monday 7 September (67 days ahead) for 11 days, roster up a week later. */
+/* Fall 2026 as the Show record actually holds it: every date is a Pacific
+   wall-clock stamp, not a bare date, because a show starts at its first
+   public hour and a window shuts at a minute to midnight. */
 const wall = (iso: string) => iso.slice(0, 16)
 const sug = suggestNextShow({
   season: 'fall', year: 2026,
-  startsOn: '2026-11-13', endsOn: '2026-11-15',
+  startsOn: '2026-11-13T12:00', endsOn: '2026-11-15T16:00',
   applicationsOpenAt: '2026-09-07T09:00',
   applicationsCloseAt: '2026-09-18T23:59',
-  rosterAnnouncedOn: '2026-09-25',
+  rosterAnnouncedOn: '2026-09-25T09:00',
 }, wall)
 
 /* The dates Drew gave for Spring, reached from Fall's own rhythm rather than
    typed in here: 23 weeks on, same Friday-to-Sunday shape. */
 check('spring follows fall', sug.season === 'spring')
 check('and takes the next year', sug.year === 2027)
-check('doors land on 23 April', sug.startsOn === '2027-04-23')
-check('and close on the 25th', sug.endsOn === '2027-04-25')
-check('still a Friday', new Date(`${sug.startsOn}T00:00:00Z`).getUTCDay() === 5)
+check('doors land on 23 April', sug.startsOn.startsWith('2027-04-23'))
+check('and close on the 25th', sug.endsOn.startsWith('2027-04-25'))
+check('still a Friday', new Date(`${sug.startsOn.slice(0, 10)}T00:00:00Z`).getUTCDay() === 5)
 check('still three days', daysBetween(sug.startsOn, sug.endsOn) === 2)
+
+/* The bug this file caught: a bare-date helper fed a wall-clock stamp
+   returned its own input, so every suggestion came back as last season. */
+check('the shift actually happened', sug.startsOn.slice(0, 10) !== '2026-11-13')
+
+/* Each field keeps the hour it had, so noon stays noon and a deadline stays
+   a minute to midnight. */
+check('doors still open at noon', sug.startsOn.endsWith('T12:00'))
+check('and the last day still ends at four', sug.endsOn.endsWith('T16:00'))
+check('the window still opens at 9am', sug.applicationsOpenAt.endsWith('T09:00'))
+check('and still closes at 23:59', sug.applicationsCloseAt.endsWith('T23:59'))
 
 /* Drew: "we will wait until February to open them." Keeping Fall's 67 day
    lead puts it there without anybody choosing a date. */
 check('applications open in February', sug.applicationsOpenAt.startsWith('2027-02-15'))
-check('at the hour they opened last time', sug.applicationsOpenAt.endsWith('T09:00'))
 check('the window is still 11 days',
-  daysBetween(sug.applicationsOpenAt.slice(0, 10), sug.applicationsCloseAt.slice(0, 10)) === 11)
-check('and still closes at 23:59', sug.applicationsCloseAt.endsWith('T23:59'))
+  daysBetween(sug.applicationsOpenAt, sug.applicationsCloseAt) === 11)
 check('the lead to doors is unchanged',
-  daysBetween(sug.applicationsOpenAt.slice(0, 10), sug.startsOn) === 67)
+  daysBetween(sug.applicationsOpenAt, sug.startsOn) === 67)
 check('the roster still goes up a week after close',
-  daysBetween(sug.applicationsCloseAt.slice(0, 10), sug.rosterAnnouncedOn) === 7)
+  daysBetween(sug.applicationsCloseAt, sug.rosterAnnouncedOn) === 7)
+
+/* Every field is in the shape a datetime-local input and laWallToIso want.
+   A bare date here would be written into a column nothing else can read. */
+const WALL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/
+for (const [k, v] of Object.entries(sug)) {
+  if (typeof v === 'string' && k !== 'season') {
+    check(`${k} is a wall-clock stamp`, WALL.test(v))
+  }
+}
 
 /* The other leg, so a spring show suggests the following fall and the two
    legs stay whole weeks apart. */
 const back = suggestNextShow({
   season: 'spring', year: 2027,
-  startsOn: '2027-04-23', endsOn: '2027-04-25',
+  startsOn: '2027-04-23T12:00', endsOn: '2027-04-25T16:00',
   applicationsOpenAt: '2027-02-15T09:00',
   applicationsCloseAt: '2027-02-26T23:59',
-  rosterAnnouncedOn: '2027-03-05',
+  rosterAnnouncedOn: '2027-03-05T09:00',
 }, wall)
 check('fall follows spring', back.season === 'fall')
 check('in the same year', back.year === 2027)
-check('and is still a Friday', new Date(`${back.startsOn}T00:00:00Z`).getUTCDay() === 5)
+check('and is still a Friday',
+  new Date(`${back.startsOn.slice(0, 10)}T00:00:00Z`).getUTCDay() === 5)
 
 /* ── the date helpers, which must never let a timezone move a day ──────── */
 
 check('a day is a day', addDays('2027-04-23', 2) === '2027-04-25')
 check('backwards too', addDays('2027-04-23', -67) === '2027-02-15')
+check('a wall stamp is taken by its date', addDays('2027-04-23T12:00', 2) === '2027-04-25')
+check('a full ISO is too', addDays('2027-04-23T12:00:00-07:00', 2) === '2027-04-25')
 check('over a month end', addDays('2027-02-28', 1) === '2027-03-01')
 /* The one a local-time parse gets wrong: spring forward in Los Angeles. */
 check('across a DST boundary', addDays('2027-03-13', 1) === '2027-03-14')
 check('across new year', addDays('2026-12-31', 1) === '2027-01-01')
 check('a leap day exists', addDays('2028-02-28', 1) === '2028-02-29')
 check('between', daysBetween('2026-11-13', '2027-04-23') === 161)
+check('between ignores the clock',
+  daysBetween('2026-11-13T23:59', '2027-04-23T00:00') === 161)
 check('between, backwards', daysBetween('2027-04-23', '2026-11-13') === -161)
 check('161 days is 23 whole weeks', 161 % 7 === 0)
 

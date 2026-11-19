@@ -7,7 +7,7 @@ import { makerLink } from '@/server/modules/roster/maker-link'
 import { MakerGrid, type MakerCard } from './MakerGrid'
 import { SiteShell } from '@/components/theme/SiteShell'
 import { PageTitle, LogoGrid, RichText, Banner } from '@/components/theme/Sections'
-import { fmtDate } from '@/lib/dates'
+import { fmtDate, applicationWindow } from '@/lib/dates'
 
 /* Cached and re-rendered at most once a minute. Read-only, nothing
  * per-request, and the Show record it reads changes a few times a season.
@@ -165,7 +165,13 @@ export default async function Makers() {
           {roster.length === 0 ? (
             <RichText
               title={`Announced ${fmtDate(show.rosterAnnouncedOn, { year: undefined })}`}
-              cta={{ href: '/apply', label: 'Apply now' }}
+              /* Same rule as the homepage hero: before the window opens the
+                 ask is the waiting list, not a form that will refuse them.
+                 The sentence under this button already says "join the list",
+                 so a button reading Apply now contradicted its own copy. */
+              cta={applicationWindow(show.applicationsOpenAt, show.applicationsCloseAt) === 'open'
+                ? { href: '/apply', label: 'Apply now' }
+                : { href: '/apply#apply', label: 'Join the list' }}
             >
               <p>
                 The {show.name} lineup goes up here the day the roster is set.

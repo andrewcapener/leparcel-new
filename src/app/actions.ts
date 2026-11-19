@@ -2501,12 +2501,12 @@ export async function planNextShow(prev: FormState, fd: FormData): Promise<FormS
   const isSeason = (v: string): v is 'spring' | 'fall' => v === 'spring' || v === 'fall'
   if (!isSeason(season)) errors.season = 'Spring or fall.'
   if (!Number.isInteger(year) || year < 2024 || year > 2100) errors.year = 'A four digit year.'
+  /* All five are wall-clock stamps, not dates, because that is what the Show
+     record holds: a show starts at its first public hour and the window
+     closes at a minute to midnight. Writing bare dates into these columns
+     would leave them in a shape nothing else on the site reads. */
   for (const [k, v] of [
     ['startsOn', startsOn], ['endsOn', endsOn], ['rosterAnnouncedOn', announced],
-  ] as const) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) errors[k] = 'Pick a date.'
-  }
-  for (const [k, v] of [
     ['applicationsOpenAt', opensAt], ['applicationsCloseAt', closesAt],
   ] as const) {
     if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) errors[k] = 'Pick a date and time.'
@@ -2520,7 +2520,7 @@ export async function planNextShow(prev: FormState, fd: FormData): Promise<FormS
   if (!errors.applicationsOpenAt && !errors.applicationsCloseAt && closesAt <= opensAt) {
     errors.applicationsCloseAt = 'Applications must close after they open.'
   }
-  if (!errors.applicationsCloseAt && !errors.startsOn && closesAt.slice(0, 10) > startsOn) {
+  if (!errors.applicationsCloseAt && !errors.startsOn && closesAt > startsOn) {
     errors.applicationsCloseAt = 'Applications must close before the show opens.'
   }
   if (Object.keys(errors).length > 0) return { ok: false, attempt, errors, values }
@@ -2542,11 +2542,11 @@ export async function planNextShow(prev: FormState, fd: FormData): Promise<FormS
     season: season as 'spring' | 'fall',
     year,
     numeral: nextNumeral(from.numeral),
-    startsOn,
-    endsOn,
+    startsOn: laWallToIso(startsOn),
+    endsOn: laWallToIso(endsOn),
     applicationsOpenAt: laWallToIso(opensAt),
     applicationsCloseAt: laWallToIso(closesAt),
-    rosterAnnouncedOn: announced,
+    rosterAnnouncedOn: laWallToIso(announced),
   })
 
   const [types, extras] = await Promise.all([
@@ -2565,7 +2565,7 @@ export async function planNextShow(prev: FormState, fd: FormData): Promise<FormS
   })
 
   await log('show', id, 'created', {}, {
-    from: from.slug, slug, startsOn, endsOn,
+    from: from.slug, slug, startsOn: row.startsOn, endsOn: row.endsOn,
     spaceTypes: types.filter((s) => s.isActive).length, addOns: extras.length,
   }, `copied from ${from.name}`, 'staff')
 
@@ -2601,8 +2601,12 @@ export async function activateShow(fd: FormData): Promise<void> {
     { active: was?.slug ?? null }, { active: target.slug }, 'made the live show', 'staff')
 
   forgetShowConfig()
+  /* Every page that renders a show date or the lineup. /makers is the one
+     that is easy to forget and the most obviously wrong when it is missed:
+     it caches for a minute, so without it the lineup page kept showing last
+     season's dates and makers after the flip. */
   for (const p of [
-    '/', '/apply', '/schedule', '/makers/indoor', '/makers/outdoor',
-    '/admin', '/admin/show', '/admin/statements',
+    '/', '/apply', '/schedule', '/makers', '/makers/indoor', '/makers/outdoor',
+    '/lookbook', '/admin', '/admin/show', '/admin/statements',
   ]) revalidatePath(p)
 }

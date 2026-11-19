@@ -77,13 +77,13 @@ export function NextShowForm({
         <div className="nxt__row">
           <label className="nxt__f">
             <span>First day</span>
-            <input className="inp" name="startsOn" type="date"
+            <input className="inp" name="startsOn" type="datetime-local"
               {...keep('startsOn', suggestion.startsOn)} />
             {e.startsOn && <em className="nxt__e">{e.startsOn}</em>}
           </label>
           <label className="nxt__f">
             <span>Last day</span>
-            <input className="inp" name="endsOn" type="date"
+            <input className="inp" name="endsOn" type="datetime-local"
               {...keep('endsOn', suggestion.endsOn)} />
             {e.endsOn && <em className="nxt__e">{e.endsOn}</em>}
           </label>
@@ -107,7 +107,7 @@ export function NextShowForm({
         <div className="nxt__row">
           <label className="nxt__f">
             <span>Roster announced</span>
-            <input className="inp" name="rosterAnnouncedOn" type="date"
+            <input className="inp" name="rosterAnnouncedOn" type="datetime-local"
               {...keep('rosterAnnouncedOn', suggestion.rosterAnnouncedOn)} />
             {e.rosterAnnouncedOn && <em className="nxt__e">{e.rosterAnnouncedOn}</em>}
           </label>
