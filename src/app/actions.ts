@@ -2572,10 +2572,20 @@ export async function planNextShow(prev: FormState, fd: FormData): Promise<FormS
     spaceTypes: types.filter((s) => s.isActive).length, addOns: extras.length,
   }, `copied from ${from.name}`, 'staff')
 
-  revalidatePath('/admin/show')
+  /* Planning the next show IS the announcement: publicShow() advertises the
+     soonest show that has not ended, so this row changes every public page
+     the moment it exists. The Show record is read through a cached wrapper,
+     so without this the site keeps showing the finished show until the
+     window expires and it looks as though nothing happened. */
+  forgetShowConfig()
+  for (const path of [
+    '/', '/apply', '/schedule', '/makers', '/makers/indoor', '/makers/outdoor',
+    '/lookbook', '/faq', '/agreement', '/admin', '/admin/show',
+  ]) revalidatePath(path)
+
   return {
     ok: true, attempt,
-    message: `${row.name} planned, copied from ${from.name}. It is not live yet.`,
+    message: `${row.name} planned, copied from ${from.name}. The site is announcing it now.`,
   }
 }
 

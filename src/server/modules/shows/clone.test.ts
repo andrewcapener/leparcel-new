@@ -2,7 +2,7 @@ import type { InferSelectModel } from 'drizzle-orm'
 import type { shows, spaceTypes, addOns } from '@/db/schema'
 import {
   addDays, clonedAddOns, clonedSpaceTypes, daysBetween, nextNumeral, nextShowRow,
-  showSlug, suggestNextShow, type NextShowInput,
+  showSlug, shiftNoteDates, suggestNextShow, type NextShowInput,
 } from './clone'
 
 let failures = 0
@@ -16,9 +16,11 @@ const fall = {
   season: 'fall', year: 2026,
   venueName: 'Community House', venueAddress: '24642 San Juan Ave, Dana Point, CA',
   startsOn: '2026-11-13', endsOn: '2026-11-15',
-  hoursNote: 'Friday noon to 7pm', loadInNote: 'Thursday evening, in slots',
+  hoursNote: 'Friday 13 November, 9am to 6pm \u00b7 Saturday 14 November, 9am to 5pm'
+    + ' \u00b7 Sunday 15 November, 9am to 5pm',
+  loadInNote: 'Thursday 12 November, in slots',
   outdoorLoadInNote: 'The morning of your day', loadInSlots: '1-3pm, 3-5pm, 5-7pm',
-  takedownNote: 'Sunday after 4pm',
+  takedownNote: 'Sunday 15 November after 4pm',
   applicationsOpenAt: '2026-09-07T09:00:00-07:00',
   applicationsCloseAt: '2026-09-18T23:59:00-07:00',
   rosterAnnouncedOn: '2026-09-25',
@@ -53,11 +55,51 @@ check('the window is the new one', next.applicationsOpenAt === '2027-02-15T09:00
 check('its own id', next.id === 'show_spring27')
 check('its own slug', next.slug === 'spring-2027')
 
+/* ── the notes with dates written into them ────────────────────────────── */
+
+/* The bug Drew caught on the homepage: these three read like policy and are
+   actually prose with the show's own dates in them, so carrying them across
+   announced Spring with November hours. */
+check('the hours move with the show',
+  next.hoursNote === 'Friday 23 April, 9am to 6pm \u00b7 Saturday 24 April, 9am to 5pm'
+    + ' \u00b7 Sunday 25 April, 9am to 5pm')
+check('load-in moves too', next.loadInNote === 'Thursday 22 April, in slots')
+check('and take-down', next.takedownNote === 'Sunday 25 April after 4pm')
+check('no month from the finished show survives', !/November/.test(
+  [next.hoursNote, next.loadInNote, next.outdoorLoadInNote, next.takedownNote].join(' ')))
+/* A note with no date in it is not a date problem. */
+check('a note without dates is left alone',
+  next.outdoorLoadInNote === 'The morning of your day')
+
+/* The weekday names are only still true because the move is whole weeks. */
+check('the weekday survives a whole-week move', next.hoursNote.startsWith('Friday 23 April'))
+
+const noteIn = 'Friday 13 November, 9am to 6pm'
+check('a whole-week move rewrites it',
+  shiftNoteDates(noteIn, 161, 2026, '2027-04-23') === 'Friday 23 April, 9am to 6pm')
+/* Nine days is not whole weeks, so "Friday" would become a lie. Cleared. */
+check('a part-week move is refused', shiftNoteDates(noteIn, 9, 2026, '2026-11-22') === null)
+check('and the caller clears it rather than keeping it',
+  nextShowRow(fall, { ...input, startsOn: '2027-04-26T12:00' }).hoursNote === '')
+/* Something parsed that is not a show date. */
+check('a date nowhere near the show is refused',
+  shiftNoteDates('Applications close 18 September', 161, 2026, '2027-04-23') === null)
+check('empty stays empty', shiftNoteDates('', 161, 2026, '2027-04-23') === '')
+check('no dates, no change',
+  shiftNoteDates('7am on your day', 161, 2026, '2027-04-23') === '7am on your day')
+/* Both written shapes, and an ordinal. */
+check('month first works',
+  shiftNoteDates('November 13 at 9am', 161, 2026, '2027-04-23') === 'April 23 at 9am')
+check('an ordinal is handled',
+  shiftNoteDates('Sunday 15th November at 5pm', 161, 2026, '2027-04-25')
+    === 'Sunday 25 April at 5pm')
+check('an abbreviation is handled',
+  shiftNoteDates('13 Nov, 9am', 161, 2026, '2027-04-23') === '23 April, 9am')
+
 /* ── what carries forward, because it is about the market ──────────────── */
 
 check('the venue carries', next.venueName === 'Community House')
 check('the address carries', next.venueAddress === fall.venueAddress)
-check('the load-in prose carries', next.loadInNote === 'Thursday evening, in slots')
 check('the outdoor load-in carries', next.outdoorLoadInNote === fall.outdoorLoadInNote)
 check('the slots carry', next.loadInSlots === '1-3pm, 3-5pm, 5-7pm')
 /* The one that would cost real money to retype wrong. */

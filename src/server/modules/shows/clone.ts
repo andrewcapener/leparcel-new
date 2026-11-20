@@ -95,8 +95,23 @@ export function nextNumeral(prev: string): string {
  */
 export function nextShowRow(prev: Show, input: NextShowInput): Omit<Show, 'createdAt'> {
   const { createdAt: _was, ...rest } = prev
+
+  /* hoursNote, the two load-in notes and the take-down note read like policy
+     and are not: they have the show's own dates written into them. Carried
+     across word for word, Spring announced itself with November hours. Each
+     is moved with the show, and cleared rather than left wrong when the move
+     cannot be vouched for. See shiftNoteDates. */
+  const days = daysBetween(prev.startsOn, input.startsOn)
+  const fromYear = Number(prev.startsOn.slice(0, 4))
+  const shift = (note: string) =>
+    shiftNoteDates(note, days, fromYear, input.startsOn) ?? ''
+
   return {
     ...rest,
+    hoursNote: shift(prev.hoursNote),
+    loadInNote: shift(prev.loadInNote),
+    outdoorLoadInNote: shift(prev.outdoorLoadInNote),
+    takedownNote: shift(prev.takedownNote),
     id: input.id,
     slug: input.slug,
     numeral: input.numeral,
@@ -244,4 +259,67 @@ export function suggestNextShow(
     applicationsCloseAt: move(prev.applicationsCloseAt),
     rosterAnnouncedOn: move(prev.rosterAnnouncedOn),
   }
+}
+
+/* ── the notes that quietly contain dates ──────────────────────────────── */
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
+const MONTH_RE = MONTHS.map((m) => `${m.slice(0, 3)}(?:${m.slice(3)})?`).join('|')
+/* "13 November" and "November 13", with or without an ordinal suffix. */
+const DATE_RE = new RegExp(
+  `\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${MONTH_RE})\\b|\\b(${MONTH_RE})\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`,
+  'gi',
+)
+
+/**
+ * Move the dates written inside a Show note, or refuse to.
+ *
+ * hoursNote, loadInNote and takedownNote read like policy and are not. They
+ * are prose with dates baked into them: "Friday 13 November, 9am to 6pm",
+ * "Thursday 12 November, 1-7pm", "Sunday 15 November at 5pm sharp". The
+ * first clone carried them across word for word, so Spring 2027 announced
+ * itself on the homepage with November hours. Drew spotted it: "you haven't
+ * fully switched all the dates."
+ *
+ * Returns null when it will not vouch for the result, and null means the
+ * note is cleared rather than left wrong. Two things make it refuse:
+ *
+ *  - A move that is not a whole number of weeks. Every weekday NAME in the
+ *    note ("Friday") is only still true if the shift preserves weekdays.
+ *  - A shifted date that does not land within three weeks of the new show.
+ *    That means something was parsed that was not a show date, and a
+ *    confidently rewritten wrong date is worse than a blank field.
+ *
+ * A note with no dates in it ("7am on your day") comes back untouched.
+ */
+export function shiftNoteDates(
+  note: string, days: number, fromYear: number, newStart: string,
+): string | null {
+  if (!note.trim()) return note
+  if (days % 7 !== 0) return null
+
+  let refused = false
+  const out = note.replace(DATE_RE, (whole, d1, m1, m2, d2) => {
+    const day = Number(d1 ?? d2)
+    const name = String(m1 ?? m2)
+    const month = MONTHS.findIndex((m) => m.toLowerCase().startsWith(name.slice(0, 3).toLowerCase()))
+    if (month < 0 || !Number.isInteger(day)) { refused = true; return whole }
+
+    const was = new Date(Date.UTC(fromYear, month, day))
+    if (Number.isNaN(was.getTime())) { refused = true; return whole }
+    const moved = addDays(was.toISOString().slice(0, 10), days)
+
+    if (Math.abs(daysBetween(moved, newStart)) > 21) { refused = true; return whole }
+
+    const dd = Number(moved.slice(8, 10))
+    const mm = MONTHS[Number(moved.slice(5, 7)) - 1]
+    /* Written back the way it was found, so "13 November" and "November 13"
+       each keep their own shape. */
+    return d1 != null ? `${dd} ${mm}` : `${mm} ${dd}`
+  })
+
+  return refused ? null : out
 }
