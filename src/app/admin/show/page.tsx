@@ -1,12 +1,13 @@
 import { eq, asc } from 'drizzle-orm'
 import { db } from '@/db'
-import { activeShow, activeAddOns, showMenu } from '@/db/queries'
+import { adminShow, activeAddOns, showMenu } from '@/db/queries'
 import { spaceTypes } from '@/db/schema'
 import { SettingsForm } from './SettingsForm'
 import { updateSpace, updateAddOn } from '@/app/actions'
 import { fmtDate, fmtDateTime, fmtRange, applicationWindow, isoToLaWall } from '@/lib/dates'
 import { suggestNextShow } from '@/server/modules/shows/clone'
 import { NextShowForm } from './NextShowForm'
+import { ShowScope } from '../ShowScope'
 import { bpsLabel, usd } from '@/lib/money'
 import { PageHead, Stats, Stat } from '../ui'
 
@@ -31,8 +32,17 @@ const WINDOW_LABEL = {
  * take on the public site, then the controls that set them, grouped in the
  * order someone setting up a season works.
  */
-export default async function ShowSettings() {
-  const show = await activeShow()
+export default async function ShowSettings({
+  searchParams,
+}: {
+  searchParams: Promise<{ show?: string }>
+}) {
+  /* Whichever show you asked for, not whichever is active.
+     A show is planned months before the admin moves onto it, and until this
+     existed there was no way back into it: Spring was announced carrying
+     Fall's hours and the only screen that could fix them edited Fall. */
+  const sp = await searchParams
+  const show = await adminShow(sp.show)
   if (!show) throw new Error('No active show. Run `npm run db:seed`.')
   const menu = await showMenu()
   const spaces = await db.query.spaceTypes.findMany({
@@ -62,6 +72,7 @@ export default async function ShowSettings() {
 
   return (
     <div className="adm-narrow">
+      <ShowScope here="/admin/show" current={show.slug} />
       <PageHead
         title="Show settings"
         sub={`${show.numeral} · ${show.name} · ${fmtRange(show.startsOn, show.endsOn)} · ${WINDOW_LABEL[windowState].toLowerCase()}`}

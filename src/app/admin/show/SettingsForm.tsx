@@ -52,6 +52,10 @@ export function SettingsForm({ show }: { show: Show }) {
 
   return (
     <form key={state.attempt ?? 0} action={action} style={{ maxWidth: 720 }} noValidate>
+      {/* Which show these values belong to. Without it the action saved
+          whatever was active, so editing a planned show silently rewrote the
+          one being worked. */}
+      <input type="hidden" name="showId" value={show.id} />
       <Block
         legend="Venue"
         why="The home page venue block, the site footer, /schedule, /apply, and the address written into the add to calendar file."

@@ -1760,7 +1760,13 @@ const ShowSettingsSchema = z.object({
  */
 export async function updateShow(prev: FormState, fd: FormData): Promise<FormState> {
   const attempt = (prev.attempt ?? 0) + 1
-  const show = await activeShow()
+  /* The show the form was rendered for, which is not always the active one:
+     a planned show has to be editable before the admin moves onto it. Falls
+     back to the active show so an older form still saves the right row. */
+  const wantId = String(fd.get('showId') ?? '').trim()
+  const show = wantId
+    ? await db.query.shows.findFirst({ where: eq(shows.id, wantId) })
+    : await activeShow()
   if (!show) return { ok: false, attempt, message: 'No active show.' }
 
   const raw = Object.fromEntries(fd.entries())
